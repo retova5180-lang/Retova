@@ -1,3 +1,4 @@
+
 const signupTab = document.getElementById("signupTab");
 const loginTab = document.getElementById("loginTab");
 
@@ -9,7 +10,7 @@ signupTab.addEventListener("click", () => {
 signupTab.classList.add("active");
 loginTab.classList.remove("active");
 
-signupForm.style.display = "block";
+signupForm.style.display = "flex";
 loginForm.style.display = "none";
 
 });
@@ -20,6 +21,6 @@ loginTab.classList.add("active");
 signupTab.classList.remove("active");
 
 signupForm.style.display = "none";
-loginForm.style.display = "block";
+loginForm.style.display = "flex";
 
 });
