@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Retova</title>
@@ -24,63 +23,57 @@
 <div class="container">
 
 <div class="logo">
-
 Retova
-
 </div>
 
-<div class="slogan">
-
+<p class="slogan">
 Share. Create. Connect.
-
-</div>
+</p>
 
 <div class="tabs">
 
-<button class="tab active" id="signupTab">
+<button
+class="tab active"
+id="signupTab">
 
 Create Account
 
 </button>
 
-<button class="tab" id="loginTab">
+<button
+class="tab"
+id="loginTab">
 
 Log In
 
 </button>
 
 </div>
-<div id="signupForm">
+
+<!-- Create Account -->
+
+<div
+class="form"
+id="signupForm">
 
 <input
 class="input"
 type="text"
-placeholder="Username"
-id="username"
->
+placeholder="Username">
 
 <input
 class="input"
 type="text"
-placeholder="Display Name"
-id="displayName"
->
+placeholder="Display Name">
 
 <input
 class="input"
 type="number"
-placeholder="Age"
-id="age"
-min="13"
-max="100"
->
+placeholder="Age">
 
-<select
-class="input"
-id="gender"
->
+<select class="input">
 
-<option value="">
+<option>
 Gender
 </option>
 
@@ -97,16 +90,12 @@ Male
 <input
 class="input"
 type="email"
-placeholder="Email"
-id="email"
->
+placeholder="Email">
 
 <input
 class="input"
 type="password"
-placeholder="Password"
-id="password"
->
+placeholder="Password">
 
 <button class="mainBtn">
 
@@ -116,7 +105,7 @@ Create Account
 
 <div class="divider">
 
-Or continue with
+<span>OR</span>
 
 </div>
 
@@ -126,31 +115,36 @@ Continue with Google
 
 </button>
 
-<div class="terms">
+<p class="terms">
 
-By creating an account you agree to our
-<a href="#">Terms & Conditions</a>
+By continuing you agree to our
+
+<a href="#">
+
+Terms & Conditions
+
+</a>
+
+</p>
 
 </div>
 
-</div>
+<!-- Login -->
 
-
-<div id="loginForm" style="display:none;">
+<div
+class="form"
+id="loginForm"
+style="display:none;">
 
 <input
 class="input"
 type="email"
-placeholder="Email"
-id="loginEmail"
->
+placeholder="Email">
 
 <input
 class="input"
 type="password"
-placeholder="Password"
-id="loginPassword"
->
+placeholder="Password">
 
 <button class="mainBtn">
 
@@ -160,7 +154,7 @@ Log In
 
 <div class="divider">
 
-Or continue with
+<span>OR</span>
 
 </div>
 
@@ -170,12 +164,17 @@ Continue with Google
 
 </button>
 
-<div class="terms">
+<p class="terms">
 
 Don't have an account?
-<a href="#">Create Account</a>
 
-</div>
+<a href="#">
+
+Create Account
+
+</a>
+
+</p>
 
 </div>
 
