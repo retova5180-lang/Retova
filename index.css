@@ -1,156 +1,36 @@
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
+html,
 body{
-background:#0A0A0A;
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-padding:20px;
-color:#fff;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
 }
 
-.container{
-width:100%;
-max-width:430px;
-background:#141414;
-border:1px solid #252525;
-border-radius:30px;
-padding:35px 28px;
-box-shadow:0 0 35px rgba(124,92,252,.15);
+.page{
+    position:relative;
+    width:100%;
+    height:100vh;
 }
 
-.logo{
-text-align:center;
-font-size:42px;
-font-weight:700;
-color:#7C5CFC;
-margin-bottom:8px;
+.bg{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    user-select:none;
+    pointer-events:none;
 }
 
-.slogan{
-text-align:center;
-color:#9a9a9a;
-margin-bottom:30px;
-font-size:15px;
+.overlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
 }
-
-.tabs{
-display:flex;
-background:#1B1B1B;
-padding:5px;
-border-radius:18px;
-margin-bottom:28px;
-}
-
-.tab{
-flex:1;
-border:none;
-background:transparent;
-color:#8b8b8b;
-padding:14px;
-border-radius:14px;
-font-size:15px;
-font-weight:600;
-cursor:pointer;
-transition:.25s;
-}
-
-.tab.active{
-background:#7C5CFC;
-color:white;
-}
-
-.form{
-display:flex;
-flex-direction:column;
-gap:16px;
-}
-
-.input{
-width:100%;
-padding:16px;
-background:#1A1A1A;
-border:1px solid #2A2A2A;
-border-radius:18px;
-color:white;
-font-size:15px;
-outline:none;
-transition:.25s;
-}
-
-.input:focus{
-border-color:#7C5CFC;
-}
-
-.mainBtn{
-width:100%;
-padding:16px;
-background:#7C5CFC;
-border:none;
-border-radius:18px;
-color:white;
-font-size:16px;
-font-weight:600;
-cursor:pointer;
-transition:.25s;
-}
-
-.mainBtn:hover{
-opacity:.9;
-}
-
-.divider{
-display:flex;
-align-items:center;
-justify-content:center;
-margin:8px 0;
-color:#777;
-font-size:14px;
-}
-
-.divider::before,
-.divider::after{
-content:"";
-height:1px;
-background:#2A2A2A;
-flex:1;
-}
-
-.divider span{
-padding:0 12px;
-}
-
-.googleBtn{
-width:100%;
-padding:15px;
-background:#1A1A1A;
-border:1px solid #2A2A2A;
-border-radius:18px;
-color:white;
-font-size:15px;
-cursor:pointer;
-transition:.25s;
-}
-
-.googleBtn:hover{
-border-color:#7C5CFC;
-}
-
-.terms{
-text-align:center;
-font-size:13px;
-color:#8d8d8d;
-line-height:1.6;
-margin-top:5px;
-}
-
-.terms a{
-color:#7C5CFC;
-text-decoration:none;
-  }
