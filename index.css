@@ -1,36 +1,207 @@
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
 }
 
-html,
 body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#000;
+
+background:#0B0B0D;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+padding:20px;
+color:white;
+
 }
 
-.page{
-    position:relative;
-    width:100%;
-    height:100vh;
+.container{
+
+width:100%;
+max-width:430px;
+
+background:#151518;
+
+border:1px solid #26262B;
+
+border-radius:32px;
+
+padding:35px 28px;
+
+box-shadow:0 0 40px rgba(124,92,252,.18);
+
 }
 
-.bg{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    display:block;
-    user-select:none;
-    pointer-events:none;
+.logo{
+
+font-size:42px;
+
+font-weight:800;
+
+text-align:center;
+
+color:#7C5CFC;
+
+margin-bottom:8px;
+
 }
 
-.overlay{
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
+.slogan{
+
+text-align:center;
+
+color:#9E9EAA;
+
+margin-bottom:35px;
+
+font-size:15px;
+
+}
+
+form{
+
+display:flex;
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+input,
+select{
+
+height:56px;
+
+background:#1B1B20;
+
+border:1px solid #2E2E36;
+
+border-radius:18px;
+
+padding:0 18px;
+
+color:white;
+
+font-size:15px;
+
+outline:none;
+
+transition:.25s;
+
+}
+
+input:focus,
+select:focus{
+
+border-color:#7C5CFC;
+
+}
+
+select{
+
+cursor:pointer;
+
+}
+
+button{
+
+height:56px;
+
+border:none;
+
+border-radius:18px;
+
+font-size:16px;
+
+font-weight:700;
+
+cursor:pointer;
+
+transition:.25s;
+
+}
+
+button[type="submit"]{
+
+background:#7C5CFC;
+
+color:white;
+
+}
+
+button[type="submit"]:hover{
+
+transform:translateY(-2px);
+
+}
+
+.google{
+
+background:#222228;
+
+color:white;
+
+border:1px solid #353541;
+
+}
+
+.google:hover{
+
+border-color:#7C5CFC;
+
+}
+
+.terms{
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+font-size:14px;
+
+color:#A3A3AE;
+
+margin-top:5px;
+
+}
+
+.terms input{
+
+width:18px;
+
+height:18px;
+
+}
+
+.login{
+
+margin-top:28px;
+
+text-align:center;
+
+color:#9D9DA8;
+
+font-size:14px;
+
+}
+
+.login a{
+
+color:#7C5CFC;
+
+text-decoration:none;
+
+font-weight:600;
+
+}
+
+::placeholder{
+
+color:#888894;
+
 }
