@@ -2,29 +2,90 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retova - Create Account</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<title>Retova</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="index.css">
-
+    <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
 
-<div class="page">
+<div class="container">
 
-    <img
-        src="./assets/register.png"
-        alt="Retova Register"
-        class="bg"
-    >
+    <div class="logo">
+        Retova
+    </div>
 
-    <div class="overlay">
+    <p class="slogan">
+        Share. Create. Connect.
+    </p>
 
-        <!-- هنا بنضيف الأزرار والحقول لاحقًا -->
+    <form id="signupForm">
+
+        <input type="text" placeholder="Username" required>
+
+        <input type="text" placeholder="Display Name" required>
+
+        <input type="email" placeholder="Email" required>
+
+        <input type="password" placeholder="Password" required>
+
+        <input type="password" placeholder="Confirm Password" required>
+
+        <input
+            type="number"
+            placeholder="Age"
+            min="9"
+            max="100"
+            required>
+
+        <select required>
+
+            <option value="">Gender</option>
+
+            <option>Female</option>
+
+            <option>Male</option>
+
+        </select>
+
+        <input type="text" placeholder="Country">
+
+        <label class="terms">
+
+            <input type="checkbox" required>
+
+            I agree to the Terms & Conditions
+
+        </label>
+
+        <button type="submit">
+            Create Account
+        </button>
+
+        <button type="button" class="google">
+
+            Continue with Google
+
+        </button>
+
+    </form>
+
+    <div class="login">
+
+        Already have an account?
+
+        <a href="login.html">
+
+            Log In
+
+        </a>
 
     </div>
 
