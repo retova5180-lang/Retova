@@ -2,11 +2,10 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Retova - Create Account</title>
+<title>Retova</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,109 +20,114 @@
 
 <div class="container">
 
-    <div class="logo">
-        Retova
-    </div>
+<h1 class="logo">Retova</h1>
 
-    <p class="slogan">
-        Share. Create. Connect.
-    </p>
+<p class="slogan">
+Share. Create. Connect.
+</p>
 
-    <form id="signupForm">
+<form id="signupForm">
 
-        <div class="avatar">
+<div class="avatar">
 
-            <img
-            id="avatarPreview"
-            src="https://ui-avatars.com/api/?name=R&background=7C5CFC&color=ffffff&size=200"
-            alt="Avatar">
+<label for="avatarInput">
 
-            <input
-            type="file"
-            id="avatarInput"
-            accept="image/*">
+<img
+id="avatarPreview"
+src="https://ui-avatars.com/api/?name=R&background=7C5CFC&color=fff&size=200">
 
-        </div>
+<div class="changeAvatar">
++
+</div>
 
-        <input
-        type="text"
-        id="name"
-        placeholder="Name"
-        required>
+</label>
 
-        <input
-        type="text"
-        id="username"
-        placeholder="Username"
-        required>
+<input
+type="file"
+id="avatarInput"
+accept="image/*"
+hidden>
 
-        <input
-        type="number"
-        id="age"
-        placeholder="Age"
-        min="9"
-        max="100"
-        required>
+</div>
 
-        <input
-        type="email"
-        id="email"
-        placeholder="Email"
-        required>
+<input
+type="text"
+placeholder="Name"
+required>
 
-        <div class="passwordBox">
+<input
+type="text"
+placeholder="Username"
+required>
 
-            <input
-            type="password"
-            id="password"
-            placeholder="Password"
-            required>
+<input
+type="number"
+placeholder="Age"
+min="9"
+max="100"
+required>
 
-            <span id="togglePassword">
-                👁
-            </span>
+<input
+type="email"
+placeholder="Email"
+required>
 
-        </div>
+<div class="passwordBox">
 
-        <button type="submit">
+<input
+id="password"
+type="password"
+placeholder="Password"
+required>
 
-            Create Account
+<button
+type="button"
+id="showPassword">
 
-        </button>
+👁
 
-        <button
-        type="button"
-        class="google">
+</button>
 
-            Continue with Google
+</div>
 
-        </button>
+<button
+class="createBtn"
+type="submit">
 
-        <div class="terms">
+Create Account
 
-            By creating an account you agree to our
+</button>
 
-            <a href="#">Terms of Service</a>
+<p class="terms">
 
-            and
+By creating an account you agree to our
+<a href="#">Terms</a>
+&
+<a href="#">Privacy Policy</a>
 
-            <a href="#">Privacy Policy</a>
+</p>
 
-        </div>
+<button
+type="button"
+class="googleBtn">
 
-    </form>
+Continue with Google
 
-    <div class="login">
+</button>
 
-        Already have an account?
+<p class="login">
 
-        <a href="login.html">
+Already have an account?
 
-            Log In
+<a href="login.html">
 
-        </a>
+Log In
 
-    </div>
+</a>
+
+</p>
+
+</form>
 
 </div>
 
