@@ -1,80 +1,110 @@
-// Avatar Preview
+// =======================
+// Avatar
+// =======================
+
 const avatarInput = document.getElementById("avatarInput");
 const avatarPreview = document.getElementById("avatarPreview");
 
 if (avatarInput && avatarPreview) {
 
-    avatarInput.addEventListener("change", function () {
+avatarInput.addEventListener("change", function () {
 
-        const file = this.files[0];
+const file = this.files[0];
 
-        if (file) {
+if(file){
 
-            avatarPreview.src = URL.createObjectURL(file);
-
-        }
-
-    });
+avatarPreview.src = URL.createObjectURL(file);
 
 }
 
-// Show / Hide Password
-const password = document.getElementById("password");
-const showPassword = document.getElementById("showPassword");
-
-if (showPassword && password) {
-
-    showPassword.addEventListener("click", function () {
-
-        if (password.type === "password") {
-
-            password.type = "text";
-            showPassword.innerHTML = "🙈";
-
-        } else {
-
-            password.type = "password";
-            showPassword.innerHTML = "👁";
-
-        }
-
-    });
+});
 
 }
 
-// Form Validation
-const form = document.getElementById("signupForm");
+// =======================
+// Show Password
+// =======================
 
+const password =
+document.getElementById("password");
+
+const showPassword =
+document.getElementById("showPassword");
+
+if(showPassword){
+
+showPassword.onclick = function(){
+
+if(password.type==="password"){
+
+password.type="text";
+
+this.innerHTML='<i class="fa-regular fa-eye-slash"></i>';
+
+}else{
+
+password.type="password";
+
+this.innerHTML='<i class="fa-regular fa-eye"></i>';
+
+}
+
+}
+
+}
+
+// =======================
+// Form
+// =======================
+
+const form =
+document.getElementById("signupForm");
 if (form) {
 
-    form.addEventListener("submit", function (e) {
+form.addEventListener("submit", function (e) {
 
-        e.preventDefault();
+e.preventDefault();
 
-        const name = form.querySelector('input[placeholder="Name"]').value.trim();
-        const username = form.querySelector('input[placeholder="Username"]').value.trim();
-        const age = form.querySelector('input[placeholder="Age"]').value.trim();
-        const email = form.querySelector('input[type="email"]').value.trim();
-        const pass = password.value.trim();
+const name =
+form.querySelector('input[placeholder="Name"]').value.trim();
 
-        if (!name || !username || !age || !email || !pass) {
+const username =
+form.querySelector('input[placeholder="Username"]').value.trim();
 
-            alert("Please complete all fields.");
-            return;
+const age =
+form.querySelector('input[placeholder="Age"]').value.trim();
 
-        }
+const email =
+form.querySelector('input[type="email"]').value.trim();
 
-        if (Number(age) < 9) {
+const pass =
+password.value.trim();
 
-            alert("Minimum age is 9.");
-            return;
+if(name==="" || username==="" || age==="" || email==="" || pass===""){
 
-        }
+alert("Please complete all fields.");
 
-        alert("Account Created Successfully 💜");
+return;
 
-        // هنا لاحقًا بنربط قاعدة البيانات
+}
 
-    });
+if(Number(age) < 9){
+
+alert("Minimum age is 9.");
+
+return;
+
+}
+
+/* ===========================
+   لاحقًا هنا نحفظ البيانات
+   في قاعدة البيانات
+=========================== */
+
+/* الانتقال للرئيسية */
+
+window.location.href = "home.html";
+
+});
 
 }
