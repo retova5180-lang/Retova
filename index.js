@@ -1,26 +1,58 @@
+const avatarInput = document.getElementById("avatarInput");
+const avatarPreview = document.getElementById("avatarPreview");
 
-const signupTab = document.getElementById("signupTab");
-const loginTab = document.getElementById("loginTab");
+if (avatarInput) {
 
-const signupForm = document.getElementById("signupForm");
-const loginForm = document.getElementById("loginForm");
+    avatarInput.addEventListener("change", function () {
 
-signupTab.addEventListener("click", () => {
+        const file = this.files[0];
 
-signupTab.classList.add("active");
-loginTab.classList.remove("active");
+        if (file) {
 
-signupForm.style.display = "flex";
-loginForm.style.display = "none";
+            avatarPreview.src = URL.createObjectURL(file);
 
-});
+        }
 
-loginTab.addEventListener("click", () => {
+    });
 
-loginTab.classList.add("active");
-signupTab.classList.remove("active");
+}
 
-signupForm.style.display = "none";
-loginForm.style.display = "flex";
+const form = document.getElementById("signupForm");
+
+form.addEventListener("submit", function (e) {
+
+    e.preventDefault();
+
+    const inputs = form.querySelectorAll("input[required]");
+
+    let valid = true;
+
+    inputs.forEach(input => {
+
+        if (input.value.trim() === "") {
+
+            valid = false;
+
+            input.style.border = "2px solid #ff4d4d";
+
+        } else {
+
+            input.style.border = "";
+
+        }
+
+    });
+
+    if (!valid) {
+
+        alert("Please complete all required fields.");
+
+        return;
+
+    }
+
+    alert("Account created successfully!");
+
+    // لاحقًا هنا بنربط Supabase أو Firebase
 
 });
