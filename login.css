@@ -525,3 +525,180 @@ opacity:.8;
 text-decoration:underline;
 
 }
+/* ===========================
+   Part 4 / 4
+=========================== */
+
+/* Animation */
+
+@keyframes fadeUp{
+
+0%{
+
+opacity:0;
+
+transform:translateY(35px);
+
+}
+
+100%{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar{
+
+width:8px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+background:#8B3DFF;
+
+border-radius:20px;
+
+}
+
+::-webkit-scrollbar-track{
+
+background:#0B0B0D;
+
+}
+
+/* Responsive */
+
+@media (max-width:768px){
+
+.login-card{
+
+width:94%;
+
+padding:35px 28px;
+
+border-radius:26px;
+
+}
+
+.logo h1{
+
+font-size:34px;
+
+}
+
+.avatar img{
+
+width:82px;
+
+height:82px;
+
+}
+
+.input-box input{
+
+height:54px;
+
+}
+
+.login-btn{
+
+height:54px;
+
+}
+
+.google-btn{
+
+height:54px;
+
+}
+
+}
+
+@media (max-width:480px){
+
+body{
+
+padding:20px;
+
+}
+
+.login-card{
+
+padding:28px 22px;
+
+}
+
+.logo h1{
+
+font-size:30px;
+
+}
+
+.logo p{
+
+font-size:13px;
+
+}
+
+.tabs button{
+
+font-size:14px;
+
+padding:11px;
+
+}
+
+.input-box label{
+
+font-size:13px;
+
+}
+
+.input-box input{
+
+font-size:14px;
+
+padding:0 16px;
+
+}
+
+.remember{
+
+font-size:13px;
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:10px;
+
+}
+
+.login-btn{
+
+font-size:16px;
+
+}
+
+.google-btn{
+
+font-size:14px;
+
+}
+
+.bottom{
+
+font-size:14px;
+
+}
+
+}
+
+/* End */
