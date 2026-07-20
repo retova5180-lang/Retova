@@ -4,11 +4,13 @@
 <head>
 
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Retova | Login</title>
+<title>Retova | Create Account</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
+
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,61 +26,230 @@
 <div class="login-card">
 
 <div class="logo">
-<h1>Retova</h1>
-<p>Share. Create. Connect.</p>
-</div>
 
-<div class="avatar">
-<img src="assets/images/avatar.png" alt="User">
+<h1>Retova</h1>
+
+<p>Share. Create. Connect.</p>
+
 </div>
 
 <div class="tabs">
-<button class="active">Login</button>
-<button>Sign Up</button>
-</div>
 
-<form>
+<button>
 
-<div class="input-box">
-<label>Email</label>
-<input type="email" placeholder="Enter your email">
-</div>
-
-<div class="input-box">
-<label>Password</label>
-<input type="password" placeholder="Enter your password">
-</div>
-
-<div class="remember">
-<label>
-<input type="checkbox">
-Remember me
-</label>
-
-<a href="#">Forgot password?</a>
-
-</div>
-
-<button class="login-btn">
 Login
+
 </button>
 
+<button class="active">
+
+Create Account
+
+</button>
+
+</div>
+
+<form id="signupForm">
+  <!-- Profile Photo -->
+
+<div class="avatar">
+
+<img src="assets/images/avatar.png" alt="Profile Photo">
+
+<input
+type="file"
+id="avatar"
+accept="image/*"
+hidden>
+
+<label for="avatar" class="upload-avatar">
+
+Change Photo
+
+</label>
+
+</div>
+
+<!-- Banner -->
+
+<div class="input-box">
+
+<label>
+
+Profile Banner (Optional)
+
+</label>
+
+<input
+type="file"
+accept="image/*">
+
+</div>
+
+<!-- Full Name -->
+
+<div class="input-box">
+
+<label>
+
+Full Name
+
+</label>
+
+<input
+type="text"
+placeholder="Enter your full name"
+required>
+
+</div>
+
+<!-- Username -->
+
+<div class="input-box">
+
+<label>
+
+Username
+
+</label>
+
+<input
+type="text"
+placeholder="@username"
+required>
+
+</div>
+<!-- Email -->
+
+<div class="input-box">
+
+<label>
+
+Email
+
+</label>
+
+<input
+type="email"
+placeholder="Enter your email"
+required>
+
+</div>
+
+<!-- Password -->
+
+<div class="input-box">
+
+<label>
+
+Password
+
+</label>
+
+<input
+type="password"
+placeholder="Create a password"
+required>
+
+</div>
+
+<!-- Age -->
+
+<div class="input-box">
+
+<label>
+
+Age
+
+</label>
+
+<input
+type="number"
+min="13"
+max="120"
+placeholder="Enter your age"
+required>
+
+</div>
+
+<!-- Gender -->
+
+<div class="input-box">
+
+<label>
+
+Gender
+
+</label>
+
+<select required>
+
+<option value="" selected disabled>
+
+Select Gender
+
+</option>
+
+<option value="male">
+
+Male
+
+</option>
+
+<option value="female">
+
+Female
+
+</option>
+
+<option value="other">
+
+Prefer not to say
+
+</option>
+
+</select>
+
+</div>
+
+<button
+type="submit"
+class="login-btn">
+
+Create Account
+
+</button>
 </form>
 
 <div class="divider">
+
 <span>or</span>
+
 </div>
 
-<button class="google-btn">
+<button
+type="button"
+class="google-btn">
+
 Continue with Google
+
 </button>
 
 <div class="bottom">
-Don't have an account?
-<a href="#">Sign Up</a>
+
+Already have an account?
+
+<a href="#">
+
+Login
+
+</a>
+
 </div>
 
 </div>
+
+<script src="auth.js"></script>
 
 </body>
 
