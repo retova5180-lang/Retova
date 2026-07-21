@@ -1,33 +1,34 @@
 /* ===========================
    RETOVA LOGIN
-   Part 1 / 4
 =========================== */
 
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Cairo',sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Cairo',sans-serif;
 }
 
 html{
-scroll-behavior:smooth;
+    scroll-behavior:smooth;
 }
 
 body{
 
-background:#0B0B0D;
-color:#ffffff;
+    background:#0B0B0D;
+    color:#fff;
 
-display:flex;
-justify-content:center;
-align-items:center;
+    min-height:100vh;
 
-min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 
-overflow:hidden;
+    padding:40px 20px;
 
-position:relative;
+    overflow-x:hidden;
+
+    position:relative;
 
 }
 
@@ -35,587 +36,407 @@ position:relative;
 
 .background-glow{
 
-position:absolute;
+    position:fixed;
 
-width:700px;
-height:700px;
+    top:50%;
+    left:50%;
 
-background:#8B3DFF;
+    width:900px;
+    height:900px;
 
-filter:blur(220px);
+    transform:translate(-50%,-50%);
 
-opacity:.20;
+    background:#8B3DFF;
 
-border-radius:50%;
+    opacity:.18;
 
-top:-220px;
+    filter:blur(220px);
 
-left:50%;
+    border-radius:50%;
 
-transform:translateX(-50%);
-
-pointer-events:none;
+    pointer-events:none;
 
 }
 
-/* Login Card */
+/* Card */
 
 .login-card{
 
-position:relative;
+    position:relative;
 
-width:430px;
+    width:100%;
 
-max-width:95%;
+    max-width:470px;
 
-padding:45px;
+    background:#151518;
 
-background:#151518;
+    border:1px solid #27272F;
 
-border:1px solid #26262D;
+    border-radius:34px;
 
-border-radius:32px;
+    padding:45px;
 
-backdrop-filter:blur(30px);
+    box-shadow:
 
-box-shadow:
+    0 0 80px rgba(0,0,0,.45),
 
-0 25px 70px rgba(0,0,0,.45),
+    0 0 40px rgba(139,61,255,.12);
 
-0 0 50px rgba(139,61,255,.10);
-
-animation:fadeUp .7s ease;
-
-z-index:5;
-
-}
-
-/* Logo */
-
-.logo{
-
-text-align:center;
-
-margin-bottom:35px;
-
-}
-
-.logo h1{
-
-font-size:42px;
-
-font-weight:800;
-
-color:#ffffff;
-
-letter-spacing:.5px;
-
-}
-
-.logo p{
-
-margin-top:8px;
-
-color:#A6A6B3;
-
-font-size:15px;
-
-}
-
-/* Avatar */
-
-.avatar{
-
-display:flex;
-
-justify-content:center;
-
-margin-bottom:30px;
-
-}
-
-.avatar img{
-
-width:92px;
-
-height:92px;
-
-border-radius:50%;
-
-object-fit:cover;
-
-border:4px solid #8B3DFF;
-
-box-shadow:
-
-0 0 25px rgba(139,61,255,.45);
-
-}
-
-/* Tabs */
-
-.tabs{
-
-display:flex;
-
-background:#1C1C22;
-
-border-radius:15px;
-
-padding:5px;
-
-margin-bottom:30px;
-
-}
-
-.tabs button{
-
-flex:1;
-
-border:none;
-
-background:transparent;
-
-color:#AFAFB9;
-
-padding:13px;
-
-font-size:15px;
-
-font-weight:700;
-
-border-radius:12px;
-
-cursor:pointer;
-
-transition:.30s;
-
-}
-
-.tabs button.active{
-
-background:#8B3DFF;
-
-color:#fff;
-
-box-shadow:0 8px 18px rgba(139,61,255,.35);
-
-}
-
-.tabs button:hover{
-
-color:#fff;
+    z-index:2;
 
 }
 /* ===========================
-   Part 2 / 4
+   Profile Photo
 =========================== */
 
-/* Form */
+.profile-upload{
 
-form{
+    display:flex;
 
-width:100%;
+    flex-direction:column;
+
+    align-items:center;
+
+    margin:30px 0;
 
 }
 
-/* Input Box */
+.profile-preview{
+
+    width:130px;
+
+    height:130px;
+
+    border-radius:50%;
+
+    border:4px solid #8B3DFF;
+
+    overflow:hidden;
+
+    background:#1C1C22;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    box-shadow:
+    0 0 25px rgba(139,61,255,.45);
+
+}
+
+.profile-preview img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+}
+
+.upload-btn{
+
+    margin-top:16px;
+
+    padding:12px 26px;
+
+    background:#8B3DFF;
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:14px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.upload-btn:hover{
+
+    background:#9E57FF;
+
+    transform:translateY(-2px);
+
+}
+
+/* Hide File Inputs */
+
+input[type=file]{
+
+    display:none;
+
+}
+
+/* ===========================
+   Banner Upload
+=========================== */
+
+.banner-upload{
+
+    margin-bottom:28px;
+
+}
+
+.banner-label{
+
+    display:block;
+
+    margin-bottom:10px;
+
+    font-size:14px;
+
+    color:#CFCFDC;
+
+    font-weight:600;
+
+}
+
+.banner-preview{
+
+    width:100%;
+
+    height:170px;
+
+    border-radius:20px;
+
+    border:2px dashed #8B3DFF;
+
+    background:#1C1C22;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:#8B3DFF;
+
+    font-weight:700;
+
+    overflow:hidden;
+
+    transition:.3s;
+
+}
+
+.banner-preview:hover{
+
+    background:#202028;
+
+}
+
+.banner-preview img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+   }
+/* ===========================
+   Inputs
+=========================== */
 
 .input-box{
 
-margin-bottom:22px;
+    margin-bottom:22px;
 
 }
 
 .input-box label{
 
-display:block;
+    display:block;
 
-margin-bottom:8px;
+    margin-bottom:8px;
 
-font-size:14px;
+    color:#D5D5E0;
 
-font-weight:600;
+    font-size:14px;
 
-color:#CFCFDC;
+    font-weight:700;
 
 }
 
-.input-box input{
+.input-box input,
+.input-box select{
 
-width:100%;
+    width:100%;
 
-height:58px;
+    height:58px;
 
-padding:0 18px;
+    padding:0 18px;
 
-background:#1C1C22;
+    background:#1C1C22;
 
-border:1px solid #2B2B33;
+    border:1px solid #30303A;
 
-border-radius:16px;
+    border-radius:16px;
 
-outline:none;
+    outline:none;
 
-color:#fff;
+    color:#fff;
 
-font-size:15px;
+    font-size:15px;
 
-transition:.30s;
+    transition:.3s;
 
 }
 
 .input-box input::placeholder{
 
-color:#7B7B88;
+    color:#8C8C99;
 
 }
 
-.input-box input:focus{
+.input-box input:focus,
+.input-box select:focus{
 
-border-color:#8B3DFF;
+    border-color:#8B3DFF;
 
-box-shadow:
-
-0 0 0 4px rgba(139,61,255,.18);
-
-}
-
-/* Remember */
-
-.remember{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:28px;
-
-font-size:14px;
+    box-shadow:0 0 0 4px rgba(139,61,255,.18);
 
 }
 
-.remember label{
+.input-box select{
 
-display:flex;
+    appearance:none;
 
-align-items:center;
-
-gap:8px;
-
-color:#BEBECC;
-
-cursor:pointer;
+    cursor:pointer;
 
 }
 
-.remember input{
+/* ===========================
+   Buttons
+=========================== */
 
-accent-color:#8B3DFF;
+.login-btn,
+.google-btn{
+
+    width:100%;
+
+    height:58px;
+
+    border:none;
+
+    border-radius:16px;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.3s;
 
 }
-
-.remember a{
-
-color:#8B3DFF;
-
-text-decoration:none;
-
-font-weight:600;
-
-transition:.3s;
-
-}
-
-.remember a:hover{
-
-opacity:.8;
-
-}
-
-/* Login Button */
 
 .login-btn{
 
-width:100%;
+    background:#8B3DFF;
 
-height:58px;
+    color:#fff;
 
-border:none;
-
-border-radius:16px;
-
-background:linear-gradient(90deg,#8B3DFF,#A85CFF);
-
-color:#fff;
-
-font-size:17px;
-
-font-weight:700;
-
-cursor:pointer;
-
-transition:.30s;
-
-box-shadow:
-
-0 15px 35px rgba(139,61,255,.35);
+    margin-top:12px;
 
 }
 
 .login-btn:hover{
 
-transform:translateY(-2px);
+    background:#9B54FF;
 
-box-shadow:
-
-0 20px 45px rgba(139,61,255,.45);
+    transform:translateY(-2px);
 
 }
-
-.login-btn:active{
-
-transform:scale(.98);
-
-}
-/* ===========================
-   Part 3 / 4
-=========================== */
-
-/* Divider */
-
-.divider{
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-margin:30px 0;
-
-position:relative;
-
-}
-
-.divider::before{
-
-content:"";
-
-position:absolute;
-
-left:0;
-
-width:42%;
-
-height:1px;
-
-background:#2C2C35;
-
-}
-
-.divider::after{
-
-content:"";
-
-position:absolute;
-
-right:0;
-
-width:42%;
-
-height:1px;
-
-background:#2C2C35;
-
-}
-
-.divider span{
-
-padding:0 14px;
-
-font-size:14px;
-
-color:#8C8C97;
-
-background:#151518;
-
-z-index:2;
-
-}
-
-/* Google Button */
 
 .google-btn{
 
-width:100%;
+    margin-top:20px;
 
-height:58px;
+    background:#1C1C22;
 
-border-radius:16px;
+    color:#fff;
 
-border:1px solid #32323B;
-
-background:#1B1B21;
-
-color:#fff;
-
-font-size:15px;
-
-font-weight:700;
-
-cursor:pointer;
-
-transition:.30s;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-gap:12px;
+    border:1px solid #32323B;
 
 }
 
 .google-btn:hover{
 
-border-color:#8B3DFF;
-
-background:#202028;
-
-transform:translateY(-2px);
+    border-color:#8B3DFF;
 
 }
 
-/* Bottom */
+/* ===========================
+   Bottom Text
+=========================== */
 
 .bottom{
 
-margin-top:28px;
+    margin-top:28px;
 
-text-align:center;
+    text-align:center;
 
-font-size:15px;
+    color:#AFAFB9;
 
-color:#A6A6B3;
+    font-size:15px;
 
 }
 
 .bottom a{
 
-text-decoration:none;
+    color:#8B3DFF;
 
-color:#8B3DFF;
+    text-decoration:none;
 
-font-weight:700;
-
-margin-left:5px;
-
-transition:.30s;
+    font-weight:700;
 
 }
 
-.bottom a:hover{
-
-opacity:.8;
-
-text-decoration:underline;
-
-}
 /* ===========================
-   Part 4 / 4
+   Responsive
 =========================== */
 
-/* Animation */
+@media (max-width:900px){
 
-@keyframes fadeUp{
+.login-card{
 
-0%{
-
-opacity:0;
-
-transform:translateY(35px);
-
-}
-
-100%{
-
-opacity:1;
-
-transform:translateY(0);
+max-width:500px;
 
 }
 
 }
-
-/* Scrollbar */
-
-::-webkit-scrollbar{
-
-width:8px;
-
-}
-
-::-webkit-scrollbar-thumb{
-
-background:#8B3DFF;
-
-border-radius:20px;
-
-}
-
-::-webkit-scrollbar-track{
-
-background:#0B0B0D;
-
-}
-
-/* Responsive */
 
 @media (max-width:768px){
 
 .login-card{
 
-width:94%;
+padding:35px 24px;
 
-padding:35px 28px;
-
-border-radius:26px;
+border-radius:28px;
 
 }
 
-.logo h1{
+.profile-preview{
 
-font-size:34px;
+width:110px;
 
-}
-
-.avatar img{
-
-width:82px;
-
-height:82px;
+height:110px;
 
 }
 
-.input-box input{
+.banner-preview{
 
-height:54px;
-
-}
-
-.login-btn{
-
-height:54px;
-
-}
-
-.google-btn{
-
-height:54px;
+height:140px;
 
 }
 
@@ -625,13 +446,15 @@ height:54px;
 
 body{
 
-padding:20px;
+padding:18px;
 
 }
 
 .login-card{
 
-padding:28px 22px;
+padding:24px 18px;
+
+border-radius:24px;
 
 }
 
@@ -647,58 +470,36 @@ font-size:13px;
 
 }
 
-.tabs button{
+.profile-preview{
+
+width:95px;
+
+height:95px;
+
+}
+
+.banner-preview{
+
+height:120px;
+
+}
+
+.input-box input,
+.input-box select{
+
+height:54px;
 
 font-size:14px;
 
-padding:11px;
-
 }
 
-.input-box label{
-
-font-size:13px;
-
-}
-
-.input-box input{
-
-font-size:14px;
-
-padding:0 16px;
-
-}
-
-.remember{
-
-font-size:13px;
-
-flex-direction:column;
-
-align-items:flex-start;
-
-gap:10px;
-
-}
-
-.login-btn{
-
-font-size:16px;
-
-}
-
+.login-btn,
 .google-btn{
 
-font-size:14px;
+height:54px;
+
+font-size:15px;
 
 }
 
-.bottom{
-
-font-size:14px;
-
-}
-
-}
-
-/* End */
+   }
