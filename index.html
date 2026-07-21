@@ -7,7 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Retova | Create Account</title>
+<title>Retova | Welcome</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 
@@ -25,6 +25,8 @@
 
 <div class="login-card">
 
+<!-- Logo -->
+
 <div class="logo">
 
 <h1>Retova</h1>
@@ -33,15 +35,21 @@
 
 </div>
 
+<!-- Tabs -->
+
 <div class="tabs">
 
-<button>
+<button
+class="tab-btn active"
+id="loginTab">
 
 Login
 
 </button>
 
-<button class="active">
+<button
+class="tab-btn"
+id="signupTab">
 
 Create Account
 
@@ -49,56 +57,121 @@ Create Account
 
 </div>
 
-<form id="signupForm">
-  <!-- Profile Photo -->
+<!-- ===========================
+LOGIN FORM
+=========================== -->
 
-<div class="avatar">
+<form id="loginForm">
 
-<img src="assets/images/avatar.png" alt="Profile Photo">
+<div class="input-box">
+
+<label for="loginEmail">
+
+Email
+
+</label>
+
+<input
+type="email"
+id="loginEmail"
+placeholder="Enter your email"
+required>
+
+</div>
+
+<div class="input-box">
+
+<label for="loginPassword">
+
+Password
+
+</label>
+
+<input
+type="password"
+id="loginPassword"
+placeholder="Enter your password"
+required>
+
+</div>
+
+<div class="remember">
+
+<label>
+
+<input type="checkbox">
+
+Remember me
+
+</label>
+
+<a href="#">
+
+Forgot Password?
+
+</a>
+
+</div>
+
+<button
+type="submit"
+class="login-btn">
+
+Login
+
+</button>
+
+</form>
+
+<!-- ===========================
+CREATE ACCOUNT
+=========================== -->
+
+<form
+id="signupForm"
+style="display:none;">
+  <!-- Avatar -->
+
+<div class="avatar-section">
+
+<label for="avatarUpload" class="avatar-label">
+
+<img
+id="avatarPreview"
+src="assets/images/avatar.png"
+alt="Avatar">
+
+<div class="avatar-plus">
+
++
+
+</div>
+
+</label>
 
 <input
 type="file"
-id="avatar"
+id="avatarUpload"
 accept="image/*"
 hidden>
 
-<label for="avatar" class="upload-avatar">
-
-Change Photo
-
-</label>
-
 </div>
 
-<!-- Banner -->
+<!-- Display Name -->
 
 <div class="input-box">
 
-<label>
+<label for="displayName">
 
-Profile Banner (Optional)
-
-</label>
-
-<input
-type="file"
-accept="image/*">
-
-</div>
-
-<!-- Full Name -->
-
-<div class="input-box">
-
-<label>
-
-Full Name
+Display Name
 
 </label>
 
 <input
 type="text"
-placeholder="Enter your full name"
+id="displayName"
+placeholder="Enter your display name"
+maxlength="30"
 required>
 
 </div>
@@ -107,7 +180,7 @@ required>
 
 <div class="input-box">
 
-<label>
+<label for="username">
 
 Username
 
@@ -115,15 +188,19 @@ Username
 
 <input
 type="text"
+id="username"
 placeholder="@username"
+maxlength="20"
+autocomplete="off"
 required>
 
 </div>
+
 <!-- Email -->
 
 <div class="input-box">
 
-<label>
+<label for="signupEmail">
 
 Email
 
@@ -131,16 +208,17 @@ Email
 
 <input
 type="email"
+id="signupEmail"
 placeholder="Enter your email"
+autocomplete="email"
 required>
 
 </div>
-
 <!-- Password -->
 
 <div class="input-box">
 
-<label>
+<label for="signupPassword">
 
 Password
 
@@ -148,67 +226,46 @@ Password
 
 <input
 type="password"
-placeholder="Create a password"
+id="signupPassword"
+placeholder="Create your password"
+autocomplete="new-password"
 required>
 
 </div>
 
-<!-- Age -->
+<!-- Confirm Password -->
 
 <div class="input-box">
 
-<label>
+<label for="confirmPassword">
 
-Age
+Confirm Password
 
 </label>
 
 <input
-type="number"
-min="13"
-max="120"
-placeholder="Enter your age"
+type="password"
+id="confirmPassword"
+placeholder="Confirm your password"
+autocomplete="new-password"
 required>
 
 </div>
 
-<!-- Gender -->
+<!-- Date of Birth -->
 
 <div class="input-box">
 
-<label>
+<label for="birthDate">
 
-Gender
+Date of Birth
 
 </label>
 
-<select required>
-
-<option value="" selected disabled>
-
-Select Gender
-
-</option>
-
-<option value="male">
-
-Male
-
-</option>
-
-<option value="female">
-
-Female
-
-</option>
-
-<option value="other">
-
-Prefer not to say
-
-</option>
-
-</select>
+<input
+type="date"
+id="birthDate"
+required>
 
 </div>
 
@@ -219,7 +276,9 @@ class="login-btn">
 Create Account
 
 </button>
+
 </form>
+<!-- Divider -->
 
 <div class="divider">
 
@@ -227,23 +286,33 @@ Create Account
 
 </div>
 
+<!-- Google -->
+
 <button
 type="button"
-class="google-btn">
+class="google-btn"
+id="googleLogin">
 
 Continue with Google
 
 </button>
 
+<!-- Bottom -->
+
 <div class="bottom">
 
-Already have an account?
+<p id="bottomText">
 
-<a href="#">
+Don't have an account?
 
-Login
+<a href="#"
+id="switchForm">
+
+Create Account
 
 </a>
+
+</p>
 
 </div>
 
