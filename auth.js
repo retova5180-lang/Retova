@@ -155,21 +155,21 @@ const age = calculateAge(birthDate);
 
 // إنشاء الحساب في Supabase Auth
 
+alert("1");
+
 const { data, error } = await supabase.auth.signUp({
-
-email,
-
-password
-
+  email,
+  password
 });
 
-if(error){
+alert("2");
 
-alert(error.message);
-
-return;
-
+if (error) {
+  alert(error.message);
+  return;
 }
+
+alert("3");
 
 const user = data.user;
 
