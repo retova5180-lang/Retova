@@ -1,5 +1,4 @@
-alert(JSON.stringify(error));
-console.log(error);
+
 // ======================================
 // Retova Auth
 // Part 1
