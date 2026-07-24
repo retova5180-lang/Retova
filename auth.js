@@ -127,9 +127,7 @@ return age;
 // ======================================
 
 signupForm.addEventListener("submit", async function(e){
-
-console.log("Signup button works");
-
+alert("وصل الضغط");
 e.preventDefault();
 
 const displayName = document.getElementById("displayName").value.trim();
