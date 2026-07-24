@@ -126,8 +126,7 @@ return age;
 // Create Account
 // ======================================
 
-signupForm.addEventListener("submit", async function(e){
-alert("وصل الضغط");
+signupForm.addEventListener("submit", async function(e
 e.preventDefault();
 
 const displayName = document.getElementById("displayName").value.trim();
