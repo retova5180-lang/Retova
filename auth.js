@@ -1,3 +1,4 @@
+alert("auth.js loaded");
 // ======================================
 // Retova Auth
 // Part 1
