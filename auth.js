@@ -1,4 +1,4 @@
-alert("auth.js loaded");
+alert(typeof supabase);
 // ======================================
 // Retova Auth
 // Part 1
