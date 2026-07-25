@@ -1,5 +1,5 @@
 // ======================================
-// Retova Auth
+// Retova Auth v2
 // Part 1
 // ======================================
 
@@ -12,7 +12,6 @@ const loginTab = document.getElementById("loginTab");
 const signupTab = document.getElementById("signupTab");
 
 // Bottom
-const switchForm = document.getElementById("switchForm");
 const bottomText = document.getElementById("bottomText");
 
 // Avatar
@@ -24,78 +23,100 @@ const avatarPreview = document.getElementById("avatarPreview");
 // ======================================
 
 function showLogin() {
-  loginForm.style.display = "block";
-  signupForm.style.display = "none";
 
-  loginTab.classList.add("active");
-  signupTab.classList.remove("active");
+    loginForm.style.display = "block";
+    signupForm.style.display = "none";
 
-  bottomText.innerHTML =
-    `Don't have an account? <a href="#" id="switchForm">Create Account</a>`;
+    loginTab.classList.add("active");
+    signupTab.classList.remove("active");
 
-  document.getElementById("switchForm").onclick = switchForms;
+    bottomText.innerHTML =
+    `Don't have an account?
+    <a href="#" id="switchForm">Create Account</a>`;
+
+    document
+      .getElementById("switchForm")
+      .addEventListener("click", switchForms);
+
 }
 
 function showSignup() {
-  loginForm.style.display = "none";
-  signupForm.style.display = "block";
 
-  signupTab.classList.add("active");
-  loginTab.classList.remove("active");
+    loginForm.style.display = "none";
+    signupForm.style.display = "block";
 
-  bottomText.innerHTML =
-    `Already have an account? <a href="#" id="switchForm">Login</a>`;
+    signupTab.classList.add("active");
+    loginTab.classList.remove("active");
 
-  document.getElementById("switchForm").onclick = switchForms;
+    bottomText.innerHTML =
+    `Already have an account?
+    <a href="#" id="switchForm">Login</a>`;
+
+    document
+      .getElementById("switchForm")
+      .addEventListener("click", switchForms);
+
 }
 
-function switchForms(e) {
-  e.preventDefault();
+function switchForms(e){
 
-  if (signupForm.style.display === "none") {
-    showSignup();
-  } else {
-    showLogin();
-  }
+    e.preventDefault();
+
+    if(signupForm.style.display==="none"){
+        showSignup();
+    }else{
+        showLogin();
+    }
+
 }
 
-loginTab.onclick = showLogin;
-signupTab.onclick = showSignup;
-switchForm.onclick = switchForms;
+loginTab.addEventListener("click",showLogin);
+signupTab.addEventListener("click",showSignup);
+
+document
+.getElementById("switchForm")
+.addEventListener("click",switchForms);
 
 // ======================================
 // Avatar Preview
 // ======================================
 
-avatarUpload.addEventListener("change", () => {
-  const file = avatarUpload.files[0];
+avatarUpload.addEventListener("change",()=>{
 
-  if (!file) return;
+    const file=avatarUpload.files[0];
 
-  avatarPreview.src = URL.createObjectURL(file);
+    if(!file)return;
+
+    avatarPreview.src=URL.createObjectURL(file);
+
 });
 
 // ======================================
 // Age
 // ======================================
 
-function calculateAge(date) {
+function calculateAge(date){
 
-  const today = new Date();
-  const birth = new Date(date);
+    const today=new Date();
 
-  let age = today.getFullYear() - birth.getFullYear();
+    const birth=new Date(date);
 
-  const month = today.getMonth() - birth.getMonth();
+    let age=today.getFullYear()-birth.getFullYear();
 
-  if (
-    month < 0 ||
-    (month === 0 && today.getDate() < birth.getDate())
-  ) {
-    age--;
-  }
+    const month=today.getMonth()-birth.getMonth();
 
-  return age;
+    if(
+        month<0||
+        (
+            month===0&&
+            today.getDate()<birth.getDate()
+        )
+    ){
+        age--;
+    }
+
+    return age;
+
 }
 // ======================================
 // Create Account
@@ -103,74 +124,84 @@ function calculateAge(date) {
 
 signupForm.addEventListener("submit", async (e) => {
 
-  e.preventDefault();
+    e.preventDefault();
 
-  const displayName = document.getElementById("displayName").value.trim();
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("signupEmail").value.trim();
-  const password = document.getElementById("signupPassword").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
-  const birthDate = document.getElementById("birthDate").value;
+    const displayName = document.getElementById("displayName").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const birthDate = document.getElementById("birthDate").value;
 
-  if (password !== confirmPassword) {
-    alert("Passwords do not match.");
-    return;
-  }
+    if(password !== confirmPassword){
+        alert("Passwords do not match.");
+        return;
+    }
 
-  const age = calculateAge(birthDate);
+    const age = calculateAge(birthDate);
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password
-  });
+    // إنشاء الحساب
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+    });
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+    if(error){
+        alert(error.message);
+        return;
+    }
 
-  const user = data.user;
+    const user = data.user;
 
-  let avatarUrl = "";
+    let avatarUrl = "";
 
-  if (avatarUpload.files.length > 0) {
+    // رفع الصورة
+    if(avatarUpload.files.length > 0){
 
-    const file = avatarUpload.files[0];
+        const file = avatarUpload.files[0];
 
-    const fileName = `${user.id}-${Date.now()}`;
+        const fileName = `${user.id}-${Date.now()}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(fileName, file);
-
-    if (!uploadError) {
-
-      const { data: publicData } = supabase.storage
+        const { error: uploadError } =
+        await supabase.storage
         .from("avatars")
-        .getPublicUrl(fileName);
+        .upload(fileName, file);
 
-      avatarUrl = publicData.publicUrl;
+        if(!uploadError){
+
+            const { data: publicData } =
+            supabase.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
+
+            avatarUrl = publicData.publicUrl;
+
+        }
 
     }
 
-  }
-
-  const { error: profileError } = await supabase
+    // حفظ البيانات
+    const { error: profileError } =
+    await supabase
     .from("users")
     .insert({
-      id: user.id,
-      username: username,
-      full_name: displayName,
-      avatar: avatarUrl,
-      age: age
+
+        id: user.id,
+        username: username,
+        full_name: displayName,
+        avatar: avatarUrl,
+        age: age
+
     });
 
-  if (profileError) {
-    alert(profileError.message);
-    return;
-  }
+    if(profileError){
 
-  alert("Account created successfully!");
+        alert(profileError.message);
+        return;
+
+    }
+
+    alert("Account created successfully!");
 
 });
 // ======================================
@@ -179,22 +210,22 @@ signupForm.addEventListener("submit", async (e) => {
 
 loginForm.addEventListener("submit", async (e) => {
 
-  e.preventDefault();
+    e.preventDefault();
 
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+    if(error){
+        alert(error.message);
+        return;
+    }
 
-  window.location.href = "home.html";
+    window.location.href = "home.html";
 
 });
 
@@ -204,16 +235,19 @@ loginForm.addEventListener("submit", async (e) => {
 
 document.getElementById("googleLogin").addEventListener("click", async () => {
 
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin + "/home.html"
-    }
-  });
+    const { error } = await supabase.auth.signInWithOAuth({
 
-  if (error) {
-    alert(error.message);
-  }
+        provider: "google",
+
+        options: {
+            redirectTo: window.location.origin + "/home.html"
+        }
+
+    });
+
+    if(error){
+        alert(error.message);
+    }
 
 });
 // ======================================
@@ -222,17 +256,10 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
 
 (async () => {
 
-  const { data } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
 
-  if (data.session) {
-    window.location.href = "home.html";
-  }
+    if(data.session){
+        window.location.href = "home.html";
+    }
 
 })();
-console.log(data);
-console.log(error);
-
-if (error) {
-  alert(error.message);
-  return;
-}
