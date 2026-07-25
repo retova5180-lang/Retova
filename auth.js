@@ -1,6 +1,5 @@
 // ======================================
-// Retova Auth v2
-// Part 1
+// Retova Auth v3
 // ======================================
 
 // Forms
@@ -12,7 +11,7 @@ const loginTab = document.getElementById("loginTab");
 const signupTab = document.getElementById("signupTab");
 
 // Bottom
-const bottomText = document.getElementById("bottomText");
+const switchForm = document.getElementById("switchForm");
 
 // Avatar
 const avatarUpload = document.getElementById("avatarUpload");
@@ -30,14 +29,6 @@ function showLogin() {
     loginTab.classList.add("active");
     signupTab.classList.remove("active");
 
-    bottomText.innerHTML =
-    `Don't have an account?
-    <a href="#" id="switchForm">Create Account</a>`;
-
-    document
-      .getElementById("switchForm")
-      .addEventListener("click", switchForms);
-
 }
 
 function showSignup() {
@@ -48,45 +39,35 @@ function showSignup() {
     signupTab.classList.add("active");
     loginTab.classList.remove("active");
 
-    bottomText.innerHTML =
-    `Already have an account?
-    <a href="#" id="switchForm">Login</a>`;
-
-    document
-      .getElementById("switchForm")
-      .addEventListener("click", switchForms);
-
-}
-
-function switchForms(e){
-
-    e.preventDefault();
-
-    if(signupForm.style.display==="none"){
-        showSignup();
-    }else{
-        showLogin();
-    }
-
 }
 
 loginTab.onclick = showLogin;
+
 signupTab.onclick = showSignup;
-document
-.getElementById("switchForm")
-.addEventListener("click",switchForms);
+
+switchForm.onclick = function (e) {
+
+    e.preventDefault();
+
+    if (signupForm.style.display === "none") {
+        showSignup();
+    } else {
+        showLogin();
+    }
+
+};
 
 // ======================================
 // Avatar Preview
 // ======================================
 
-avatarUpload.addEventListener("change",()=>{
+avatarUpload?.addEventListener("change", () => {
 
-    const file=avatarUpload.files[0];
+    const file = avatarUpload.files[0];
 
-    if(!file)return;
+    if (!file) return;
 
-    avatarPreview.src=URL.createObjectURL(file);
+    avatarPreview.src = URL.createObjectURL(file);
 
 });
 
@@ -94,23 +75,19 @@ avatarUpload.addEventListener("change",()=>{
 // Age
 // ======================================
 
-function calculateAge(date){
+function calculateAge(date) {
 
-    const today=new Date();
+    const today = new Date();
+    const birth = new Date(date);
 
-    const birth=new Date(date);
+    let age = today.getFullYear() - birth.getFullYear();
 
-    let age=today.getFullYear()-birth.getFullYear();
+    const month = today.getMonth() - birth.getMonth();
 
-    const month=today.getMonth()-birth.getMonth();
-
-    if(
-        month<0||
-        (
-            month===0&&
-            today.getDate()<birth.getDate()
-        )
-    ){
+    if (
+        month < 0 ||
+        (month === 0 && today.getDate() < birth.getDate())
+    ) {
         age--;
     }
 
@@ -121,7 +98,7 @@ function calculateAge(date){
 // Create Account
 // ======================================
 
-signupForm.addEventListener("submit", async (e) => {
+signupForm?.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
@@ -132,30 +109,38 @@ signupForm.addEventListener("submit", async (e) => {
     const confirmPassword = document.getElementById("confirmPassword").value;
     const birthDate = document.getElementById("birthDate").value;
 
-    if(password !== confirmPassword){
+    if (!displayName || !username || !email || !password || !birthDate) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    if (password !== confirmPassword) {
         alert("Passwords do not match.");
         return;
     }
 
     const age = calculateAge(birthDate);
 
-    // إنشاء الحساب
     const { data, error } = await supabase.auth.signUp({
         email,
         password
     });
 
-    if(error){
+    if (error) {
         alert(error.message);
         return;
     }
 
     const user = data.user;
 
+    if (!user) {
+        alert("Failed to create account.");
+        return;
+    }
+
     let avatarUrl = "";
 
-    // رفع الصورة
-    if(avatarUpload.files.length > 0){
+    if (avatarUpload.files.length > 0) {
 
         const file = avatarUpload.files[0];
 
@@ -163,37 +148,36 @@ signupForm.addEventListener("submit", async (e) => {
 
         const { error: uploadError } =
         await supabase.storage
-        .from("avatars")
-        .upload(fileName, file);
-
-        if(!uploadError){
-
-            const { data: publicData } =
-            supabase.storage
             .from("avatars")
-            .getPublicUrl(fileName);
+            .upload(fileName, file);
 
-            avatarUrl = publicData.publicUrl;
+        if (!uploadError) {
+
+            const { data } =
+            supabase.storage
+                .from("avatars")
+                .getPublicUrl(fileName);
+
+            avatarUrl = data.publicUrl;
 
         }
 
     }
 
-    // حفظ البيانات
     const { error: profileError } =
     await supabase
-    .from("users")
-    .insert({
+        .from("users")
+        .insert({
 
-        id: user.id,
-        username: username,
-        full_name: displayName,
-        avatar: avatarUrl,
-        age: age
+            id: user.id,
+            username: username,
+            full_name: displayName,
+            avatar: avatarUrl,
+            age: age
 
-    });
+        });
 
-    if(profileError){
+    if (profileError) {
 
         alert(profileError.message);
         return;
@@ -207,19 +191,24 @@ signupForm.addEventListener("submit", async (e) => {
 // Login
 // ======================================
 
-loginForm.addEventListener("submit", async (e) => {
+loginForm?.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;
 
+    if (!email || !password) {
+        alert("Please enter your email and password.");
+        return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
         email,
         password
     });
 
-    if(error){
+    if (error) {
         alert(error.message);
         return;
     }
@@ -232,7 +221,7 @@ loginForm.addEventListener("submit", async (e) => {
 // Google Login
 // ======================================
 
-document.getElementById("googleLogin").addEventListener("click", async () => {
+document.getElementById("googleLogin")?.addEventListener("click", async () => {
 
     const { error } = await supabase.auth.signInWithOAuth({
 
@@ -244,21 +233,27 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
 
     });
 
-    if(error){
+    if (error) {
         alert(error.message);
     }
 
 });
 // ======================================
-// Session Check
+// Session
 // ======================================
 
 (async () => {
 
     const { data } = await supabase.auth.getSession();
 
-    if(data.session){
+    if (data.session) {
         window.location.href = "home.html";
     }
 
 })();
+
+// ======================================
+// Start
+// ======================================
+
+showLogin();
