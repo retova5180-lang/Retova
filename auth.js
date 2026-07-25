@@ -1,26 +1,21 @@
-
 // ======================================
 // Retova Auth
 // Part 1
 // ======================================
 
 // Forms
-
 const loginForm = document.getElementById("loginForm");
 const signupForm = document.getElementById("signupForm");
 
 // Tabs
-
 const loginTab = document.getElementById("loginTab");
 const signupTab = document.getElementById("signupTab");
 
-// Bottom Switch
-
+// Bottom
 const switchForm = document.getElementById("switchForm");
 const bottomText = document.getElementById("bottomText");
 
 // Avatar
-
 const avatarUpload = document.getElementById("avatarUpload");
 const avatarPreview = document.getElementById("avatarPreview");
 
@@ -29,239 +24,177 @@ const avatarPreview = document.getElementById("avatarPreview");
 // ======================================
 
 function showLogin() {
+  loginForm.style.display = "block";
+  signupForm.style.display = "none";
 
-loginForm.style.display = "block";
-signupForm.style.display = "none";
+  loginTab.classList.add("active");
+  signupTab.classList.remove("active");
 
-loginTab.classList.add("active");
-signupTab.classList.remove("active");
+  bottomText.innerHTML =
+    `Don't have an account? <a href="#" id="switchForm">Create Account</a>`;
 
-bottomText.textContent = "Don't have an account?";
-switchForm.textContent = "Create Account";
-
+  document.getElementById("switchForm").onclick = switchForms;
 }
 
 function showSignup() {
+  loginForm.style.display = "none";
+  signupForm.style.display = "block";
 
-loginForm.style.display = "none";
-signupForm.style.display = "block";
+  signupTab.classList.add("active");
+  loginTab.classList.remove("active");
 
-signupTab.classList.add("active");
-loginTab.classList.remove("active");
+  bottomText.innerHTML =
+    `Already have an account? <a href="#" id="switchForm">Login</a>`;
 
-bottomText.textContent = "Already have an account?";
-switchForm.textContent = "Login";
-
+  document.getElementById("switchForm").onclick = switchForms;
 }
 
-// ======================================
-// Events
-// ======================================
+function switchForms(e) {
+  e.preventDefault();
+
+  if (signupForm.style.display === "none") {
+    showSignup();
+  } else {
+    showLogin();
+  }
+}
 
 loginTab.onclick = showLogin;
-
 signupTab.onclick = showSignup;
+switchForm.onclick = switchForms;
 
-switchForm.onclick = function(e){
-
-e.preventDefault();
-
-if(signupForm.style.display === "none"){
-
-showSignup();
-
-}else{
-
-showLogin();
-
-}
-
-};
 // ======================================
 // Avatar Preview
 // ======================================
 
-avatarUpload.addEventListener("change", function () {
+avatarUpload.addEventListener("change", () => {
+  const file = avatarUpload.files[0];
 
-const file = this.files[0];
+  if (!file) return;
 
-if (!file) return;
-
-const reader = new FileReader();
-
-reader.onload = function (e) {
-
-avatarPreview.src = e.target.result;
-
-};
-
-reader.readAsDataURL(file);
-
+  avatarPreview.src = URL.createObjectURL(file);
 });
 
 // ======================================
-// Calculate Age
+// Age
 // ======================================
 
-function calculateAge(birthDate){
+function calculateAge(date) {
 
-const today = new Date();
+  const today = new Date();
+  const birth = new Date(date);
 
-const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
 
-let age = today.getFullYear() - birth.getFullYear();
+  const month = today.getMonth() - birth.getMonth();
 
-const month = today.getMonth() - birth.getMonth();
+  if (
+    month < 0 ||
+    (month === 0 && today.getDate() < birth.getDate())
+  ) {
+    age--;
+  }
 
-if(month < 0 || (month === 0 && today.getDate() < birth.getDate())){
-
-age--;
-
-}
-
-return age;
-
+  return age;
 }
 // ======================================
 // Create Account
 // ======================================
 
-signupForm.addEventListener("submit", async function(e
-e.preventDefault();
+signupForm.addEventListener("submit", async (e) => {
 
-const displayName = document.getElementById("displayName").value.trim();
+  e.preventDefault();
 
-const username = document.getElementById("username").value.trim();
+  const displayName = document.getElementById("displayName").value.trim();
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("signupEmail").value.trim();
+  const password = document.getElementById("signupPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const birthDate = document.getElementById("birthDate").value;
 
-const email = document.getElementById("signupEmail").value.trim();
+  if (password !== confirmPassword) {
+    alert("Passwords do not match.");
+    return;
+  }
 
-const password = document.getElementById("signupPassword").value;
+  const age = calculateAge(birthDate);
 
-const confirmPassword = document.getElementById("confirmPassword").value;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
+  });
 
-const birthDate = document.getElementById("birthDate").value;
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
-if(password !== confirmPassword){
+  const user = data.user;
 
-alert("Passwords do not match.");
+  let avatarUrl = "";
 
-return;
+  if (avatarUpload.files.length > 0) {
 
-}
+    const file = avatarUpload.files[0];
 
-const age = calculateAge(birthDate);
+    const fileName = `${user.id}-${Date.now()}`;
 
-// إنشاء الحساب في Supabase Auth
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(fileName, file);
 
-alert("1");
+    if (!uploadError) {
 
-const { data, error } = await supabase.auth.signUp({
-  email,
-  password
-});
+      const { data: publicData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
 
-alert("2");
+      avatarUrl = publicData.publicUrl;
 
-if (error) {
-  alert(error.message);
-  return;
-}
+    }
 
-alert("3");
+  }
 
-const user = data.user;
+  const { error: profileError } = await supabase
+    .from("users")
+    .insert({
+      id: user.id,
+      username: username,
+      full_name: displayName,
+      avatar: avatarUrl,
+      age: age
+    });
 
-let avatarUrl = "";
+  if (profileError) {
+    alert(profileError.message);
+    return;
+  }
 
-// رفع الصورة إذا اختار المستخدم واحدة
-if(avatarUpload.files.length > 0){
-
-const file = avatarUpload.files[0];
-
-const fileName = `${user.id}-${Date.now()}`;
-
-const { error: uploadError } = await supabase.storage
-
-.from("avatars")
-
-.upload(fileName, file);
-
-if(!uploadError){
-
-const { data: publicUrl } = supabase.storage
-
-.from("avatars")
-
-.getPublicUrl(fileName);
-
-avatarUrl = publicUrl.publicUrl;
-
-}
-
-}
-
-// حفظ البيانات في جدول users
-
-const { error: profileError } = await supabase
-
-.from("users")
-
-.insert({
-
-id: user.id,
-
-username: username,
-
-full_name: displayName,
-
-avatar: avatarUrl,
-
-age: age
-
-});
-
-if(profileError){
-
-alert(profileError.message);
-
-return;
-
-}
-
-alert("Account created successfully!");
+  alert("Account created successfully!");
 
 });
 // ======================================
 // Login
 // ======================================
 
-loginForm.addEventListener("submit", async function(e){
+loginForm.addEventListener("submit", async (e) => {
 
-e.preventDefault();
+  e.preventDefault();
 
-const email = document.getElementById("loginEmail").value.trim();
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
 
-const password = document.getElementById("loginPassword").value;
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
 
-const { error } = await supabase.auth.signInWithPassword({
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
-email,
-
-password
-
-});
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
-
-// الانتقال للصفحة الرئيسية
-
-window.location.href = "home.html";
+  window.location.href = "home.html";
 
 });
 
@@ -271,38 +204,28 @@ window.location.href = "home.html";
 
 document.getElementById("googleLogin").addEventListener("click", async () => {
 
-const { error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin + "/home.html"
+    }
+  });
 
-provider: "google",
-
-options: {
-
-redirectTo: window.location.origin + "/home.html"
-
-}
-
-});
-
-if(error){
-
-alert(error.message);
-
-}
+  if (error) {
+    alert(error.message);
+  }
 
 });
-
 // ======================================
 // Session Check
 // ======================================
 
 (async () => {
 
-const { data } = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
 
-if(data.session){
-
-window.location.href = "home.html";
-
-}
+  if (data.session) {
+    window.location.href = "home.html";
+  }
 
 })();
