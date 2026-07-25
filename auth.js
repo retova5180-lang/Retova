@@ -229,3 +229,10 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
   }
 
 })();
+console.log(data);
+console.log(error);
+
+if (error) {
+  alert(error.message);
+  return;
+}
