@@ -70,9 +70,8 @@ function switchForms(e){
 
 }
 
-loginTab.addEventListener("click",showLogin);
-signupTab.addEventListener("click",showSignup);
-
+loginTab.onclick = showLogin;
+signupTab.onclick = showSignup;
 document
 .getElementById("switchForm")
 .addEventListener("click",switchForms);
