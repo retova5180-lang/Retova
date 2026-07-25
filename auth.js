@@ -1,3 +1,8 @@
+signupForm?.addEventListener("submit", async (e) => {
+
+    alert("وصل الضغط");
+
+    e.preventDefault();
 // ======================================
 // Retova Auth v3
 // ======================================
