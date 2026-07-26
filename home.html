@@ -3,19 +3,21 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Retova</title>
+<title>Retova</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="home.css">
+<link rel="stylesheet" href="home.css">
+
+<script src="https://unpkg.com/lucide@latest"></script>
 
 </head>
 
@@ -23,87 +25,110 @@
 
 <div class="app">
 
-    <!-- Header -->
+<header class="header">
 
-    <header class="header">
+<div class="header-left">
 
-        <button class="icon-btn profile-btn">
+<button class="icon-btn">
 
-            <img src="assets/icons/profile.svg" alt="Profile">
+<i data-lucide="menu"></i>
 
-        </button>
+</button>
 
-        <h1 class="logo">
+</div>
 
-            Retova
+<div class="header-center">
 
-        </h1>
+<h1>Retova</h1>
 
-        <button class="icon-btn wheel-btn">
+</div>
 
-            <img src="assets/icons/wheel.svg" alt="Wheel">
+<div class="header-right">
 
-        </button>
+<button class="icon-btn">
 
-    </header>
+<i data-lucide="bell"></i>
 
-    <!-- Stories -->
+</button>
 
-    <section class="stories">
+</div>
 
-    </section>
+</header>
 
-    <!-- Create Post -->
+<section class="stories">
 
-    <section class="create-post">
+</section>
 
-    </section>
+<section class="create-post">
 
-    <!-- Feed -->
+<div class="post-avatar">
 
-    <main class="feed">
+<img src="assets/images/avatar.png">
 
-    </main>
+</div>
 
-    <!-- Bottom Navigation -->
+<div class="post-input">
 
-    <nav class="bottom-nav">
+What's happening?
 
-        <button class="nav-item active">
+</div>
 
-            <img src="assets/icons/home.svg" alt="Home">
+<button class="post-btn">
 
-        </button>
+Post
 
-        <button class="nav-item">
+</button>
 
-            <img src="assets/icons/search.svg" alt="Search">
+</section>
 
-        </button>
+<main class="feed">
 
-        <button class="nav-item">
+</main>
 
-            <img src="assets/icons/fire.svg" alt="Battle">
+<nav class="bottom-nav">
 
-        </button>
+<button class="nav-btn active">
 
-        <button class="nav-item">
+<i data-lucide="house"></i>
 
-            <img src="assets/icons/bell.svg" alt="Notifications">
+</button>
 
-        </button>
+<button class="nav-btn">
 
-        <button class="nav-item">
+<i data-lucide="search"></i>
 
-            <img src="assets/icons/profile.svg" alt="Profile">
+</button>
 
-        </button>
+<button class="nav-btn">
 
-    </nav>
+<i data-lucide="flame"></i>
+
+</button>
+
+<button class="nav-btn">
+
+<i data-lucide="bell"></i>
+
+</button>
+
+<button class="nav-btn">
+
+<i data-lucide="user"></i>
+
+</button>
+
+</nav>
 
 </div>
 
 <script src="home.js"></script>
 
+<script>
+
+lucide.createIcons();
+
+</script>
+
 </body>
+
 </html>
