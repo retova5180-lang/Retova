@@ -1,8 +1,4 @@
-signupForm?.addEventListener("submit", async (e) => {
 
-    alert("وصل الضغط");
-
-    e.preventDefault();
 // ======================================
 // Retova Auth v3
 // ======================================
@@ -218,7 +214,7 @@ loginForm?.addEventListener("submit", async (e) => {
         return;
     }
 
-    window.location.href = "home.html";
+// window.location.href = "home.html";
 
 });
 
