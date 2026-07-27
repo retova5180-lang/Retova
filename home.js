@@ -1,5 +1,5 @@
 // ======================================
-// RETOVA HOME
+// RETOVA HOME V2
 // ======================================
 
 // Containers
@@ -8,50 +8,49 @@ const storiesContainer = document.getElementById("stories");
 const feedContainer = document.getElementById("feed");
 
 // ======================================
-// Stories Data
+// Stories
 // ======================================
 
 const stories = [
 
 {
 name:"You",
-image:"https://i.pravatar.cc/150?img=1",
-add:true
+avatar:"https://i.pravatar.cc/150?img=1"
 },
 
 {
 name:"Sarah",
-image:"https://i.pravatar.cc/150?img=5"
+avatar:"https://i.pravatar.cc/150?img=5"
 },
 
 {
 name:"Liam",
-image:"https://i.pravatar.cc/150?img=8"
+avatar:"https://i.pravatar.cc/150?img=8"
 },
 
 {
 name:"Emily",
-image:"https://i.pravatar.cc/150?img=12"
+avatar:"https://i.pravatar.cc/150?img=12"
 },
 
 {
 name:"Carlos",
-image:"https://i.pravatar.cc/150?img=18"
-},
-
-{
-name:"Aiko",
-image:"https://i.pravatar.cc/150?img=20"
-},
-
-{
-name:"Noah",
-image:"https://i.pravatar.cc/150?img=25"
+avatar:"https://i.pravatar.cc/150?img=18"
 },
 
 {
 name:"Olivia",
-image:"https://i.pravatar.cc/150?img=32"
+avatar:"https://i.pravatar.cc/150?img=32"
+},
+
+{
+name:"Noah",
+avatar:"https://i.pravatar.cc/150?img=41"
+},
+
+{
+name:"Emma",
+avatar:"https://i.pravatar.cc/150?img=47"
 }
 
 ];
@@ -66,21 +65,17 @@ storiesContainer.innerHTML+=`
 
 <div class="story">
 
-<div class="story-image">
+<div class="story-avatar">
 
-<img src="${story.image}">
-
-${
-story.add
-?
-`<span class="story-add">+</span>`
-:
-""
-}
+<img src="${story.avatar}">
 
 </div>
 
-<p>${story.name}</p>
+<div class="story-name">
+
+${story.name}
+
+</div>
 
 </div>
 
@@ -89,7 +84,7 @@ story.add
 });
 
 // ======================================
-// Posts
+// Posts Array
 // ======================================
 
 const posts=[];
@@ -98,6 +93,62 @@ const posts=[];
 // ======================================
 
 posts.push(
+
+{
+name:"Sarah",
+username:"@sarah",
+avatar:"https://i.pravatar.cc/150?img=5",
+text:"Good morning everyone ☀️",
+images:[]
+},
+
+{
+name:"Liam",
+username:"@liam",
+avatar:"https://i.pravatar.cc/150?img=8",
+text:"Weekend vibes 🌴",
+images:[
+"https://picsum.photos/600/600?1"
+]
+},
+
+{
+name:"Emily",
+username:"@emily",
+avatar:"https://i.pravatar.cc/150?img=12",
+text:"Coffee first. Always ☕",
+images:[
+"https://picsum.photos/600/600?2",
+"https://picsum.photos/600/600?3"
+]
+},
+
+{
+name:"Carlos",
+username:"@carlos",
+avatar:"https://i.pravatar.cc/150?img=18",
+text:"Beautiful sunset today 🌅",
+images:[
+"https://picsum.photos/600/600?4",
+"https://picsum.photos/600/600?5",
+"https://picsum.photos/600/600?6"
+]
+},
+
+{
+name:"Olivia",
+username:"@olivia",
+avatar:"https://i.pravatar.cc/150?img=32",
+text:"Travel memories ✈️",
+images:[
+"https://picsum.photos/600/600?7",
+"https://picsum.photos/600/600?8",
+"https://picsum.photos/600/600?9",
+"https://picsum.photos/600/600?10"
+]
+}
+
+);
 // ======================================
 // Render Posts
 // ======================================
@@ -106,17 +157,13 @@ posts.forEach(post=>{
 
 let imagesHTML="";
 
-if(post.images.length>0){
+if(post.images.length){
 
 imagesHTML='<div class="post-images">';
 
 post.images.forEach(image=>{
 
-imagesHTML+=`
-
-<img src="${image}" alt="Post Image">
-
-`;
+imagesHTML+=`<img src="${image}" alt="Post Image">`;
 
 });
 
@@ -132,7 +179,7 @@ feedContainer.innerHTML+=`
 
 <div class="post-user">
 
-<img class="post-avatar" src="${post.avatar}">
+<img src="${post.avatar}" alt="${post.name}">
 
 <div>
 
@@ -144,11 +191,7 @@ feedContainer.innerHTML+=`
 
 </div>
 
-<button class="post-more">
-
 <i class="fa-solid fa-ellipsis"></i>
-
-</button>
 
 </div>
 
@@ -207,102 +250,3 @@ ${imagesHTML}
 `;
 
 });
-{
-
-name:"Sarah",
-
-username:"@sarah",
-
-avatar:"https://i.pravatar.cc/150?img=5",
-
-text:"Good morning everyone ☀️",
-
-images:[]
-
-},
-
-{
-
-name:"Liam",
-
-username:"@liam",
-
-avatar:"https://i.pravatar.cc/150?img=8",
-
-text:"Weekend vibes 🌴",
-
-images:[
-
-"https://picsum.photos/500/500?1"
-
-]
-
-},
-
-{
-
-name:"Emily",
-
-username:"@emily",
-
-avatar:"https://i.pravatar.cc/150?img=12",
-
-text:"Coffee first ☕",
-
-images:[
-
-"https://picsum.photos/500/500?2",
-
-"https://picsum.photos/500/500?3"
-
-]
-
-},
-
-{
-
-name:"Carlos",
-
-username:"@carlos",
-
-avatar:"https://i.pravatar.cc/150?img=18",
-
-text:"Beautiful sunset today.",
-
-images:[
-
-"https://picsum.photos/500/500?4",
-
-"https://picsum.photos/500/500?5",
-
-"https://picsum.photos/500/500?6"
-
-]
-
-},
-
-{
-
-name:"Olivia",
-
-username:"@olivia",
-
-avatar:"https://i.pravatar.cc/150?img=32",
-
-text:"Travel memories ✈️",
-
-images:[
-
-"https://picsum.photos/500/500?7",
-
-"https://picsum.photos/500/500?8",
-
-"https://picsum.photos/500/500?9",
-
-"https://picsum.photos/500/500?10"
-
-]
-
-}
-
-);
