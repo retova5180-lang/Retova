@@ -64,3 +64,102 @@ ${story.name}
 `;
 
 });
+// =========================
+// FIRST POST
+// =========================
+
+feed.innerHTML = `
+
+<div class="post">
+
+<div class="post-header">
+
+<div class="post-user">
+
+<img src="https://i.pravatar.cc/150?img=60">
+
+<div>
+
+<div class="post-name">
+
+SALAH 💜
+
+</div>
+
+<div class="post-username">
+
+@s4u_2 · 2m
+
+</div>
+
+</div>
+
+</div>
+
+<i class="fa-solid fa-ellipsis"></i>
+
+</div>
+
+<div class="post-text">
+
+Which destination would you choose for your next vacation? 🌍✈️
+
+</div>
+
+<div class="post-images">
+
+<img src="https://picsum.photos/600/600?11">
+
+<img src="https://picsum.photos/600/600?12">
+
+<img src="https://picsum.photos/600/600?13">
+
+<img src="https://picsum.photos/600/600?14">
+
+</div>
+
+<div class="post-actions">
+
+<div class="action">
+
+<i class="fa-regular fa-heart"></i>
+
+<span>7.8K</span>
+
+</div>
+
+<div class="action">
+
+<i class="fa-regular fa-comment"></i>
+
+<span>104</span>
+
+</div>
+
+<div class="action">
+
+<i class="fa-solid fa-repeat"></i>
+
+<span>19</span>
+
+</div>
+
+<div class="action">
+
+<i class="fa-regular fa-eye"></i>
+
+<span>48K</span>
+
+</div>
+
+<div class="action">
+
+<i class="fa-solid fa-arrow-up-from-bracket"></i>
+
+</div>
+
+</div>
+
+</div>
+
+`;
