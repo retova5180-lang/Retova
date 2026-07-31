@@ -1,15 +1,8 @@
-// =========================
-// RETOVA STORIES
-// =========================
-
-const storiesContainer = document.querySelector(".stories");
-
 const stories = [
 
 {
 name:"You",
-avatar:"https://i.pravatar.cc/150?img=15",
-you:true
+avatar:"https://i.pravatar.cc/150?img=15"
 },
 
 {
@@ -24,38 +17,38 @@ avatar:"https://i.pravatar.cc/150?img=12"
 
 {
 name:"Emma",
-avatar:"https://i.pravatar.cc/150?img=48"
+avatar:"https://i.pravatar.cc/150?img=47"
 },
 
 {
 name:"Liam",
-avatar:"https://i.pravatar.cc/150?img=60"
+avatar:"https://i.pravatar.cc/150?img=18"
 },
 
 {
 name:"Mia",
-avatar:"https://i.pravatar.cc/150?img=24"
+avatar:"https://i.pravatar.cc/150?img=25"
 }
 
 ];
 
-stories.forEach(story=>{
+const storiesBox = document.getElementById("stories");
 
-storiesContainer.innerHTML += `
+stories.forEach(user=>{
 
-<div class="story ${story.you ? "you" : ""}">
+storiesBox.innerHTML += `
+
+<div class="story">
 
 <div class="story-avatar">
 
-<img src="${story.avatar}" alt="${story.name}">
-
-${story.you ? '<div class="add-story">+</div>' : ''}
+<img src="${user.avatar}">
 
 </div>
 
 <div class="story-name">
 
-${story.name}
+${user.name}
 
 </div>
 
@@ -64,102 +57,57 @@ ${story.name}
 `;
 
 });
-// =========================
-// FIRST POST
-// =========================
 
-feed.innerHTML = `
+const posts=[
+
+{
+
+name:"Sophia",
+
+user:"@sophia",
+
+avatar:"https://i.pravatar.cc/150?img=32",
+
+text:"Good morning ☀️",
+
+image:"https://picsum.photos/700/500?random=1"
+
+},
+
+{
+
+name:"Liam",
+
+user:"@liam",
+
+avatar:"https://i.pravatar.cc/150?img=18",
+
+text:"Weekend vibes 🌴",
+
+image:"https://picsum.photos/700/500?random=2"
+
+}
+
+];
+
+const feed=document.getElementById("feed");
+
+posts.forEach(post=>{
+
+feed.innerHTML+=`
 
 <div class="post">
 
-<div class="post-header">
+<h3>${post.name}</h3>
 
-<div class="post-user">
+<p>${post.user}</p>
 
-<img src="https://i.pravatar.cc/150?img=60">
+<p>${post.text}</p>
 
-<div>
-
-<div class="post-name">
-
-SALAH 💜
-
-</div>
-
-<div class="post-username">
-
-@s4u_2 · 2m
-
-</div>
-
-</div>
-
-</div>
-
-<i class="fa-solid fa-ellipsis"></i>
-
-</div>
-
-<div class="post-text">
-
-Which destination would you choose for your next vacation? 🌍✈️
-
-</div>
-
-<div class="post-images">
-
-<img src="https://picsum.photos/600/600?11">
-
-<img src="https://picsum.photos/600/600?12">
-
-<img src="https://picsum.photos/600/600?13">
-
-<img src="https://picsum.photos/600/600?14">
-
-</div>
-
-<div class="post-actions">
-
-<div class="action">
-
-<i class="fa-regular fa-heart"></i>
-
-<span>7.8K</span>
-
-</div>
-
-<div class="action">
-
-<i class="fa-regular fa-comment"></i>
-
-<span>104</span>
-
-</div>
-
-<div class="action">
-
-<i class="fa-solid fa-repeat"></i>
-
-<span>19</span>
-
-</div>
-
-<div class="action">
-
-<i class="fa-regular fa-eye"></i>
-
-<span>48K</span>
-
-</div>
-
-<div class="action">
-
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-
-</div>
-
-</div>
+<img src="${post.image}">
 
 </div>
 
 `;
+
+});
