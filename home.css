@@ -1,6 +1,6 @@
-/* ====================================
+/* =====================================
 RETOVA
-==================================== */
+===================================== */
 
 *{
 margin:0;
@@ -9,28 +9,33 @@ box-sizing:border-box;
 font-family:'Cairo',sans-serif;
 }
 
+html{
+
+scroll-behavior:smooth;
+
+}
+
 body{
 
 background:#09090B;
+
 color:#fff;
 
 overflow-x:hidden;
 
 }
 
-.layout{
+#app{
 
 min-height:100vh;
 
-padding-bottom:90px;
-
-background:#0F0F12;
+background:#0F1014;
 
 }
 
-/* ==========================
+/* =====================================
 HEADER
-========================== */
+===================================== */
 
 .header{
 
@@ -38,11 +43,9 @@ position:sticky;
 
 top:0;
 
-left:0;
+z-index:999;
 
-right:0;
-
-height:74px;
+height:72px;
 
 display:flex;
 
@@ -52,11 +55,11 @@ justify-content:space-between;
 
 padding:0 18px;
 
-background:#111114;
+background:rgba(15,16,20,.88);
 
-border-bottom:1px solid #23232B;
+backdrop-filter:blur(18px);
 
-z-index:999;
+border-bottom:1px solid rgba(255,255,255,.06);
 
 }
 
@@ -68,10 +71,11 @@ font-weight:800;
 
 color:#8B3DFF;
 
+letter-spacing:.5px;
+
 }
 
-.profile-btn,
-.wheel-btn{
+.icon-btn{
 
 width:48px;
 
@@ -79,19 +83,35 @@ height:48px;
 
 border:none;
 
-background:none;
+border-radius:50%;
+
+background:#17181E;
 
 display:flex;
 
-justify-content:center;
-
 align-items:center;
+
+justify-content:center;
 
 cursor:pointer;
 
+transition:.25s;
+
+color:#fff;
+
+font-size:20px;
+
 }
 
-.profile-btn img{
+.icon-btn:hover{
+
+background:#8B3DFF;
+
+transform:scale(1.06);
+
+}
+
+.avatar{
 
 width:48px;
 
@@ -101,34 +121,11 @@ border-radius:50%;
 
 object-fit:cover;
 
-border:3px solid #8B3DFF;
+border:2px solid #8B3DFF;
 
-}
-
-.wheel-btn{
-
-background:#8B3DFF;
-
-border-radius:50%;
-
-color:#fff;
-
-font-size:22px;
-
-box-shadow:0 0 20px rgba(139,61,255,.45);
-
-transition:.25s;
-
-}
-
-.wheel-btn:hover{
-
-transform:rotate(20deg);
-
-}
-/* ==========================
+/* =====================================
 STORIES
-========================== */
+===================================== */
 
 .stories{
 
@@ -136,15 +133,15 @@ display:flex;
 
 gap:16px;
 
-padding:18px;
+padding:16px 18px;
 
 overflow-x:auto;
 
-background:#111114;
-
-border-bottom:1px solid #23232B;
-
 scrollbar-width:none;
+
+background:#101116;
+
+border-bottom:1px solid rgba(255,255,255,.05);
 
 }
 
@@ -156,23 +153,23 @@ display:none;
 
 .story{
 
-min-width:74px;
-
 display:flex;
 
 flex-direction:column;
 
 align-items:center;
 
+min-width:72px;
+
+cursor:pointer;
+
 }
 
-.story-avatar{
+.story-ring{
 
-position:relative;
+width:72px;
 
-width:70px;
-
-height:70px;
+height:72px;
 
 padding:3px;
 
@@ -180,19 +177,33 @@ border-radius:50%;
 
 background:linear-gradient(135deg,#8B3DFF,#B86CFF);
 
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+transition:.25s;
+
 }
 
-.story-avatar img{
+.story-ring:hover{
+
+transform:scale(1.05);
+
+}
+
+.story-ring img{
 
 width:100%;
 
 height:100%;
 
-object-fit:cover;
-
 border-radius:50%;
 
-border:3px solid #111114;
+object-fit:cover;
+
+border:3px solid #101116;
 
 }
 
@@ -204,27 +215,33 @@ font-size:13px;
 
 font-weight:600;
 
-color:#EAEAEA;
-
-text-align:center;
+color:#E6E6E6;
 
 max-width:72px;
+
+white-space:nowrap;
 
 overflow:hidden;
 
 text-overflow:ellipsis;
 
-white-space:nowrap;
+text-align:center;
 
 }
 
-.story.you .story-avatar{
+.story.you .story-ring{
 
-background:#22222B;
+background:#1C1D25;
+
+border:2px solid #303040;
+
+position:relative;
 
 }
 
-.add-story{
+.story.you .story-ring::after{
+
+content:"+";
 
 position:absolute;
 
@@ -240,438 +257,20 @@ border-radius:50%;
 
 background:#8B3DFF;
 
-border:2px solid #111114;
-
 display:flex;
 
 justify-content:center;
 
 align-items:center;
-
-font-size:16px;
-
-font-weight:700;
-
-color:#fff;
-
-}
-/* ==========================
-FEED
-========================== */
-
-.feed{
-
-display:flex;
-
-flex-direction:column;
-
-gap:18px;
-
-padding:18px;
-
-}
-
-.post{
-
-background:rgba(23,23,29,.98);
-
-border:1px solid #262630;
-
-border-radius:24px;
-
-padding:18px;
-
-backdrop-filter:blur(18px);
-
-transition:.25s;
-
-box-shadow:0 12px 35px rgba(0,0,0,.35);
-
-}
-
-.post:hover{
-
-border-color:#8B3DFF;
-
-box-shadow:0 0 25px rgba(139,61,255,.18);
-
-}
-
-.post-header{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:14px;
-
-}
-
-.post-user{
-
-display:flex;
-
-align-items:center;
-
-gap:12px;
-
-}
-
-.post-user img{
-
-width:48px;
-
-height:48px;
-
-border-radius:50%;
-
-object-fit:cover;
-
-}
-
-.post-info{
-
-display:flex;
-
-flex-direction:column;
-
-}
-
-.post-name{
 
 font-size:17px;
 
 font-weight:700;
 
-display:flex;
-
-align-items:center;
-
-gap:6px;
-
-}
-
-.post-name i{
-
-font-size:15px;
-
-color:#8B3DFF;
-
-}
-
-.post-username{
-
-margin-top:2px;
-
-font-size:13px;
-
-color:#8B8B96;
-
-}
-
-.post-text{
-
-margin-top:10px;
-
-font-size:16px;
-
-line-height:1.7;
-
-color:#F2F2F2;
-
-  }
-/* ==========================
-POST IMAGES
-========================== */
-
-.post-images{
-
-display:grid;
-
-grid-template-columns:repeat(2,1fr);
-
-gap:8px;
-
-margin-top:16px;
-
-}
-
-.post-images img{
-
-width:100%;
-
-aspect-ratio:1/1;
-
-border-radius:18px;
-
-object-fit:cover;
-
-background:#1C1C22;
-
-transition:.25s;
-
-cursor:pointer;
-
-}
-
-.post-images img:hover{
-
-transform:scale(.98);
-
-}
-
-.post-images img:only-child{
-
-grid-column:1/3;
-
-aspect-ratio:16/9;
-
-}
-
-/* ==========================
-POST ACTIONS
-========================== */
-
-.post-actions{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-top:18px;
-
-padding-top:14px;
-
-border-top:1px solid #262630;
-
-}
-
-.action{
-
-display:flex;
-
-align-items:center;
-
-gap:6px;
-
-font-size:15px;
-
-color:#9999A5;
-
-cursor:pointer;
-
-transition:.25s;
-
-}
-
-.action i{
-
-font-size:18px;
-
-}
-
-.action:hover{
-
-color:#8B3DFF;
-
-transform:translateY(-2px);
-
-}
-
-.action.active{
-
-color:#8B3DFF;
-
-}
-/* ==========================
-FLOAT BUTTON
-========================== */
-
-.fab{
-
-position:fixed;
-
-right:22px;
-
-bottom:92px;
-
-width:62px;
-
-height:62px;
-
-border:none;
-
-border-radius:50%;
-
-background:linear-gradient(135deg,#8B3DFF,#A45EFF);
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
+border:2px solid #101116;
 
 color:#fff;
 
-font-size:24px;
-
-cursor:pointer;
-
-box-shadow:0 12px 35px rgba(139,61,255,.45);
-
-transition:.25s;
-
-z-index:999;
-
+}
 }
 
-.fab:hover{
-
-transform:scale(1.08);
-
-}
-
-/* ==========================
-BOTTOM NAV
-========================== */
-
-.bottom-nav{
-
-position:fixed;
-
-left:0;
-
-bottom:0;
-
-width:100%;
-
-height:74px;
-
-display:flex;
-
-justify-content:space-around;
-
-align-items:center;
-
-background:rgba(17,17,20,.96);
-
-backdrop-filter:blur(20px);
-
-border-top:1px solid #262630;
-
-z-index:1000;
-
-}
-
-.bottom-nav button{
-
-width:54px;
-
-height:54px;
-
-border:none;
-
-background:none;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-font-size:22px;
-
-color:#90909B;
-
-transition:.25s;
-
-cursor:pointer;
-
-}
-
-.bottom-nav button.active{
-
-color:#8B3DFF;
-
-}
-
-.bottom-nav button:hover{
-
-color:#8B3DFF;
-
-transform:translateY(-2px);
-
-}
-/* ==========================
-RESPONSIVE
-========================== */
-
-@media (min-width:768px){
-
-.layout{
-
-max-width:900px;
-
-margin:auto;
-
-}
-
-.feed{
-
-max-width:720px;
-
-margin:auto;
-
-}
-
-.stories{
-
-justify-content:flex-start;
-
-}
-
-}
-
-@media (min-width:1200px){
-
-.layout{
-
-max-width:1200px;
-
-}
-
-.feed{
-
-max-width:760px;
-
-}
-
-}
-
-/* ==========================
-SMOOTH
-========================== */
-
-.story,
-.post,
-.action,
-.bottom-nav button,
-.fab,
-.wheel-btn{
-
-transition:all .25s ease;
-
-}
-
-.story-avatar img,
-.post-images img{
-
-user-select:none;
-
--webkit-user-drag:none;
-
-}
