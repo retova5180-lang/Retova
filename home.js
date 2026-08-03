@@ -143,3 +143,40 @@ const stories = [
 }
 
 ];
+// ===============================
+// Render Header
+// ===============================
+
+document.getElementById("myAvatar").src = "you.webp";
+
+// ===============================
+// Render Stories
+// ===============================
+
+const storiesContainer = document.getElementById("stories");
+
+stories.forEach(story=>{
+
+const card=document.createElement("div");
+
+card.className="story";
+
+card.innerHTML=`
+
+<div class="storyRing ${story.seen ? "seen":""}">
+
+<img src="${story.avatar}" alt="${story.name}">
+
+</div>
+
+<div class="storyName">
+
+${story.name}
+
+</div>
+
+`;
+
+storiesContainer.appendChild(card);
+
+});
