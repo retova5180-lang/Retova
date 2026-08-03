@@ -1,84 +1,145 @@
-const app = document.getElementById("app");
+// ===============================
+// RETOVA
+// ===============================
 
-app.innerHTML = `
+// USER
 
-<header class="header">
+const currentUser = {
 
-<img
-class="avatar"
-src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&crop=faces"
-alt="">
+name: "You",
 
-<div class="logo">
+avatar:
+"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&crop=faces"
 
-Retova
+};
 
-</div>
+// STORIES
 
-<button class="icon-btn">
-
-<i class="fa-solid fa-dharmachakra"></i>
-
-</button>
-
-</header>
-
-<section id="stories"></section>
-
-<section id="feed"></section>
-
-`;
-const stories=[
+const stories = [
 
 {
+
 name:"You",
-img:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&crop=faces"
+
+avatar:currentUser.avatar,
+
+hasStory:false,
+
+seen:false,
+
+mine:true
+
 },
 
 {
-name:"Sophia",
-img:"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&fit=crop&crop=faces"
+
+name:"Apple",
+
+avatar:"https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+
+hasStory:true,
+
+seen:false
+
 },
 
 {
-name:"Noah",
-img:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&crop=faces"
+
+name:"Real Madrid",
+
+avatar:"https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
+
+hasStory:true,
+
+seen:true
+
 },
 
 {
-name:"Emma",
-img:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&fit=crop&crop=faces"
+
+name:"Formula 1",
+
+avatar:"https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg",
+
+hasStory:true,
+
+seen:false
+
 },
 
 {
-name:"Liam",
-img:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&fit=crop&crop=faces"
+
+name:"NASA",
+
+avatar:"https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg",
+
+hasStory:true,
+
+seen:true
+
+},
+
+{
+
+name:"Spotify",
+
+avatar:"https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg",
+
+hasStory:true,
+
+seen:false
+
 }
 
 ];
+const currentUser = {
+    name: "You",
+    avatar: "assets/avatars/you.jpg"
+};
 
-const storiesContainer=document.getElementById("stories");
+const stories = [
 
-stories.forEach(story=>{
+{
+    name:"You",
+    avatar:"assets/avatars/you.jpg",
+    mine:true,
+    seen:false,
+    hasStory:false
+},
 
-storiesContainer.innerHTML+=`
+{
+    name:"Apple",
+    avatar:"assets/avatars/apple.png",
+    hasStory:true,
+    seen:false
+},
 
-<div class="story">
+{
+    name:"Real Madrid",
+    avatar:"assets/avatars/realmadrid.png",
+    hasStory:true,
+    seen:true
+},
 
-<div class="story-ring">
+{
+    name:"Formula 1",
+    avatar:"assets/avatars/f1.png",
+    hasStory:true,
+    seen:false
+},
 
-<img src="${story.img}">
+{
+    name:"NASA",
+    avatar:"assets/avatars/nasa.png",
+    hasStory:true,
+    seen:true
+},
 
-</div>
+{
+    name:"Spotify",
+    avatar:"assets/avatars/spotify.png",
+    hasStory:true,
+    seen:false
+}
 
-<div class="story-name">
-
-${story.name}
-
-</div>
-
-</div>
-
-`;
-
-});
+];
