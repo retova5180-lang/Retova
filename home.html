@@ -1,129 +1,105 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <title>Retova</title>
+<meta charset="UTF-8">
 
-    <link rel="stylesheet" href="home.css">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>Retova</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
-        rel="stylesheet">
+<link rel="stylesheet" href="home.css">
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect"
+href="https://fonts.gstatic.com"
+crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+rel="stylesheet">
+
+<script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 
 <body>
 
-<div class="app">
+<div class="phone">
 
-    <!-- Header -->
+<header class="header">
 
-    <header class="topbar">
+<div id="myAvatar"></div>
 
-        <button class="profile-button">
-            <div class="avatar-gradient">
-                R
-            </div>
-        </button>
+<div class="logo">
 
-        <h1 class="logo">
-            Retova
-        </h1>
-
-        <button class="settings-button">
-
-            <i data-lucide="settings-2"></i>
-
-        </button>
-
-    </header>
-
-    <!-- Stories -->
-
-    <section class="stories-section">
-
-        <div class="stories-track">
-
-            <!-- JS -->
-
-        </div>
-
-    </section>
-
-    <!-- Feed -->
-
-    <main
-        id="feed"
-        class="feed">
-
-    </main>
+Retova
 
 </div>
 
+<button id="settings">
 
-<!-- Floating Button -->
+<i data-lucide="settings-2"></i>
 
-<button
-class="create-post">
+</button>
+
+</header>
+
+
+<section id="stories">
+
+</section>
+
+
+<main id="feed">
+
+</main>
+
+
+<button id="newPost">
 
 <i data-lucide="plus"></i>
 
 </button>
 
 
-<!-- Bottom Navigation -->
+<nav>
 
-<nav class="bottom-nav">
-
-<button class="nav-item active">
+<button class="active">
 
 <i data-lucide="house"></i>
 
-<span>Home</span>
-
 </button>
 
-<button class="nav-item">
+<button>
 
 <i data-lucide="search"></i>
 
-<span>Search</span>
-
 </button>
 
-<button class="nav-item">
+<button>
 
 <i data-lucide="flame"></i>
 
-<span>Explore</span>
-
 </button>
 
-<button class="nav-item">
+<button>
 
 <i data-lucide="bell"></i>
 
-<span>Notifications</span>
-
 </button>
 
-<button class="nav-item">
+<button>
 
 <i data-lucide="mail"></i>
-
-<span>Messages</span>
 
 </button>
 
 </nav>
 
+</div>
 
 <script src="home.js"></script>
 
@@ -134,4 +110,5 @@ lucide.createIcons();
 </script>
 
 </body>
+
 </html>
