@@ -1,45 +1,137 @@
-<header id="topBar">
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
 
-    <div class="profileButton">
-        <img id="myAvatar">
-    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <h1>Retova</h1>
+    <title>Retova</title>
 
-    <button id="settingsButton">
-        <img src="assets/icons/settings.svg" alt="">
-    </button>
+    <link rel="stylesheet" href="home.css">
 
-</header>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<section id="stories"></section>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
 
-<main id="feed"></main>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
 
-<button id="fab">
-    <img src="assets/icons/add.svg" alt="">
+<body>
+
+<div class="app">
+
+    <!-- Header -->
+
+    <header class="topbar">
+
+        <button class="profile-button">
+            <div class="avatar-gradient">
+                R
+            </div>
+        </button>
+
+        <h1 class="logo">
+            Retova
+        </h1>
+
+        <button class="settings-button">
+
+            <i data-lucide="settings-2"></i>
+
+        </button>
+
+    </header>
+
+    <!-- Stories -->
+
+    <section class="stories-section">
+
+        <div class="stories-track">
+
+            <!-- JS -->
+
+        </div>
+
+    </section>
+
+    <!-- Feed -->
+
+    <main
+        id="feed"
+        class="feed">
+
+    </main>
+
+</div>
+
+
+<!-- Floating Button -->
+
+<button
+class="create-post">
+
+<i data-lucide="plus"></i>
+
 </button>
 
-<nav id="bottomBar">
 
-    <button class="active">
-        <img src="assets/icons/home.svg" alt="">
-    </button>
+<!-- Bottom Navigation -->
 
-    <button>
-        <img src="assets/icons/search.svg" alt="">
-    </button>
+<nav class="bottom-nav">
 
-    <button>
-        <img src="assets/icons/explore.svg" alt="">
-    </button>
+<button class="nav-item active">
 
-    <button>
-        <img src="assets/icons/notifications.svg" alt="">
-    </button>
+<i data-lucide="house"></i>
 
-    <button>
-        <img src="assets/icons/messages.svg" alt="">
-    </button>
+<span>Home</span>
+
+</button>
+
+<button class="nav-item">
+
+<i data-lucide="search"></i>
+
+<span>Search</span>
+
+</button>
+
+<button class="nav-item">
+
+<i data-lucide="flame"></i>
+
+<span>Explore</span>
+
+</button>
+
+<button class="nav-item">
+
+<i data-lucide="bell"></i>
+
+<span>Notifications</span>
+
+</button>
+
+<button class="nav-item">
+
+<i data-lucide="mail"></i>
+
+<span>Messages</span>
+
+</button>
 
 </nav>
+
+
+<script src="home.js"></script>
+
+<script>
+
+lucide.createIcons();
+
+</script>
+
+</body>
+</html>
