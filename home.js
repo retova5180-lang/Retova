@@ -1,269 +1,520 @@
-// =======================================
-// RETOVA
-// HOME
-// =======================================
+/* ==========================================
+   RETOVA
+   HOME.JS
+   PART 1
+========================================== */
 
-// ---------- Stories ----------
+/* ---------- APP ---------- */
 
-const stories = [
+const app = {
+
+    stories: [],
+
+    posts: [],
+
+    user: null
+
+};
+
+/* ---------- ELEMENTS ---------- */
+
+const storiesContainer =
+document.getElementById("stories");
+
+const feedContainer =
+document.getElementById("feed");
+
+const newPostButton =
+document.getElementById("newPost");
+
+/* ---------- HELPERS ---------- */
+
+function create(tag, className = ""){
+
+    const element =
+    document.createElement(tag);
+
+    if(className){
+
+        element.className = className;
+
+    }
+
+    return element;
+
+}
+
+function clear(element){
+
+    element.innerHTML = "";
+
+}
+
+function formatNumber(number){
+
+    if(number >= 1000000){
+
+        return (number / 1000000).toFixed(1) + "M";
+
+    }
+
+    if(number >= 1000){
+
+        return (number / 1000).toFixed(1) + "K";
+
+    }
+
+    return number.toString();
+
+}
+
+/* ---------- INIT ---------- */
+
+function initializeHome(){
+
+    clear(storiesContainer);
+
+    clear(feedContainer);
+
+}
+
+initializeHome();
+/* ==========================================
+   STORIES DATA
+========================================== */
+
+app.stories = [
 
 {
+    id:1,
+    type:"mine",
     name:"You",
     letter:"R",
-    mine:true,
     seen:false,
-    gradient:["#8B3DFF","#C34CFF"]
+    gradient:["#8B3DFF","#C54DFF"]
 },
 
 {
+    id:2,
+    type:"official",
     name:"Apple",
-    letter:"A",
-    seen:false,
-    gradient:["#6366F1","#8B5CF6"]
+    avatar:"assets/avatars/apple.png",
+    verified:true,
+    seen:false
 },
 
 {
+    id:3,
+    type:"official",
     name:"Formula 1",
-    letter:"F",
-    seen:true,
-    gradient:["#EF4444","#F97316"]
+    avatar:"assets/avatars/f1.png",
+    verified:true,
+    seen:true
 },
 
 {
+    id:4,
+    type:"official",
     name:"NASA",
-    letter:"N",
-    seen:false,
-    gradient:["#2563EB","#06B6D4"]
+    avatar:"assets/avatars/nasa.png",
+    verified:true,
+    seen:false
 },
 
 {
+    id:5,
+    type:"official",
     name:"Spotify",
-    letter:"S",
-    seen:true,
-    gradient:["#16A34A","#22C55E"]
+    avatar:"assets/avatars/spotify.png",
+    verified:true,
+    seen:true
 },
 
 {
-    name:"Real Madrid",
-    letter:"R",
-    seen:false,
-    gradient:["#FACC15","#F59E0B"]
+    id:6,
+    type:"official",
+    name:"Netflix",
+    avatar:"assets/avatars/netflix.png",
+    verified:true,
+    seen:false
 }
 
 ];
 
-// ---------- Render Stories ----------
+/* ==========================================
+   RENDER STORIES
+========================================== */
 
-const storiesTrack =
-document.querySelector(".stories-track");
+function renderStories(){
 
-stories.forEach(story=>{
+    clear(storiesContainer);
 
-const item=document.createElement("div");
+    app.stories.forEach(story=>{
 
-item.className=`story ${story.mine?"mine":""} ${story.seen?"seen":""}`;
+        const card=create("div","story");
 
-item.innerHTML=`
+        if(story.seen){
 
-<div class="story-ring">
+            card.classList.add("seen");
 
-<div
-class="story-avatar"
-style="background:linear-gradient(135deg,${story.gradient[0]},${story.gradient[1]});">
+        }
 
-${story.letter}
+        if(story.type==="mine"){
 
-</div>
+            card.classList.add("mine");
 
-</div>
+        }
 
-${story.mine?'<div class="add-story">+</div>':""}
+        const ring=create("div","story-ring");
 
-<div class="story-name">
+        const avatar=create("div","story-avatar");
 
-${story.name}
+        if(story.type==="official"){
 
-</div>
+            avatar.style.backgroundImage=`url(${story.avatar})`;
 
-`;
+            avatar.style.backgroundSize="cover";
 
-storiesTrack.appendChild(item);
+            avatar.style.backgroundPosition="center";
 
-});
+        }else{
 
-// =======================================
-// POSTS
-// =======================================
+            avatar.style.background=
+            `linear-gradient(135deg,${story.gradient[0]},${story.gradient[1]})`;
 
-const posts = [
+            avatar.textContent=story.letter;
+
+        }
+
+        ring.appendChild(avatar);
+
+        card.appendChild(ring);
+
+        if(story.type==="mine"){
+
+            const plus=create("div","story-plus");
+
+            plus.textContent="+";
+
+            card.appendChild(plus);
+
+        }
+
+        const name=create("div","story-name");
+
+        name.textContent=story.name;
+
+        card.appendChild(name);
+
+        storiesContainer.appendChild(card);
+
+    });
+
+}
+
+renderStories();
+/* ==========================================
+   POSTS DATA
+========================================== */
+
+app.posts = [
 
 {
+id:1,
 
-letter:"L",
+accountType:"official",
 
-gradient:["#8B3DFF","#C24BFF"],
+name:"Apple",
 
-name:"Lina",
+username:"apple",
 
-username:"@lina",
+avatar:"assets/avatars/apple.png",
 
-badge:"VIP",
+verified:true,
 
-time:"2m",
-
-text:"Finally finished redesigning my workspace. Loving the clean setup.",
-
-likes:"4.2K",
-
-comments:"341",
-
-reposts:"102",
-
-views:"89K"
-
-},
-
-{
-
-letter:"S",
-
-gradient:["#2563EB","#06B6D4"],
-
-name:"SALAH",
-
-username:"@salah",
-
-badge:"Verified",
+vip:false,
 
 time:"12m",
 
-text:"Weekend trip was absolutely worth it. New memories unlocked.",
+text:"Apple Intelligence expands to more languages later this year.",
 
-likes:"18K",
+images:[
+"assets/posts/apple_1.jpg"
+],
 
-comments:"1.2K",
+likes:28400,
 
-reposts:"640",
+comments:1843,
 
-views:"401K"
+reposts:3902,
+
+views:2400000
+
+},
+
+{
+id:2,
+
+accountType:"official",
+
+name:"Formula 1",
+
+username:"f1",
+
+avatar:"assets/avatars/f1.png",
+
+verified:true,
+
+vip:false,
+
+time:"31m",
+
+text:"Race weekend starts tomorrow. Which team are you supporting?",
+
+images:[
+"assets/posts/f1_1.jpg"
+],
+
+likes:91300,
+
+comments:6200,
+
+reposts:12000,
+
+views:7400000
+
+},
+
+{
+id:3,
+
+accountType:"vip",
+
+name:"Lina",
+
+username:"lina",
+
+letter:"L",
+
+gradient:["#8B3DFF","#C54DFF"],
+
+verified:false,
+
+vip:true,
+
+time:"5m",
+
+text:"Finally finished my new workspace setup.",
+
+images:[],
+
+likes:4200,
+
+comments:286,
+
+reposts:81,
+
+views:118000
+
+},
+
+{
+id:4,
+
+accountType:"free",
+
+name:"Noah",
+
+username:"noah",
+
+letter:"N",
+
+gradient:["#2563EB","#06B6D4"],
+
+verified:false,
+
+vip:false,
+
+time:"1h",
+
+text:"Late night coding session completed.",
+
+images:[],
+
+likes:863,
+
+comments:54,
+
+reposts:11,
+
+views:18400
 
 }
 
 ];
-// =======================================
-// RENDER POSTS
-// =======================================
+/* ==========================================
+   RENDER POSTS
+========================================== */
 
-const feed = document.getElementById("feed");
+function renderPosts(){
 
-posts.forEach(post=>{
+    clear(feedContainer);
 
-const card=document.createElement("article");
+    app.posts.forEach(post=>{
 
-card.className="post";
+        const article = create("article","post");
 
-card.innerHTML=`
+        /* ---------- Avatar ---------- */
 
-<div class="post-header">
+        let avatarHTML="";
 
-<div class="post-user">
+        if(post.accountType==="official"){
 
-<div
-class="post-avatar"
-style="background:linear-gradient(135deg,${post.gradient[0]},${post.gradient[1]});">
+            avatarHTML=`
+            <div class="post-avatar">
+                <img src="${post.avatar}" alt="${post.name}">
+            </div>
+            `;
 
-${post.letter}
+        }else{
 
-</div>
+            avatarHTML=`
+            <div
+                class="post-avatar"
+                style="
+                background:linear-gradient(
+                135deg,
+                ${post.gradient[0]},
+                ${post.gradient[1]}
+                );">
 
-<div class="post-info">
+                ${post.letter}
 
-<div class="post-name">
+            </div>
+            `;
 
-${post.name}
+        }
 
-<span class="badge">
+        /* ---------- Badges ---------- */
 
-${post.badge}
+        let badges="";
 
-</span>
+        if(post.verified){
 
-</div>
+            badges+=`
+            <span class="verify">
+                ✓
+            </span>
+            `;
+        }
 
-<div class="post-username">
+        if(post.vip){
 
-${post.username}
+            badges+=`
+            <span class="vip">
+                VIP
+            </span>
+            `;
+        }
 
-</div>
+        /* ---------- Images ---------- */
 
-<div class="post-time">
+        let imagesHTML="";
 
-${post.time}
+        if(post.images.length===1){
 
-</div>
+            imagesHTML=`
 
-</div>
+            <div class="post-image">
 
-</div>
+                <img
+                src="${post.images[0]}"
+                alt="">
 
-<div class="post-menu">
+            </div>
 
-<i data-lucide="more-horizontal"></i>
+            `;
 
-</div>
+        }
 
-</div>
+        /* ---------- Card ---------- */
 
-<div class="post-text">
+        article.innerHTML=`
 
-${post.text}
+        <div class="post-header">
 
-</div>
+            <div class="post-user">
 
-<div class="post-actions">
+                ${avatarHTML}
 
-<div class="action-group">
+                <div class="post-info">
 
-<div class="action">
+                    <div class="post-name">
 
-<i data-lucide="heart"></i>
+                        ${post.name}
 
-<span>${post.likes}</span>
+                        ${badges}
 
-</div>
+                    </div>
 
-<div class="action">
+                    <div class="post-username">
 
-<i data-lucide="message-circle"></i>
+                        @${post.username}
 
-<span>${post.comments}</span>
+                    </div>
 
-</div>
+                    <div class="post-time">
 
-<div class="action">
+                        ${post.time}
 
-<i data-lucide="repeat-2"></i>
+                    </div>
 
-<span>${post.reposts}</span>
+                </div>
 
-</div>
+            </div>
 
-</div>
+        </div>
 
-<div class="action">
+        <div class="post-content">
 
-<i data-lucide="bar-chart-3"></i>
+            ${post.text}
 
-<span>${post.views}</span>
+        </div>
 
-</div>
+        ${imagesHTML}
 
-</div>
+        <div class="post-actions">
 
-`;
+            <div class="post-left-actions">
 
-feed.appendChild(card);
+                <div class="action">
+                    ❤️ ${formatNumber(post.likes)}
+                </div>
 
-});
+                <div class="action">
+                    💬 ${formatNumber(post.comments)}
+                </div>
 
-lucide.createIcons();
+                <div class="action">
+                    🔁 ${formatNumber(post.reposts)}
+                </div>
+
+            </div>
+
+            <div class="action">
+
+                👁 ${formatNumber(post.views)}
+
+            </div>
+
+        </div>
+
+        `;
+
+        feedContainer.appendChild(article);
+
+    });
+
+}
+
+renderPosts();
