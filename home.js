@@ -1,175 +1,85 @@
-// ===============================
+// =======================================
 // RETOVA
-// ===============================
+// HOME
+// =======================================
 
-// USER
-
-const currentUser = {
-
-name: "You",
-
-avatar:
-"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&crop=faces"
-
-};
-
-// STORIES
-
-const stories = [
-
-{
-
-name:"You",
-
-avatar:currentUser.avatar,
-
-hasStory:false,
-
-seen:false,
-
-mine:true
-
-},
-
-{
-
-name:"Apple",
-
-avatar:"https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-
-hasStory:true,
-
-seen:false
-
-},
-
-{
-
-name:"Real Madrid",
-
-avatar:"https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
-
-hasStory:true,
-
-seen:true
-
-},
-
-{
-
-name:"Formula 1",
-
-avatar:"https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg",
-
-hasStory:true,
-
-seen:false
-
-},
-
-{
-
-name:"NASA",
-
-avatar:"https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg",
-
-hasStory:true,
-
-seen:true
-
-},
-
-{
-
-name:"Spotify",
-
-avatar:"https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg",
-
-hasStory:true,
-
-seen:false
-
-}
-
-];
-const currentUser = {
-    name: "You",
-    avatar: "assets/avatars/you.jpg"
-};
+// ---------- Stories ----------
 
 const stories = [
 
 {
     name:"You",
-    avatar:"assets/avatars/you.jpg",
+    letter:"R",
     mine:true,
     seen:false,
-    hasStory:false
+    gradient:["#8B3DFF","#C34CFF"]
 },
 
 {
     name:"Apple",
-    avatar:"assets/avatars/apple.png",
-    hasStory:true,
-    seen:false
-},
-
-{
-    name:"Real Madrid",
-    avatar:"assets/avatars/realmadrid.png",
-    hasStory:true,
-    seen:true
+    letter:"A",
+    seen:false,
+    gradient:["#6366F1","#8B5CF6"]
 },
 
 {
     name:"Formula 1",
-    avatar:"assets/avatars/f1.png",
-    hasStory:true,
-    seen:false
+    letter:"F",
+    seen:true,
+    gradient:["#EF4444","#F97316"]
 },
 
 {
     name:"NASA",
-    avatar:"assets/avatars/nasa.png",
-    hasStory:true,
-    seen:true
+    letter:"N",
+    seen:false,
+    gradient:["#2563EB","#06B6D4"]
 },
 
 {
     name:"Spotify",
-    avatar:"assets/avatars/spotify.png",
-    hasStory:true,
-    seen:false
+    letter:"S",
+    seen:true,
+    gradient:["#16A34A","#22C55E"]
+},
+
+{
+    name:"Real Madrid",
+    letter:"R",
+    seen:false,
+    gradient:["#FACC15","#F59E0B"]
 }
 
 ];
-// ===============================
-// Render Header
-// ===============================
 
-document.getElementById("myAvatar").src = "you.webp";
+// ---------- Render Stories ----------
 
-// ===============================
-// Render Stories
-// ===============================
-
-const storiesContainer = document.getElementById("stories");
+const storiesTrack =
+document.querySelector(".stories-track");
 
 stories.forEach(story=>{
 
-const card=document.createElement("div");
+const item=document.createElement("div");
 
-card.className="story";
+item.className=`story ${story.mine?"mine":""} ${story.seen?"seen":""}`;
 
-card.innerHTML=`
+item.innerHTML=`
 
-<div class="storyRing ${story.seen ? "seen":""}">
+<div class="story-ring">
 
-<img src="${story.avatar}" alt="${story.name}">
+<div
+class="story-avatar"
+style="background:linear-gradient(135deg,${story.gradient[0]},${story.gradient[1]});">
+
+${story.letter}
 
 </div>
 
-<div class="storyName">
+</div>
+
+${story.mine?'<div class="add-story">+</div>':""}
+
+<div class="story-name">
 
 ${story.name}
 
@@ -177,6 +87,183 @@ ${story.name}
 
 `;
 
-storiesContainer.appendChild(card);
+storiesTrack.appendChild(item);
 
 });
+
+// =======================================
+// POSTS
+// =======================================
+
+const posts = [
+
+{
+
+letter:"L",
+
+gradient:["#8B3DFF","#C24BFF"],
+
+name:"Lina",
+
+username:"@lina",
+
+badge:"VIP",
+
+time:"2m",
+
+text:"Finally finished redesigning my workspace. Loving the clean setup.",
+
+likes:"4.2K",
+
+comments:"341",
+
+reposts:"102",
+
+views:"89K"
+
+},
+
+{
+
+letter:"S",
+
+gradient:["#2563EB","#06B6D4"],
+
+name:"SALAH",
+
+username:"@salah",
+
+badge:"Verified",
+
+time:"12m",
+
+text:"Weekend trip was absolutely worth it. New memories unlocked.",
+
+likes:"18K",
+
+comments:"1.2K",
+
+reposts:"640",
+
+views:"401K"
+
+}
+
+];
+// =======================================
+// RENDER POSTS
+// =======================================
+
+const feed = document.getElementById("feed");
+
+posts.forEach(post=>{
+
+const card=document.createElement("article");
+
+card.className="post";
+
+card.innerHTML=`
+
+<div class="post-header">
+
+<div class="post-user">
+
+<div
+class="post-avatar"
+style="background:linear-gradient(135deg,${post.gradient[0]},${post.gradient[1]});">
+
+${post.letter}
+
+</div>
+
+<div class="post-info">
+
+<div class="post-name">
+
+${post.name}
+
+<span class="badge">
+
+${post.badge}
+
+</span>
+
+</div>
+
+<div class="post-username">
+
+${post.username}
+
+</div>
+
+<div class="post-time">
+
+${post.time}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="post-menu">
+
+<i data-lucide="more-horizontal"></i>
+
+</div>
+
+</div>
+
+<div class="post-text">
+
+${post.text}
+
+</div>
+
+<div class="post-actions">
+
+<div class="action-group">
+
+<div class="action">
+
+<i data-lucide="heart"></i>
+
+<span>${post.likes}</span>
+
+</div>
+
+<div class="action">
+
+<i data-lucide="message-circle"></i>
+
+<span>${post.comments}</span>
+
+</div>
+
+<div class="action">
+
+<i data-lucide="repeat-2"></i>
+
+<span>${post.reposts}</span>
+
+</div>
+
+</div>
+
+<div class="action">
+
+<i data-lucide="bar-chart-3"></i>
+
+<span>${post.views}</span>
+
+</div>
+
+</div>
+
+`;
+
+feed.appendChild(card);
+
+});
+
+lucide.createIcons();
