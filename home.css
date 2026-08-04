@@ -1,609 +1,834 @@
-/* ===========================
-   RESET
-=========================== */
+/* =========================================
+   RETOVA HOME
+   VERSION 2.0
+========================================= */
 
 :root{
-  --bg:#09090B;
-  --surface:#111114;
-  --border:#24242B;
 
-  --primary:#8B3DFF;
-  --primary2:#B84DFF;
+--bg:#09090B;
 
-  --text:#FFFFFF;
-  --muted:#A4A4AE;
+--surface:#111114;
 
-  --radius:24px;
+--surface2:#18181D;
+
+--border:#23232B;
+
+--purple:#8B3DFF;
+
+--purple2:#C54DFF;
+
+--text:#FFFFFF;
+
+--muted:#8C8C97;
+
+--radius:26px;
+
 }
 
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+
+margin:0;
+
+padding:0;
+
+box-sizing:border-box;
+
+-webkit-tap-highlight-color:transparent;
+
 }
 
 html{
-    font-size:16px;
+
+font-size:16px;
+
+height:100%;
+
 }
 
 body{
 
-    background:var(--bg);
+background:var(--bg);
 
-    color:var(--text);
+font-family:"Inter",sans-serif;
 
-    font-family:"Cairo",sans-serif;
+color:var(--text);
 
-    overflow-x:hidden;
+overflow-x:hidden;
 
-    min-height:100vh;
-
-}
-
-button{
-
-    border:none;
-
-    background:none;
-
-    font-family:inherit;
+min-height:100vh;
 
 }
 
-img{
+/* ========================================= */
 
-    display:block;
+.phone{
 
-    max-width:100%;
+width:100%;
 
-}
+max-width:720px;
 
-a{
+margin:auto;
 
-    color:inherit;
+min-height:100vh;
 
-    text-decoration:none;
-
-}
-
-/* ===========================
-   APP
-=========================== */
-
-.app{
-
-    width:100%;
-
-    max-width:680px;
-
-    margin:auto;
-
-    min-height:100vh;
-
-    padding-bottom:120px;
+padding-bottom:120px;
 
 }
 
-/* ===========================
-   HEADER
-=========================== */
+/* =========================================
+HEADER
+========================================= */
 
-.topbar{
+.header{
 
-    height:86px;
+position:sticky;
 
-    display:flex;
+top:0;
 
-    align-items:center;
+height:84px;
 
-    justify-content:space-between;
+display:flex;
 
-    padding:18px;
+justify-content:space-between;
 
-    position:sticky;
+align-items:center;
 
-    top:0;
+padding:0 20px;
 
-    background:#09090B;
+background:rgba(9,9,11,.94);
 
-    border-bottom:1px solid var(--border);
+backdrop-filter:blur(24px);
 
-    z-index:999;
+border-bottom:1px solid rgba(255,255,255,.05);
+
+z-index:999;
 
 }
+
+/* ========================================= */
 
 .logo{
 
-    color:var(--primary);
+font-size:30px;
 
-    font-size:31px;
+font-weight:800;
 
-    font-weight:800;
+letter-spacing:.4px;
 
-}
-
-.profile-button{
-
-    width:54px;
-
-    height:54px;
+color:white;
 
 }
 
-.settings-button{
+/* ========================================= */
 
-    width:54px;
+#myAvatar{
 
-    height:54px;
+width:54px;
 
-    border-radius:50%;
+height:54px;
 
-    display:flex;
+border-radius:50%;
 
-    align-items:center;
+background:
 
-    justify-content:center;
+linear-gradient(
 
-    background:linear-gradient(135deg,var(--primary),var(--primary2));
+135deg,
 
-}
+#8B3DFF,
 
-.settings-button svg{
+#C44DFF
 
-    width:24px;
+);
 
-    height:24px;
+display:flex;
 
-    color:white;
+justify-content:center;
 
-}
+align-items:center;
 
-.avatar-gradient{
+font-size:22px;
 
-    width:54px;
+font-weight:800;
 
-    height:54px;
+color:white;
 
-    border-radius:50%;
+box-shadow:
 
-    display:flex;
+0 0 26px
 
-    justify-content:center;
-
-    align-items:center;
-
-    font-weight:800;
-
-    font-size:22px;
-
-    color:white;
-
-    background:linear-gradient(135deg,#8B3DFF,#C24BFF);
-
-}
-/* ===========================
-   STORIES
-=========================== */
-
-.stories-section{
-
-    padding:18px 0 20px;
-
-    border-bottom:1px solid var(--border);
-
-    overflow:hidden;
+rgba(139,61,255,.45);
 
 }
 
-.stories-track{
+/* ========================================= */
 
-    display:flex;
+#settings{
 
-    align-items:flex-start;
+width:54px;
 
-    gap:18px;
+height:54px;
 
-    overflow-x:auto;
+border:none;
 
-    padding:0 18px;
+border-radius:50%;
 
-    scrollbar-width:none;
+background:
 
-    scroll-behavior:smooth;
+linear-gradient(
+
+135deg,
+
+#8B3DFF,
+
+#B54DFF
+
+);
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+cursor:pointer;
+
+box-shadow:
+
+0 0 24px
+
+rgba(139,61,255,.35);
 
 }
 
-.stories-track::-webkit-scrollbar{
+#settings svg{
 
-    display:none;
+width:24px;
+
+height:24px;
+
+stroke:white;
 
 }
+
+/* =========================================
+STORIES
+========================================= */
+
+#stories{
+
+display:flex;
+
+gap:18px;
+
+overflow-x:auto;
+
+padding:18px;
+
+scrollbar-width:none;
+
+}
+
+#stories::-webkit-scrollbar{
+
+display:none;
+
+}
+/* =========================================
+   STORY CARD
+========================================= */
 
 .story{
 
-    min-width:82px;
+display:flex;
 
-    display:flex;
+flex-direction:column;
 
-    flex-direction:column;
+align-items:center;
 
-    align-items:center;
+position:relative;
 
-    position:relative;
+min-width:74px;
 
 }
 
 .story-ring{
 
-    width:74px;
+width:72px;
 
-    height:74px;
+height:72px;
 
-    border-radius:50%;
+border-radius:50%;
 
-    padding:3px;
+padding:3px;
 
-    background:linear-gradient(
-        135deg,
-        var(--primary),
-        var(--primary2)
-    );
+display:flex;
 
-    display:flex;
+justify-content:center;
 
-    justify-content:center;
+align-items:center;
 
-    align-items:center;
+background:linear-gradient(
+135deg,
+var(--purple),
+var(--purple2)
+);
 
-    transition:.25s;
+transition:.25s;
 
 }
 
 .story.seen .story-ring{
 
-    background:#575761;
+background:#55555F;
 
 }
 
 .story-avatar{
 
-    width:100%;
+width:100%;
 
-    height:100%;
+height:100%;
 
-    border-radius:50%;
+border-radius:50%;
 
-    background:#18181C;
+background:var(--surface2);
 
-    display:flex;
+display:flex;
 
-    justify-content:center;
+justify-content:center;
 
-    align-items:center;
+align-items:center;
 
-    color:white;
+font-size:23px;
 
-    font-size:23px;
+font-weight:800;
 
-    font-weight:800;
+color:white;
+
+background-size:cover;
+
+background-position:center;
+
+border:2px solid #0B0B0D;
 
 }
 
 .story-name{
 
-    margin-top:9px;
+margin-top:8px;
 
-    font-size:13px;
+font-size:12px;
 
-    font-weight:600;
+font-weight:600;
 
-    color:white;
+max-width:74px;
 
-    white-space:nowrap;
+overflow:hidden;
 
-    max-width:82px;
+text-overflow:ellipsis;
 
-    overflow:hidden;
+white-space:nowrap;
 
-    text-overflow:ellipsis;
+text-align:center;
 
-    text-align:center;
+color:#F4F4F4;
+
+}
+
+/* زر الإضافة */
+
+.story.mine .story-plus{
+
+position:absolute;
+
+bottom:22px;
+
+right:-1px;
+
+width:24px;
+
+height:24px;
+
+border-radius:50%;
+
+background:linear-gradient(
+135deg,
+var(--purple),
+var(--purple2)
+);
+
+border:3px solid #09090B;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:15px;
+
+font-weight:800;
+
+color:white;
+
+box-shadow:0 0 14px rgba(139,61,255,.45);
 
 }
 
-/* زر + */
+/* =========================================
+   FEED
+========================================= */
 
-.story.mine .add-story{
+#feed{
 
-    position:absolute;
+padding:0 18px 24px;
 
-    bottom:26px;
+display:flex;
 
-    right:2px;
+flex-direction:column;
 
-    width:24px;
-
-    height:24px;
-
-    border-radius:50%;
-
-    background:linear-gradient(
-        135deg,
-        var(--primary),
-        var(--primary2)
-    );
-
-    border:3px solid var(--bg);
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    color:white;
-
-    font-size:16px;
-
-    font-weight:800;
-
-    box-shadow:0 0 12px rgba(139,61,255,.45);
+gap:18px;
 
 }
-/* ===========================
-   POST CARD
-=========================== */
+/* =========================================
+   POST
+========================================= */
 
 .post{
 
-    background:var(--surface);
+background:#111114;
 
-    border:1px solid var(--border);
+border:1px solid rgba(255,255,255,.05);
 
-    border-radius:26px;
+border-radius:28px;
 
-    padding:18px;
+padding:18px;
 
-    margin-bottom:22px;
+box-shadow:
 
-    transition:.25s;
+0 8px 40px rgba(0,0,0,.35);
+
+transition:.25s;
 
 }
 
 .post:hover{
 
-    border-color:rgba(139,61,255,.45);
+border-color:rgba(139,61,255,.35);
+
+transform:translateY(-2px);
 
 }
 
+/* ========================================= */
+
 .post-header{
 
-    display:flex;
+display:flex;
 
-    justify-content:space-between;
+justify-content:space-between;
 
-    align-items:flex-start;
+align-items:flex-start;
 
-    margin-bottom:15px;
+margin-bottom:14px;
 
 }
 
 .post-user{
 
-    display:flex;
+display:flex;
 
-    gap:14px;
+gap:14px;
 
 }
+
+/* ========================================= */
 
 .post-avatar{
 
-    width:56px;
+width:56px;
 
-    height:56px;
+height:56px;
 
-    border-radius:50%;
+border-radius:50%;
 
-    background:linear-gradient(
-        135deg,
-        var(--primary),
-        var(--primary2)
-    );
+background-size:cover;
 
-    display:flex;
+background-position:center;
 
-    justify-content:center;
+display:flex;
 
-    align-items:center;
+justify-content:center;
 
-    color:white;
+align-items:center;
 
-    font-size:22px;
+font-weight:800;
 
-    font-weight:800;
+font-size:21px;
+
+color:white;
+
+overflow:hidden;
 
 }
 
+/* ========================================= */
+
 .post-info{
 
-    display:flex;
+display:flex;
 
-    flex-direction:column;
+flex-direction:column;
+
+gap:2px;
 
 }
 
 .post-name{
 
-    display:flex;
+display:flex;
 
-    align-items:center;
+align-items:center;
 
-    gap:7px;
+gap:6px;
 
-    font-size:18px;
+font-size:17px;
 
-    font-weight:800;
+font-weight:800;
 
 }
 
+/* ========================================= */
+
+.verify{
+
+width:18px;
+
+height:18px;
+
+border-radius:50%;
+
+background:#2D9CFF;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:11px;
+
+font-weight:700;
+
+color:white;
+
+}
+
+.vip{
+
+padding:4px 8px;
+
+border-radius:999px;
+
+background:linear-gradient(
+135deg,
+#8B3DFF,
+#C44DFF
+);
+
+font-size:10px;
+
+font-weight:700;
+
+color:white;
+
+}
+
+/* ========================================= */
+
 .post-username{
 
-    color:var(--muted);
+font-size:13px;
 
-    font-size:13px;
-
-    margin-top:2px;
+color:#9B9BA5;
 
 }
 
 .post-time{
 
-    color:#7A7A84;
+font-size:12px;
 
-    font-size:12px;
-
-    margin-top:3px;
+color:#72727C;
 
 }
 
-.badge{
+/* ========================================= */
 
-    padding:3px 8px;
+.post-content{
 
-    border-radius:999px;
+margin-top:12px;
 
-    background:rgba(139,61,255,.16);
+font-size:15px;
 
-    color:#D9B8FF;
+line-height:1.9;
 
-    font-size:10px;
-
-    font-weight:700;
+color:white;
 
 }
 
-.post-menu{
-
-    opacity:.7;
-
-    cursor:pointer;
-
-}
-
-.post-text{
-
-    margin-top:10px;
-
-    line-height:1.9;
-
-    font-size:16px;
-
-    color:white;
-
-}
+/* ========================================= */
 
 .post-image{
 
-    width:100%;
+margin-top:14px;
 
-    border-radius:18px;
+border-radius:20px;
 
-    margin-top:16px;
-
-    overflow:hidden;
+overflow:hidden;
 
 }
 
 .post-image img{
 
-    width:100%;
+width:100%;
 
-    display:block;
+display:block;
 
 }
 
-/* شبكة 4 صور */
+/* ========================================= */
 
 .post-grid{
 
-    display:grid;
+margin-top:14px;
 
-    grid-template-columns:repeat(2,1fr);
+display:grid;
 
-    gap:8px;
+grid-template-columns:repeat(2,1fr);
 
-    margin-top:16px;
+gap:8px;
 
 }
 
 .post-grid img{
 
-    width:100%;
+width:100%;
 
-    aspect-ratio:1/1;
+aspect-ratio:1/1;
 
-    object-fit:cover;
+object-fit:cover;
 
-    border-radius:16px;
+border-radius:16px;
 
-}
-
-/* ===========================
-   ACTIONS
-=========================== */
+   }
+/* =========================================
+   POST ACTIONS
+========================================= */
 
 .post-actions{
 
-    display:flex;
+display:flex;
 
-    justify-content:space-between;
+justify-content:space-between;
 
-    align-items:center;
+align-items:center;
 
-    margin-top:18px;
+margin-top:18px;
 
-    padding-top:16px;
+padding-top:16px;
 
-    border-top:1px solid rgba(255,255,255,.05);
+border-top:1px solid rgba(255,255,255,.06);
 
 }
 
-.action-group{
+.post-left-actions{
 
-    display:flex;
+display:flex;
 
-    gap:18px;
+gap:20px;
 
 }
 
 .action{
 
-    display:flex;
+display:flex;
 
-    align-items:center;
+align-items:center;
 
-    gap:6px;
+gap:6px;
 
-    color:#A4A4AE;
+color:#9A9AA4;
 
-    font-size:13px;
+font-size:13px;
 
-    cursor:pointer;
+font-weight:600;
 
-    transition:.2s;
+cursor:pointer;
 
-}
-
-.action:hover{
-
-    color:var(--primary);
+transition:.25s;
 
 }
 
 .action svg{
 
-    width:20px;
+width:20px;
 
-    height:20px;
+height:20px;
+
+stroke-width:2;
+
+}
+
+.action:hover{
+
+color:var(--purple);
+
+transform:translateY(-1px);
+
+}
+
+/* =========================================
+   FLOAT BUTTON
+========================================= */
+
+#newPost{
+
+position:fixed;
+
+right:22px;
+
+bottom:96px;
+
+width:68px;
+
+height:68px;
+
+border:none;
+
+border-radius:50%;
+
+background:linear-gradient(
+135deg,
+#8B3DFF,
+#C44DFF
+);
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+box-shadow:
+0 0 30px rgba(139,61,255,.45);
+
+cursor:pointer;
+
+z-index:999;
+
+transition:.25s;
+
+}
+
+#newPost:hover{
+
+transform:scale(1.05);
+
+}
+
+#newPost svg{
+
+width:30px;
+
+height:30px;
+
+stroke:white;
+
+}
+
+/* =========================================
+   BOTTOM NAV
+========================================= */
+
+nav{
+
+position:fixed;
+
+left:50%;
+
+transform:translateX(-50%);
+
+bottom:0;
+
+width:100%;
+
+max-width:720px;
+
+height:82px;
+
+display:flex;
+
+justify-content:space-around;
+
+align-items:center;
+
+background:rgba(15,15,18,.97);
+
+backdrop-filter:blur(22px);
+
+border-top:1px solid rgba(255,255,255,.05);
+
+z-index:998;
+
+}
+
+nav button{
+
+width:52px;
+
+height:52px;
+
+border:none;
+
+border-radius:18px;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+cursor:pointer;
+
+transition:.25s;
+
+}
+
+nav button svg{
+
+width:24px;
+
+height:24px;
+
+stroke:#8E8E98;
+
+}
+
+nav button.active{
+
+background:rgba(139,61,255,.16);
+
+}
+
+nav button.active svg{
+
+stroke:var(--purple);
+
+}
+
+nav button:hover{
+
+background:rgba(255,255,255,.05);
 
 }
