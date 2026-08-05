@@ -595,3 +595,352 @@ window.addEventListener("load",()=>{
     });
 
 });
+/* ==========================================
+   POSTS DATA
+========================================== */
+
+app.posts = [
+
+{
+id:1,
+accountType:"official",
+name:"Apple",
+username:"apple",
+avatar:"assets/avatars/apple.png",
+verified:true,
+vip:false,
+time:"12m",
+text:"Apple Intelligence expands to more languages later this year.",
+images:["assets/posts/apple1.jpg"],
+likes:28400,
+comments:1843,
+reposts:3902,
+views:2400000
+},
+
+{
+id:2,
+accountType:"official",
+name:"Ferrari",
+username:"ferrari",
+avatar:"assets/avatars/ferrari.png",
+verified:true,
+vip:false,
+time:"27m",
+text:"Ready for another race weekend. Forza Ferrari.",
+images:["assets/posts/ferrari1.jpg"],
+likes:94100,
+comments:6320,
+reposts:11200,
+views:7800000
+},
+
+{
+id:3,
+accountType:"official",
+name:"BMW",
+username:"bmw",
+avatar:"assets/avatars/bmw.png",
+verified:true,
+vip:false,
+time:"43m",
+text:"The new BMW M4 Competition in Frozen Black.",
+images:["assets/posts/bmw1.jpg"],
+likes:55300,
+comments:2981,
+reposts:3011,
+views:3100000
+},
+
+{
+id:4,
+accountType:"official",
+name:"Formula 1",
+username:"f1",
+avatar:"assets/avatars/f1.png",
+verified:true,
+vip:false,
+time:"58m",
+text:"Lights out tomorrow. Who's taking pole position?",
+images:["assets/posts/f1_1.jpg"],
+likes:132000,
+comments:8511,
+reposts:19200,
+views:9600000
+},
+
+{
+id:5,
+accountType:"vip",
+name:"Lina",
+username:"lina",
+letter:"L",
+gradient:["#8B3DFF","#C54DFF"],
+verified:false,
+vip:true,
+time:"1h",
+text:"Finally finished my new workspace setup.",
+images:["assets/posts/setup1.jpg"],
+likes:4211,
+comments:291,
+reposts:88,
+views:119000
+},
+
+{
+id:6,
+accountType:"free",
+name:"Noah",
+username:"noah",
+letter:"N",
+gradient:["#2563EB","#06B6D4"],
+verified:false,
+vip:false,
+time:"2h",
+text:"Morning coffee before work ☕",
+images:["assets/posts/coffee1.jpg"],
+likes:831,
+comments:41,
+reposts:12,
+views:15200
+},
+
+{
+id:7,
+accountType:"official",
+name:"NASA",
+username:"nasa",
+avatar:"assets/avatars/nasa.png",
+verified:true,
+vip:false,
+time:"3h",
+text:"Another breathtaking view of Earth from orbit.",
+images:["assets/posts/nasa1.jpg"],
+likes:61000,
+comments:3410,
+reposts:8200,
+views:4700000
+},
+
+{
+id:8,
+accountType:"official",
+name:"Spotify",
+username:"spotify",
+avatar:"assets/avatars/spotify.png",
+verified:true,
+vip:false,
+time:"5h",
+text:"Your next favorite playlist just dropped.",
+images:["assets/posts/music1.jpg"],
+likes:22800,
+comments:981,
+reposts:1102,
+views:1900000
+}
+
+];
+/* ==========================================
+   COMMENTS
+========================================== */
+
+const comments = {
+
+1:[
+{name:"Noah",text:"Looks amazing 🔥"},
+{name:"Emma",text:"Can't wait for this."},
+{name:"Maya",text:"Finally!"},
+{name:"Lina",text:"Love it ❤️"},
+{name:"Omar",text:"Best update so far."},
+{name:"Sarah",text:"This is beautiful."},
+{name:"Alex",text:"Great work Apple."},
+{name:"Daniel",text:"Instant upgrade."}
+],
+
+2:[
+{name:"Noah",text:"Forza Ferrari ❤️"},
+{name:"Emma",text:"Let's win this weekend."},
+{name:"Maya",text:"Beautiful car."},
+{name:"Omar",text:"Looks so clean."},
+{name:"Sarah",text:"Dream garage."},
+{name:"Adam",text:"Absolutely stunning."},
+{name:"Lina",text:"🔥🔥🔥"},
+{name:"Alex",text:"Can't stop looking at it."}
+],
+
+3:[
+{name:"Emma",text:"M4 looks perfect."},
+{name:"Sarah",text:"Favorite color."},
+{name:"Omar",text:"Need this."},
+{name:"Noah",text:"BMW never disappoints."},
+{name:"Daniel",text:"Beautiful spec."},
+{name:"Maya",text:"Love it."}
+],
+
+4:[
+{name:"Adam",text:"Ferrari this weekend."},
+{name:"Lina",text:"McLaren 🔥"},
+{name:"Noah",text:"Can't wait."},
+{name:"Emma",text:"Pole tomorrow."},
+{name:"Sarah",text:"Best sport ever."},
+{name:"Alex",text:"Let's go!"}
+],
+
+5:[
+{name:"Emma",text:"Clean setup."},
+{name:"Sarah",text:"Looks cozy."},
+{name:"Omar",text:"Nice lighting."},
+{name:"Noah",text:"Love the colors."},
+{name:"Adam",text:"Goals."}
+]
+
+};
+/* ==========================================
+   PART 8
+   RETOVA INTERACTIONS
+========================================== */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+    // فتح المنشور
+
+    document.querySelectorAll(".post").forEach(post=>{
+
+        post.addEventListener("click",(e)=>{
+
+            if(
+                e.target.closest(".action") ||
+                e.target.closest(".post-menu")
+            ){
+                return;
+            }
+
+            console.log("Open Post");
+
+        });
+
+    });
+
+    // إعجاب
+
+    document.querySelectorAll(".action-like").forEach(button=>{
+
+        button.addEventListener("click",()=>{
+
+            button.classList.toggle("liked");
+
+        });
+
+    });
+
+    // حفظ
+
+    document.querySelectorAll(".action-save").forEach(button=>{
+
+        button.addEventListener("click",()=>{
+
+            button.classList.toggle("saved");
+
+        });
+
+    });
+
+    // إعادة نشر
+
+    document.querySelectorAll(".action-repost").forEach(button=>{
+
+        button.addEventListener("click",()=>{
+
+            button.classList.toggle("reposted");
+
+        });
+
+    });
+
+    // تعليقات
+
+    document.querySelectorAll(".action-comment").forEach(button=>{
+
+        button.addEventListener("click",()=>{
+
+            console.log("Open Comments");
+
+        });
+
+    });
+
+    // مشاركة
+
+    document.querySelectorAll(".action-share").forEach(button=>{
+
+        button.addEventListener("click",()=>{
+
+            console.log("Share");
+
+        });
+
+    });
+
+});
+/* ==========================================
+   PART 9
+   COMMENTS SHEET
+========================================== */
+
+const commentsSheet = {
+
+    opened:false,
+
+    post:null,
+
+    open(postId){
+
+        this.opened=true;
+
+        this.post=postId;
+
+        console.log("Comments:",postId);
+
+    },
+
+    close(){
+
+        this.opened=false;
+
+        this.post=null;
+
+    }
+
+};
+
+/* ==========================================
+   OPEN COMMENTS
+========================================== */
+
+document.addEventListener("click",(e)=>{
+
+    const button=e.target.closest(".action-comment");
+
+    if(!button) return;
+
+    const post=button.closest(".post");
+
+    if(!post) return;
+
+    commentsSheet.open(post.dataset.id);
+
+});
+
+/* ==========================================
+   ESC
+========================================== */
+
+window.addEventListener("keydown",(e)=>{
+
+    if(e.key==="Escape"){
+
+        commentsSheet.close();
+
+    }
+
+});
