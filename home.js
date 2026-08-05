@@ -944,3 +944,163 @@ window.addEventListener("keydown",(e)=>{
     }
 
 });
+/* ==========================================
+PART 11
+COMMENTS SHEET ENGINE
+========================================== */
+
+const commentsSheet =
+document.getElementById("commentsSheet");
+
+const commentsList =
+document.getElementById("commentsList");
+
+/* ====================================== */
+
+const demoComments=[
+
+{
+name:"Lina",
+letter:"L",
+text:"This looks amazing 🔥",
+likes:24
+},
+
+{
+name:"Noah",
+letter:"N",
+text:"Can't wait for this.",
+likes:8
+},
+
+{
+name:"Emma",
+letter:"E",
+text:"Beautiful update.",
+likes:13
+},
+
+{
+name:"Sarah",
+letter:"S",
+text:"Love the design.",
+likes:16
+},
+
+{
+name:"Omar",
+letter:"O",
+text:"Retova keeps getting better.",
+likes:11
+},
+
+{
+name:"Maya",
+letter:"M",
+text:"My favorite app already.",
+likes:31
+},
+
+{
+name:"Alex",
+letter:"A",
+text:"Looks premium.",
+likes:18
+},
+
+{
+name:"Daniel",
+letter:"D",
+text:"Awesome work.",
+likes:9
+}
+
+];
+
+/* ====================================== */
+
+function buildComments(){
+
+commentsList.innerHTML="";
+
+demoComments.forEach(comment=>{
+
+const item=document.createElement("div");
+
+item.className="comment";
+
+item.innerHTML=`
+
+<div class="comment-avatar">
+
+${comment.letter}
+
+</div>
+
+<div class="comment-content">
+
+<div class="comment-name">
+
+${comment.name}
+
+</div>
+
+<div class="comment-text">
+
+${comment.text}
+
+</div>
+
+<div class="comment-like">
+
+❤️ ${comment.likes}
+
+</div>
+
+</div>
+
+`;
+
+commentsList.appendChild(item);
+
+});
+
+}
+
+/* ====================================== */
+
+document.addEventListener("click",(e)=>{
+
+const button=e.target.closest(".action-comment");
+
+if(!button) return;
+
+buildComments();
+
+commentsSheet.classList.add("show");
+
+});
+
+/* ====================================== */
+
+commentsSheet.addEventListener("click",(e)=>{
+
+if(e.target===commentsSheet){
+
+commentsSheet.classList.remove("show");
+
+}
+
+});
+
+/* ====================================== */
+
+window.addEventListener("keydown",(e)=>{
+
+if(e.key==="Escape"){
+
+commentsSheet.classList.remove("show");
+
+}
+
+});
