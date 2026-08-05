@@ -518,3 +518,80 @@ function renderPosts(){
 }
 
 renderPosts();
+/* ==========================================
+   INTERACTIONS
+========================================== */
+
+document.addEventListener("click",(event)=>{
+
+    const action=event.target.closest(".action");
+
+    if(action){
+
+        action.classList.toggle("active");
+
+    }
+
+});
+
+/* ==========================================
+   FLOAT BUTTON
+========================================== */
+
+if(newPostButton){
+
+    newPostButton.addEventListener("click",()=>{
+
+        console.log("Create Post");
+
+    });
+
+}
+
+/* ==========================================
+   NAVIGATION
+========================================== */
+
+const navButtons=document.querySelectorAll("nav button");
+
+navButtons.forEach(button=>{
+
+    button.addEventListener("click",()=>{
+
+        navButtons.forEach(item=>{
+
+            item.classList.remove("active");
+
+        });
+
+        button.classList.add("active");
+
+    });
+
+});
+
+/* ==========================================
+   SIMPLE ANIMATION
+========================================== */
+
+window.addEventListener("load",()=>{
+
+    document.querySelectorAll(".post").forEach((post,index)=>{
+
+        post.style.opacity="0";
+
+        post.style.transform="translateY(20px)";
+
+        setTimeout(()=>{
+
+            post.style.transition=".35s ease";
+
+            post.style.opacity="1";
+
+            post.style.transform="translateY(0)";
+
+        },index*120);
+
+    });
+
+});
