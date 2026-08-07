@@ -845,3 +845,266 @@ window.addEventListener("load",()=>{
     });
 
 });
+
+/* ==========================================
+FAKE USERS DATABASE
+========================================== */
+
+const fakeUsers = [
+
+{type:"official",name:"Ferrari",username:"ferrari",verified:true,avatar:"assets/avatars/ferrari.png"},
+{type:"official",name:"BMW",username:"bmw",verified:true,avatar:"assets/avatars/bmw.png"},
+{type:"official",name:"Red Bull",username:"redbull",verified:true,avatar:"assets/avatars/redbull.png"},
+{type:"official",name:"Apple",username:"apple",verified:true,avatar:"assets/avatars/apple.png"},
+{type:"official",name:"NASA",username:"nasa",verified:true,avatar:"assets/avatars/nasa.png"},
+{type:"official",name:"Spotify",username:"spotify",verified:true,avatar:"assets/avatars/spotify.png"},
+{type:"official",name:"Netflix",username:"netflix",verified:true,avatar:"assets/avatars/netflix.png"},
+{type:"official",name:"Formula 1",username:"f1",verified:true,avatar:"assets/avatars/f1.png"},
+
+{type:"user",name:"Lina",username:"lina",letter:"L",gradient:["#8B3DFF","#C54DFF"]},
+{type:"user",name:"Noah",username:"noah",letter:"N",gradient:["#2563EB","#06B6D4"]},
+{type:"user",name:"Emma",username:"emma",letter:"E",gradient:["#EC4899","#F97316"]},
+{type:"user",name:"Sarah",username:"sarah",letter:"S",gradient:["#14B8A6","#22C55E"]},
+{type:"user",name:"Adam",username:"adam",letter:"A",gradient:["#F59E0B","#EF4444"]},
+{type:"user",name:"Maya",username:"maya",letter:"M",gradient:["#A855F7","#EC4899"]},
+{type:"user",name:"Alex",username:"alex",letter:"A",gradient:["#06B6D4","#3B82F6"]},
+{type:"user",name:"Daniel",username:"daniel",letter:"D",gradient:["#F97316","#FACC15"]}
+
+];
+/* ==========================================
+AUTO GENERATE POSTS
+========================================== */
+
+const fakeTexts = [
+
+"Good morning everyone ☀️",
+"Today's weather is amazing.",
+"Working on something exciting.",
+"Coffee + coding = perfect day ☕",
+"Who's watching Formula 1 today?",
+"New setup completed ✨",
+"Late night vibes 🌙",
+"Weekend plans?",
+"This photo came out better than expected.",
+"Can't stop listening to this playlist.",
+"Travel soon ✈️",
+"Beautiful sunset today.",
+"Learning something new every day.",
+"Rate this from 1 to 10 👀",
+"Retova is looking awesome 💜"
+
+];
+
+for(let i=0;i<40;i++){
+
+    const user =
+    fakeUsers[
+        Math.floor(Math.random()*fakeUsers.length)
+    ];
+
+    app.posts.push({
+
+        id:100+i,
+
+        accountType:
+        user.type==="official"
+        ?"official"
+        :"free",
+
+        name:user.name,
+
+        username:user.username,
+
+        verified:user.verified||false,
+
+        vip:false,
+
+        avatar:user.avatar||"",
+
+        letter:user.letter||"R",
+
+        gradient:user.gradient||["#8B3DFF","#C54DFF"],
+
+        time:
+        Math.floor(Math.random()*23+1)+"h",
+
+        text:
+        fakeTexts[
+        Math.floor(Math.random()*fakeTexts.length)
+        ],
+
+        images:[],
+
+        likes:
+        Math.floor(Math.random()*90000)+100,
+
+        comments:
+        Math.floor(Math.random()*3000)+5,
+
+        reposts:
+        Math.floor(Math.random()*2000),
+
+        views:
+        Math.floor(Math.random()*9000000)+5000
+
+    });
+
+}
+
+renderPosts();
+/* ==========================================
+AUTO COMMENTS
+========================================== */
+
+const commentNames = [
+"Lina","Noah","Emma","Sarah","Adam",
+"Maya","Alex","Daniel","Leo","Olivia",
+"Sophia","Jack","Ava","Lucas","Ethan"
+];
+
+const commentTexts = [
+
+"🔥",
+"Beautiful!",
+"I love this.",
+"Absolutely amazing.",
+"Wow 😍",
+"This is awesome.",
+"Can't wait.",
+"So clean.",
+"Perfect shot.",
+"My favorite.",
+"Great work!",
+"Looks incredible.",
+"Nice one 👏",
+"Love this update.",
+"Retova keeps getting better 💜"
+
+];
+
+app.posts.forEach(post=>{
+
+    comments[post.id]=[];
+
+    const total=
+    Math.floor(Math.random()*12)+4;
+
+    for(let i=0;i<total;i++){
+
+        comments[post.id].push({
+
+            name:
+            commentNames[
+            Math.floor(Math.random()*commentNames.length)
+            ],
+
+            text:
+            commentTexts[
+            Math.floor(Math.random()*commentTexts.length)
+            ],
+
+            likes:
+            Math.floor(Math.random()*80)
+
+        });
+
+    }
+
+});
+/* ==========================================
+LIKE SYSTEM
+========================================== */
+
+document.addEventListener("click", (e) => {
+
+    const like = e.target.closest(".action-like");
+
+    if (!like) return;
+
+    const post = like.closest(".post");
+    if (!post) return;
+
+    const id = Number(post.dataset.id);
+
+    const data = app.posts.find(p => p.id === id);
+
+    if (!data) return;
+
+    const number = like.querySelector(".count");
+
+    if (like.classList.contains("liked")) {
+
+        like.classList.remove("liked");
+        data.likes--;
+
+    } else {
+
+        like.classList.add("liked");
+        data.likes++;
+
+    }
+
+    if (number) {
+        number.textContent = formatNumber(data.likes);
+    }
+
+});
+/* ==========================================
+REACTIONS SYSTEM
+========================================== */
+
+const reactions = {};
+
+function addReaction(postId, emoji) {
+
+    if (!reactions[postId]) {
+        reactions[postId] = {};
+    }
+
+    if (!reactions[postId][emoji]) {
+        reactions[postId][emoji] = 0;
+    }
+
+    reactions[postId][emoji]++;
+
+    renderReactions(postId);
+
+}
+
+function renderReactions(postId) {
+
+    const post = document.querySelector(
+        `.post[data-id="${postId}"]`
+    );
+
+    if (!post) return;
+
+    let container =
+    post.querySelector(".post-reactions");
+
+    if (!container) {
+
+        container = document.createElement("div");
+
+        container.className = "post-reactions";
+
+        post.appendChild(container);
+
+    }
+
+    container.innerHTML = "";
+
+    Object.entries(reactions[postId] || {})
+    .forEach(([emoji, count]) => {
+
+        const item = document.createElement("div");
+
+        item.className = "reaction-item";
+
+        item.textContent = `${emoji} ${count}`;
+
+        container.appendChild(item);
+
+    });
+
+           }
