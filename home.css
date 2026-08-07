@@ -1077,3 +1077,56 @@ font-weight:700;
 cursor:pointer;
 
 }
+/* ==========================================
+REACTION PICKER
+========================================== */
+
+.reaction-picker{
+
+display:none;
+
+position:fixed;
+
+gap:8px;
+
+padding:10px;
+
+background:#18181D;
+
+border:1px solid rgba(255,255,255,.08);
+
+border-radius:18px;
+
+z-index:99999;
+
+box-shadow:0 15px 40px rgba(0,0,0,.45);
+
+}
+
+.reaction-picker button{
+
+width:42px;
+
+height:42px;
+
+border:none;
+
+background:none;
+
+font-size:24px;
+
+cursor:pointer;
+
+border-radius:12px;
+
+transition:.2s;
+
+}
+
+.reaction-picker button:hover{
+
+background:rgba(255,255,255,.08);
+
+transform:scale(1.12);
+
+}
