@@ -1108,3 +1108,70 @@ function renderReactions(postId) {
     });
 
            }
+/* ==========================================
+REACTION PICKER
+========================================== */
+
+const picker = document.getElementById("reactionPicker");
+
+let currentPost = null;
+
+document.addEventListener("contextmenu",(e)=>{
+
+    const like = e.target.closest(".action-like");
+
+    if(!like) return;
+
+    e.preventDefault();
+
+    currentPost = like.closest(".post");
+
+    picker.style.display = "flex";
+
+    picker.style.left = e.pageX + "px";
+
+    picker.style.top = (e.pageY - 70) + "px";
+
+});
+
+document.addEventListener("click",(e)=>{
+
+    if(
+        !picker.contains(e.target) &&
+        !e.target.closest(".action-like")
+    ){
+
+        picker.style.display = "none";
+
+    }
+
+});
+
+picker.querySelectorAll("button").forEach(button=>{
+
+    button.addEventListener("click",()=>{
+
+        if(button.id==="moreEmoji"){
+
+            document
+            .getElementById("emojiInput")
+            .focus();
+
+            return;
+
+        }
+
+        if(!currentPost) return;
+
+        const emoji = button.textContent;
+
+        const id =
+        Number(currentPost.dataset.id);
+
+        addReaction(id,emoji);
+
+        picker.style.display="none";
+
+    });
+
+});
