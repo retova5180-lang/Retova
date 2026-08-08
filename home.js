@@ -180,23 +180,7 @@ seen:false
    POSTS
 =========================== */
 
-app.posts = [
 
-{
-id:1,
-accountType:"official",
-name:"Apple",
-username:"apple",
-avatar:"assets/avatars/apple.png",
-verified:true,
-vip:false,
-time:"12m",
-text:"Apple Intelligence expands to more languages later this year.",
-images:["assets/posts/apple1.jpg"],
-likes:28400,
-comments:1843,
-reposts:3902,
-views:2400000
 },
 
 {
