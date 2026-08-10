@@ -899,7 +899,7 @@ const fakeTexts = [
 
 ];
 
-for(let i=0;i<40;i++){
+
 
     const user =
     fakeUsers[
