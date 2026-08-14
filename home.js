@@ -1059,5 +1059,514 @@ function renderPosts() {
 
                             <span class="count">
 
-                                ${formatNumber(
-                                    po
+${formatNumber(
+    post.reposts
+)}
+
+                            </span>
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="action action-views"
+                        aria-label="Views"
+                    >
+
+                        ${getActionIcon(
+                            "eye",
+                            "Views"
+                        )}
+
+                        <span class="count">
+
+                            ${formatNumber(
+                                post.views
+                            )}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            feedContainer.appendChild(
+                article
+            );
+
+        }
+    );
+
+    refreshIcons();
+
+}
+
+
+/* =========================================================
+   LUCIDE
+========================================================= */
+
+function refreshIcons() {
+
+    if (
+        typeof lucide !== "undefined"
+    ) {
+
+        lucide.createIcons();
+
+    }
+
+}
+
+
+/* =========================================================
+   LIKE
+========================================================= */
+
+function toggleLike(postId) {
+
+    const post =
+        app.posts.find(
+            item => item.id === postId
+        );
+
+    if (!post) return;
+
+
+    if (
+        app.likedPosts.has(postId)
+    ) {
+
+        app.likedPosts.delete(postId);
+
+        post.likes =
+            Math.max(
+                0,
+                post.likes - 1
+            );
+
+    } else {
+
+        app.likedPosts.add(postId);
+
+        post.likes++;
+
+    }
+
+
+    saveHomeState();
+
+    renderPosts();
+
+}
+
+
+/* =========================================================
+   REPOST
+========================================================= */
+
+function toggleRepost(postId) {
+
+    const post =
+        app.posts.find(
+            item => item.id === postId
+        );
+
+    if (!post) return;
+
+
+    if (
+        app.repostedPosts.has(postId)
+    ) {
+
+        app.repostedPosts.delete(
+            postId
+        );
+
+        post.reposts =
+            Math.max(
+                0,
+                post.reposts - 1
+            );
+
+    } else {
+
+        app.repostedPosts.add(
+            postId
+        );
+
+        post.reposts++;
+
+    }
+
+
+    saveHomeState();
+
+    renderPosts();
+
+}
+
+
+/* =========================================================
+   COMMENTS
+========================================================= */
+
+function getComments(postId) {
+
+    if (!app.comments[postId]) {
+
+        app.comments[postId] =
+            demoComments.map(
+                comment => ({
+                    ...comment
+                })
+            );
+
+    }
+
+    return app.comments[postId];
+
+}
+
+
+function buildComments(postId) {
+
+    if (!commentsList) return;
+
+    clear(commentsList);
+
+
+    const comments =
+        getComments(postId);
+
+
+    comments.forEach(
+        comment => {
+
+            const item =
+                create(
+                    "div",
+                    "comment"
+                );
+
+
+            item.innerHTML = `
+
+                <div class="comment-avatar">
+
+                    ${escapeHTML(
+                        comment.letter
+                    )}
+
+                </div>
+
+
+                <div class="comment-content">
+
+                    <div class="comment-name">
+
+                        ${escapeHTML(
+                            comment.name
+                        )}
+
+                    </div>
+
+
+                    <div class="comment-text">
+
+                        ${escapeHTML(
+                            comment.text
+                        )}
+
+                    </div>
+
+
+                    <div class="comment-like">
+
+                        <i
+                            data-lucide="heart"
+                        ></i>
+
+                        ${comment.likes}
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            commentsList.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    refreshIcons();
+
+}
+
+
+/* =========================================================
+   OPEN COMMENTS
+========================================================= */
+
+function openComments(postId) {
+
+    buildComments(postId);
+
+    commentsSheet?.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE COMMENTS
+========================================================= */
+
+function closeComments() {
+
+    commentsSheet?.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   ACTION EVENTS
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const like =
+            event.target.closest(
+                ".action-like"
+            );
+
+
+        if (like) {
+
+            const post =
+                like.closest(".post");
+
+
+            if (post) {
+
+                toggleLike(
+                    Number(
+                        post.dataset.id
+                    )
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        const comment =
+            event.target.closest(
+                ".action-comment"
+            );
+
+
+        if (comment) {
+
+            const post =
+                comment.closest(".post");
+
+
+            if (post) {
+
+                openComments(
+                    Number(
+                        post.dataset.id
+                    )
+                );
+
+            }
+
+            return;
+
+        }
+
+
+        const repost =
+            event.target.closest(
+                ".action-repost"
+            );
+
+
+        if (repost) {
+
+            const post =
+                repost.closest(".post");
+
+
+            if (post) {
+
+                toggleRepost(
+                    Number(
+                        post.dataset.id
+                    )
+                );
+
+            }
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   COMMENTS CLOSE
+========================================================= */
+
+commentsSheet?.addEventListener(
+    "click",
+    event => {
+
+        if (
+            event.target ===
+            commentsSheet
+        ) {
+
+            closeComments();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ESC
+========================================================= */
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            closeComments();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CREATE POST
+========================================================= */
+
+newPostButton?.addEventListener(
+    "click",
+    () => {
+
+        if (
+            typeof openCreatePost ===
+            "function"
+        ) {
+
+            openCreatePost();
+
+        } else {
+
+            console.warn(
+                "create-post.js is not loaded."
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document
+    .querySelectorAll("nav button")
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .querySelectorAll(
+                            "nav button"
+                        )
+                        .forEach(
+                            item => {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+
+                            }
+                        );
+
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+loadHomeState();
+
+renderStories();
+
+renderPosts();
+
+refreshIcons();
+
+
+/* =========================================================
+   PUBLIC API
+========================================================= */
+
+window.retovaApp = app;
+
+window.renderPosts =
+    renderPosts;
+
+window.renderStories =
+    renderStories;
+
+window.openComments =
+    openComments;
+
+window.closeComments =
+    closeComments;
