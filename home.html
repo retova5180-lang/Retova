@@ -11,27 +11,40 @@ content="width=device-width,initial-scale=1.0">
 <title>Retova</title>
 
 <link rel="stylesheet" href="home.css">
+
 <link rel="stylesheet" href="create-post.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 
 <link rel="preconnect"
-href="https://fonts.gstatic.com"
+href="https://fonts.googleapis.com">
+
+<link rel="preconnect"
+href="https://fonts.googleapis.com"
 crossorigin>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+<link
+href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
 rel="stylesheet">
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
 </head>
 
+
 <body>
+
 
 <div class="phone">
 
+
+<!-- =========================================
+HEADER
+========================================= -->
+
 <header class="header">
 
+
 <div id="myAvatar"></div>
+
 
 <div class="logo">
 
@@ -39,86 +52,158 @@ Retova
 
 </div>
 
-<button id="settings">
+
+<button
+id="settings"
+type="button"
+aria-label="Settings"
+>
 
 <i data-lucide="settings-2"></i>
 
 </button>
 
+
 </header>
 
+
+
+<!-- =========================================
+STORIES
+========================================= -->
 
 <section id="stories">
 
 </section>
 
 
+
+<!-- =========================================
+FEED
+========================================= -->
+
 <main id="feed">
 
 </main>
 
 
-<button id="newPost">
+
+<!-- =========================================
+CREATE POST BUTTON
+========================================= -->
+
+<button
+id="newPost"
+type="button"
+aria-label="Create post"
+>
 
 <i data-lucide="plus"></i>
 
 </button>
 
 
+
+<!-- =========================================
+BOTTOM NAVIGATION
+========================================= -->
+
 <nav>
 
-<button class="active">
+
+<button
+class="active"
+type="button"
+aria-label="Home"
+>
 
 <i data-lucide="house"></i>
 
 </button>
 
-<button>
+
+<button
+type="button"
+aria-label="Search"
+>
 
 <i data-lucide="search"></i>
 
 </button>
 
-<button>
+
+<button
+type="button"
+aria-label="Explore"
+>
 
 <i data-lucide="flame"></i>
 
 </button>
 
-<button>
+
+<button
+type="button"
+aria-label="Notifications"
+>
 
 <i data-lucide="bell"></i>
 
 </button>
 
-<button>
+
+<button
+type="button"
+aria-label="Messages"
+>
 
 <i data-lucide="mail"></i>
 
 </button>
 
+
 </nav>
 
+
 </div>
+
+
+
 <!-- =========================================
 COMMENTS SHEET
 ========================================= -->
 
-<div id="commentsSheet" class="comments-sheet">
+<div
+id="commentsSheet"
+class="comments-sheet"
+>
+
 
 <div class="comments-header">
 
+
 <div class="comments-line"></div>
 
-<h3>Comments</h3>
+
+<h3>
+
+Comments
+
+</h3>
+
 
 </div>
+
+
 
 <div id="commentsList">
 
 </div>
 
+
+
 <div class="comments-input">
+
 
 <div class="my-comment-avatar">
 
@@ -126,20 +211,39 @@ R
 
 </div>
 
+
+
 <input
 type="text"
-placeholder="Write a comment...">
+placeholder="Write a comment..."
+>
 
-<button>
+
+
+<button
+type="button"
+>
 
 Send
 
 </button>
 
-</div>
 
 </div>
+
+
+</div>
+
+
+
+<!-- =========================================
+JAVASCRIPT
+========================================= -->
+
+<script src="create-post.js"></script>
+
 <script src="home.js"></script>
+
 
 <script>
 
@@ -147,34 +251,7 @@ lucide.createIcons();
 
 </script>
 
+
 </body>
 
 </html>
-<!-- REACTION PICKER -->
-
-<div id="reactionPicker" class="reaction-picker">
-
-<button>❤️</button>
-
-<button>😂</button>
-
-<button>😍</button>
-
-<button>🔥</button>
-
-<button>😮</button>
-
-<button>🥹</button>
-
-<button>👍</button>
-
-<button>👏</button>
-
-<button id="moreEmoji">➕</button>
-
-</div>
-
-<input
-type="text"
-id="emojiInput"
-style="position:absolute;opacity:0;width:1px;height:1px;">
