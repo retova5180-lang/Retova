@@ -1,6 +1,6 @@
 /* =========================================
    RETOVA HOME
-   VERSION 2.0
+   FINAL VERSION
 ========================================= */
 
 :root{
@@ -59,7 +59,10 @@ min-height:100vh;
 
 }
 
-/* ========================================= */
+
+/* =========================================
+   PHONE
+========================================= */
 
 .phone{
 
@@ -75,8 +78,9 @@ padding-bottom:120px;
 
 }
 
+
 /* =========================================
-HEADER
+   HEADER
 ========================================= */
 
 .header{
@@ -105,8 +109,6 @@ z-index:999;
 
 }
 
-/* ========================================= */
-
 .logo{
 
 font-size:30px;
@@ -118,8 +120,6 @@ letter-spacing:.4px;
 color:white;
 
 }
-
-/* ========================================= */
 
 #myAvatar{
 
@@ -160,8 +160,6 @@ box-shadow:
 rgba(139,61,255,.45);
 
 }
-
-/* ========================================= */
 
 #settings{
 
@@ -211,8 +209,9 @@ stroke:white;
 
 }
 
+
 /* =========================================
-STORIES
+   STORIES
 ========================================= */
 
 #stories{
@@ -234,9 +233,6 @@ scrollbar-width:none;
 display:none;
 
 }
-/* =========================================
-   STORY CARD
-========================================= */
 
 .story{
 
@@ -268,10 +264,16 @@ justify-content:center;
 
 align-items:center;
 
-background:linear-gradient(
+background:
+
+linear-gradient(
+
 135deg,
+
 var(--purple),
+
 var(--purple2)
+
 );
 
 transition:.25s;
@@ -336,8 +338,6 @@ color:#F4F4F4;
 
 }
 
-/* زر الإضافة */
-
 .story.mine .story-plus{
 
 position:absolute;
@@ -352,10 +352,16 @@ height:24px;
 
 border-radius:50%;
 
-background:linear-gradient(
+background:
+
+linear-gradient(
+
 135deg,
+
 var(--purple),
+
 var(--purple2)
+
 );
 
 border:3px solid #09090B;
@@ -372,9 +378,14 @@ font-weight:800;
 
 color:white;
 
-box-shadow:0 0 14px rgba(139,61,255,.45);
+box-shadow:
+
+0 0 14px
+
+rgba(139,61,255,.45);
 
 }
+
 
 /* =========================================
    FEED
@@ -391,6 +402,8 @@ flex-direction:column;
 gap:18px;
 
 }
+
+
 /* =========================================
    POST
 ========================================= */
@@ -407,7 +420,9 @@ padding:18px;
 
 box-shadow:
 
-0 8px 40px rgba(0,0,0,.35);
+0 8px 40px
+
+rgba(0,0,0,.35);
 
 transition:.25s;
 
@@ -415,13 +430,13 @@ transition:.25s;
 
 .post:hover{
 
-border-color:rgba(139,61,255,.35);
+border-color:
+
+rgba(139,61,255,.35);
 
 transform:translateY(-2px);
 
 }
-
-/* ========================================= */
 
 .post-header{
 
@@ -442,8 +457,6 @@ display:flex;
 gap:14px;
 
 }
-
-/* ========================================= */
 
 .post-avatar{
 
@@ -473,8 +486,6 @@ overflow:hidden;
 
 }
 
-/* ========================================= */
-
 .post-info{
 
 display:flex;
@@ -498,8 +509,6 @@ font-size:17px;
 font-weight:800;
 
 }
-
-/* ========================================= */
 
 .verify{
 
@@ -525,16 +534,32 @@ color:white;
 
 }
 
+.verify svg{
+
+width:18px;
+
+height:18px;
+
+stroke:white;
+
+}
+
 .vip{
 
 padding:4px 8px;
 
 border-radius:999px;
 
-background:linear-gradient(
+background:
+
+linear-gradient(
+
 135deg,
+
 #8B3DFF,
+
 #C44DFF
+
 );
 
 font-size:10px;
@@ -544,8 +569,6 @@ font-weight:700;
 color:white;
 
 }
-
-/* ========================================= */
 
 .post-username{
 
@@ -563,7 +586,10 @@ color:#72727C;
 
 }
 
-/* ========================================= */
+
+/* =========================================
+   POST CONTENT
+========================================= */
 
 .post-content{
 
@@ -576,8 +602,6 @@ line-height:1.9;
 color:white;
 
 }
-
-/* ========================================= */
 
 .post-image{
 
@@ -597,15 +621,15 @@ display:block;
 
 }
 
-/* ========================================= */
-
 .post-grid{
 
 margin-top:14px;
 
 display:grid;
 
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:
+
+repeat(2,1fr);
 
 gap:8px;
 
@@ -621,7 +645,9 @@ object-fit:cover;
 
 border-radius:16px;
 
-   }
+}
+
+
 /* =========================================
    POST ACTIONS
 ========================================= */
@@ -638,7 +664,11 @@ margin-top:18px;
 
 padding-top:16px;
 
-border-top:1px solid rgba(255,255,255,.06);
+border-top:
+
+1px solid
+
+rgba(255,255,255,.06);
 
 }
 
@@ -649,6 +679,12 @@ display:flex;
 gap:20px;
 
 }
+
+
+/* =========================================
+   ACTION BUTTONS
+   FIX WHITE RECTANGLES
+========================================= */
 
 .action{
 
@@ -668,6 +704,22 @@ cursor:pointer;
 
 transition:.25s;
 
+background:transparent;
+
+border:none;
+
+padding:0;
+
+margin:0;
+
+outline:none;
+
+box-shadow:none;
+
+-webkit-appearance:none;
+
+appearance:none;
+
 }
 
 .action svg{
@@ -676,7 +728,15 @@ width:20px;
 
 height:20px;
 
+stroke:#9A9AA4;
+
 stroke-width:2;
+
+}
+
+.action .count{
+
+color:#9A9AA4;
 
 }
 
@@ -688,8 +748,149 @@ transform:translateY(-1px);
 
 }
 
+.action:hover svg{
+
+stroke:var(--purple);
+
+}
+
+
 /* =========================================
-   FLOAT BUTTON
+   LIKE
+========================================= */
+
+.action-like.liked{
+
+color:#FF4D8D;
+
+}
+
+.action-like.liked svg{
+
+stroke:#FF4D8D;
+
+fill:rgba(255,77,141,.12);
+
+}
+
+
+/* =========================================
+   REPOST
+========================================= */
+
+.action-repost.active{
+
+color:var(--purple);
+
+}
+
+.action-repost.active svg{
+
+stroke:var(--purple);
+
+}
+
+
+/* =========================================
+   MORE OPTIONS
+========================================= */
+
+.post-more{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+width:36px;
+
+height:36px;
+
+background:transparent;
+
+border:none;
+
+padding:6px;
+
+margin:0;
+
+border-radius:50%;
+
+color:#9A9AA4;
+
+cursor:pointer;
+
+outline:none;
+
+box-shadow:none;
+
+-webkit-appearance:none;
+
+appearance:none;
+
+transition:.25s;
+
+}
+
+.post-more svg{
+
+width:22px;
+
+height:22px;
+
+stroke:#9A9AA4;
+
+stroke-width:2;
+
+}
+
+.post-more:hover{
+
+background:
+
+rgba(255,255,255,.06);
+
+color:var(--purple);
+
+}
+
+.post-more:hover svg{
+
+stroke:var(--purple);
+
+}
+
+
+/* =========================================
+   SCREEN READER ONLY
+========================================= */
+
+.sr-only{
+
+position:absolute;
+
+width:1px;
+
+height:1px;
+
+padding:0;
+
+margin:-1px;
+
+overflow:hidden;
+
+clip:rect(0,0,0,0);
+
+white-space:nowrap;
+
+border:0;
+
+}
+
+
+/* =========================================
+   FLOAT CREATE POST BUTTON
 ========================================= */
 
 #newPost{
@@ -708,10 +909,16 @@ border:none;
 
 border-radius:50%;
 
-background:linear-gradient(
+background:
+
+linear-gradient(
+
 135deg,
+
 #8B3DFF,
+
 #C44DFF
+
 );
 
 display:flex;
@@ -721,7 +928,10 @@ justify-content:center;
 align-items:center;
 
 box-shadow:
-0 0 30px rgba(139,61,255,.45);
+
+0 0 30px
+
+rgba(139,61,255,.45);
 
 cursor:pointer;
 
@@ -729,11 +939,19 @@ z-index:999;
 
 transition:.25s;
 
+outline:none;
+
 }
 
 #newPost:hover{
 
 transform:scale(1.05);
+
+}
+
+#newPost:active{
+
+transform:scale(.96);
 
 }
 
@@ -746,6 +964,7 @@ height:30px;
 stroke:white;
 
 }
+
 
 /* =========================================
    BOTTOM NAV
@@ -773,11 +992,17 @@ justify-content:space-around;
 
 align-items:center;
 
-background:rgba(15,15,18,.97);
+background:
+
+rgba(15,15,18,.97);
 
 backdrop-filter:blur(22px);
 
-border-top:1px solid rgba(255,255,255,.05);
+border-top:
+
+1px solid
+
+rgba(255,255,255,.05);
 
 z-index:998;
 
@@ -803,6 +1028,16 @@ cursor:pointer;
 
 transition:.25s;
 
+background:transparent;
+
+outline:none;
+
+box-shadow:none;
+
+-webkit-appearance:none;
+
+appearance:none;
+
 }
 
 nav button svg{
@@ -817,7 +1052,9 @@ stroke:#8E8E98;
 
 nav button.active{
 
-background:rgba(139,61,255,.16);
+background:
+
+rgba(139,61,255,.16);
 
 }
 
@@ -829,11 +1066,15 @@ stroke:var(--purple);
 
 nav button:hover{
 
-background:rgba(255,255,255,.05);
+background:
+
+rgba(255,255,255,.05);
 
 }
+
+
 /* ==========================================
-COMMENTS SHEET
+   COMMENTS SHEET
 ========================================== */
 
 .comments-sheet{
@@ -860,9 +1101,17 @@ border-top-left-radius:30px;
 
 border-top-right-radius:30px;
 
-border:1px solid rgba(255,255,255,.06);
+border:
 
-box-shadow:0 -15px 40px rgba(0,0,0,.45);
+1px solid
+
+rgba(255,255,255,.06);
+
+box-shadow:
+
+0 -15px 40px
+
+rgba(0,0,0,.45);
 
 transition:.35s ease;
 
@@ -892,7 +1141,11 @@ align-items:center;
 
 gap:12px;
 
-border-bottom:1px solid rgba(255,255,255,.05);
+border-bottom:
+
+1px solid
+
+rgba(255,255,255,.05);
 
 }
 
@@ -950,7 +1203,17 @@ height:46px;
 
 border-radius:50%;
 
-background:linear-gradient(135deg,#8B3DFF,#C54DFF);
+background:
+
+linear-gradient(
+
+135deg,
+
+#8B3DFF,
+
+#C54DFF
+
+);
 
 display:flex;
 
@@ -1012,7 +1275,11 @@ align-items:center;
 
 gap:12px;
 
-border-top:1px solid rgba(255,255,255,.05);
+border-top:
+
+1px solid
+
+rgba(255,255,255,.05);
 
 background:#111114;
 
@@ -1026,7 +1293,17 @@ height:42px;
 
 border-radius:50%;
 
-background:linear-gradient(135deg,#8B3DFF,#C54DFF);
+background:
+
+linear-gradient(
+
+135deg,
+
+#8B3DFF,
+
+#C54DFF
+
+);
 
 display:flex;
 
@@ -1076,9 +1353,13 @@ font-weight:700;
 
 cursor:pointer;
 
+outline:none;
+
 }
+
+
 /* ==========================================
-REACTION PICKER
+   REACTION PICKER
 ========================================== */
 
 .reaction-picker{
@@ -1093,13 +1374,21 @@ padding:10px;
 
 background:#18181D;
 
-border:1px solid rgba(255,255,255,.08);
+border:
+
+1px solid
+
+rgba(255,255,255,.08);
 
 border-radius:18px;
 
 z-index:99999;
 
-box-shadow:0 15px 40px rgba(0,0,0,.45);
+box-shadow:
+
+0 15px 40px
+
+rgba(0,0,0,.45);
 
 }
 
@@ -1121,12 +1410,179 @@ border-radius:12px;
 
 transition:.2s;
 
+outline:none;
+
 }
 
 .reaction-picker button:hover{
 
-background:rgba(255,255,255,.08);
+background:
+
+rgba(255,255,255,.08);
 
 transform:scale(1.12);
 
 }
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media(max-width:480px){
+
+.header{
+
+height:78px;
+
+padding:0 16px;
+
+}
+
+.logo{
+
+font-size:27px;
+
+}
+
+#myAvatar,
+#settings{
+
+width:50px;
+
+height:50px;
+
+}
+
+#stories{
+
+gap:16px;
+
+padding:16px;
+
+}
+
+#feed{
+
+padding:0 14px 20px;
+
+gap:14px;
+
+}
+
+.post{
+
+padding:16px;
+
+border-radius:24px;
+
+}
+
+.post-user{
+
+gap:11px;
+
+}
+
+.post-avatar{
+
+width:52px;
+
+height:52px;
+
+}
+
+.post-name{
+
+font-size:16px;
+
+}
+
+.post-content{
+
+font-size:14px;
+
+}
+
+.post-left-actions{
+
+gap:16px;
+
+}
+
+.action{
+
+font-size:12px;
+
+}
+
+.action svg{
+
+width:19px;
+
+height:19px;
+
+}
+
+.post-more{
+
+width:34px;
+
+height:34px;
+
+}
+
+#newPost{
+
+right:18px;
+
+bottom:94px;
+
+width:64px;
+
+height:64px;
+
+}
+
+nav{
+
+height:78px;
+
+}
+
+nav button{
+
+width:50px;
+
+height:50px;
+
+}
+
+}
+
+
+/* =========================================
+   TOUCH DEVICES
+========================================= */
+
+@media(hover:none){
+
+.post:hover{
+
+transform:none;
+
+}
+
+.action:hover{
+
+transform:none;
+
+}
+
+#newPost:hover{
+
+transform:none;
+
+}
+
+   }
