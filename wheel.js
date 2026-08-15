@@ -1,1102 +1,1101 @@
 /* =========================================================
    ΛRS — DAILY WHEEL
-   Independent Wheel Engine
-========================================================= */
+   Complete standalone wheel system
+   ========================================================= */
 
-(function(){
+(() => {
 
     "use strict";
 
-    const WHEEL_STORAGE =
-        "lrs_daily_wheel_state";
 
-    const MAX_DAILY_SPINS = 2;
+    /* =====================================================
+       CONFIG
+    ===================================================== */
+
+    const STORAGE_KEY =
+        "ars_daily_wheel_state";
+
+    const MAX_SPINS_PER_DAY = 2;
+
+
+    /* =====================================================
+       REWARDS
+    ===================================================== */
 
     const rewards = [
 
         {
-            id:"streak",
-            type:"reward",
-            icon:"🔥",
-            title:{
-                en:"Streak +1",
-                ar:"زيادة ستريك +1"
-            },
-            description:{
-                en:"Your streak has been increased by 1.",
-                ar:"تمت زيادة الستريك الخاص بك بمقدار 1."
-            }
+            id: "streak",
+            title: "Streak Bonus",
+            description: "+1 Streak",
+            type: "reward"
         },
 
         {
-            id:"avatar",
-            type:"reward",
-            icon:"🖼️",
-            title:{
-                en:"Free Avatar",
-                ar:"افتار مجاني"
-            },
-            description:{
-                en:"You unlocked a free avatar for 24 hours.",
-                ar:"حصلت على افتار مجاني لمدة 24 ساعة."
-            }
+            id: "avatar",
+            title: "Free Avatar",
+            description: "Free avatar for 1 day",
+            type: "reward"
         },
 
         {
-            id:"vip",
-            type:"reward",
-            icon:"💜",
-            title:{
-                en:"VIP Badge",
-                ar:"علامة VIP"
-            },
-            description:{
-                en:"Your VIP badge is active for 24 hours.",
-                ar:"علامة VIP الخاصة بك مفعلة لمدة 24 ساعة."
-            }
+            id: "vip",
+            title: "VIP Badge",
+            description: "VIP Badge for 1 day",
+            type: "reward"
         },
 
         {
-            id:"theme",
-            type:"reward",
-            icon:"✨",
-            title:{
-                en:"Favorite Theme",
-                ar:"الثيم المفضل"
-            },
-            description:{
-                en:"Use your favorite theme for 1 hour.",
-                ar:"استخدم ثيمك المفضل لمدة ساعة."
-            }
+            id: "theme",
+            title: "Favorite Theme",
+            description: "Use your favorite theme for 1 hour",
+            type: "reward"
+        },
+
+        {
+            id: "streak2",
+            title: "Streak Bonus",
+            description: "+2 Streak",
+            type: "reward"
+        },
+
+        {
+            id: "avatar2",
+            title: "Free Avatar",
+            description: "Free avatar for 1 day",
+            type: "reward"
+        },
+
+        {
+            id: "vip2",
+            title: "VIP Badge",
+            description: "VIP Badge for 1 day",
+            type: "reward"
+        },
+
+        {
+            id: "theme2",
+            title: "Favorite Theme",
+            description: "Use your favorite theme for 1 hour",
+            type: "reward"
         }
 
     ];
 
+
+    /* =====================================================
+       CHALLENGES
+    ===================================================== */
 
     const challenges = [
 
         {
-            id:"profile",
-            icon:"👤",
-            en:"Change your profile avatar.",
-            ar:"غيّر صورة بروفايلك."
+            id: "post",
+            title: "Post Challenge",
+            description: "Create a post today.",
+            type: "challenge"
         },
 
         {
-            id:"post",
-            icon:"📝",
-            en:"Create a new post today.",
-            ar:"أنشئ منشورًا جديدًا اليوم."
+            id: "like",
+            title: "Like Challenge",
+            description: "Like 5 posts today.",
+            type: "challenge"
         },
 
         {
-            id:"like",
-            icon:"❤️",
-            en:"Like 5 posts.",
-            ar:"سجّل إعجابك بـ 5 منشورات."
+            id: "comment",
+            title: "Comment Challenge",
+            description: "Leave 3 comments today.",
+            type: "challenge"
         },
 
         {
-            id:"comment",
-            icon:"💬",
-            en:"Leave 3 comments.",
-            ar:"اكتب 3 تعليقات."
+            id: "follow",
+            title: "Follow Challenge",
+            description: "Follow 2 new accounts today.",
+            type: "challenge"
         },
 
         {
-            id:"follow",
-            icon:"➕",
-            en:"Follow one new account.",
-            ar:"تابع حسابًا جديدًا."
+            id: "explore",
+            title: "Explore Challenge",
+            description: "Explore 10 posts today.",
+            type: "challenge"
         },
 
         {
-            id:"explore",
-            icon:"🔥",
-            en:"Explore 5 different posts.",
-            ar:"استكشف 5 منشورات مختلفة."
+            id: "repost",
+            title: "Repost Challenge",
+            description: "Repost 2 posts today.",
+            type: "challenge"
         },
 
         {
-            id:"story",
-            icon:"⭕",
-            en:"View 5 stories.",
-            ar:"شاهد 5 قصص."
+            id: "story",
+            title: "Story Challenge",
+            description: "Share a story today.",
+            type: "challenge"
         },
 
         {
-            id:"share",
-            icon:"↗️",
-            en:"Share one post.",
-            ar:"شارك منشورًا واحدًا."
+            id: "message",
+            title: "Message Challenge",
+            description: "Send a message to a friend.",
+            type: "challenge"
         },
 
         {
-            id:"repost",
-            icon:"🔁",
-            en:"Repost one post.",
-            ar:"أعد نشر منشور واحد."
+            id: "profile",
+            title: "Profile Challenge",
+            description: "Update your profile today.",
+            type: "challenge"
         },
 
         {
-            id:"message",
-            icon:"✉️",
-            en:"Send one message.",
-            ar:"أرسل رسالة واحدة."
+            id: "streak",
+            title: "Streak Challenge",
+            description: "Keep your streak alive today.",
+            type: "challenge"
         },
 
         {
-            id:"discover",
-            icon:"🔎",
-            en:"Search for a new account.",
-            ar:"ابحث عن حساب جديد."
+            id: "discover",
+            title: "Discovery Challenge",
+            description: "Visit 3 new profiles.",
+            type: "challenge"
         },
 
         {
-            id:"save",
-            icon:"🔖",
-            en:"Save one post.",
-            ar:"احفظ منشورًا واحدًا."
-        },
-
-        {
-            id:"return",
-            icon:"↩️",
-            en:"Come back to ΛRS tomorrow.",
-            ar:"ارجع إلى ΛRS غدًا."
-        },
-
-        {
-            id:"reaction",
-            icon:"😍",
-            en:"React to 3 posts.",
-            ar:"تفاعل مع 3 منشورات."
-        },
-
-        {
-            id:"official",
-            icon:"⭐",
-            en:"Visit one official account.",
-            ar:"زر حسابًا رسميًا واحدًا."
-        },
-
-        {
-            id:"notifications",
-            icon:"🔔",
-            en:"Check your notifications.",
-            ar:"تحقق من إشعاراتك."
+            id: "save",
+            title: "Save Challenge",
+            description: "Save 3 posts today.",
+            type: "challenge"
         }
 
     ];
 
 
-    function getLanguage(){
+    /* =====================================================
+       STATE
+    ===================================================== */
 
-        const saved =
-            localStorage.getItem(
-                "lrs_language"
-            );
+    let wheelState = {
 
-        if(saved === "ar"){
-            return "ar";
-        }
+        date: getTodayKey(),
 
-        return "en";
-    }
+        spins: 0,
+
+        spinning: false,
+
+        lastResult: null
+
+    };
 
 
-    function getToday(){
+    /* =====================================================
+       HELPERS
+    ===================================================== */
 
-        const date =
+    function getTodayKey() {
+
+        const now =
             new Date();
 
         return [
-            date.getFullYear(),
+            now.getFullYear(),
             String(
-                date.getMonth() + 1
-            ).padStart(2,"0"),
+                now.getMonth() + 1
+            ).padStart(2, "0"),
             String(
-                date.getDate()
-            ).padStart(2,"0")
+                now.getDate()
+            ).padStart(2, "0")
         ].join("-");
 
     }
 
 
-    function getState(){
+    function loadState() {
 
-        try{
+        try {
 
             const saved =
-                JSON.parse(
-                    localStorage.getItem(
-                        WHEEL_STORAGE
-                    )
+                localStorage.getItem(
+                    STORAGE_KEY
                 );
 
-            if(!saved){
+            if (!saved) return;
 
-                return {
-                    date:getToday(),
-                    spins:0,
-                    rewards:[],
-                    challenges:[]
+            const parsed =
+                JSON.parse(saved);
+
+            if (
+                !parsed ||
+                typeof parsed !== "object"
+            ) {
+                return;
+            }
+
+
+            if (
+                parsed.date !==
+                getTodayKey()
+            ) {
+
+                wheelState = {
+
+                    date: getTodayKey(),
+
+                    spins: 0,
+
+                    spinning: false,
+
+                    lastResult: null
+
                 };
+
+                saveState();
+
+                return;
 
             }
 
 
-            if(
-                saved.date !==
-                getToday()
-            ){
+            wheelState.spins =
+                Number(
+                    parsed.spins
+                ) || 0;
 
-                return {
-                    date:getToday(),
-                    spins:0,
-                    rewards:[],
-                    challenges:[]
-                };
+            wheelState.lastResult =
+                parsed.lastResult ||
+                null;
 
-            }
+        } catch (error) {
 
-            return saved;
-
-        }catch(error){
-
-            return {
-                date:getToday(),
-                spins:0,
-                rewards:[],
-                challenges:[]
-            };
+            console.warn(
+                "ΛRS Wheel: storage could not be loaded.",
+                error
+            );
 
         }
 
     }
 
 
-    function saveState(state){
+    function saveState() {
 
-        localStorage.setItem(
-            WHEEL_STORAGE,
-            JSON.stringify(state)
+        try {
+
+            localStorage.setItem(
+
+                STORAGE_KEY,
+
+                JSON.stringify({
+
+                    date:
+                        wheelState.date,
+
+                    spins:
+                        wheelState.spins,
+
+                    lastResult:
+                        wheelState.lastResult
+
+                })
+
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "ΛRS Wheel: storage could not be saved.",
+                error
+            );
+
+        }
+
+    }
+
+
+    function getRemainingSpins() {
+
+        return Math.max(
+
+            0,
+
+            MAX_SPINS_PER_DAY -
+            wheelState.spins
+
         );
 
     }
 
 
-    function randomResult(){
+    function randomItem(array) {
 
-        const all = [
-
-            ...rewards,
-
-            ...challenges.map(
-                challenge => ({
-                    id:challenge.id,
-                    type:"challenge",
-                    icon:challenge.icon,
-                    title:{
-                        en:"Challenge",
-                        ar:"تحدي"
-                    },
-                    description:{
-                        en:challenge.en,
-                        ar:challenge.ar
-                    }
-                })
-            )
-
-        ];
-
-        return all[
+        return array[
             Math.floor(
                 Math.random() *
-                all.length
+                array.length
             )
         ];
 
     }
 
 
-    function applyReward(reward){
+    function escapeHTML(value) {
 
-        const state =
-            getState();
+        return String(value)
+
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+    }
+
+
+    /* =====================================================
+       REWARD STORAGE
+    ===================================================== */
+
+    function getUserRewards() {
+
+        try {
+
+            return JSON.parse(
+
+                localStorage.getItem(
+                    "ars_user_rewards"
+                )
+
+            ) || {};
+
+        } catch {
+
+            return {};
+
+        }
+
+    }
+
+
+    function saveUserRewards(data) {
+
+        try {
+
+            localStorage.setItem(
+
+                "ars_user_rewards",
+
+                JSON.stringify(data)
+
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "ΛRS Wheel: rewards could not be saved.",
+                error
+            );
+
+        }
+
+    }
+
+
+    function applyReward(reward) {
+
+        const data =
+            getUserRewards();
+
 
         const now =
             Date.now();
 
 
-        if(
-            reward.id ===
-            "streak"
-        ){
+        if (
+            reward.id === "streak" ||
+            reward.id === "streak2"
+        ) {
 
-            const current =
+            const amount =
+                reward.id === "streak2"
+                    ? 2
+                    : 1;
+
+            data.streakBonus =
                 Number(
-                    localStorage.getItem(
-                        "lrs_streak"
-                    )
+                    data.streakBonus
                 ) || 0;
 
-            localStorage.setItem(
-                "lrs_streak",
-                String(
-                    current + 1
-                )
-            );
+            data.streakBonus +=
+                amount;
 
         }
 
 
-        if(
-            reward.id ===
-            "avatar"
-        ){
+        if (
+            reward.id === "avatar" ||
+            reward.id === "avatar2"
+        ) {
 
-            localStorage.setItem(
-
-                "lrs_free_avatar",
-
-                JSON.stringify({
-
-                    active:true,
-
-                    expires:
-                        now +
-                        24 *
-                        60 *
-                        60 *
-                        1000
-
-                })
-
-            );
+            data.freeAvatarUntil =
+                now +
+                (
+                    24 *
+                    60 *
+                    60 *
+                    1000
+                );
 
         }
 
 
-        if(
-            reward.id ===
-            "vip"
-        ){
+        if (
+            reward.id === "vip" ||
+            reward.id === "vip2"
+        ) {
 
-            localStorage.setItem(
-
-                "lrs_vip_badge",
-
-                JSON.stringify({
-
-                    active:true,
-
-                    expires:
-                        now +
-                        24 *
-                        60 *
-                        60 *
-                        1000
-
-                })
-
-            );
+            data.vipUntil =
+                now +
+                (
+                    24 *
+                    60 *
+                    60 *
+                    1000
+                );
 
         }
 
 
-        if(
-            reward.id ===
-            "theme"
-        ){
+        if (
+            reward.id === "theme" ||
+            reward.id === "theme2"
+        ) {
 
-            localStorage.setItem(
-
-                "lrs_favorite_theme",
-
-                JSON.stringify({
-
-                    active:true,
-
-                    expires:
-                        now +
-                        60 *
-                        60 *
-                        1000
-
-                })
-
-            );
+            data.favoriteThemeUntil =
+                now +
+                (
+                    60 *
+                    60 *
+                    1000
+                );
 
         }
 
 
-        state.rewards.push({
+        data.lastReward = {
 
-            id:reward.id,
+            id:
+                reward.id,
 
-            receivedAt:now
+            title:
+                reward.title,
 
-        });
+            description:
+                reward.description,
+
+            receivedAt:
+                now
+
+        };
 
 
-        saveState(state);
+        saveUserRewards(
+            data
+        );
+
+
+        /*
+         * Optional integration:
+         * If the profile system exposes a refresh
+         * function, update it automatically.
+         */
+
+        if (
+            typeof window.refreshProfileRewards ===
+            "function"
+        ) {
+
+            window.refreshProfileRewards();
+
+        }
 
     }
 
 
-    function createWheelScreen(){
+    /* =====================================================
+       CSS
+    ===================================================== */
 
-        if(
+    function injectStyles() {
+
+        if (
             document.getElementById(
-                "wheelScreen"
+                "arsWheelStyles"
             )
-        ){
-
+        ) {
             return;
-
         }
 
 
-        const screen =
+        const style =
             document.createElement(
-                "div"
+                "style"
             );
 
-        screen.id =
-            "wheelScreen";
 
-        screen.className =
-            "wheel-screen";
+        style.id =
+            "arsWheelStyles";
 
 
-        screen.innerHTML = `
+        style.textContent = `
 
-            <div class="wheel-container">
+            .ars-wheel-overlay {
 
-                <div class="wheel-header">
+                position:fixed;
 
-                    <div class="wheel-title">
-                        Daily Wheel
-                    </div>
+                inset:0;
 
-                    <button
-                        class="wheel-close"
-                        id="wheelClose"
-                        type="button"
-                    >
-                        ×
-                    </button>
+                background:
+                    rgba(0,0,0,.72);
 
-                </div>
+                backdrop-filter:
+                    blur(18px);
 
+                -webkit-backdrop-filter:
+                    blur(18px);
 
-                <div class="wheel-subtitle">
-                    Spin the wheel and discover your reward or challenge.
-                </div>
+                display:flex;
 
+                align-items:center;
 
-                <div class="wheel-pointer"></div>
+                justify-content:center;
 
+                padding:20px;
 
-                <div
-                    class="wheel"
-                    id="dailyWheel"
-                >
+                opacity:0;
 
-                    <div
-                        class="wheel-segment"
-                        style="
-                            transform:rotate(0deg);
-                            background:conic-gradient(
-                                #8B3DFF 0deg 22.5deg,
-                                #17171C 22.5deg 45deg,
-                                #A143FF 45deg 67.5deg,
-                                #17171C 67.5deg 90deg,
-                                #8B3DFF 90deg 112.5deg,
-                                #17171C 112.5deg 135deg,
-                                #A143FF 135deg 157.5deg,
-                                #17171C 157.5deg 180deg,
-                                #8B3DFF 180deg 202.5deg,
-                                #17171C 202.5deg 225deg,
-                                #A143FF 225deg 247.5deg,
-                                #17171C 247.5deg 270deg,
-                                #8B3DFF 270deg 292.5deg,
-                                #17171C 292.5deg 315deg,
-                                #A143FF 315deg 337.5deg,
-                                #17171C 337.5deg 360deg
-                            );
-                        "
-                    >
-                    </div>
+                pointer-events:none;
 
-                </div>
+                transition:.25s ease;
+
+                z-index:99999;
+
+            }
 
 
-                <div
-                    class="wheel-spins"
-                    id="wheelSpins"
-                >
-                    2 spins left today
-                </div>
+            .ars-wheel-overlay.active {
+
+                opacity:1;
+
+                pointer-events:auto;
+
+            }
 
 
-                <button
-                    class="wheel-spin-button"
-                    id="wheelSpinButton"
-                    type="button"
-                >
-                    Spin
-                </button>
+            .ars-wheel-panel {
 
-            </div>
+                width:100%;
 
+                max-width:460px;
 
-            <div
-                class="wheel-result"
-                id="wheelResult"
-            >
+                max-height:
+                    calc(100vh - 40px);
 
-                <div class="wheel-result-card">
+                overflow-y:auto;
 
-                    <div
-                        class="wheel-result-icon"
-                        id="wheelResultIcon"
-                    >
-                        🎁
-                    </div>
+                background:
+                    linear-gradient(
+                        180deg,
+                        #15151A,
+                        #0D0D10
+                    );
 
+                border:
+                    1px solid
+                    rgba(255,255,255,.08);
 
-                    <div
-                        class="wheel-result-type"
-                        id="wheelResultType"
-                    >
-                        Reward
-                    </div>
+                border-radius:32px;
 
+                padding:22px;
 
-                    <div
-                        class="wheel-result-title"
-                        id="wheelResultTitle"
-                    >
-                        Reward
-                    </div>
+                box-shadow:
+                    0 30px 90px
+                    rgba(0,0,0,.65);
 
+                color:white;
 
-                    <div
-                        class="wheel-result-description"
-                        id="wheelResultDescription"
-                    >
-                    </div>
+                transform:
+                    translateY(20px)
+                    scale(.96);
+
+                transition:.25s ease;
+
+            }
 
 
-                    <div
-                        class="reward-applied"
-                        id="rewardApplied"
-                    >
-                    </div>
+            .ars-wheel-overlay.active
+            .ars-wheel-panel {
+
+                transform:
+                    translateY(0)
+                    scale(1);
+
+            }
 
 
-                    <button
-                        class="wheel-result-exit"
-                        id="wheelResultExit"
-                        type="button"
-                    >
-                        Exit
-                    </button>
+            .ars-wheel-header {
 
-                </div>
+                display:flex;
 
-            </div>
+                align-items:center;
+
+                justify-content:space-between;
+
+                margin-bottom:18px;
+
+            }
+
+
+            .ars-wheel-title {
+
+                font-size:24px;
+
+                font-weight:800;
+
+            }
+
+
+            .ars-wheel-close {
+
+                width:42px;
+
+                height:42px;
+
+                border:0;
+
+                border-radius:50%;
+
+                background:
+                    rgba(255,255,255,.07);
+
+                color:white;
+
+                font-size:25px;
+
+                cursor:pointer;
+
+            }
+
+
+            .ars-wheel-subtitle {
+
+                color:#92929D;
+
+                font-size:14px;
+
+                margin-top:-8px;
+
+                margin-bottom:20px;
+
+            }
+
+
+            .ars-wheel-stage {
+
+                width:min(
+                    320px,
+                    78vw
+                );
+
+                aspect-ratio:1;
+
+                margin:0 auto 22px;
+
+                position:relative;
+
+            }
+
+
+            .ars-wheel-pointer {
+
+                position:absolute;
+
+                top:-5px;
+
+                left:50%;
+
+                transform:
+                    translateX(-50%);
+
+                width:0;
+
+                height:0;
+
+                border-left:
+                    14px solid transparent;
+
+                border-right:
+                    14px solid transparent;
+
+                border-top:
+                    28px solid
+                    #FFFFFF;
+
+                z-index:5;
+
+                filter:
+                    drop-shadow(
+                        0 4px 10px
+                        rgba(0,0,0,.5)
+                    );
+
+            }
+
+
+            .ars-wheel {
+
+                width:100%;
+
+                height:100%;
+
+                border-radius:50%;
+
+                border:
+                    8px solid
+                    #26262E;
+
+                position:relative;
+
+                overflow:hidden;
+
+                background:
+                    conic-gradient(
+                        #8B3DFF 0deg 30deg,
+                        #24242B 30deg 60deg,
+                        #C54DFF 60deg 90deg,
+                        #24242B 90deg 120deg,
+                        #8B3DFF 120deg 150deg,
+                        #24242B 150deg 180deg,
+                        #C54DFF 180deg 210deg,
+                        #24242B 210deg 240deg,
+                        #8B3DFF 240deg 270deg,
+                        #24242B 270deg 300deg,
+                        #C54DFF 300deg 330deg,
+                        #24242B 330deg 360deg
+                    );
+
+                box-shadow:
+                    0 0 45px
+                    rgba(139,61,255,.25);
+
+                transition:
+                    transform
+                    4s cubic-bezier(
+                        .12,
+                        .82,
+                        .18,
+                        1
+                    );
+
+            }
+
+
+            .ars-wheel-center {
+
+                position:absolute;
+
+                inset:50% auto auto 50%;
+
+                transform:
+                    translate(-50%,-50%);
+
+                width:82px;
+
+                height:82px;
+
+                border-radius:50%;
+
+                border:
+                    5px solid
+                    #09090B;
+
+                background:
+                    linear-gradient(
+                        135deg,
+                        #8B3DFF,
+                        #C54DFF
+                    );
+
+                display:flex;
+
+                align-items:center;
+
+                justify-content:center;
+
+                font-size:16px;
+
+                font-weight:900;
+
+                box-shadow:
+                    0 0 25px
+                    rgba(139,61,255,.5);
+
+                z-index:3;
+
+            }
+
+
+            .ars-wheel-info {
+
+                display:flex;
+
+                justify-content:center;
+
+                gap:8px;
+
+                margin-bottom:18px;
+
+            }
+
+
+            .ars-wheel-spins {
+
+                padding:8px 14px;
+
+                border-radius:999px;
+
+                background:
+                    rgba(
+                        139,
+                        61,
+                        255,
+                        .13
+                    );
+
+                color:#CDA8FF;
+
+                font-size:13px;
+
+                font-weight:700;
+
+            }
+
+
+            .ars-wheel-spin-button {
+
+                width:100%;
+
+                min-height:54px;
+
+                border:0;
+
+                border-radius:18px;
+
+                background:
+                    linear-gradient(
+                        135deg,
+                        #8B3DFF,
+                        #C54DFF
+                    );
+
+                color:white;
+
+                font-size:17px;
+
+                font-weight:800;
+
+                cursor:pointer;
+
+                box-shadow:
+                    0 12px 30px
+                    rgba(139,61,255,.28);
+
+                transition:.2s ease;
+
+            }
+
+
+            .ars-wheel-spin-button:active {
+
+                transform:scale(.98);
+
+            }
+
+
+            .ars-wheel-spin-button:disabled {
+
+                opacity:.45;
+
+                cursor:not-allowed;
+
+                box-shadow:none;
+
+            }
+
+
+            .ars-wheel-result {
+
+                display:none;
+
+                margin-top:18px;
+
+                padding:20px;
+
+                border-radius:22px;
+
+                background:
+                    rgba(255,255,255,.045);
+
+                border:
+                    1px solid
+                    rgba(255,255,255,.07);
+
+                text-align:center;
+
+            }
+
+
+            .ars-wheel-result.show {
+
+                display:block;
+
+                animation:
+                    arsResultIn
+                    .35s ease;
+
+            }
+
+
+            @keyframes arsResultIn {
+
+                from {
+
+                    opacity:0;
+
+                    transform:
+                        translateY(10px)
+                        scale(.97);
+
+                }
+
+                to {
+
+                    opacity:1;
+
+                    transform:
+                        translateY(0)
+                        scale(1);
+
+                }
+
+            }
+
+
+            .ars-wheel-result-type {
+
+                font-size:12px;
+
+                text-transform:uppercase;
+
+                letter-spacing:1.5px;
+
+                color:#A78BFA;
+
+                font-weight:800;
+
+                margin-bottom:8px;
+
+            }
+
+
+            .ars-wheel-result-title {
+
+                font-size:22px;
+
+                font-weight:800;
+
+                margin-bottom:8px;
+
+            }
+
+
+            .ars-wheel-result-description {
+
+                color:#B7B7C1;
+
+                font-size:14px;
+
+                line-height:1.6;
+
+            }
+
+
+            .ars-wheel-exit {
+
+                width:100%;
+
+                margin-top:16px;
+
+                min-height:48px;
+
+                border:0;
+
+                border-radius:16px;
+
+                background:
+                    rgba(255,255,255,.08);
+
+                color:white;
+
+                font-size:15px;
+
+                font-weight:700;
+
+                cursor:pointer;
+
+            }
+
+
+            .ars-wheel-empty {
+
+                text-align:center;
+
+                padding:14px 0 4px;
+
+                color:#8F8F99;
+
+                font-size:13px;
+
+            }
 
         `;
 
 
-        document.body.appendChild(
-            screen
+        document.head.appendChild(
+            style
         );
 
-
-        setupWheelEvents();
-
-    }
-
-
-    function updateSpinCounter(){
-
-        const state =
-            getState();
-
-        const remaining =
-            Math.max(
-                0,
-                MAX_DAILY_SPINS -
-                state.spins
-            );
-
-        const counter =
-            document.getElementById(
-                "wheelSpins"
-            );
-
-        const button =
-            document.getElementById(
-                "wheelSpinButton"
-            );
-
-        if(!counter || !button){
-            return;
-        }
-
-
-        const lang =
-            getLanguage();
-
-
-        counter.textContent =
-            lang === "ar"
-
-            ? `${remaining} لفات متبقية اليوم`
-
-            : `${remaining} ${
-                remaining === 1
-                ? "spin"
-                : "spins"
-            } left today`;
-
-
-        button.disabled =
-            remaining <= 0;
-
-
-        button.textContent =
-            lang === "ar"
-            ? "لف"
-            : "Spin";
-
-    }
-
-
-    function showResult(result){
-
-        const lang =
-            getLanguage();
-
-        const resultScreen =
-            document.getElementById(
-                "wheelResult"
-            );
-
-        const icon =
-            document.getElementById(
-                "wheelResultIcon"
-            );
-
-        const type =
-            document.getElementById(
-                "wheelResultType"
-            );
-
-        const title =
-            document.getElementById(
-                "wheelResultTitle"
-            );
-
-        const description =
-            document.getElementById(
-                "wheelResultDescription"
-            );
-
-        const applied =
-            document.getElementById(
-                "rewardApplied"
-            );
-
-        const exit =
-            document.getElementById(
-                "wheelResultExit"
-            );
-
-
-        if(
-            !resultScreen ||
-            !icon ||
-            !type ||
-            !title ||
-            !description ||
-            !applied ||
-            !exit
-        ){
-
-            return;
-
-        }
-
-
-        icon.textContent =
-            result.icon;
-
-
-        type.textContent =
-            result.type === "reward"
-
-            ? (
-                lang === "ar"
-                ? "جائزة"
-                : "Reward"
-            )
-
-            : (
-                lang === "ar"
-                ? "تحدي"
-                : "Challenge"
-            );
-
-
-        title.textContent =
-            result.type === "reward"
-
-            ? result.title[lang]
-
-            : (
-                lang === "ar"
-                ? "تحدي"
-                : "Challenge"
-            );
-
-
-        description.textContent =
-            result.description[lang];
-
-
-        if(
-            result.type === "reward"
-        ){
-
-            applyReward(result);
-
-            applied.textContent =
-                lang === "ar"
-                ? "تمت إضافة الجائزة تلقائيًا ✓"
-                : "Reward added automatically ✓";
-
-        }else{
-
-            applied.textContent =
-                "";
-
-        }
-
-
-        exit.textContent =
-            lang === "ar"
-            ? "خروج"
-            : "Exit";
-
-
-        resultScreen.classList.add(
-            "active"
-        );
-
-    }
-
-
-    function spinWheel(){
-
-        const state =
-            getState();
-
-        if(
-            state.spins >=
-            MAX_DAILY_SPINS
-        ){
-
-            return;
-
-        }
-
-
-        const wheel =
-            document.getElementById(
-                "dailyWheel"
-            );
-
-        const button =
-            document.getElementById(
-                "wheelSpinButton"
-            );
-
-
-        if(!wheel || !button){
-            return;
-        }
-
-
-        button.disabled =
-            true;
-
-
-        const result =
-            randomResult();
-
-
-        state.spins++;
-
-        saveState(state);
-
-
-        const randomRotation =
-            1440 +
-            Math.floor(
-                Math.random() *
-                1440
-            );
-
-
-        wheel.style.transform =
-            `rotate(${randomRotation}deg)`;
-
-
-        setTimeout(
-
-            () => {
-
-                showResult(
-                    result
-                );
-
-                updateSpinCounter();
-
-            },
-
-            4100
-
-        );
-
-    }
-
-
-    function setupWheelEvents(){
-
-        const close =
-            document.getElementById(
-                "wheelClose"
-            );
-
-        const spin =
-            document.getElementById(
-                "wheelSpinButton"
-            );
-
-        const exit =
-            document.getElementById(
-                "wheelResultExit"
-            );
-
-
-        if(close){
-
-            close.addEventListener(
-                "click",
-                closeWheel
-            );
-
-        }
-
-
-        if(spin){
-
-            spin.addEventListener(
-                "click",
-                spinWheel
-            );
-
-        }
-
-
-        if(exit){
-
-            exit.addEventListener(
-                "click",
-                () => {
-
-                    const result =
-                        document.getElementById(
-                            "wheelResult"
-                        );
-
-                    if(result){
-
-                        result.classList.remove(
-                            "active"
-                        );
-
-                    }
-
-                    updateSpinCounter();
-
-                }
-            );
-
-        }
-
-
-        updateSpinCounter();
-
-    }
-
-
-    function openWheel(){
-
-        createWheelScreen();
-
-
-        const screen =
-            document.getElementById(
-                "wheelScreen"
-            );
-
-
-        if(screen){
-
-            screen.classList.add(
-                "active"
-            );
-
-        }
-
-    }
-
-
-    function closeWheel(){
-
-        const screen =
-            document.getElementById(
-                "wheelScreen"
-            );
-
-        if(!screen){
-            return;
-        }
-
-
-        screen.classList.remove(
-            "active"
-        );
-
-
-        const result =
-            document.getElementById(
-                "wheelResult"
-            );
-
-        if(result){
-
-            result.classList.remove(
-                "active"
-            );
-
-        }
-
-    }
-
-
-    function initializeWheel() {
-
-    const wheelButton =
-        document.querySelector(
-            "nav button:nth-child(3)"
-        );
-
-    if (!wheelButton) {
-        console.error("ΛRS: Wheel button not found.");
-        return;
-    }
-
-    if (
-        wheelButton.dataset.wheelBound === "true"
-    ) {
-        return;
-    }
-
-    wheelButton.dataset.wheelBound = "true";
-
-    wheelButton.addEventListener(
-        "click",
-        function(event) {
-
-            event.preventDefault();
-            event.stopImmediatePropagation();
-
-            openWheel();
-
-        },
-        true
-    );
-
-    }
-
-        const buttons =
-            document.querySelectorAll(
-                "nav button"
-            );
-
-
-        if(
-            buttons.length < 3
-        ){
-
-            return;
-
-        }
-
-
-        const wheelButton =
-            buttons[2];
-
-
-        if(
-            wheelButton.dataset
-                .wheelBound === "true"
-        ){
-
-            return;
-
-        }
-
-
-        wheelButton.dataset
-            .wheelBound = "true";
-
-
-        wheelButton.addEventListener(
-            "click",
-            function(event){
-
-                event.preventDefault();
-
-                openWheel();
-
-            }
-        );
-
-    }
-
-
-    if(
-        document.readyState ===
-        "loading"
-    ){
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeWheel
-        );
-
-    }else{
-
-        initializeWheel();
-
-    }
-
-})();
+ 
