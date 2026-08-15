@@ -1001,7 +1001,40 @@
     }
 
 
-    function initializeWheel(){
+    function initializeWheel() {
+
+    const wheelButton =
+        document.querySelector(
+            "nav button:nth-child(3)"
+        );
+
+    if (!wheelButton) {
+        console.error("ΛRS: Wheel button not found.");
+        return;
+    }
+
+    if (
+        wheelButton.dataset.wheelBound === "true"
+    ) {
+        return;
+    }
+
+    wheelButton.dataset.wheelBound = "true";
+
+    wheelButton.addEventListener(
+        "click",
+        function(event) {
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            openWheel();
+
+        },
+        true
+    );
+
+    }
 
         const buttons =
             document.querySelectorAll(
