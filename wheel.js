@@ -1098,4 +1098,580 @@
             style
         );
 
- 
+         /* =====================================================
+           WHEEL UI
+        ===================================================== */
+
+        function createWheelUI() {
+
+            if (
+                document.getElementById(
+                    "arsWheelOverlay"
+                )
+            ) {
+                return;
+            }
+
+            const overlay =
+                document.createElement("div");
+
+            overlay.id =
+                "arsWheelOverlay";
+
+            overlay.className =
+                "ars-wheel-overlay";
+
+            overlay.innerHTML = `
+
+                <div class="ars-wheel-panel">
+
+                    <div class="ars-wheel-header">
+
+                        <div class="ars-wheel-title">
+                            Daily Wheel
+                        </div>
+
+                        <button
+                            class="ars-wheel-close"
+                            id="arsWheelClose"
+                            type="button"
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <div class="ars-wheel-subtitle">
+                        Spin twice every day for a random reward or challenge.
+                    </div>
+
+
+                    <div class="ars-wheel-stage">
+
+                        <div class="ars-wheel-pointer"></div>
+
+                        <div
+                            class="ars-wheel"
+                            id="arsWheel"
+                        >
+
+                            <div class="ars-wheel-center">
+                                ΛRS
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="ars-wheel-info">
+
+                        <div
+                            class="ars-wheel-spins"
+                            id="arsWheelSpins"
+                        >
+                            2 spins left
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        class="ars-wheel-spin-button"
+                        id="arsWheelSpin"
+                        type="button"
+                    >
+                        Spin
+                    </button>
+
+
+                    <div
+                        class="ars-wheel-result"
+                        id="arsWheelResult"
+                    >
+
+                        <div
+                            class="ars-wheel-result-type"
+                            id="arsWheelResultType"
+                        >
+                        </div>
+
+                        <div
+                            class="ars-wheel-result-title"
+                            id="arsWheelResultTitle"
+                        >
+                        </div>
+
+                        <div
+                            class="ars-wheel-result-description"
+                            id="arsWheelResultDescription"
+                        >
+                        </div>
+
+                        <button
+                            class="ars-wheel-exit"
+                            id="arsWheelExit"
+                            type="button"
+                        >
+                            Exit
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            document.body.appendChild(
+                overlay
+            );
+
+
+            setupWheelEvents();
+
+        }
+
+
+        /* =====================================================
+           EVENTS
+        ===================================================== */
+
+        function setupWheelEvents() {
+
+            const overlay =
+                document.getElementById(
+                    "arsWheelOverlay"
+                );
+
+            const close =
+                document.getElementById(
+                    "arsWheelClose"
+                );
+
+            const exit =
+                document.getElementById(
+                    "arsWheelExit"
+                );
+
+            const spin =
+                document.getElementById(
+                    "arsWheelSpin"
+                );
+
+
+            if (!overlay ||
+                !close ||
+                !exit ||
+                !spin) {
+
+                console.error(
+                    "ΛRS Wheel: UI elements are missing."
+                );
+
+                return;
+
+            }
+
+
+            close.addEventListener(
+                "click",
+                closeWheel
+            );
+
+
+            exit.addEventListener(
+                "click",
+                closeWheel
+            );
+
+
+            spin.addEventListener(
+                "click",
+                spinWheel
+            );
+
+
+            overlay.addEventListener(
+                "click",
+                event => {
+
+                    if (
+                        event.target ===
+                        overlay
+                    ) {
+                        closeWheel();
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =====================================================
+           OPEN
+        ===================================================== */
+
+        function openWheel() {
+
+            loadState();
+
+            injectStyles();
+
+            createWheelUI();
+
+            const overlay =
+                document.getElementById(
+                    "arsWheelOverlay"
+                );
+
+            if (!overlay) return;
+
+
+            overlay.classList.add(
+                "active"
+            );
+
+
+            updateWheelUI();
+
+        }
+
+
+        /* =====================================================
+           CLOSE
+        ===================================================== */
+
+        function closeWheel() {
+
+            const overlay =
+                document.getElementById(
+                    "arsWheelOverlay"
+                );
+
+            if (!overlay) return;
+
+
+            overlay.classList.remove(
+                "active"
+            );
+
+        }
+
+
+        /* =====================================================
+           UI UPDATE
+        ===================================================== */
+
+        function updateWheelUI() {
+
+            const remaining =
+                getRemainingSpins();
+
+
+            const spins =
+                document.getElementById(
+                    "arsWheelSpins"
+                );
+
+            const button =
+                document.getElementById(
+                    "arsWheelSpin"
+                );
+
+
+            if (spins) {
+
+                spins.textContent =
+                    remaining === 1
+                        ? "1 spin left"
+                        : `${remaining} spins left`;
+
+            }
+
+
+            if (button) {
+
+                button.disabled =
+                    remaining <= 0 ||
+                    wheelState.spinning;
+
+            }
+
+        }
+
+
+        /* =====================================================
+           PICK RESULT
+        ===================================================== */
+
+        function pickResult() {
+
+            const allItems =
+                rewards.concat(
+                    challenges
+                );
+
+            return randomItem(
+                allItems
+            );
+
+        }
+
+
+        /* =====================================================
+           SPIN
+        ===================================================== */
+
+        function spinWheel() {
+
+            if (
+                wheelState.spinning
+            ) {
+                return;
+            }
+
+
+            if (
+                getRemainingSpins() <= 0
+            ) {
+                updateWheelUI();
+                return;
+            }
+
+
+            const wheel =
+                document.getElementById(
+                    "arsWheel"
+                );
+
+
+            if (!wheel) {
+                return;
+            }
+
+
+            wheelState.spinning =
+                true;
+
+
+            updateWheelUI();
+
+
+            const result =
+                pickResult();
+
+
+            const rotation =
+                1440 +
+                Math.floor(
+                    Math.random() * 1440
+                );
+
+
+            wheel.style.transform =
+                `rotate(${rotation}deg)`;
+
+
+            setTimeout(
+                () => {
+
+                    wheelState.spins += 1;
+
+                    wheelState.lastResult =
+                        result;
+
+
+                    wheelState.spinning =
+                        false;
+
+
+                    saveState();
+
+
+                    if (
+                        result.type ===
+                        "reward"
+                    ) {
+
+                        applyReward(
+                            result
+                        );
+
+                    }
+
+
+                    showResult(
+                        result
+                    );
+
+
+                    updateWheelUI();
+
+                },
+                4100
+            );
+
+        }
+
+
+        /* =====================================================
+           SHOW RESULT
+        ===================================================== */
+
+        function showResult(
+            result
+        ) {
+
+            const resultBox =
+                document.getElementById(
+                    "arsWheelResult"
+                );
+
+            const type =
+                document.getElementById(
+                    "arsWheelResultType"
+                );
+
+            const title =
+                document.getElementById(
+                    "arsWheelResultTitle"
+                );
+
+            const description =
+                document.getElementById(
+                    "arsWheelResultDescription"
+                );
+
+
+            if (!resultBox ||
+                !type ||
+                !title ||
+                !description) {
+
+                return;
+
+            }
+
+
+            type.textContent =
+                result.type === "reward"
+                    ? "Reward"
+                    : "Challenge";
+
+
+            title.textContent =
+                result.title;
+
+
+            description.textContent =
+                result.description;
+
+
+            resultBox.classList.add(
+                "show"
+            );
+
+        }
+
+
+        /* =====================================================
+           BUTTON CONNECTION
+        ===================================================== */
+
+        function connectWheelButton() {
+
+            const button =
+                document.getElementById(
+                    "wheelButton"
+                );
+
+
+            if (!button) {
+
+                console.warn(
+                    "ΛRS Wheel: #wheelButton was not found."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                button.dataset.wheelConnected ===
+                "true"
+            ) {
+                return;
+            }
+
+
+            button.dataset.wheelConnected =
+                "true";
+
+
+            button.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    openWheel();
+
+                }
+            );
+
+        }
+
+
+        /* =====================================================
+           PUBLIC API
+        ===================================================== */
+
+        window.openWheel =
+            openWheel;
+
+
+        window.closeWheel =
+            closeWheel;
+
+
+        window.connectWheelButton =
+            connectWheelButton;
+
+
+        /* =====================================================
+           START
+        ===================================================== */
+
+        function startWheel() {
+
+            injectStyles();
+
+            connectWheelButton();
+
+        }
+
+
+        if (
+            document.readyState ===
+            "loading"
+        ) {
+
+            document.addEventListener(
+                "DOMContentLoaded",
+                startWheel
+            );
+
+        } else {
+
+            startWheel();
+
+        }
+
+
+})();
