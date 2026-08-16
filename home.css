@@ -1,19 +1,28 @@
 /* =========================================================
-   ΛRS HOME
-   FINAL MOBILE LAYOUT
+   ΛRS — HOME
+   Compatible with current home.html + home.js
    ========================================================= */
 
 :root {
-    --bg: #09090B;
+    --bg: #09090b;
     --surface: #111114;
-    --surface2: #18181D;
-    --border: #23232B;
+    --surface-2: #18181d;
+    --surface-3: #202027;
 
-    --purple: #8B3DFF;
-    --purple2: #C54DFF;
+    --border: rgba(255,255,255,.07);
+    --border-hover: rgba(139,61,255,.35);
 
-    --text: #FFFFFF;
-    --muted: #8C8C97;
+    --purple: #8b3dff;
+    --purple-2: #c54dff;
+
+    --text: #ffffff;
+    --muted: #92929d;
+    --muted-2: #6f6f79;
+
+    --blue: #2d9cff;
+
+    --nav-height: 82px;
+    --header-height: 84px;
 
     --radius: 26px;
 }
@@ -30,55 +39,79 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-
 html {
-    width: 100%;
     min-height: 100%;
+    background: var(--bg);
     font-size: 16px;
-    overflow-x: hidden;
 }
 
-
 body {
-    width: 100%;
-    min-width: 0;
     min-height: 100vh;
-
-    margin: 0;
-    padding: 0;
-
     background: var(--bg);
     color: var(--text);
 
-    font-family: "Inter", sans-serif;
+    font-family:
+        "Inter",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
     overflow-x: hidden;
+}
+
+button,
+input,
+textarea {
+    font: inherit;
+}
+
+button {
+    color: inherit;
+}
+
+img {
+    max-width: 100%;
 }
 
 
 /* =========================================================
-   MAIN APP CONTAINER
+   ACCESSIBILITY
+   ========================================================= */
+
+.sr-only {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    padding: 0;
+    margin: -1px;
+
+    overflow: hidden;
+
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+
+    border: 0;
+}
+
+
+/* =========================================================
+   MAIN PHONE CONTAINER
    ========================================================= */
 
 .phone {
-    width: 100% !important;
-    max-width: 100% !important;
-
-    min-width: 0;
+    width: 100%;
+    max-width: 720px;
 
     min-height: 100vh;
 
-    margin: 0 !important;
-    padding: 0 0 120px 0;
+    margin: 0 auto;
+
+    padding-bottom: 125px;
 
     position: relative;
-
-    left: 0 !important;
-    right: auto !important;
-
-    transform: none !important;
-
-    overflow-x: hidden;
 }
 
 
@@ -88,55 +121,32 @@ body {
 
 .header {
     position: sticky;
-
     top: 0;
-    left: 0;
 
     width: 100%;
-
-    height: 84px;
+    height: var(--header-height);
 
     display: flex;
-
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
     padding: 0 20px;
 
-    background: rgba(9, 9, 11, .94);
+    background:
+        rgba(9,9,11,.94);
 
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
 
     border-bottom:
-        1px solid
-        rgba(255, 255, 255, .05);
+        1px solid rgba(255,255,255,.05);
 
-    z-index: 999;
+    z-index: 1000;
 }
 
 
 /* =========================================================
-   LOGO
-   ========================================================= */
-
-.logo {
-    font-size: 30px;
-
-    font-weight: 800;
-
-    letter-spacing: .4px;
-
-    color: white;
-
-    text-align: center;
-
-    user-select: none;
-}
-
-
-/* =========================================================
-   MY AVATAR
+   USER AVATAR IN HEADER
    ========================================================= */
 
 #myAvatar {
@@ -147,78 +157,111 @@ body {
 
     border-radius: 50%;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #C44DFF
+            var(--purple),
+            var(--purple-2)
         );
 
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
+    color: #fff;
 
     font-size: 22px;
-
     font-weight: 800;
-
-    color: white;
 
     box-shadow:
         0 0 26px
-        rgba(139, 61, 255, .45);
+        rgba(139,61,255,.42);
+
+    overflow: hidden;
+
+    background-size: cover;
+    background-position: center;
 }
 
 
 /* =========================================================
-   WHEEL BUTTON
+   LOGO
    ========================================================= */
 
-#wheelButton {
+.logo {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    font-size: 30px;
+    font-weight: 800;
+
+    letter-spacing: .5px;
+
+    color: #fff;
+
+    white-space: nowrap;
+
+    user-select: none;
+}
+
+
+/* =========================================================
+   SETTINGS BUTTON
+   ========================================================= */
+
+#settings {
     width: 54px;
     height: 54px;
 
     flex: 0 0 54px;
 
-    border: none;
-
+    border: 0;
     border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #B54DFF
+            var(--purple),
+            var(--purple-2)
         );
-
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
 
     cursor: pointer;
 
     box-shadow:
         0 0 24px
-        rgba(139, 61, 255, .35);
+        rgba(139,61,255,.35);
 
-    color: white;
-
-    transition: .2s ease;
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
+#settings:hover {
+    transform: scale(1.04);
 
-#wheelButton:active {
-    transform: scale(.94);
+    box-shadow:
+        0 0 30px
+        rgba(139,61,255,.5);
 }
 
+#settings:active {
+    transform: scale(.95);
+}
 
-#wheelButton svg {
+#settings svg {
     width: 24px;
     height: 24px;
 
-    stroke: white;
+    stroke: #fff;
 }
 
 
@@ -228,28 +271,24 @@ body {
 
 #stories {
     width: 100%;
-    max-width: 100%;
 
     display: flex;
+    align-items: flex-start;
 
     gap: 18px;
 
     overflow-x: auto;
+    overflow-y: hidden;
 
-    padding: 18px;
+    padding:
+        18px
+        18px
+        20px;
 
     scrollbar-width: none;
 
-    margin: 0 !important;
-
-    position: relative;
-
-    left: 0 !important;
-    right: auto !important;
-
-    transform: none !important;
+    overscroll-behavior-x: contain;
 }
-
 
 #stories::-webkit-scrollbar {
     display: none;
@@ -257,52 +296,62 @@ body {
 
 
 /* =========================================================
-   STORY
+   STORY CARD
    ========================================================= */
 
 .story {
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
     position: relative;
 
     min-width: 74px;
+    width: 74px;
 
-    flex: 0 0 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    flex-shrink: 0;
 }
 
+
+/* =========================================================
+   STORY RING
+   ========================================================= */
 
 .story-ring {
     width: 72px;
     height: 72px;
 
-    border-radius: 50%;
-
     padding: 3px;
 
-    display: flex;
+    border-radius: 50%;
 
-    justify-content: center;
+    display: flex;
     align-items: center;
+    justify-content: center;
 
     background:
         linear-gradient(
             135deg,
             var(--purple),
-            var(--purple2)
+            var(--purple-2)
         );
 
-    transition: .25s;
+    transition:
+        transform .2s ease;
 }
 
+.story:hover .story-ring {
+    transform: scale(1.04);
+}
 
 .story.seen .story-ring {
-    background: #55555F;
+    background: #4b4b55;
 }
 
+
+/* =========================================================
+   STORY AVATAR
+   ========================================================= */
 
 .story-avatar {
     width: 100%;
@@ -310,92 +359,89 @@ body {
 
     border-radius: 50%;
 
-    background: var(--surface2);
-
     display: flex;
-
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
-    font-size: 23px;
-
-    font-weight: 800;
-
-    color: white;
-
-    background-size: cover;
-
-    background-position: center;
+    background: var(--surface-2);
 
     border:
         2px solid
-        #0B0B0D;
+        #09090b;
+
+    color: #fff;
+
+    font-size: 23px;
+    font-weight: 800;
+
+    background-size: cover;
+    background-position: center;
 
     overflow: hidden;
-}
-
-
-.story-name {
-    margin-top: 8px;
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    max-width: 74px;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-
-    white-space: nowrap;
-
-    text-align: center;
-
-    color: #F4F4F4;
 }
 
 
 /* =========================================================
-   STORY PLUS
+   MY STORY PLUS
    ========================================================= */
 
 .story.mine .story-plus {
     position: absolute;
 
-    bottom: 22px;
     right: -1px;
+    bottom: 22px;
 
     width: 24px;
     height: 24px;
 
     border-radius: 50%;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     background:
         linear-gradient(
             135deg,
             var(--purple),
-            var(--purple2)
+            var(--purple-2)
         );
 
     border:
         3px solid
-        #09090B;
+        #09090b;
 
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
+    color: #fff;
 
     font-size: 15px;
-
     font-weight: 800;
-
-    color: white;
 
     box-shadow:
         0 0 14px
-        rgba(139, 61, 255, .45);
+        rgba(139,61,255,.45);
+}
+
+
+/* =========================================================
+   STORY NAME
+   ========================================================= */
+
+.story-name {
+    width: 74px;
+
+    margin-top: 8px;
+
+    color: #f4f4f4;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 
@@ -404,30 +450,17 @@ body {
    ========================================================= */
 
 #feed {
-    width: 100% !important;
-    max-width: 100% !important;
-
-    min-width: 0;
+    width: 100%;
 
     padding:
-        0 18px 24px !important;
-
-    margin: 0 !important;
+        0
+        18px
+        24px;
 
     display: flex;
-
     flex-direction: column;
 
     gap: 18px;
-
-    position: relative;
-
-    left: 0 !important;
-    right: auto !important;
-
-    transform: none !important;
-
-    overflow-x: hidden;
 }
 
 
@@ -436,37 +469,33 @@ body {
    ========================================================= */
 
 .post {
-    width: 100% !important;
-    max-width: 100% !important;
-
-    min-width: 0;
-
-    background: #111114;
-
-    border:
-        1px solid
-        rgba(255, 255, 255, .05);
-
-    border-radius: 28px;
+    width: 100%;
 
     padding: 18px;
 
+    background: var(--surface);
+
+    border:
+        1px solid
+        rgba(255,255,255,.05);
+
+    border-radius: 28px;
+
     box-shadow:
         0 8px 40px
-        rgba(0, 0, 0, .35);
+        rgba(0,0,0,.35);
 
-    transition: .25s;
-
-    overflow: hidden;
+    transition:
+        border-color .2s ease,
+        transform .2s ease;
 }
-
 
 .post:hover {
     border-color:
-        rgba(139, 61, 255, .35);
+        var(--border-hover);
 
     transform:
-        translateY(-2px);
+        translateY(-1px);
 }
 
 
@@ -475,24 +504,29 @@ body {
    ========================================================= */
 
 .post-header {
-    display: flex;
+    width: 100%;
 
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
 
-    align-items: flex-start;
+    gap: 12px;
 
     margin-bottom: 14px;
-
-    min-width: 0;
 }
 
 
+/* =========================================================
+   POST USER
+   ========================================================= */
+
 .post-user {
+    min-width: 0;
+
     display: flex;
+    align-items: flex-start;
 
     gap: 14px;
-
-    min-width: 0;
 }
 
 
@@ -508,22 +542,28 @@ body {
 
     border-radius: 50%;
 
-    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    background-size: cover;
     background-position: center;
 
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
-
-    font-weight: 800;
+    color: #fff;
 
     font-size: 21px;
-
-    color: white;
+    font-weight: 800;
 
     overflow: hidden;
+}
+
+.post-avatar img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
 }
 
 
@@ -532,47 +572,37 @@ body {
    ========================================================= */
 
 .post-info {
-    display: flex;
+    min-width: 0;
 
+    display: flex;
     flex-direction: column;
 
     gap: 2px;
-
-    min-width: 0;
-}
-
-
-.post-name {
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    font-size: 17px;
-
-    font-weight: 800;
-
-    min-width: 0;
-}
-
-
-.post-username {
-    font-size: 13px;
-
-    color: #9B9BA5;
-}
-
-
-.post-time {
-    font-size: 12px;
-
-    color: #72727C;
 }
 
 
 /* =========================================================
-   VERIFIED
+   POST NAME
+   ========================================================= */
+
+.post-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    color: #fff;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   VERIFIED BADGE
    ========================================================= */
 
 .verify {
@@ -583,23 +613,27 @@ body {
 
     border-radius: 50%;
 
-    background: #2D9CFF;
-
-    display: flex;
-
-    justify-content: center;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
 
-    font-size: 11px;
+    background: var(--blue);
 
-    font-weight: 700;
+    color: #fff;
+}
 
-    color: white;
+.verify svg {
+    width: 13px;
+    height: 13px;
+
+    stroke: #fff;
+
+    stroke-width: 3;
 }
 
 
 /* =========================================================
-   VIP
+   VIP BADGE
    ========================================================= */
 
 .vip {
@@ -610,15 +644,91 @@ body {
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #C44DFF
+            var(--purple),
+            var(--purple-2)
         );
 
+    color: #fff;
+
     font-size: 10px;
+    font-weight: 800;
 
-    font-weight: 700;
+    line-height: 1;
+}
 
-    color: white;
+
+/* =========================================================
+   USERNAME
+   ========================================================= */
+
+.post-username {
+    color: #9b9ba5;
+
+    font-size: 13px;
+
+    line-height: 1.4;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   POST TIME
+   ========================================================= */
+
+.post-time {
+    color: var(--muted-2);
+
+    font-size: 12px;
+
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   MORE BUTTON
+   ========================================================= */
+
+.post-more {
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    border: 0;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+
+    color: var(--muted);
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease;
+}
+
+.post-more:hover {
+    background:
+        rgba(255,255,255,.07);
+
+    color: #fff;
+}
+
+.post-more:active {
+    transform: scale(.94);
+}
+
+.post-more svg {
+    width: 21px;
+    height: 21px;
 }
 
 
@@ -629,11 +739,13 @@ body {
 .post-content {
     margin-top: 12px;
 
+    color: #fff;
+
     font-size: 15px;
 
-    line-height: 1.9;
+    line-height: 1.75;
 
-    color: white;
+    white-space: pre-wrap;
 
     overflow-wrap: anywhere;
 }
@@ -651,12 +763,12 @@ body {
     border-radius: 20px;
 
     overflow: hidden;
-}
 
+    background: var(--surface-2);
+}
 
 .post-image img {
     width: 100%;
-
     height: auto;
 
     display: block;
@@ -666,7 +778,7 @@ body {
 
 
 /* =========================================================
-   POST GRID
+   MULTI IMAGE GRID
    ========================================================= */
 
 .post-grid {
@@ -681,7 +793,6 @@ body {
 
     gap: 8px;
 }
-
 
 .post-grid img {
     width: 100%;
@@ -701,53 +812,77 @@ body {
    ========================================================= */
 
 .post-actions {
-    display: flex;
+    width: 100%;
 
+    display: flex;
+    align-items: center;
     justify-content: space-between;
 
-    align-items: center;
+    gap: 12px;
 
     margin-top: 18px;
-
     padding-top: 16px;
 
     border-top:
         1px solid
-        rgba(255, 255, 255, .06);
-
-    min-width: 0;
+        rgba(255,255,255,.06);
 }
-
 
 .post-left-actions {
     display: flex;
+    align-items: center;
 
-    gap: 20px;
+    gap: 8px;
 
     min-width: 0;
 }
 
 
-.action {
-    display: flex;
+/* =========================================================
+   ACTION BUTTON
+   ========================================================= */
 
+.action {
+    min-width: 0;
+
+    border: 0;
+
+    background: transparent;
+
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
 
     gap: 6px;
 
-    color: #9A9AA4;
+    padding:
+        8px 9px;
+
+    border-radius: 12px;
+
+    color: #9a9aa4;
 
     font-size: 13px;
-
     font-weight: 600;
 
     cursor: pointer;
 
-    transition: .25s;
-
-    white-space: nowrap;
+    transition:
+        color .2s ease,
+        background .2s ease,
+        transform .2s ease;
 }
 
+.action:hover {
+    color: var(--purple);
+
+    background:
+        rgba(139,61,255,.08);
+}
+
+.action:active {
+    transform: scale(.94);
+}
 
 .action svg {
     width: 20px;
@@ -757,159 +892,226 @@ body {
 }
 
 
-.action:hover {
-    color: var(--purple);
+/* =========================================================
+   LIKE ACTIVE
+   ========================================================= */
 
-    transform:
-        translateY(-1px);
+.action-like.liked {
+    color: #ff4d7d;
+}
+
+.action-like.liked:hover {
+    color: #ff4d7d;
+
+    background:
+        rgba(255,77,125,.08);
 }
 
 
 /* =========================================================
-   CREATE POST FLOAT BUTTON
+   REPOST ACTIVE
+   ========================================================= */
+
+.action-repost.active {
+    color: #42d98b;
+}
+
+.action-repost.active:hover {
+    color: #42d98b;
+
+    background:
+        rgba(66,217,139,.08);
+}
+
+
+/* =========================================================
+   ACTION COUNT
+   ========================================================= */
+
+.action .count {
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   VIEWS
+   ========================================================= */
+
+.action-views {
+    color: #8f8f99;
+
+    cursor: default;
+
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.action-views:hover {
+    color: #8f8f99;
+
+    background: transparent;
+}
+
+.action-views:active {
+    transform: none;
+}
+
+
+/* =========================================================
+   CREATE POST FLOATING BUTTON
    ========================================================= */
 
 #newPost {
     position: fixed;
 
-    right: 22px;
+    right: max(
+        22px,
+        calc(
+            (100vw - 720px) / 2 + 22px
+        )
+    );
+
     bottom: 96px;
 
     width: 68px;
     height: 68px;
 
-    border: none;
-
+    border: 0;
     border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #C54DFF
+            var(--purple),
+            var(--purple-2)
         );
-
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
 
     box-shadow:
         0 0 30px
-        rgba(139, 61, 255, .45);
+        rgba(139,61,255,.45);
 
     cursor: pointer;
 
     z-index: 999;
 
-    transition: .25s;
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
 }
-
 
 #newPost:hover {
     transform: scale(1.05);
-}
 
+    box-shadow:
+        0 0 38px
+        rgba(139,61,255,.58);
+}
 
 #newPost:active {
-    transform: scale(.94);
+    transform: scale(.93);
 }
-
 
 #newPost svg {
     width: 30px;
     height: 30px;
 
-    stroke: white;
+    stroke: #fff;
+
+    stroke-width: 2.5;
 }
 
 
 /* =========================================================
-   BOTTOM NAV
+   BOTTOM NAVIGATION
    ========================================================= */
 
 nav {
     position: fixed;
 
-    left: 0 !important;
-    right: 0 !important;
-
+    left: 50%;
     bottom: 0;
 
-    width: 100% !important;
-    max-width: 100% !important;
+    transform:
+        translateX(-50%);
 
-    height: 82px;
+    width: 100%;
+    max-width: 720px;
+
+    height: var(--nav-height);
+
+    padding:
+        8px
+        14px
+        calc(8px + env(safe-area-inset-bottom));
 
     display: flex;
-
+    align-items: center;
     justify-content: space-around;
 
-    align-items: center;
-
     background:
-        rgba(15, 15, 18, .97);
+        rgba(15,15,18,.97);
 
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
 
     border-top:
         1px solid
-        rgba(255, 255, 255, .05);
+        rgba(255,255,255,.05);
 
     z-index: 998;
-
-    transform: none !important;
-
-    margin: 0 !important;
 }
-
 
 nav button {
     width: 52px;
     height: 52px;
 
-    border: none;
-
+    border: 0;
     border-radius: 18px;
 
     display: flex;
-
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     background: transparent;
 
-    color: #8E8E98;
-
     cursor: pointer;
 
-    transition: .25s;
+    transition:
+        background .2s ease,
+        transform .2s ease;
 }
 
+nav button:hover {
+    background:
+        rgba(255,255,255,.05);
+}
+
+nav button:active {
+    transform: scale(.92);
+}
 
 nav button svg {
     width: 24px;
     height: 24px;
 
-    stroke: #8E8E98;
-}
+    stroke: #8e8e98;
 
+    stroke-width: 2;
+}
 
 nav button.active {
     background:
-        rgba(139, 61, 255, .16);
+        rgba(139,61,255,.16);
 }
-
 
 nav button.active svg {
     stroke: var(--purple);
-}
 
-
-nav button:hover {
-    background:
-        rgba(255, 255, 255, .05);
+    stroke-width: 2.4;
 }
 
 
@@ -920,63 +1122,61 @@ nav button:hover {
 .comments-sheet {
     position: fixed;
 
-    left: 0;
-    right: 0;
-
+    left: 50%;
     bottom: -100%;
 
+    transform:
+        translateX(-50%);
+
     width: 100%;
-
     max-width: 720px;
-
-    margin: auto;
 
     height: 78vh;
 
-    background: #111114;
+    display: flex;
+    flex-direction: column;
+
+    background: var(--surface);
+
+    border:
+        1px solid
+        rgba(255,255,255,.06);
 
     border-top-left-radius: 30px;
     border-top-right-radius: 30px;
 
-    border:
-        1px solid
-        rgba(255, 255, 255, .06);
-
     box-shadow:
         0 -15px 40px
-        rgba(0, 0, 0, .45);
+        rgba(0,0,0,.45);
 
-    transition: .35s ease;
+    transition:
+        bottom .35s ease;
 
     z-index: 9999;
-
-    display: flex;
-
-    flex-direction: column;
 }
-
 
 .comments-sheet.show {
     bottom: 0;
 }
 
 
+/* =========================================================
+   COMMENTS HEADER
+   ========================================================= */
+
 .comments-header {
     padding: 18px;
 
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
 
     gap: 12px;
 
     border-bottom:
         1px solid
-        rgba(255, 255, 255, .05);
+        rgba(255,255,255,.05);
 }
-
 
 .comments-line {
     width: 60px;
@@ -984,18 +1184,20 @@ nav button:hover {
 
     border-radius: 999px;
 
-    background: #3B3B45;
+    background: #3b3b45;
 }
-
 
 .comments-header h3 {
+    color: #fff;
+
     font-size: 18px;
-
     font-weight: 700;
-
-    color: white;
 }
 
+
+/* =========================================================
+   COMMENTS LIST
+   ========================================================= */
 
 #commentsList {
     flex: 1;
@@ -1005,19 +1207,23 @@ nav button:hover {
     padding: 18px;
 
     display: flex;
-
     flex-direction: column;
 
     gap: 18px;
+
+    overscroll-behavior: contain;
 }
 
+
+/* =========================================================
+   COMMENT
+   ========================================================= */
 
 .comment {
     display: flex;
 
     gap: 12px;
 }
-
 
 .comment-avatar {
     width: 46px;
@@ -1027,23 +1233,21 @@ nav button:hover {
 
     border-radius: 50%;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #C54DFF
+            var(--purple),
+            var(--purple-2)
         );
 
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
+    color: #fff;
 
     font-weight: 700;
-
-    color: white;
 }
-
 
 .comment-content {
     flex: 1;
@@ -1051,272 +1255,16 @@ nav button:hover {
     min-width: 0;
 }
 
-
 .comment-name {
-    font-size: 15px;
-
-    font-weight: 700;
-
-    color: white;
-
     margin-bottom: 4px;
-}
 
+    color: #fff;
+
+    font-size: 15px;
+    font-weight: 700;
+}
 
 .comment-text {
-    font-size: 14px;
+    color: #d6d6dd;
 
-    line-height: 1.6;
-
-    color: #D6D6DD;
-
-    overflow-wrap: anywhere;
-}
-
-
-.comment-like {
-    margin-top: 8px;
-
-    font-size: 12px;
-
-    color: #9B9BA5;
-}
-
-
-/* =========================================================
-   COMMENTS INPUT
-   ========================================================= */
-
-.comments-input {
-    padding: 16px;
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 12px;
-
-    border-top:
-        1px solid
-        rgba(255, 255, 255, .05);
-
-    background: #111114;
-}
-
-
-.my-comment-avatar {
-    width: 42px;
-    height: 42px;
-
-    flex: 0 0 42px;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #8B3DFF,
-            #C54DFF
-        );
-
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
-
-    font-weight: 700;
-
-    color: white;
-}
-
-
-.comments-input input {
-    flex: 1;
-
-    min-width: 0;
-
-    background: #1A1A20;
-
-    border: none;
-
-    outline: none;
-
-    padding: 14px 16px;
-
-    border-radius: 16px;
-
-    color: white;
-
-    font-size: 14px;
-}
-
-
-.comments-input input::placeholder {
-    color: #777781;
-}
-
-
-.comments-input button {
-    background: #8B3DFF;
-
-    border: none;
-
-    color: white;
-
-    padding: 12px 18px;
-
-    border-radius: 14px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   REACTION PICKER
-   ========================================================= */
-
-.reaction-picker {
-    display: none;
-
-    position: fixed;
-
-    gap: 8px;
-
-    padding: 10px;
-
-    background: #18181D;
-
-    border:
-        1px solid
-        rgba(255, 255, 255, .08);
-
-    border-radius: 18px;
-
-    z-index: 99999;
-
-    box-shadow:
-        0 15px 40px
-        rgba(0, 0, 0, .45);
-}
-
-
-.reaction-picker button {
-    width: 42px;
-    height: 42px;
-
-    border: none;
-
-    background: none;
-
-    font-size: 24px;
-
-    cursor: pointer;
-
-    border-radius: 12px;
-
-    transition: .2s;
-}
-
-
-.reaction-picker button:hover {
-    background:
-        rgba(255, 255, 255, .08);
-
-    transform: scale(1.12);
-}
-
-
-/* =========================================================
-   CREATE POST OPEN STATE
-   ========================================================= */
-
-body.create-post-open {
-    overflow: hidden;
-}
-
-
-/* =========================================================
-   IMPORTANT MOBILE FIX
-   ========================================================= */
-
-@media (max-width: 720px) {
-
-    .phone {
-        width: 100vw !important;
-        max-width: 100vw !important;
-
-        margin: 0 !important;
-    }
-
-
-    .header {
-        width: 100vw;
-
-        padding-left: 18px;
-        padding-right: 18px;
-    }
-
-
-    #stories {
-        width: 100vw;
-
-        padding-left: 18px;
-        padding-right: 18px;
-    }
-
-
-    #feed {
-        width: 100vw !important;
-
-        padding-left: 18px !important;
-        padding-right: 18px !important;
-    }
-
-
-    .post {
-        width: 100% !important;
-    }
-
-
-    nav {
-        width: 100vw !important;
-        max-width: 100vw !important;
-    }
-
-
-    #newPost {
-        right: 20px;
-        bottom: 96px;
-    }
-
-}
-
-
-/* =========================================================
-   EXTRA SAFETY AGAINST HORIZONTAL SHIFT
-   ========================================================= */
-
-body,
-.phone,
-.header,
-#stories,
-#feed,
-.post,
-nav {
-    overflow-x: hidden;
-}
-
-
-img,
-video {
-    max-width: 100%;
-}
-
-
-button,
-input,
-textarea {
-    font-family: inherit;
-   }
+  
