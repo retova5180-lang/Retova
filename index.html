@@ -2,427 +2,477 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="description"
-        content="ΛRS"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ΛRS">
     <title>ΛRS</title>
 
-    <link
-        rel="stylesheet"
-        href="login.css"
-    >
+    <link rel="stylesheet" href="login.css">
 </head>
 
 <body>
 
-    <main class="page">
+<main class="page">
 
-        <section class="auth-wrapper">
+    <section class="auth-wrapper">
 
-            <div class="brand-side">
+        <!-- BRAND -->
 
-                <div class="brand-glow"></div>
+        <div class="brand-side">
 
-                <div class="brand">
-                    <span>ΛRS</span>
-                </div>
+            <div class="brand-glow"></div>
 
-                <div class="brand-content">
+            <div class="brand">
+                <span>ΛRS</span>
+            </div>
 
-                    <h1>
-                        Your world.
-                        <span>Your way.</span>
-                    </h1>
+            <div class="brand-content">
+                <h1>
+                    Your world.
+                    <span>Your way.</span>
+                </h1>
+
+                <p>
+                    Create your profile and make ΛRS yours.
+                </p>
+            </div>
+
+            <div class="brand-footer">
+                © ΛRS
+            </div>
+
+        </div>
+
+
+        <!-- AUTH -->
+
+        <div class="form-side">
+
+            <div class="auth-card">
+
+                <div class="auth-heading">
+
+                    <h2>Welcome</h2>
 
                     <p>
-                        Create your profile and
-                        make ΛRS yours.
+                        Sign in or create your account.
                     </p>
 
                 </div>
 
-                <div class="brand-footer">
-                    © ΛRS
+
+                <!-- TABS -->
+
+                <div class="tabs">
+
+                    <button
+                        class="tab active"
+                        type="button"
+                        data-tab="login"
+                    >
+                        Sign In
+                    </button>
+
+                    <button
+                        class="tab"
+                        type="button"
+                        data-tab="register"
+                    >
+                        Create Account
+                    </button>
+
                 </div>
 
-            </div>
 
+                <!-- LOGIN -->
 
-            <div class="form-side">
+                <form
+                    id="loginForm"
+                    class="form active"
+                    autocomplete="on"
+                >
 
-                <div class="auth-card">
+                    <div class="field">
 
-                    <div class="auth-heading">
+                        <label for="loginEmail">
+                            Email
+                        </label>
 
-                        <h2>
-                            Welcome
-                        </h2>
-
-                        <p>
-                            Sign in or create your account.
-                        </p>
+                        <input
+                            class="input"
+                            id="loginEmail"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            placeholder="Enter your email"
+                            required
+                        >
 
                     </div>
 
 
-                    <div class="tabs">
+                    <div class="field">
 
-                        <button
-                            class="tab active"
-                            type="button"
-                            data-tab="login"
-                        >
-                            Sign In
-                        </button>
+                        <label for="loginPassword">
+                            Password
+                        </label>
 
-                        <button
-                            class="tab"
-                            type="button"
-                            data-tab="register"
+                        <input
+                            class="input"
+                            id="loginPassword"
+                            name="password"
+                            type="password"
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                            required
                         >
-                            Create Account
-                        </button>
 
                     </div>
 
 
-                    <!-- LOGIN -->
-
-                    <form
-                        id="loginForm"
-                        class="form active"
-                        autocomplete="on"
+                    <button
+                        class="primary-button"
+                        type="submit"
                     >
+                        Sign In
+                    </button>
 
-                        <div class="field">
-
-                            <label for="loginEmail">
-                                Email
-                            </label>
-
-                            <input
-                                class="input"
-                                id="loginEmail"
-                                name="email"
-                                type="email"
-                                autocomplete="email"
-                                placeholder="Enter your email"
-                                required
-                            >
-
-                        </div>
+                </form>
 
 
-                        <div class="field">
+                <!-- REGISTER -->
 
-                            <label for="loginPassword">
-                                Password
-                            </label>
+                <form
+                    id="registerForm"
+                    class="form"
+                    autocomplete="on"
+                >
 
-                            <input
-                                class="input"
-                                id="loginPassword"
-                                name="password"
-                                type="password"
-                                autocomplete="current-password"
-                                placeholder="Enter your password"
-                                required
-                            >
+                    <!-- DISPLAY NAME -->
 
-                        </div>
+                    <div class="field">
 
+                        <label for="registerDisplayName">
+                            Display Name
+                        </label>
 
-                        <button
-                            class="primary-button"
-                            type="submit"
+                        <input
+                            class="input"
+                            id="registerDisplayName"
+                            name="displayName"
+                            type="text"
+                            autocomplete="name"
+                            placeholder="Enter your name"
+                            minlength="1"
+                            maxlength="40"
+                            required
                         >
-                            Sign In
-                        </button>
 
-                    </form>
+                    </div>
 
 
-                    <!-- REGISTER -->
+                    <!-- USERNAME -->
 
-                    <form
-                        id="registerForm"
-                        class="form"
-                        autocomplete="on"
-                    >
+                    <div class="field">
 
-                        <div class="field">
+                        <label for="registerUsername">
+                            Username
+                        </label>
 
-                            <label for="registerUsername">
-                                Username
-                            </label>
+                        <div class="username-input-wrapper">
+
+                            <span class="username-prefix">
+                                @
+                            </span>
 
                             <input
-                                class="input"
+                                class="input username-input"
                                 id="registerUsername"
                                 name="username"
                                 type="text"
                                 autocomplete="username"
-                                placeholder="Choose a username"
+                                placeholder="choose your username"
                                 minlength="2"
                                 maxlength="30"
+                                pattern="[A-Za-z0-9._-]+"
                                 required
                             >
 
                         </div>
 
+                        <small class="field-hint">
+                            Letters, numbers, dots, underscores and hyphens.
+                        </small>
 
-                        <div class="field">
-
-                            <label for="registerEmail">
-                                Email
-                            </label>
-
-                            <input
-                                class="input"
-                                id="registerEmail"
-                                name="email"
-                                type="email"
-                                autocomplete="email"
-                                placeholder="Enter your email"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="field">
-
-                            <label for="registerPassword">
-                                Password
-                            </label>
-
-                            <input
-                                class="input"
-                                id="registerPassword"
-                                name="password"
-                                type="password"
-                                autocomplete="new-password"
-                                placeholder="Create a password"
-                                minlength="8"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="profile-setup">
-
-                            <button
-                                class="profile-setup-button"
-                                id="openProfileSetup"
-                                type="button"
-                            >
-
-                                <div
-                                    class="profile-preview"
-                                    id="profilePreview"
-                                >
-                                    A
-                                </div>
-
-                                <div class="profile-text">
-
-                                    <strong>
-                                        Customize Profile
-                                    </strong>
-
-                                    <span>
-                                        Choose your letter and colors
-                                    </span>
-
-                                </div>
-
-                                <div class="profile-arrow">
-                                    ›
-                                </div>
-
-                            </button>
-
-                        </div>
-
-
-                        <button
-                            class="primary-button"
-                            type="submit"
-                        >
-                            Create Account
-                        </button>
-
-                    </form>
-
-
-                    <div class="divider">
-                        <span>OR</span>
                     </div>
 
 
-                    <div class="social-buttons">
+                    <!-- EMAIL -->
+
+                    <div class="field">
+
+                        <label for="registerEmail">
+                            Email
+                        </label>
+
+                        <input
+                            class="input"
+                            id="registerEmail"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            placeholder="Enter your email"
+                            required
+                        >
+
+                        <small class="field-hint">
+                            Your email is private and will not appear on your profile.
+                        </small>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="field">
+
+                        <label for="registerPassword">
+                            Password
+                        </label>
+
+                        <input
+                            class="input"
+                            id="registerPassword"
+                            name="password"
+                            type="password"
+                            autocomplete="new-password"
+                            placeholder="Create a password"
+                            minlength="8"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- PROFILE -->
+
+                    <div class="profile-setup">
 
                         <button
-                            class="social-button"
-                            id="googleLogin"
+                            class="profile-setup-button"
+                            id="openProfileSetup"
                             type="button"
                         >
-                            Continue with Google
-                        </button>
 
-                        <button
-                            class="social-button"
-                            id="appleLogin"
-                            type="button"
-                        >
-                            Continue with Apple
+                            <div
+                                class="profile-preview"
+                                id="profilePreview"
+                            >
+                                A
+                            </div>
+
+                            <div class="profile-text">
+
+                                <strong>
+                                    Customize Profile
+                                </strong>
+
+                                <span>
+                                    Choose your letter and colors
+                                </span>
+
+                            </div>
+
+                            <div class="profile-arrow">
+                                ›
+                            </div>
+
                         </button>
 
                     </div>
 
+
+                    <!-- CREATE -->
+
+                    <button
+                        class="primary-button"
+                        type="submit"
+                    >
+                        Create Account
+                    </button>
+
+                </form>
+
+
+                <!-- SOCIAL -->
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+
+                <div class="social-buttons">
+
+                    <button
+                        class="social-button"
+                        id="googleLogin"
+                        type="button"
+                    >
+                        Continue with Google
+                    </button>
+
+                    <button
+                        class="social-button"
+                        id="appleLogin"
+                        type="button"
+                    >
+                        Continue with Apple
+                    </button>
+
                 </div>
 
             </div>
 
-        </section>
+        </div>
 
-    </main>
+    </section>
 
-
-    <!-- PROFILE SETUP MODAL -->
-
-    <div
-        class="modal"
-        id="profileModal"
-        aria-hidden="true"
-    >
-
-        <div class="modal-card">
-
-            <div class="modal-header">
-
-                <h3>
-                    Customize Profile
-                </h3>
-
-                <button
-                    class="close-button"
-                    id="closeProfileSetup"
-                    type="button"
-                    aria-label="Close"
-                >
-                    ×
-                </button>
-
-            </div>
+</main>
 
 
-            <div class="setup-preview">
+<!-- PROFILE MODAL -->
 
-                <div
-                    class="large-avatar"
-                    id="largeAvatarPreview"
-                >
-                    A
-                </div>
+<div
+    class="modal"
+    id="profileModal"
+    aria-hidden="true"
+>
 
-            </div>
+    <div class="modal-card">
 
+        <div class="modal-header">
 
-            <div class="setup-section">
-
-                <span class="setup-section-title">
-                    Choose Letter
-                </span>
-
-                <div
-                    class="letter-grid"
-                    id="letterGrid"
-                ></div>
-
-            </div>
-
-
-            <div class="setup-section">
-
-                <span class="setup-section-title">
-                    Letter Color
-                </span>
-
-                <div
-                    class="color-grid"
-                    id="letterColors"
-                ></div>
-
-            </div>
-
-
-            <div class="setup-section">
-
-                <span class="setup-section-title">
-                    Background
-                </span>
-
-                <div
-                    class="color-grid"
-                    id="backgroundColors"
-                ></div>
-
-            </div>
-
-
-            <div class="subscribe-box">
-
-                <div class="subscribe-info">
-
-                    <strong>
-                        Want a real avatar?
-                    </strong>
-
-                    <span>
-                        VIP members can upload
-                        their own profile image.
-                    </span>
-
-                </div>
-
-                <button
-                    class="subscribe-button"
-                    id="openSubscription"
-                    type="button"
-                >
-                    VIP
-                </button>
-
-            </div>
-
+            <h3>
+                Customize Profile
+            </h3>
 
             <button
-                class="save-profile"
-                id="saveProfileSetup"
+                class="close-button"
+                id="closeProfileSetup"
                 type="button"
+                aria-label="Close"
             >
-                Save Profile
+                ×
             </button>
 
         </div>
 
+
+        <!-- PREVIEW -->
+
+        <div class="setup-preview">
+
+            <div
+                class="large-avatar"
+                id="largeAvatarPreview"
+            >
+                A
+            </div>
+
+        </div>
+
+
+        <!-- LETTER -->
+
+        <div class="setup-section">
+
+            <span class="setup-section-title">
+                Choose Letter
+            </span>
+
+            <div
+                class="letter-grid"
+                id="letterGrid"
+            ></div>
+
+        </div>
+
+
+        <!-- LETTER COLOR -->
+
+        <div class="setup-section">
+
+            <span class="setup-section-title">
+                Letter Color
+            </span>
+
+            <div
+                class="color-grid"
+                id="letterColors"
+            ></div>
+
+        </div>
+
+
+        <!-- BACKGROUND -->
+
+        <div class="setup-section">
+
+            <span class="setup-section-title">
+                Background
+            </span>
+
+            <div
+                class="color-grid"
+                id="backgroundColors"
+            ></div>
+
+        </div>
+
+
+        <!-- VIP -->
+
+        <div class="subscribe-box">
+
+            <div class="subscribe-info">
+
+                <strong>
+                    Want a real avatar?
+                </strong>
+
+                <span>
+                    VIP members can upload
+                    their own profile image.
+                </span>
+
+            </div>
+
+            <button
+                class="subscribe-button"
+                id="openSubscription"
+                type="button"
+            >
+                VIP
+            </button>
+
+        </div>
+
+
+        <!-- SAVE -->
+
+        <button
+            class="save-profile"
+            id="saveProfileSetup"
+            type="button"
+        >
+            Save Profile
+        </button>
+
     </div>
 
+</div>
 
-    <script
-        src="auth.js"
-        defer
-    ></script>
+
+<script src="auth.js" defer></script>
 
 </body>
-</html>
+    </html>
