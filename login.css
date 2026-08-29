@@ -911,3 +911,36 @@ button {
         grid-template-columns: repeat(5, 1fr);
     }
 }
+.username-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.username-prefix {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    color: #777782;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    z-index: 2;
+}
+
+.username-input {
+    padding-left: 34px !important;
+}
+
+.field-hint {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #666671;
+
+    font-size: 11px;
+    line-height: 1.4;
+}
