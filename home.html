@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#08080B"
+    >
+
+    <title>ΛRS</title>
+
+    <link
+        rel="stylesheet"
+        href="home.css"
+    >
+</head>
+
+<body>
+
+    <!-- =====================================================
+         APP
+    ====================================================== -->
+
+    <div class="ars-app">
+
+
+        <!-- =================================================
+             TOP HEADER
+        ================================================== -->
+
+        <header class="ars-header">
+
+            <!-- User Avatar -->
+
+            <button
+                class="ars-user-button"
+                id="userProfileButton"
+                type="button"
+                aria-label="Open profile"
+            >
+                <span
+                    class="ars-user-avatar"
+                    id="userAvatar"
+                >
+                    R
+                </span>
+
+                <span
+                    class="ars-avatar-plus"
+                    aria-hidden="true"
+                >
+                    +
+                </span>
+            </button>
+
+
+            <!-- Logo -->
+
+            <button
+                class="ars-logo"
+                id="homeLogo"
+                type="button"
+                aria-label="ΛRS Home"
+            >
+                ΛRS
+            </button>
+
+
+            <!-- Daily Wheel -->
+
+            <button
+                class="ars-wheel-button"
+                id="dailyWheelButton"
+                type="button"
+                aria-label="Open daily wheel"
+            >
+
+                <span
+                    class="ars-wheel-icon"
+                    aria-hidden="true"
+                >
+
+                    <span class="wheel-line wheel-line-1"></span>
+                    <span class="wheel-line wheel-line-2"></span>
+                    <span class="wheel-line wheel-line-3"></span>
+
+                    <span class="wheel-dot wheel-dot-1"></span>
+                    <span class="wheel-dot wheel-dot-2"></span>
+                    <span class="wheel-dot wheel-dot-3"></span>
+
+                </span>
+
+            </button>
+
+        </header>
+
+
+        <!-- =================================================
+             STORIES / PEOPLE
+        ================================================== -->
+
+        <section
+            class="ars-stories-section"
+            aria-label="People and wheel"
+        >
+
+            <div
+                class="ars-stories"
+                id="storiesContainer"
+            >
+
+
+                <!-- YOU -->
+
+                <button
+                    class="ars-story ars-story-you"
+                    type="button"
+                    data-profile="you"
+                >
+
+                    <span class="ars-story-avatar user-letter-avatar">
+                        R
+                    </span>
+
+                    <span
+                        class="ars-story-plus"
+                        aria-hidden="true"
+                    >
+                        +
+                    </span>
+
+                    <span class="ars-story-name">
+                        You
+                    </span>
+
+                </button>
+
+
+                <!-- LINA -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="lina"
+                >
+
+                    <span class="ars-story-avatar photo-avatar">
+                        <img
+                            src="assets/avatars/lina.jpg"
+                            alt="Lina"
+                            loading="lazy"
+                        >
+                    </span>
+
+                    <span class="ars-online-dot"></span>
+
+                    <span class="ars-story-name">
+                        Lina
+                    </span>
+
+                </button>
+
+
+                <!-- NOAH -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="noah"
+                >
+
+                    <span class="ars-story-avatar photo-avatar">
+                        <img
+                            src="assets/avatars/noah.jpg"
+                            alt="Noah"
+                            loading="lazy"
+                        >
+                    </span>
+
+                    <span class="ars-online-dot"></span>
+
+                    <span class="ars-story-name">
+                        Noah
+                    </span>
+
+                </button>
+
+
+                <!-- SARA -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="sara"
+                >
+
+                    <span class="ars-story-avatar photo-avatar">
+                        <img
+                            src="assets/avatars/sara.jpg"
+                            alt="Sara"
+                            loading="lazy"
+                        >
+                    </span>
+
+                    <span class="ars-online-dot"></span>
+
+                    <span class="ars-story-name">
+                        Sara
+                    </span>
+
+                </button>
+
+
+                <!-- DAILY WHEEL -->
+
+                <button
+                    class="ars-story ars-story-wheel"
+                    id="storiesWheelButton"
+                    type="button"
+                >
+
+                    <span
+                        class="ars-story-avatar wheel-story-avatar"
+                    >
+
+                        <span class="mini-wheel">
+
+                            <span class="mini-wheel-center"></span>
+
+                            <span class="mini-wheel-spoke spoke-1"></span>
+                            <span class="mini-wheel-spoke spoke-2"></span>
+                            <span class="mini-wheel-spoke spoke-3"></span>
+                            <span class="mini-wheel-spoke spoke-4"></span>
+                            <span class="mini-wheel-spoke spoke-5"></span>
+                            <span class="mini-wheel-spoke spoke-6"></span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="ars-story-name">
+                        Wheel
+                    </span>
+
+                </button>
+
+
+                <!-- APPLE -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="apple"
+                >
+
+                    <span class="ars-story-avatar brand-avatar apple-avatar">
+                        
+                    </span>
+
+                    <span class="ars-verified-dot">
+                        ✓
+                    </span>
+
+                    <span class="ars-story-name">
+                        Apple
+                    </span>
+
+                </button>
+
+
+                <!-- FERRARI -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="ferrari"
+                >
+
+                    <span class="ars-story-avatar brand-avatar ferrari-avatar">
+                        F
+                    </span>
+
+                    <span class="ars-story-name">
+                        Ferrari
+                    </span>
+
+                </button>
+
+
+                <!-- BMW -->
+
+                <button
+                    class="ars-story"
+                    type="button"
+                    data-profile="bmw"
+                >
+
+                    <span class="ars-story-avatar brand-avatar bmw-avatar">
+                        BMW
+                    </span>
+
+                    <span class="ars-story-name">
+                        BMW
+                    </span>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             MAIN FEED
+        ================================================== -->
+
+        <main
+            class="ars-feed"
+            id="feed"
+        >
+
+
+            <!-- =============================================
+                 POST 1 — LINA
+            ============================================== -->
+
+            <article
+                class="ars-post"
+                data-post-id="lina-001"
+            >
+
+                <div class="ars-post-header">
+
+                    <button
+                        class="ars-post-profile"
+                        type="button"
+                    >
+
+                        <span class="ars-post-avatar letter-avatar">
+                            L
+                        </span>
+
+                        <span class="ars-post-user-info">
+
+                            <span class="ars-post-name-row">
+
+                                <strong>
+                                    Lina
+                                </strong>
+
+                                <span class="ars-post-verified">
+                                    ✓
+                                </span>
+
+                            </span>
+
+                            <span class="ars-post-username">
+                                @lina.ae
+                            </span>
+
+                            <span class="ars-post-time">
+                                12m
+                            </span>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="ars-post-menu"
+                        type="button"
+                        aria-label="Post options"
+                    >
+                        •••
+                    </button>
+
+                </div>
+
+
+                <div class="ars-post-content">
+
+                    <p>
+                        Sunset always hits different 💜
+                    </p>
+
+                </div>
+
+
+                <div class="ars-post-image">
+
+                    <img
+                        src="assets/posts/sunset.jpg"
+                        alt="Sunset"
+                        loading="lazy"
+                    >
+
+                </div>
+
+
+                <div class="ars-post-actions">
+
+                    <button
+                        class="ars-post-action like-button"
+                        type="button"
+                        aria-label="Like"
+                    >
+                        <span class="action-icon">♡</span>
+                        <span class="action-count">2.4K</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action comment-button"
+                        type="button"
+                        aria-label="Comment"
+                    >
+                        <span class="action-icon">○</span>
+                        <span class="action-count">186</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action repost-button"
+                        type="button"
+                        aria-label="Repost"
+                    >
+                        <span class="action-icon">↗</span>
+                        <span class="action-count">312</span>
+                    </button>
+
+
+                    <span class="ars-post-views">
+                        <span class="views-icon">◉</span>
+                        <span>48K</span>
+                    </span>
+
+                </div>
+
+            </article>
+
+
+            <!-- =============================================
+                 POST 2 — APPLE
+            ============================================== -->
+
+            <article
+                class="ars-post"
+                data-post-id="apple-001"
+            >
+
+                <div class="ars-post-header">
+
+                    <button
+                        class="ars-post-profile"
+                        type="button"
+                    >
+
+                        <span class="ars-post-avatar brand-post-avatar">
+                            
+                        </span>
+
+                        <span class="ars-post-user-info">
+
+                            <span class="ars-post-name-row">
+
+                                <strong>
+                                    Apple
+                                </strong>
+
+                                <span class="ars-post-verified">
+                                    ✓
+                                </span>
+
+                            </span>
+
+                            <span class="ars-post-username">
+                                @apple
+                            </span>
+
+                            <span class="ars-post-time">
+                                28m
+                            </span>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="ars-post-menu"
+                        type="button"
+                        aria-label="Post options"
+                    >
+                        •••
+                    </button>
+
+                </div>
+
+
+                <div class="ars-post-content">
+
+                    <p>
+                        Apple Intelligence expands to more languages later this year.
+                    </p>
+
+                </div>
+
+
+                <div class="ars-post-image">
+
+                    <img
+                        src="assets/posts/apple.jpg"
+                        alt="Apple post"
+                        loading="lazy"
+                    >
+
+                </div>
+
+
+                <div class="ars-post-actions">
+
+                    <button
+                        class="ars-post-action like-button"
+                        type="button"
+                    >
+                        <span class="action-icon">♡</span>
+                        <span class="action-count">28.4K</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action comment-button"
+                        type="button"
+                    >
+                        <span class="action-icon">○</span>
+                        <span class="action-count">1.8K</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action repost-button"
+                        type="button"
+                    >
+                        <span class="action-icon">↗</span>
+                        <span class="action-count">3.9K</span>
+                    </button>
+
+
+                    <span class="ars-post-views">
+                        <span class="views-icon">◉</span>
+                        <span>2.4M</span>
+                    </span>
+
+                </div>
+
+            </article>
+
+
+            <!-- =============================================
+                 POST 3 — NOAH
+            ============================================== -->
+
+            <article
+                class="ars-post"
+                data-post-id="noah-001"
+            >
+
+                <div class="ars-post-header">
+
+                    <button
+                        class="ars-post-profile"
+                        type="button"
+                    >
+
+                        <span class="ars-post-avatar letter-avatar">
+                            N
+                        </span>
+
+                        <span class="ars-post-user-info">
+
+                            <span class="ars-post-name-row">
+
+                                <strong>
+                                    Noah
+                                </strong>
+
+                                <span class="ars-post-verified">
+                                    ✓
+                                </span>
+
+                            </span>
+
+                            <span class="ars-post-username">
+                                @noah.vibes
+                            </span>
+
+                            <span class="ars-post-time">
+                                45m
+                            </span>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="ars-post-menu"
+                        type="button"
+                        aria-label="Post options"
+                    >
+                        •••
+                    </button>
+
+                </div>
+
+
+                <div class="ars-post-content">
+
+                    <p>
+                        Focused on the journey.
+                    </p>
+
+                </div>
+
+
+                <div class="ars-post-image">
+
+                    <img
+                        src="assets/posts/noah.jpg"
+                        alt="Noah post"
+                        loading="lazy"
+                    >
+
+                </div>
+
+
+                <div class="ars-post-actions">
+
+                    <button
+                        class="ars-post-action like-button"
+                        type="button"
+                    >
+                        <span class="action-icon">♡</span>
+                        <span class="action-count">8.1K</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action comment-button"
+                        type="button"
+                    >
+                        <span class="action-icon">○</span>
+                        <span class="action-count">432</span>
+                    </button>
+
+
+                    <button
+                        class="ars-post-action repost-button"
+                        type="button"
+                    >
+                        <span class="action-icon">↗</span>
+                        <span class="action-count">728</span>
+                    </button>
+
+
+                    <span class="ars-post-views">
+                        <span class="views-icon">◉</span>
+                        <span>91K</span>
+                    </span>
+
+                </div>
+
+            </article>
+
+
+        </main>
+
+
+        <!-- =================================================
+             CREATE POST BUTTON
+        ================================================== -->
+
+        <button
+            class="ars-create-post"
+            id="createPostButton"
+            type="button"
+            aria-label="Create post"
+        >
+            +
+        </button>
+
+
+        <!-- =================================================
+             BOTTOM NAVIGATION
+        ================================================== -->
+
+        <nav
+            class="ars-bottom-nav"
+            aria-label="Main navigation"
+        >
+
+            <button
+                class="ars-nav-item active"
+                id="navHome"
+                type="button"
+                data-page="home"
+            >
+
+                <span class="ars-nav-icon">
+                    ⌂
+                </span>
+
+                <span class="ars-nav-label">
+                    Home
+                </span>
+
+            </button>
+
+
+            <button
+                class="ars-nav-item"
+                id="navSearch"
+                type="button"
+                data-page="search"
+            >
+
+                <span class="ars-nav-icon">
+                    ⌕
+                </span>
+
+                <span class="ars-nav-label">
+                    Search
+                </span>
+
+            </button>
+
+
+            <button
+                class="ars-nav-item"
+                id="navTrending"
+                type="button"
+                data-page="trending"
+            >
+
+                <span class="ars-nav-icon">
+                    ♨
+                </span>
+
+                <span class="ars-nav-label">
+                    Trending
+                </span>
+
+            </button>
+
+
+            <button
+                class="ars-nav-item"
+                id="navNotifications"
+                type="button"
+              
