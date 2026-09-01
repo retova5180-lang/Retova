@@ -1,851 +1,854 @@
+// ======================================
+// ΛRS AUTH
+// Clean Authentication System
+// ======================================
+
 "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
+// ======================================
+// Elements
+// ======================================
 
-    const tabs = document.querySelectorAll(".tab");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
 
-    const loginForm =
-        document.getElementById("loginForm");
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
 
-    const registerForm =
-        document.getElementById("registerForm");
+const bottomText = document.getElementById("bottomText");
+const switchForm = document.getElementById("switchForm");
 
-    const profileModal =
-        document.getElementById("profileModal");
+const avatarUpload = document.getElementById("avatarUpload");
+const avatarPreview = document.getElementById("avatarPreview");
 
-    const openProfileSetup =
-        document.getElementById("openProfileSetup");
+const googleLogin = document.getElementById("googleLogin");
 
-    const closeProfileSetup =
-        document.getElementById("closeProfileSetup");
+// ======================================
+// Safety Check
+// ======================================
 
-    const saveProfileSetup =
-        document.getElementById("saveProfileSetup");
+if (!loginForm || !signupForm) {
+    console.error("Auth Error: Login or Signup form was not found.");
+}
 
-    const openSubscription =
-        document.getElementById("openSubscription");
+// ======================================
+// Show Login
+// ======================================
 
-    const profilePreview =
-        document.getElementById("profilePreview");
+function showLogin() {
 
-    const largeAvatarPreview =
-        document.getElementById("largeAvatarPreview");
+    if (!loginForm || !signupForm) return;
 
-    const letterGrid =
-        document.getElementById("letterGrid");
+    loginForm.style.display = "block";
+    signupForm.style.display = "none";
 
-    const letterColors =
-        document.getElementById("letterColors");
+    if (loginTab) {
+        loginTab.classList.add("active");
+    }
 
-    const backgroundColors =
-        document.getElementById("backgroundColors");
+    if (signupTab) {
+        signupTab.classList.remove("active");
+    }
 
-    const googleLogin =
-        document.getElementById("googleLogin");
+    if (bottomText) {
+        bottomText.textContent = "Don't have an account?";
+    }
 
-    const appleLogin =
-        document.getElementById("appleLogin");
+    const link = document.getElementById("switchForm");
 
+    if (link) {
+        link.textContent = "Create Account";
+        link.onclick = switchForms;
+    }
+}
 
-    /* =========================================
-       PROFILE
-    ========================================= */
+// ======================================
+// Show Signup
+// ======================================
 
-    const profile = {
+function showSignup() {
 
-        letter: "A",
+    if (!loginForm || !signupForm) return;
 
-        letterColor: "#FFFFFF",
+    loginForm.style.display = "none";
+    signupForm.style.display = "block";
 
-        backgroundColor: "#8B3DFF"
+    if (signupTab) {
+        signupTab.classList.add("active");
+    }
 
-    };
+    if (loginTab) {
+        loginTab.classList.remove("active");
+    }
 
+    if (bottomText) {
+        bottomText.textContent = "Already have an account?";
+    }
 
-    /* =========================================
-       LETTERS
-    ========================================= */
+    const link = document.getElementById("switchForm");
 
-    const letters = [
+    if (link) {
+        link.textContent = "Login";
+        link.onclick = switchForms;
+    }
+}
 
-        ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+// ======================================
+// Switch Login / Signup
+// ======================================
 
-        ..."0123456789",
+function switchForms(event) {
 
-        "@",
-        "#",
-        "$",
-        "&",
-        "*",
-        "+"
+    if (event) {
+        event.preventDefault();
+    }
 
-    ];
+    if (!signupForm) return;
 
+    const signupVisible =
+        signupForm.style.display !== "none";
 
-    /* =========================================
-       COLORS
-    ========================================= */
+    if (signupVisible) {
+        showLogin();
+    } else {
+        showSignup();
+    }
+}
 
-    const textColors = [
+// ======================================
+// Tabs
+// ======================================
 
-        "#FFFFFF",
-        "#000000",
-        "#F8FAFC",
-        "#FDE68A",
-        "#FCA5A5",
-        "#FDBA74",
-        "#86EFAC",
-        "#67E8F9",
-        "#93C5FD",
-        "#C4B5FD",
-        "#F0ABFC",
-        "#FDA4AF"
-
-    ];
-
-
-    const bgColors = [
-
-        "#8B3DFF",
-        "#C54DFF",
-        "#6D28D9",
-        "#4C1D95",
-        "#111827",
-        "#18181B",
-        "#27272A",
-        "#3F3F46",
-        "#0F172A",
-        "#1E293B",
-        "#164E63",
-        "#14532D",
-        "#713F12",
-        "#7F1D1D"
-
-    ];
-
-
-    /* =========================================
-       TAB SYSTEM
-    ========================================= */
-
-    tabs.forEach(tab => {
-
-        tab.addEventListener("click", () => {
-
-            const selected =
-                tab.dataset.tab;
-
-            tabs.forEach(item => {
-
-                item.classList.remove(
-                    "active"
-                );
-
-            });
-
-            tab.classList.add("active");
-
-
-            if (selected === "login") {
-
-                loginForm.classList.add(
-                    "active"
-                );
-
-                registerForm.classList.remove(
-                    "active"
-                );
-
-            } else {
-
-                registerForm.classList.add(
-                    "active"
-                );
-
-                loginForm.classList.remove(
-                    "active"
-                );
-
-            }
-
-        });
-
+if (loginTab) {
+    loginTab.addEventListener("click", function () {
+        showLogin();
     });
+}
 
+if (signupTab) {
+    signupTab.addEventListener("click", function () {
+        showSignup();
+    });
+}
 
-    /* =========================================
-       PREVIEW
-    ========================================= */
+if (switchForm) {
+    switchForm.addEventListener("click", switchForms);
+}
 
-    function updatePreview() {
+// ======================================
+// Avatar Preview
+// ======================================
 
-        profilePreview.textContent =
-            profile.letter;
+if (avatarUpload && avatarPreview) {
 
-        largeAvatarPreview.textContent =
-            profile.letter;
+    avatarUpload.addEventListener("change", function () {
 
+        const file = this.files && this.files[0];
 
-        profilePreview.style.color =
-            profile.letterColor;
+        if (!file) return;
 
-        largeAvatarPreview.style.color =
-            profile.letterColor;
-
-
-        profilePreview.style.background =
-            profile.backgroundColor;
-
-        largeAvatarPreview.style.background =
-            profile.backgroundColor;
-
-    }
-
-
-    /* =========================================
-       LETTERS
-    ========================================= */
-
-    function buildLetters() {
-
-        letterGrid.innerHTML = "";
-
-
-        letters.forEach(letter => {
-
-            const button =
-                document.createElement("button");
-
-
-            button.type = "button";
-
-            button.className =
-                "letter-option";
-
-            button.textContent =
-                letter;
-
-
-            if (
-                letter === profile.letter
-            ) {
-
-                button.classList.add(
-                    "selected"
-                );
-
-            }
-
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    profile.letter =
-                        letter;
-
-
-                    document
-                        .querySelectorAll(
-                            ".letter-option"
-                        )
-                        .forEach(item => {
-
-                            item.classList.remove(
-                                "selected"
-                            );
-
-                        });
-
-
-                    button.classList.add(
-                        "selected"
-                    );
-
-
-                    updatePreview();
-
-                }
-            );
-
-
-            letterGrid.appendChild(button);
-
-        });
-
-    }
-
-
-    /* =========================================
-       LETTER COLORS
-    ========================================= */
-
-    function buildLetterColors() {
-
-        letterColors.innerHTML = "";
-
-
-        textColors.forEach(color => {
-
-            const button =
-                document.createElement("button");
-
-
-            button.type = "button";
-
-            button.className =
-                "color-option";
-
-            button.style.background =
-                color;
-
-
-            if (
-                color ===
-                profile.letterColor
-            ) {
-
-                button.classList.add(
-                    "selected"
-                );
-
-            }
-
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    profile.letterColor =
-                        color;
-
-
-                    document
-                        .querySelectorAll(
-                            "#letterColors .color-option"
-                        )
-                        .forEach(item => {
-
-                            item.classList.remove(
-                                "selected"
-                            );
-
-                        });
-
-
-                    button.classList.add(
-                        "selected"
-                    );
-
-
-                    updatePreview();
-
-                }
-            );
-
-
-            letterColors.appendChild(button);
-
-        });
-
-    }
-
-
-    /* =========================================
-       BACKGROUND COLORS
-    ========================================= */
-
-    function buildBackgroundColors() {
-
-        backgroundColors.innerHTML = "";
-
-
-        bgColors.forEach(color => {
-
-            const button =
-                document.createElement("button");
-
-
-            button.type = "button";
-
-            button.className =
-                "color-option";
-
-            button.style.background =
-                color;
-
-
-            if (
-                color ===
-                profile.backgroundColor
-            ) {
-
-                button.classList.add(
-                    "selected"
-                );
-
-            }
-
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    profile.backgroundColor =
-                        color;
-
-
-                    document
-                        .querySelectorAll(
-                            "#backgroundColors .color-option"
-                        )
-                        .forEach(item => {
-
-                            item.classList.remove(
-                                "selected"
-                            );
-
-                        });
-
-
-                    button.classList.add(
-                        "selected"
-                    );
-
-
-                    updatePreview();
-
-                }
-            );
-
-
-            backgroundColors.appendChild(button);
-
-        });
-
-    }
-
-
-    /* =========================================
-       OPEN PROFILE
-    ========================================= */
-
-    openProfileSetup.addEventListener(
-        "click",
-        () => {
-
-            buildLetters();
-
-            buildLetterColors();
-
-            buildBackgroundColors();
-
-            updatePreview();
-
-
-            profileModal.classList.add(
-                "open"
-            );
-
-            profileModal.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image.");
+            this.value = "";
+            return;
         }
-    );
 
+        const reader = new FileReader();
 
-    /* =========================================
-       CLOSE PROFILE
-    ========================================= */
+        reader.onload = function (event) {
 
-    function closeModal() {
+            if (event.target && event.target.result) {
+                avatarPreview.src = event.target.result;
+            }
 
-        profileModal.classList.remove(
-            "open"
-        );
+        };
 
-        profileModal.setAttribute(
-            "aria-hidden",
-            "true"
-        );
+        reader.readAsDataURL(file);
+    });
+}
 
+// ======================================
+// Calculate Age
+// ======================================
+
+function calculateAge(birthDate) {
+
+    if (!birthDate) {
+        return null;
     }
 
+    const today = new Date();
+    const birth = new Date(birthDate);
 
-    closeProfileSetup.addEventListener(
-        "click",
-        closeModal
-    );
+    let age =
+        today.getFullYear() -
+        birth.getFullYear();
 
+    const monthDifference =
+        today.getMonth() -
+        birth.getMonth();
 
-    profileModal.addEventListener(
-        "click",
-        event => {
+    if (
+        monthDifference < 0 ||
+        (
+            monthDifference === 0 &&
+            today.getDate() < birth.getDate()
+        )
+    ) {
+        age--;
+    }
 
-            if (
-                event.target ===
-                profileModal
-            ) {
+    return age;
+}
 
-                closeModal();
+// ======================================
+// Create Account
+// ======================================
 
-            }
+if (signupForm) {
 
+    signupForm.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        // ----------------------------------
+        // Make sure Supabase exists
+        // ----------------------------------
+
+        if (!window.supabase) {
+            alert("Authentication system is not loaded.");
+            console.error("Supabase library is missing.");
+            return;
         }
-    );
 
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Escape" &&
-                profileModal.classList.contains(
-                    "open"
-                )
-            ) {
-
-                closeModal();
-
-            }
-
+        if (typeof supabase === "undefined") {
+            alert("Supabase connection is not available.");
+            console.error("supabase.js was not loaded.");
+            return;
         }
-    );
 
+        // ----------------------------------
+        // Get Values
+        // ----------------------------------
 
-    /* =========================================
-       SAVE PROFILE
-    ========================================= */
+        const displayNameElement =
+            document.getElementById("displayName");
 
-    saveProfileSetup.addEventListener(
-        "click",
-        () => {
+        const usernameElement =
+            document.getElementById("username");
 
-            const profileData = {
+        const emailElement =
+            document.getElementById("signupEmail");
 
-                letter:
-                    profile.letter,
+        const passwordElement =
+            document.getElementById("signupPassword");
 
-                letterColor:
-                    profile.letterColor,
+        const confirmPasswordElement =
+            document.getElementById("confirmPassword");
 
-                backgroundColor:
-                    profile.backgroundColor,
+        const birthDateElement =
+            document.getElementById("birthDate");
 
-                letterChangedAt:
-                    Date.now()
+        const displayName =
+            displayNameElement
+                ? displayNameElement.value.trim()
+                : "";
 
-            };
+        const username =
+            usernameElement
+                ? usernameElement.value.trim()
+                : "";
 
+        const email =
+            emailElement
+                ? emailElement.value.trim()
+                : "";
 
-            localStorage.setItem(
-                "ars_profile_setup",
-                JSON.stringify(
-                    profileData
-                )
+        const password =
+            passwordElement
+                ? passwordElement.value
+                : "";
+
+        const confirmPassword =
+            confirmPasswordElement
+                ? confirmPasswordElement.value
+                : "";
+
+        const birthDate =
+            birthDateElement
+                ? birthDateElement.value
+                : "";
+
+        // ----------------------------------
+        // Validation
+        // ----------------------------------
+
+        if (!displayName) {
+            alert("Please enter your display name.");
+            return;
+        }
+
+        if (!username) {
+            alert("Please enter your username.");
+            return;
+        }
+
+        if (!email) {
+            alert("Please enter your email.");
+            return;
+        }
+
+        if (!password) {
+            alert("Please enter a password.");
+            return;
+        }
+
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        if (!birthDate) {
+            alert("Please select your date of birth.");
+            return;
+        }
+
+        const age = calculateAge(birthDate);
+
+        if (age === null || age < 13) {
+            alert("You must be at least 13 years old.");
+            return;
+        }
+
+        // ----------------------------------
+        // Disable Button
+        // ----------------------------------
+
+        const submitButton =
+            signupForm.querySelector(
+                'button[type="submit"]'
             );
 
+        const originalButtonText =
+            submitButton
+                ? submitButton.textContent
+                : "";
 
-            closeModal();
-
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "Creating...";
         }
-    );
-
-
-    /* =========================================
-       RESTORE PROFILE
-    ========================================= */
-
-    function restoreProfile() {
 
         try {
 
-            const saved =
-                localStorage.getItem(
-                    "ars_profile_setup"
+            // ----------------------------------
+            // Create Supabase Account
+            // ----------------------------------
+
+            const {
+                data,
+                error
+            } = await supabase.auth.signUp({
+
+                email: email,
+
+                password: password
+
+            });
+
+            // ----------------------------------
+            // Auth Error
+            // ----------------------------------
+
+            if (error) {
+
+                console.error(
+                    "Signup Error:",
+                    error
                 );
 
+                alert(error.message);
+                return;
+            }
 
-            if (!saved) {
+            // ----------------------------------
+            // User Check
+            // ----------------------------------
 
-                updatePreview();
+            const user = data && data.user;
+
+            if (!user) {
+
+                alert(
+                    "Account could not be created."
+                );
 
                 return;
-
             }
 
+            // ----------------------------------
+            // Upload Avatar
+            // ----------------------------------
 
-            const data =
-                JSON.parse(saved);
+            let avatarUrl = "";
 
+            if (
+                avatarUpload &&
+                avatarUpload.files &&
+                avatarUpload.files.length > 0
+            ) {
 
-            if (!data) {
+                const file =
+                    avatarUpload.files[0];
 
-                updatePreview();
+                const fileName =
+                    `${user.id}-${Date.now()}-${file.name}`;
+
+                const {
+                    error: uploadError
+                } = await supabase.storage
+                    .from("avatars")
+                    .upload(
+                        fileName,
+                        file,
+                        {
+                            upsert: false
+                        }
+                    );
+
+                if (uploadError) {
+
+                    console.warn(
+                        "Avatar upload failed:",
+                        uploadError
+                    );
+
+                } else {
+
+                    const {
+                        data: publicData
+                    } = supabase.storage
+                        .from("avatars")
+                        .getPublicUrl(
+                            fileName
+                        );
+
+                    if (
+                        publicData &&
+                        publicData.publicUrl
+                    ) {
+
+                        avatarUrl =
+                            publicData.publicUrl;
+                    }
+                }
+            }
+
+            // ----------------------------------
+            // Save User Profile
+            // ----------------------------------
+
+            const {
+                error: profileError
+            } = await supabase
+                .from("users")
+                .insert({
+
+                    id: user.id,
+
+                    username: username,
+
+                    full_name: displayName,
+
+                    avatar: avatarUrl,
+
+                    age: age
+
+                });
+
+            // ----------------------------------
+            // Profile Error
+            // ----------------------------------
+
+            if (profileError) {
+
+                console.error(
+                    "Profile Error:",
+                    profileError
+                );
+
+                alert(
+                    "Account was created, but your profile could not be saved.\n\n" +
+                    profileError.message
+                );
 
                 return;
-
             }
 
+            // ----------------------------------
+            // Get Current Session
+            // ----------------------------------
 
-            if (
-                typeof data.letter ===
-                "string" &&
-                data.letter.length > 0
-            ) {
+            const {
+                data: sessionData
+            } = await supabase.auth.getSession();
 
-                profile.letter =
-                    data.letter;
+            // ----------------------------------
+            // Successful Signup
+            // ----------------------------------
 
+            if (sessionData && sessionData.session) {
+
+                window.location.replace("home.html");
+
+                return;
             }
 
+            // ----------------------------------
+            // Email Confirmation Enabled
+            // ----------------------------------
 
-            if (
-                typeof data.letterColor ===
-                "string"
-            ) {
+            alert(
+                "Account created successfully.\n\n" +
+                "Please confirm your email, then log in."
+            );
 
-                profile.letterColor =
-                    data.letterColor;
-
-            }
-
-
-            if (
-                typeof data.backgroundColor ===
-                "string"
-            ) {
-
-                profile.backgroundColor =
-                    data.backgroundColor;
-
-            }
+            showLogin();
 
         } catch (error) {
 
-            console.warn(
-                "ΛRS: profile could not be restored.",
+            console.error(
+                "Unexpected Signup Error:",
                 error
             );
 
+            alert(
+                "Something went wrong while creating your account."
+            );
+
+        } finally {
+
+            if (submitButton) {
+
+                submitButton.disabled = false;
+
+                submitButton.textContent =
+                    originalButtonText ||
+                    "Create Account";
+            }
         }
 
+    });
+}
 
-        updatePreview();
+// ======================================
+// Login
+// ======================================
 
-    }
+if (loginForm) {
 
+    loginForm.addEventListener("submit", async function (event) {
 
-    /* =========================================
-       REGISTER DATA
-    ========================================= */
+        event.preventDefault();
 
-    registerForm.addEventListener(
-        "submit",
-        event => {
+        // ----------------------------------
+        // Make sure Supabase exists
+        // ----------------------------------
 
-            event.preventDefault();
+        if (!window.supabase) {
 
+            alert(
+                "Authentication system is not loaded."
+            );
 
-            const displayName =
-                document
-                    .getElementById(
-                        "registerDisplayName"
-                    )
-                    .value
-                    .trim();
+            console.error(
+                "Supabase library is missing."
+            );
 
+            return;
+        }
 
-            const username =
-                document
-                    .getElementById(
-                        "registerUsername"
-                    )
-                    .value
-                    .trim()
-                    .toLowerCase();
+        if (typeof supabase === "undefined") {
 
+            alert(
+                "Supabase connection is not available."
+            );
 
-            const email =
-                document
-                    .getElementById(
-                        "registerEmail"
-                    )
-                    .value
-                    .trim();
+            console.error(
+                "supabase.js was not loaded."
+            );
 
+            return;
+        }
 
-            const password =
-                document
-                    .getElementById(
-                        "registerPassword"
-                    )
-                    .value;
+        // ----------------------------------
+        // Get Login Values
+        // ----------------------------------
 
+        const emailElement =
+            document.getElementById("loginEmail");
+
+        const passwordElement =
+            document.getElementById("loginPassword");
+
+        const email =
+            emailElement
+                ? emailElement.value.trim()
+                : "";
+
+        const password =
+            passwordElement
+                ? passwordElement.value
+                : "";
+
+        // ----------------------------------
+        // Validation
+        // ----------------------------------
+
+        if (!email) {
+
+            alert("Please enter your email.");
+            return;
+        }
+
+        if (!password) {
+
+            alert("Please enter your password.");
+            return;
+        }
+
+        // ----------------------------------
+        // Disable Button
+        // ----------------------------------
+
+        const submitButton =
+            loginForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        const originalButtonText =
+            submitButton
+                ? submitButton.textContent
+                : "";
+
+        if (submitButton) {
+
+            submitButton.disabled = true;
+            submitButton.textContent = "Logging in...";
+        }
+
+        try {
+
+            // ----------------------------------
+            // Login with Supabase
+            // ----------------------------------
+
+            const {
+                data,
+                error
+            } = await supabase.auth
+                .signInWithPassword({
+
+                    email: email,
+
+                    password: password
+
+                });
+
+            // ----------------------------------
+            // Login Error
+            // ----------------------------------
+
+            if (error) {
+
+                console.error(
+                    "Login Error:",
+                    error
+                );
+
+                alert(error.message);
+                return;
+            }
+
+            // ----------------------------------
+            // Session Check
+            // ----------------------------------
 
             if (
-                !displayName ||
-                !username ||
-                !email ||
-                !password
+                !data ||
+                !data.session
             ) {
 
-                return;
-
-            }
-
-
-            const registrationData = {
-
-                displayName,
-
-                username,
-
-                email,
-
-                password,
-
-                profile: {
-
-                    letter:
-                        profile.letter,
-
-                    letterColor:
-                        profile.letterColor,
-
-                    backgroundColor:
-                        profile.backgroundColor
-
-                }
-
-            };
-
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "ars:register",
-                    {
-                        detail:
-                            registrationData
-                    }
-                )
-            );
-
-        }
-    );
-
-
-    /* =========================================
-       LOGIN
-    ========================================= */
-
-    loginForm.addEventListener(
-        "submit",
-        event => {
-
-            event.preventDefault();
-
-
-            const email =
-                document
-                    .getElementById(
-                        "loginEmail"
-                    )
-                    .value
-                    .trim();
-
-
-            const password =
-                document
-                    .getElementById(
-                        "loginPassword"
-                    )
-                    .value;
-
-
-            if (!email || !password) {
+                alert(
+                    "Login succeeded, but no session was created."
+                );
 
                 return;
-
             }
 
+            // ----------------------------------
+            // GO HOME
+            // ----------------------------------
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "ars:login",
-                    {
-                        detail: {
-
-                            email,
-
-                            password
-
-                        }
-                    }
-                )
+            window.location.replace(
+                "home.html"
             );
 
+        } catch (error) {
+
+            console.error(
+                "Unexpected Login Error:",
+                error
+            );
+
+            alert(
+                "Something went wrong while logging in."
+            );
+
+        } finally {
+
+            if (submitButton) {
+
+                submitButton.disabled = false;
+
+                submitButton.textContent =
+                    originalButtonText ||
+                    "Login";
+            }
         }
-    );
 
+    });
+}
 
-    /* =========================================
-       SOCIAL
-    ========================================= */
+// ======================================
+// Google Login
+// ======================================
+
+if (googleLogin) {
 
     googleLogin.addEventListener(
         "click",
-        () => {
+        async function () {
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "ars:google-login"
-                )
-            );
+            if (!window.supabase) {
 
+                alert(
+                    "Authentication system is not loaded."
+                );
+
+                return;
+            }
+
+            if (typeof supabase === "undefined") {
+
+                alert(
+                    "Supabase connection is not available."
+                );
+
+                return;
+            }
+
+            try {
+
+                const {
+                    error
+                } = await supabase.auth
+                    .signInWithOAuth({
+
+                        provider: "google",
+
+                        options: {
+
+                            redirectTo:
+                                window.location.origin +
+                                "/home.html"
+
+                        }
+
+                    });
+
+                if (error) {
+
+                    console.error(
+                        "Google Login Error:",
+                        error
+                    );
+
+                    alert(error.message);
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Unexpected Google Login Error:",
+                    error
+                );
+
+                alert(
+                    "Google login could not be started."
+                );
+            }
         }
     );
+}
 
+// ======================================
+// Existing Session Check
+// ======================================
 
-    appleLogin.addEventListener(
-        "click",
-        () => {
+(async function checkExistingSession() {
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "ars:apple-login"
-                )
+    if (
+        !window.supabase ||
+        typeof supabase === "undefined"
+    ) {
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabase.auth.getSession();
+
+        if (error) {
+
+            console.error(
+                "Session Error:",
+                error
             );
 
+            return;
         }
-    );
 
+        if (
+            data &&
+            data.session
+        ) {
 
-    /* =========================================
-       VIP
-    ========================================= */
-
-    openSubscription.addEventListener(
-        "click",
-        () => {
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "ars:open-vip"
-                )
+            window.location.replace(
+                "home.html"
             );
-
         }
-    );
 
+    } catch (error) {
 
-    /* =========================================
-       INITIALIZE
-    ========================================= */
+        console.error(
+            "Unexpected Session Error:",
+            error
+        );
+    }
 
-    restoreProfile();
+})();
 
-});
+// ======================================
+// Default State
+// ======================================
+
+showLogin();
