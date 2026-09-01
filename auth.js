@@ -1,854 +1,545 @@
-// ======================================
-// ΛRS AUTH
-// Clean Authentication System
-// ======================================
+// ========================================
+// ΛRS - Frontend Authentication
+// UI DEVELOPMENT VERSION
+// No Supabase / No Email Confirmation
+// ========================================
 
-"use strict";
+document.addEventListener("DOMContentLoaded", () => {
 
-// ======================================
-// Elements
-// ======================================
+    // ----------------------------------------
+    // Elements
+    // ----------------------------------------
 
-const loginForm = document.getElementById("loginForm");
-const signupForm = document.getElementById("signupForm");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
 
-const loginTab = document.getElementById("loginTab");
-const signupTab = document.getElementById("signupTab");
+    const displayNameInput = document.getElementById("displayName");
+    const usernameInput = document.getElementById("username");
+    const signupEmailInput = document.getElementById("signupEmail");
+    const signupPasswordInput = document.getElementById("signupPassword");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const birthDateInput = document.getElementById("birthDate");
 
-const bottomText = document.getElementById("bottomText");
-const switchForm = document.getElementById("switchForm");
+    const avatarUpload = document.getElementById("avatarUpload");
+    const avatarPreview = document.getElementById("avatarPreview");
 
-const avatarUpload = document.getElementById("avatarUpload");
-const avatarPreview = document.getElementById("avatarPreview");
+    const switchFormButton = document.getElementById("switchForm");
+    const googleLoginButton = document.getElementById("googleLogin");
 
-const googleLogin = document.getElementById("googleLogin");
+    // ----------------------------------------
+    // Show Login
+    // ----------------------------------------
 
-// ======================================
-// Safety Check
-// ======================================
+    function showLogin() {
 
-if (!loginForm || !signupForm) {
-    console.error("Auth Error: Login or Signup form was not found.");
-}
-
-// ======================================
-// Show Login
-// ======================================
-
-function showLogin() {
-
-    if (!loginForm || !signupForm) return;
-
-    loginForm.style.display = "block";
-    signupForm.style.display = "none";
-
-    if (loginTab) {
-        loginTab.classList.add("active");
-    }
-
-    if (signupTab) {
-        signupTab.classList.remove("active");
-    }
-
-    if (bottomText) {
-        bottomText.textContent = "Don't have an account?";
-    }
-
-    const link = document.getElementById("switchForm");
-
-    if (link) {
-        link.textContent = "Create Account";
-        link.onclick = switchForms;
-    }
-}
-
-// ======================================
-// Show Signup
-// ======================================
-
-function showSignup() {
-
-    if (!loginForm || !signupForm) return;
-
-    loginForm.style.display = "none";
-    signupForm.style.display = "block";
-
-    if (signupTab) {
-        signupTab.classList.add("active");
-    }
-
-    if (loginTab) {
-        loginTab.classList.remove("active");
-    }
-
-    if (bottomText) {
-        bottomText.textContent = "Already have an account?";
-    }
-
-    const link = document.getElementById("switchForm");
-
-    if (link) {
-        link.textContent = "Login";
-        link.onclick = switchForms;
-    }
-}
-
-// ======================================
-// Switch Login / Signup
-// ======================================
-
-function switchForms(event) {
-
-    if (event) {
-        event.preventDefault();
-    }
-
-    if (!signupForm) return;
-
-    const signupVisible =
-        signupForm.style.display !== "none";
-
-    if (signupVisible) {
-        showLogin();
-    } else {
-        showSignup();
-    }
-}
-
-// ======================================
-// Tabs
-// ======================================
-
-if (loginTab) {
-    loginTab.addEventListener("click", function () {
-        showLogin();
-    });
-}
-
-if (signupTab) {
-    signupTab.addEventListener("click", function () {
-        showSignup();
-    });
-}
-
-if (switchForm) {
-    switchForm.addEventListener("click", switchForms);
-}
-
-// ======================================
-// Avatar Preview
-// ======================================
-
-if (avatarUpload && avatarPreview) {
-
-    avatarUpload.addEventListener("change", function () {
-
-        const file = this.files && this.files[0];
-
-        if (!file) return;
-
-        if (!file.type.startsWith("image/")) {
-            alert("Please select an image.");
-            this.value = "";
-            return;
+        if (loginForm) {
+            loginForm.style.display = "block";
         }
 
-        const reader = new FileReader();
+        if (signupForm) {
+            signupForm.style.display = "none";
+        }
 
-        reader.onload = function (event) {
+        if (switchFormButton) {
+            switchFormButton.textContent = "Create Account";
+        }
+    }
 
-            if (event.target && event.target.result) {
-                avatarPreview.src = event.target.result;
+    // ----------------------------------------
+    // Show Signup
+    // ----------------------------------------
+
+    function showSignup() {
+
+        if (loginForm) {
+            loginForm.style.display = "none";
+        }
+
+        if (signupForm) {
+            signupForm.style.display = "block";
+        }
+
+        if (switchFormButton) {
+            switchFormButton.textContent = "Login";
+        }
+    }
+
+    // ----------------------------------------
+    // Switch Login / Signup
+    // ----------------------------------------
+
+    if (switchFormButton) {
+
+        switchFormButton.addEventListener("click", (event) => {
+
+            event.preventDefault();
+
+            const signupVisible =
+                signupForm &&
+                signupForm.style.display !== "none";
+
+            if (signupVisible) {
+                showLogin();
+            } else {
+                showSignup();
             }
 
-        };
+        });
 
-        reader.readAsDataURL(file);
-    });
-}
-
-// ======================================
-// Calculate Age
-// ======================================
-
-function calculateAge(birthDate) {
-
-    if (!birthDate) {
-        return null;
     }
 
-    const today = new Date();
-    const birth = new Date(birthDate);
+    // ----------------------------------------
+    // Avatar Preview
+    // ----------------------------------------
 
-    let age =
-        today.getFullYear() -
-        birth.getFullYear();
+    if (avatarUpload) {
 
-    const monthDifference =
-        today.getMonth() -
-        birth.getMonth();
+        avatarUpload.addEventListener("change", () => {
 
-    if (
-        monthDifference < 0 ||
-        (
-            monthDifference === 0 &&
-            today.getDate() < birth.getDate()
-        )
-    ) {
-        age--;
-    }
+            const file = avatarUpload.files?.[0];
 
-    return age;
-}
-
-// ======================================
-// Create Account
-// ======================================
-
-if (signupForm) {
-
-    signupForm.addEventListener("submit", async function (event) {
-
-        event.preventDefault();
-
-        // ----------------------------------
-        // Make sure Supabase exists
-        // ----------------------------------
-
-        if (!window.supabase) {
-            alert("Authentication system is not loaded.");
-            console.error("Supabase library is missing.");
-            return;
-        }
-
-        if (typeof supabase === "undefined") {
-            alert("Supabase connection is not available.");
-            console.error("supabase.js was not loaded.");
-            return;
-        }
-
-        // ----------------------------------
-        // Get Values
-        // ----------------------------------
-
-        const displayNameElement =
-            document.getElementById("displayName");
-
-        const usernameElement =
-            document.getElementById("username");
-
-        const emailElement =
-            document.getElementById("signupEmail");
-
-        const passwordElement =
-            document.getElementById("signupPassword");
-
-        const confirmPasswordElement =
-            document.getElementById("confirmPassword");
-
-        const birthDateElement =
-            document.getElementById("birthDate");
-
-        const displayName =
-            displayNameElement
-                ? displayNameElement.value.trim()
-                : "";
-
-        const username =
-            usernameElement
-                ? usernameElement.value.trim()
-                : "";
-
-        const email =
-            emailElement
-                ? emailElement.value.trim()
-                : "";
-
-        const password =
-            passwordElement
-                ? passwordElement.value
-                : "";
-
-        const confirmPassword =
-            confirmPasswordElement
-                ? confirmPasswordElement.value
-                : "";
-
-        const birthDate =
-            birthDateElement
-                ? birthDateElement.value
-                : "";
-
-        // ----------------------------------
-        // Validation
-        // ----------------------------------
-
-        if (!displayName) {
-            alert("Please enter your display name.");
-            return;
-        }
-
-        if (!username) {
-            alert("Please enter your username.");
-            return;
-        }
-
-        if (!email) {
-            alert("Please enter your email.");
-            return;
-        }
-
-        if (!password) {
-            alert("Please enter a password.");
-            return;
-        }
-
-        if (password.length < 6) {
-            alert("Password must be at least 6 characters.");
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            alert("Passwords do not match.");
-            return;
-        }
-
-        if (!birthDate) {
-            alert("Please select your date of birth.");
-            return;
-        }
-
-        const age = calculateAge(birthDate);
-
-        if (age === null || age < 13) {
-            alert("You must be at least 13 years old.");
-            return;
-        }
-
-        // ----------------------------------
-        // Disable Button
-        // ----------------------------------
-
-        const submitButton =
-            signupForm.querySelector(
-                'button[type="submit"]'
-            );
-
-        const originalButtonText =
-            submitButton
-                ? submitButton.textContent
-                : "";
-
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = "Creating...";
-        }
-
-        try {
-
-            // ----------------------------------
-            // Create Supabase Account
-            // ----------------------------------
-
-            const {
-                data,
-                error
-            } = await supabase.auth.signUp({
-
-                email: email,
-
-                password: password
-
-            });
-
-            // ----------------------------------
-            // Auth Error
-            // ----------------------------------
-
-            if (error) {
-
-                console.error(
-                    "Signup Error:",
-                    error
-                );
-
-                alert(error.message);
+            if (!file) {
                 return;
             }
 
-            // ----------------------------------
-            // User Check
-            // ----------------------------------
+            if (!file.type.startsWith("image/")) {
 
-            const user = data && data.user;
+                alert("Please select an image.");
 
-            if (!user) {
-
-                alert(
-                    "Account could not be created."
-                );
+                avatarUpload.value = "";
 
                 return;
             }
 
-            // ----------------------------------
-            // Upload Avatar
-            // ----------------------------------
+            const reader = new FileReader();
 
-            let avatarUrl = "";
+            reader.onload = (event) => {
 
-            if (
-                avatarUpload &&
-                avatarUpload.files &&
-                avatarUpload.files.length > 0
-            ) {
-
-                const file =
-                    avatarUpload.files[0];
-
-                const fileName =
-                    `${user.id}-${Date.now()}-${file.name}`;
-
-                const {
-                    error: uploadError
-                } = await supabase.storage
-                    .from("avatars")
-                    .upload(
-                        fileName,
-                        file,
-                        {
-                            upsert: false
-                        }
-                    );
-
-                if (uploadError) {
-
-                    console.warn(
-                        "Avatar upload failed:",
-                        uploadError
-                    );
-
-                } else {
-
-                    const {
-                        data: publicData
-                    } = supabase.storage
-                        .from("avatars")
-                        .getPublicUrl(
-                            fileName
-                        );
-
-                    if (
-                        publicData &&
-                        publicData.publicUrl
-                    ) {
-
-                        avatarUrl =
-                            publicData.publicUrl;
-                    }
+                if (avatarPreview) {
+                    avatarPreview.src = event.target.result;
+                    avatarPreview.style.display = "block";
                 }
+
+                // Save temporary avatar preview
+                localStorage.setItem(
+                    "ars_avatar_preview",
+                    event.target.result
+                );
+            };
+
+            reader.readAsDataURL(file);
+
+        });
+
+    }
+
+    // ----------------------------------------
+    // Calculate Age
+    // ----------------------------------------
+
+    function calculateAge(dateString) {
+
+        if (!dateString) {
+            return null;
+        }
+
+        const birthDate = new Date(dateString);
+
+        if (Number.isNaN(birthDate.getTime())) {
+            return null;
+        }
+
+        const today = new Date();
+
+        let age =
+            today.getFullYear() -
+            birthDate.getFullYear();
+
+        const monthDifference =
+            today.getMonth() -
+            birthDate.getMonth();
+
+        if (
+            monthDifference < 0 ||
+            (
+                monthDifference === 0 &&
+                today.getDate() < birthDate.getDate()
+            )
+        ) {
+            age--;
+        }
+
+        return age;
+    }
+
+    // ----------------------------------------
+    // CREATE ACCOUNT
+    // ----------------------------------------
+
+    if (signupForm) {
+
+        signupForm.addEventListener("submit", (event) => {
+
+            event.preventDefault();
+
+            // ----------------------------------------
+            // Get values
+            // ----------------------------------------
+
+            const displayName =
+                displayNameInput?.value.trim() || "";
+
+            const username =
+                usernameInput?.value.trim() || "";
+
+            const email =
+                signupEmailInput?.value.trim() || "";
+
+            const password =
+                signupPasswordInput?.value || "";
+
+            const confirmPassword =
+                confirmPasswordInput?.value || "";
+
+            const birthDate =
+                birthDateInput?.value || "";
+
+            // ----------------------------------------
+            // Validation
+            // ----------------------------------------
+
+            if (!displayName) {
+
+                alert("Please enter your display name.");
+
+                displayNameInput?.focus();
+
+                return;
             }
 
-            // ----------------------------------
-            // Save User Profile
-            // ----------------------------------
+            if (!username) {
 
-            const {
-                error: profileError
-            } = await supabase
-                .from("users")
-                .insert({
+                alert("Please enter your username.");
 
-                    id: user.id,
+                usernameInput?.focus();
 
-                    username: username,
+                return;
+            }
 
-                    full_name: displayName,
+            if (!email) {
 
-                    avatar: avatarUrl,
+                alert("Please enter your email.");
 
-                    age: age
+                signupEmailInput?.focus();
 
-                });
+                return;
+            }
 
-            // ----------------------------------
-            // Profile Error
-            // ----------------------------------
+            if (!password) {
 
-            if (profileError) {
+                alert("Please enter a password.");
 
-                console.error(
-                    "Profile Error:",
-                    profileError
+                signupPasswordInput?.focus();
+
+                return;
+            }
+
+            if (password.length < 6) {
+
+                alert("Password must be at least 6 characters.");
+
+                signupPasswordInput?.focus();
+
+                return;
+            }
+
+            if (password !== confirmPassword) {
+
+                alert("Passwords do not match.");
+
+                confirmPasswordInput?.focus();
+
+                return;
+            }
+
+            if (!birthDate) {
+
+                alert("Please enter your date of birth.");
+
+                birthDateInput?.focus();
+
+                return;
+            }
+
+            // ----------------------------------------
+            // Age
+            // ----------------------------------------
+
+            const age = calculateAge(birthDate);
+
+            if (age === null) {
+
+                alert("Please enter a valid date of birth.");
+
+                return;
+            }
+
+            // ----------------------------------------
+            // Create frontend user
+            // ----------------------------------------
+
+            const user = {
+
+                id:
+                    "user_" +
+                    Date.now(),
+
+                displayName:
+                    displayName,
+
+                username:
+                    username,
+
+                email:
+                    email,
+
+                password:
+                    password,
+
+                birthDate:
+                    birthDate,
+
+                age:
+                    age,
+
+                avatar:
+                    localStorage.getItem(
+                        "ars_avatar_preview"
+                    ) || "",
+
+                avatarType:
+                    localStorage.getItem(
+                        "ars_avatar_preview"
+                    )
+                        ? "image"
+                        : "letter",
+
+                letter:
+                    displayName
+                        ? displayName.charAt(0).toUpperCase()
+                        : "A",
+
+                createdAt:
+                    new Date().toISOString()
+            };
+
+            // ----------------------------------------
+            // Save user
+            // ----------------------------------------
+
+            localStorage.setItem(
+                "ars_user",
+                JSON.stringify(user)
+            );
+
+            // ----------------------------------------
+            // Mark logged in
+            // ----------------------------------------
+
+            localStorage.setItem(
+                "ars_logged_in",
+                "true"
+            );
+
+            // ----------------------------------------
+            // Go Home
+            // ----------------------------------------
+
+            window.location.replace("home.html");
+
+        });
+
+    }
+
+    // ----------------------------------------
+    // LOGIN
+    // ----------------------------------------
+
+    if (loginForm) {
+
+        loginForm.addEventListener("submit", (event) => {
+
+            event.preventDefault();
+
+            const emailInput =
+                loginForm.querySelector(
+                    'input[type="email"]'
                 );
+
+            const passwordInput =
+                loginForm.querySelector(
+                    'input[type="password"]'
+                );
+
+            const email =
+                emailInput?.value.trim() || "";
+
+            const password =
+                passwordInput?.value || "";
+
+            if (!email) {
+
+                alert("Please enter your email.");
+
+                emailInput?.focus();
+
+                return;
+            }
+
+            if (!password) {
+
+                alert("Please enter your password.");
+
+                passwordInput?.focus();
+
+                return;
+            }
+
+            // ----------------------------------------
+            // Get saved frontend account
+            // ----------------------------------------
+
+            const savedUser =
+                localStorage.getItem("ars_user");
+
+            if (!savedUser) {
 
                 alert(
-                    "Account was created, but your profile could not be saved.\n\n" +
-                    profileError.message
+                    "No account found. Please create an account first."
                 );
 
-                return;
-            }
-
-            // ----------------------------------
-            // Get Current Session
-            // ----------------------------------
-
-            const {
-                data: sessionData
-            } = await supabase.auth.getSession();
-
-            // ----------------------------------
-            // Successful Signup
-            // ----------------------------------
-
-            if (sessionData && sessionData.session) {
-
-                window.location.replace("home.html");
+                showSignup();
 
                 return;
             }
 
-            // ----------------------------------
-            // Email Confirmation Enabled
-            // ----------------------------------
-
-            alert(
-                "Account created successfully.\n\n" +
-                "Please confirm your email, then log in."
-            );
-
-            showLogin();
-
-        } catch (error) {
-
-            console.error(
-                "Unexpected Signup Error:",
-                error
-            );
-
-            alert(
-                "Something went wrong while creating your account."
-            );
-
-        } finally {
-
-            if (submitButton) {
-
-                submitButton.disabled = false;
-
-                submitButton.textContent =
-                    originalButtonText ||
-                    "Create Account";
-            }
-        }
-
-    });
-}
-
-// ======================================
-// Login
-// ======================================
-
-if (loginForm) {
-
-    loginForm.addEventListener("submit", async function (event) {
-
-        event.preventDefault();
-
-        // ----------------------------------
-        // Make sure Supabase exists
-        // ----------------------------------
-
-        if (!window.supabase) {
-
-            alert(
-                "Authentication system is not loaded."
-            );
-
-            console.error(
-                "Supabase library is missing."
-            );
-
-            return;
-        }
-
-        if (typeof supabase === "undefined") {
-
-            alert(
-                "Supabase connection is not available."
-            );
-
-            console.error(
-                "supabase.js was not loaded."
-            );
-
-            return;
-        }
-
-        // ----------------------------------
-        // Get Login Values
-        // ----------------------------------
-
-        const emailElement =
-            document.getElementById("loginEmail");
-
-        const passwordElement =
-            document.getElementById("loginPassword");
-
-        const email =
-            emailElement
-                ? emailElement.value.trim()
-                : "";
-
-        const password =
-            passwordElement
-                ? passwordElement.value
-                : "";
-
-        // ----------------------------------
-        // Validation
-        // ----------------------------------
-
-        if (!email) {
-
-            alert("Please enter your email.");
-            return;
-        }
-
-        if (!password) {
-
-            alert("Please enter your password.");
-            return;
-        }
-
-        // ----------------------------------
-        // Disable Button
-        // ----------------------------------
-
-        const submitButton =
-            loginForm.querySelector(
-                'button[type="submit"]'
-            );
-
-        const originalButtonText =
-            submitButton
-                ? submitButton.textContent
-                : "";
-
-        if (submitButton) {
-
-            submitButton.disabled = true;
-            submitButton.textContent = "Logging in...";
-        }
-
-        try {
-
-            // ----------------------------------
-            // Login with Supabase
-            // ----------------------------------
-
-            const {
-                data,
-                error
-            } = await supabase.auth
-                .signInWithPassword({
-
-                    email: email,
-
-                    password: password
-
-                });
-
-            // ----------------------------------
-            // Login Error
-            // ----------------------------------
-
-            if (error) {
-
-                console.error(
-                    "Login Error:",
-                    error
-                );
-
-                alert(error.message);
-                return;
-            }
-
-            // ----------------------------------
-            // Session Check
-            // ----------------------------------
-
-            if (
-                !data ||
-                !data.session
-            ) {
-
-                alert(
-                    "Login succeeded, but no session was created."
-                );
-
-                return;
-            }
-
-            // ----------------------------------
-            // GO HOME
-            // ----------------------------------
-
-            window.location.replace(
-                "home.html"
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Unexpected Login Error:",
-                error
-            );
-
-            alert(
-                "Something went wrong while logging in."
-            );
-
-        } finally {
-
-            if (submitButton) {
-
-                submitButton.disabled = false;
-
-                submitButton.textContent =
-                    originalButtonText ||
-                    "Login";
-            }
-        }
-
-    });
-}
-
-// ======================================
-// Google Login
-// ======================================
-
-if (googleLogin) {
-
-    googleLogin.addEventListener(
-        "click",
-        async function () {
-
-            if (!window.supabase) {
-
-                alert(
-                    "Authentication system is not loaded."
-                );
-
-                return;
-            }
-
-            if (typeof supabase === "undefined") {
-
-                alert(
-                    "Supabase connection is not available."
-                );
-
-                return;
-            }
+            let user;
 
             try {
 
-                const {
-                    error
-                } = await supabase.auth
-                    .signInWithOAuth({
-
-                        provider: "google",
-
-                        options: {
-
-                            redirectTo:
-                                window.location.origin +
-                                "/home.html"
-
-                        }
-
-                    });
-
-                if (error) {
-
-                    console.error(
-                        "Google Login Error:",
-                        error
-                    );
-
-                    alert(error.message);
-                }
+                user = JSON.parse(savedUser);
 
             } catch (error) {
 
-                console.error(
-                    "Unexpected Google Login Error:",
-                    error
-                );
+                localStorage.removeItem("ars_user");
 
                 alert(
-                    "Google login could not be started."
+                    "Your account data is invalid. Please create a new account."
                 );
+
+                showSignup();
+
+                return;
             }
-        }
-    );
-}
 
-// ======================================
-// Existing Session Check
-// ======================================
+            // ----------------------------------------
+            // Check credentials
+            // ----------------------------------------
 
-(async function checkExistingSession() {
+            if (
+                user.email !== email ||
+                user.password !== password
+            ) {
 
-    if (
-        !window.supabase ||
-        typeof supabase === "undefined"
-    ) {
-        return;
-    }
+                alert(
+                    "Incorrect email or password."
+                );
 
-    try {
+                return;
+            }
 
-        const {
-            data,
-            error
-        } = await supabase.auth.getSession();
+            // ----------------------------------------
+            // Login successful
+            // ----------------------------------------
 
-        if (error) {
-
-            console.error(
-                "Session Error:",
-                error
+            localStorage.setItem(
+                "ars_logged_in",
+                "true"
             );
 
-            return;
-        }
+            window.location.replace("home.html");
+
+        });
+
+    }
+
+    // ----------------------------------------
+    // Google Login
+    // ----------------------------------------
+    // Frontend-only placeholder for now.
+    // Real Google OAuth will be connected later.
+    // ----------------------------------------
+
+    if (googleLoginButton) {
+
+        googleLoginButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+
+                alert(
+                    "Google Login will be connected later."
+                );
+
+            }
+        );
+
+    }
+
+    // ----------------------------------------
+    // Existing Login State
+    // ----------------------------------------
+
+    const loggedIn =
+        localStorage.getItem(
+            "ars_logged_in"
+        ) === "true";
+
+    const currentUser =
+        localStorage.getItem(
+            "ars_user"
+        );
+
+    // If already logged in and on index page,
+    // go directly to Home.
+
+    if (loggedIn && currentUser) {
+
+        // Don't redirect if we're not actually on index/login.
+        const currentPage =
+            window.location.pathname
+                .split("/")
+                .pop();
 
         if (
-            data &&
-            data.session
+            currentPage === "" ||
+            currentPage === "index.html"
         ) {
 
             window.location.replace(
                 "home.html"
             );
+
+            return;
         }
 
-    } catch (error) {
-
-        console.error(
-            "Unexpected Session Error:",
-            error
-        );
     }
 
-})();
+    // ----------------------------------------
+    // Default
+    // ----------------------------------------
 
-// ======================================
-// Default State
-// ======================================
+    showLogin();
 
-showLogin();
+});
