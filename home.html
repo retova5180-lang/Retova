@@ -1,268 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+  <meta charset="UTF-8">
 
-    <title>ΛRS</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
 
-    <link rel="stylesheet" href="home.css">
-    <link rel="stylesheet" href="create-post.css">
+  <title>ΛRS — Home</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="create-post.css">
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
 
-<div class="app">
+  <main class="phone">
 
-    <!-- HEADER -->
+    <!-- ================= HEADER ================= -->
     <header class="header">
 
-        <button
-            class="avatar-button"
-            id="myAvatar"
-            type="button"
-            aria-label="Profile"
-        >
-            R
-        </button>
-
-        <div class="logo">
-            ΛRS
+      <div class="header-left">
+        <div id="myAvatar" class="header-avatar ars-avatar">
+          A
         </div>
+      </div>
 
-        <button
-            class="icon-button"
-            id="settings"
-            type="button"
-            aria-label="Settings"
-        >
-            <i data-lucide="settings-2"></i>
-        </button>
+      <div class="logo">
+        ΛRS
+      </div>
+
+      <button
+        id="settings"
+        class="icon-button"
+        type="button"
+        aria-label="Settings"
+      >
+        <i data-lucide="settings"></i>
+      </button>
 
     </header>
 
 
-    <!-- STORIES -->
+    <!-- ================= STORIES ================= -->
     <section class="stories-section">
 
-        <div class="stories-header">
-            <h2>Stories</h2>
-
-            <button
-                id="viewAllStories"
-                type="button"
-            >
-                View all
-            </button>
-        </div>
-
-        <div id="stories" class="stories"></div>
+      <div
+        id="stories"
+        class="stories"
+        aria-label="Stories"
+      ></div>
 
     </section>
 
 
-    <!-- FEED -->
-    <main id="feed" class="feed"></main>
+    <!-- ================= FEED ================= -->
+    <section
+      id="feed"
+      class="feed"
+    ></section>
 
 
-    <!-- CREATE POST -->
+    <!-- ================= CREATE POST BUTTON ================= -->
     <button
-        id="newPost"
-        class="new-post-button"
-        type="button"
-        aria-label="Create post"
+      id="newPost"
+      class="new-post-button"
+      type="button"
+      aria-label="Create post"
     >
-        <i data-lucide="plus"></i>
+      <i data-lucide="plus"></i>
     </button>
 
 
-    <!-- BOTTOM NAV -->
+    <!-- ================= BOTTOM NAV ================= -->
     <nav class="bottom-nav">
 
-        <button
-            class="nav-button active"
-            type="button"
-            aria-label="Home"
-            data-page="home"
-        >
-            <i data-lucide="house"></i>
-            <span>Home</span>
-        </button>
+      <button
+        class="nav-item active"
+        data-nav="home"
+        type="button"
+        aria-label="Home"
+      >
+        <i data-lucide="house"></i>
+        <span>Home</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            aria-label="Search"
-            data-page="search"
-        >
-            <i data-lucide="search"></i>
-            <span>Search</span>
-        </button>
+      <button
+        class="nav-item"
+        data-nav="search"
+        type="button"
+        aria-label="Search"
+      >
+        <i data-lucide="search"></i>
+        <span>Search</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            aria-label="Explore"
-            data-page="explore"
-        >
-            <i data-lucide="flame"></i>
-            <span>Explore</span>
-        </button>
+      <button
+        class="nav-item"
+        data-nav="wheel"
+        type="button"
+        aria-label="Wheel"
+      >
+        <i data-lucide="flame"></i>
+        <span>Wheel</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            aria-label="Notifications"
-            data-page="notifications"
-        >
-            <i data-lucide="bell"></i>
-            <span>Alerts</span>
-        </button>
+      <button
+        class="nav-item"
+        data-nav="notifications"
+        type="button"
+        aria-label="Notifications"
+      >
+        <i data-lucide="bell"></i>
+        <span>Alerts</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            aria-label="Messages"
-            data-page="messages"
-        >
-            <i data-lucide="mail"></i>
-            <span>Messages</span>
-        </button>
+      <button
+        class="nav-item"
+        data-nav="messages"
+        type="button"
+        aria-label="Messages"
+      >
+        <i data-lucide="mail"></i>
+        <span>Messages</span>
+      </button>
 
     </nav>
 
-</div>
 
+    <!-- ================= COMMENTS SHEET ================= -->
+    <div
+      id="commentsSheet"
+      class="comments-sheet"
+      aria-hidden="true"
+    >
 
-<!-- COMMENTS SHEET -->
-<div
-    id="commentsSheet"
-    class="comments-sheet"
->
+      <div class="comments-overlay"></div>
 
-    <div class="comments-overlay"></div>
-
-    <div class="comments-panel">
+      <div class="comments-panel">
 
         <div class="comments-header">
 
-            <div class="comments-line"></div>
+          <div>
+            <h3>Comments</h3>
+            <span id="commentsCount">0 comments</span>
+          </div>
 
-            <div class="comments-title-row">
-
-                <h3>Comments</h3>
-
-                <button
-                    id="closeComments"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </div>
-
-        </div>
-
-        <div
-            id="commentsList"
-            class="comments-list"
-        ></div>
-
-        <div class="comments-input">
-
-            <div class="my-comment-avatar">
-                R
-            </div>
-
-            <input
-                id="commentInput"
-                type="text"
-                maxlength="280"
-                placeholder="Write a comment..."
-            >
-
-            <button
-                id="sendComment"
-                type="button"
-            >
-                Send
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- STORY VIEWER -->
-<div
-    id="storyViewer"
-    class="story-viewer"
->
-
-    <div class="story-viewer-background"></div>
-
-    <div class="story-viewer-content">
-
-        <button
-            id="closeStory"
-            class="story-close"
+          <button
+            id="closeComments"
+            class="icon-button"
             type="button"
-        >
-            ×
-        </button>
+            aria-label="Close comments"
+          >
+            <i data-lucide="x"></i>
+          </button>
 
-        <div
-            id="storyViewerAvatar"
-            class="story-viewer-avatar"
-        >
-            L
         </div>
 
+
         <div
-            id="storyViewerName"
-            class="story-viewer-name"
+          id="commentsList"
+          class="comments-list"
+        ></div>
+
+
+        <form
+          id="commentForm"
+          class="comment-form"
         >
-            Lina
-        </div>
 
-        <div
-            id="storyViewerImage"
-            class="story-viewer-image"
-        ></div>
+          <input
+            id="commentInput"
+            type="text"
+            placeholder="Write a comment..."
+            autocomplete="off"
+            maxlength="500"
+          >
 
-        <div
-            id="storyViewerText"
-            class="story-viewer-text"
-        ></div>
+          <button
+            type="submit"
+            aria-label="Send comment"
+          >
+            <i data-lucide="send"></i>
+          </button>
+
+        </form>
+
+      </div>
 
     </div>
 
-</div>
+
+    <!-- ================= REACTION PICKER ================= -->
+    <div
+      id="reactionPicker"
+      class="reaction-picker"
+      aria-hidden="true"
+    >
+
+      <button
+        type="button"
+        data-reaction="❤️"
+      >
+        ❤️
+      </button>
+
+      <button
+        type="button"
+        data-reaction="🔥"
+      >
+        🔥
+      </button>
+
+      <button
+        type="button"
+        data-reaction="😂"
+      >
+        😂
+      </button>
+
+      <button
+        type="button"
+        data-reaction="😍"
+      >
+        😍
+      </button>
+
+      <button
+        type="button"
+        data-reaction="😮"
+      >
+        😮
+      </button>
+
+      <button
+        type="button"
+        data-reaction="👏"
+      >
+        👏
+      </button>
+
+    </div>
+
+  </main>
 
 
-<script src="home.js"></script>
-<script src="create-post.js"></script>
+  <!-- ================= SCRIPTS ================= -->
 
-<script>
-    if (window.lucide) {
-        lucide.createIcons();
-    }
-</script>
+  <script
+    src="home.js"
+    defer
+  ></script>
+
+  <script
+    src="create-post.js"
+    defer
+  ></script>
 
 </body>
 </html>
