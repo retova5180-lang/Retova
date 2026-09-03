@@ -1,836 +1,817 @@
 /* =========================================================
-   ΛRS — HOME.JS
-   Home interactions
-   Works with mobile / iPad / laptop / desktop
+   ΛRS — HOME
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+(() => {
+
     "use strict";
+
+
+    /* =====================================================
+       DEMO DATA
+    ===================================================== */
+
+    const demoStories = [
+        {
+            id: "story-1",
+            name: "Lina",
+            username: "lina.ae",
+            letter: "L",
+            gradient: "linear-gradient(135deg,#ff4f9d,#8b3dff)",
+            text: "Sunset always hits different 💜",
+            image:
+                "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=80"
+        },
+
+        {
+            id: "story-2",
+            name: "Noah",
+            username: "noah.vibes",
+            letter: "N",
+            gradient: "linear-gradient(135deg,#4f9cff,#8b3dff)",
+            text: "Focused on the journey.",
+            image:
+                "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"
+        },
+
+        {
+            id: "story-3",
+            name: "Sara",
+            username: "sara.wave",
+            letter: "S",
+            gradient: "linear-gradient(135deg,#ff4fa3,#ff8c4f)",
+            text: "Good vibes only ✨",
+            image:
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"
+        }
+    ];
+
+
+    let posts = [
+        {
+            id: "post-1",
+            name: "Lina",
+            username: "lina.ae",
+            letter: "L",
+            verified: false,
+            time: "12m",
+            text:
+                "Sunset always hits different 💜",
+            image:
+                "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
+            likes: 2400,
+            comments: 186,
+            reposts: 312,
+            saves: 48000,
+            liked: false,
+            reposted: false
+        },
+
+        {
+            id: "post-2",
+            name: "Apple",
+            username: "apple",
+            letter: "",
+            verified: true,
+            time: "28m",
+            text:
+                "Apple Intelligence expands to more languages later this year.",
+            image:
+                "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
+            likes: 28400,
+            comments: 1800,
+            reposts: 3900,
+            saves: 2400000,
+            liked: false,
+            reposted: false
+        },
+
+        {
+            id: "post-3",
+            name: "Noah",
+            username: "noah.vibes",
+            letter: "N",
+            verified: true,
+            time: "45m",
+            text:
+                "Focused on the journey.",
+            image:
+                "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
+            likes: 8100,
+            comments: 432,
+            reposts: 728,
+            saves: 91000,
+            liked: false,
+            reposted: false
+        }
+    ];
+
+
+    let activePostId = null;
+
 
     /* =====================================================
        HELPERS
     ===================================================== */
 
-    const $ = (selector, parent = document) =>
-        parent.querySelector(selector);
+    function escapeHTML(value) {
 
-    const $$ = (selector, parent = document) =>
-        [...parent.querySelectorAll(selector)];
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
 
-    const safeClick = (element, callback) => {
-        if (!element) return;
 
-        element.addEventListener("click", (event) => {
-            event.preventDefault();
-            callback(event);
-        });
-    };
+    function formatNumber(value) {
 
-    /* =====================================================
-       USER PROFILE BUTTON
-    ===================================================== */
-
-    const userButton = $(".ars-user-button");
-
-    safeClick(userButton, () => {
-        /*
-         * profile.html will be connected here later.
-         * For now this keeps the button functional
-         * without breaking the Home page.
-         */
-
-        if (typeof window.openProfile === "function") {
-            window.openProfile();
-            return;
+        if (value >= 1000000) {
+            return (
+                (value / 1000000)
+                    .toFixed(value >= 10000000 ? 0 : 1)
+                    .replace(".0", "")
+                + "M"
+            );
         }
 
-        window.location.href = "profile.html";
-    });
+        if (value >= 1000) {
+            return (
+                (value / 1000)
+                    .toFixed(value >= 10000 ? 0 : 1)
+                    .replace(".0", "")
+                + "K"
+            );
+        }
+
+        return String(value);
+    }
+
+
+    function getCurrentUser() {
+
+        try {
+
+            const raw =
+                localStorage.getItem("ars_user");
+
+            if (!raw) {
+                return {
+                    name: "Retova",
+                    username: "retova",
+                    letter: "R"
+                };
+            }
+
+            const user = JSON.parse(raw);
+
+            return {
+                name:
+                    user.displayName ||
+                    user.name ||
+                    "Retova",
+
+                username:
+                    user.username ||
+                    "retova",
+
+                letter:
+                    localStorage.getItem("ars_letter") ||
+                    user.letter ||
+                    "R"
+            };
+
+        } catch {
+
+            return {
+                name: "Retova",
+                username: "retova",
+                letter: "R"
+            };
+        }
+    }
+
 
     /* =====================================================
-       LOGO
+       AVATAR
     ===================================================== */
 
-    const logo = $(".ars-logo");
+    function renderMyAvatar() {
 
-    safeClick(logo, () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    });
+        const button =
+            document.getElementById("myAvatar");
 
-    /* =====================================================
-       WHEEL BUTTON
-    ===================================================== */
+        if (!button) return;
 
-    const wheelButton = $(".ars-wheel-button");
+        const user =
+            getCurrentUser();
 
-    safeClick(wheelButton, () => {
-        openWheel();
-    });
+        button.textContent =
+            user.letter || "R";
+    }
 
-    /* =====================================================
-       MINI WHEEL STORY
-    ===================================================== */
-
-    const wheelStory = $(".wheel-story");
-
-    safeClick(wheelStory, () => {
-        openWheel();
-    });
-
-    /* =====================================================
-       CREATE POST BUTTON
-    ===================================================== */
-
-    const createPostButton = $(".ars-create-post");
-
-    safeClick(createPostButton, () => {
-        window.location.href = "create-post.html";
-    });
 
     /* =====================================================
        STORIES
     ===================================================== */
 
-    $$(".ars-story").forEach((story) => {
-        story.addEventListener("click", () => {
+    function renderStories() {
 
-            if (story.classList.contains("ars-story-you")) {
-                if (typeof window.openProfile === "function") {
-                    window.openProfile();
-                } else {
-                    window.location.href = "profile.html";
-                }
+        const container =
+            document.getElementById("stories");
 
-                return;
-            }
+        if (!container) return;
 
-            const username =
-                story.dataset.username ||
-                story.querySelector(".ars-story-name")?.textContent?.trim();
+        container.innerHTML =
+            demoStories.map(story => {
 
-            if (!username) return;
+                return `
+                    <button
+                        class="story"
+                        type="button"
+                        data-story-id="${escapeHTML(story.id)}"
+                    >
 
-            if (typeof window.openStory === "function") {
-                window.openStory(username);
-            }
-        });
-    });
+                        <div
+                            class="story-avatar"
+                            style="background:${story.gradient}"
+                        >
+                            <div class="story-avatar-inner">
+                                ${escapeHTML(story.letter)}
+                            </div>
+                        </div>
 
-    /* =====================================================
-       POST MENUS
-    ===================================================== */
+                        <span class="story-name">
+                            ${escapeHTML(story.name)}
+                        </span>
 
-    $$(".ars-post-menu").forEach((menu) => {
+                    </button>
+                `;
 
-        menu.addEventListener("click", (event) => {
-            event.preventDefault();
-            event.stopPropagation();
+            }).join("");
 
-            const post = menu.closest(".ars-post");
+        container
+            .querySelectorAll(".story")
+            .forEach(button => {
 
-            if (!post) return;
+                button.addEventListener(
+                    "click",
+                    () => {
 
-            openPostMenu(post, menu);
-        });
+                        openStory(
+                            button.dataset.storyId
+                        );
 
-    });
-
-    /* =====================================================
-       POST PROFILE
-    ===================================================== */
-
-    $$(".ars-post-profile").forEach((profile) => {
-
-        profile.addEventListener("click", () => {
-
-            const post = profile.closest(".ars-post");
-
-            const username =
-                post?.dataset.username ||
-                profile.querySelector(".ars-post-username")?.textContent?.trim();
-
-            if (!username) {
-                window.location.href = "profile.html";
-                return;
-            }
-
-            if (typeof window.openProfileByUsername === "function") {
-                window.openProfileByUsername(username);
-                return;
-            }
-
-            window.location.href =
-                `profile.html?user=${encodeURIComponent(username.replace("@", ""))}`;
-        });
-
-    });
-
-    /* =====================================================
-       POST LIKES
-    ===================================================== */
-
-    $$(".like-button").forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            const countElement =
-                $(".action-count", button);
-
-            const icon =
-                $(".action-icon", button);
-
-            let count = parseNumber(
-                countElement?.textContent || "0"
-            );
-
-            const alreadyLiked =
-                button.classList.contains("liked");
-
-            if (alreadyLiked) {
-                count = Math.max(0, count - 1);
-
-                button.classList.remove("liked");
-
-                if (icon) {
-                    icon.textContent = "♡";
-                }
-
-            } else {
-                count += 1;
-
-                button.classList.add("liked");
-
-                if (icon) {
-                    icon.textContent = "♥";
-                }
-            }
-
-            if (countElement) {
-                countElement.textContent =
-                    formatNumber(count);
-            }
-
-        });
-
-    });
-
-    /* =====================================================
-       POST COMMENTS
-    ===================================================== */
-
-    $$(".comment-button").forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            const post =
-                button.closest(".ars-post");
-
-            if (!post) return;
-
-            if (typeof window.openComments === "function") {
-                window.openComments(post);
-                return;
-            }
-
-            /*
-             * Comments page can be connected later.
-             */
-
-            const postId =
-                post.dataset.postId || "";
-
-            window.location.href =
-                `post.html${postId ? `?id=${encodeURIComponent(postId)}` : ""}`;
-        });
-
-    });
-
-    /* =====================================================
-       REPOST
-    ===================================================== */
-
-    $$(".repost-button").forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            const post =
-                button.closest(".ars-post");
-
-            if (!post) return;
-
-            const active =
-                button.classList.contains("reposted");
-
-            const countElement =
-                $(".action-count", button);
-
-            let count =
-                parseNumber(countElement?.textContent || "0");
-
-            if (active) {
-                count = Math.max(0, count - 1);
-                button.classList.remove("reposted");
-            } else {
-                count += 1;
-                button.classList.add("reposted");
-            }
-
-            if (countElement) {
-                countElement.textContent =
-                    formatNumber(count);
-            }
-
-        });
-
-    });
-
-    /* =====================================================
-       SAVE
-    ===================================================== */
-
-    $$(".save-button").forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            button.classList.toggle("saved");
-
-            const icon =
-                $(".action-icon", button);
-
-            if (!icon) return;
-
-            icon.textContent =
-                button.classList.contains("saved")
-                    ? "★"
-                    : "☆";
-
-        });
-
-    });
-
-    /* =====================================================
-       BOTTOM NAVIGATION
-    ===================================================== */
-
-    $$(".ars-nav-item").forEach((item) => {
-
-        item.addEventListener("click", () => {
-
-            const page =
-                item.dataset.page;
-
-            if (!page) return;
-
-            if (
-                page === "home" ||
-                item.classList.contains("active")
-            ) {
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-
-                return;
-            }
-
-            navigateToPage(page);
-        });
-
-    });
-
-    /* =====================================================
-       SEARCH
-    ===================================================== */
-
-    const searchButton =
-        $(
-            '.ars-nav-item[data-page="search"], [data-action="search"]'
-        );
-
-    safeClick(searchButton, () => {
-        window.location.href = "search.html";
-    });
-
-    /* =====================================================
-       NOTIFICATIONS
-    ===================================================== */
-
-    const notificationButton =
-        $(
-            '.ars-nav-item[data-page="notifications"], [data-action="notifications"]'
-        );
-
-    safeClick(notificationButton, () => {
-        window.location.href = "notifications.html";
-    });
-
-    /* =====================================================
-       MESSAGES
-    ===================================================== */
-
-    const messagesButton =
-        $(
-            '.ars-nav-item[data-page="messages"], [data-action="messages"]'
-        );
-
-    safeClick(messagesButton, () => {
-        window.location.href = "messages.html";
-    });
-
-    /* =====================================================
-       STORY HORIZONTAL SCROLL
-    ===================================================== */
-
-    const stories =
-        $(".ars-stories");
-
-    if (stories) {
-
-        let isDown = false;
-        let startX = 0;
-        let scrollLeft = 0;
-
-        stories.addEventListener("pointerdown", (event) => {
-
-            isDown = true;
-            startX = event.clientX;
-            scrollLeft = stories.scrollLeft;
-
-            stories.setPointerCapture?.(event.pointerId);
-        });
-
-        stories.addEventListener("pointermove", (event) => {
-
-            if (!isDown) return;
-
-            const distance =
-                event.clientX - startX;
-
-            stories.scrollLeft =
-                scrollLeft - distance;
-        });
-
-        const stopDragging = () => {
-            isDown = false;
-        };
-
-        stories.addEventListener(
-            "pointerup",
-            stopDragging
-        );
-
-        stories.addEventListener(
-            "pointercancel",
-            stopDragging
-        );
-
-        stories.addEventListener(
-            "pointerleave",
-            stopDragging
-        );
-    }
-
-    /* =====================================================
-       WHEEL
-    ===================================================== */
-
-    function openWheel() {
-
-        /*
-         * If wheel.js exists, use it directly.
-         */
-
-        if (
-            typeof window.openARSWheel === "function"
-        ) {
-            window.openARSWheel();
-            return;
-        }
-
-        if (
-            typeof window.openWheel === "function" &&
-            window.openWheel !== openWheel
-        ) {
-            window.openWheel();
-            return;
-        }
-
-        /*
-         * Fallback:
-         * Load wheel.html if it exists.
-         */
-
-        const existing =
-            document.querySelector("#arsWheelModal");
-
-        if (existing) {
-            existing.classList.add("active");
-            document.body.classList.add("wheel-open");
-            return;
-        }
-
-        window.location.href = "wheel.html";
-    }
-
-    /* =====================================================
-       POST MENU
-    ===================================================== */
-
-    function openPostMenu(post, menuButton) {
-
-        closeAllPostMenus();
-
-        const menu =
-            document.createElement("div");
-
-        menu.className =
-            "ars-post-popup-menu";
-
-        menu.innerHTML = `
-            <button type="button" data-menu-action="save">
-                Save
-            </button>
-
-            <button type="button" data-menu-action="share">
-                Share
-            </button>
-
-            <button type="button" data-menu-action="copy">
-                Copy link
-            </button>
-
-            <button type="button" data-menu-action="report">
-                Report
-            </button>
-        `;
-
-        post.style.position = "relative";
-
-        post.appendChild(menu);
-
-        menu.querySelectorAll("button").forEach((button) => {
-
-            button.addEventListener("click", () => {
-
-                const action =
-                    button.dataset.menuAction;
-
-                handlePostMenuAction(
-                    action,
-                    post
+                    }
                 );
 
-                menu.remove();
             });
+    }
 
-        });
 
-        setTimeout(() => {
+    /* =====================================================
+       STORIES VIEWER
+    ===================================================== */
 
-            document.addEventListener(
-                "click",
-                function outsideClick(event) {
+    function openStory(id) {
 
-                    if (
-                        !menu.contains(event.target) &&
-                        event.target !== menuButton
-                    ) {
-                        menu.remove();
-
-                        document.removeEventListener(
-                            "click",
-                            outsideClick
-                        );
-                    }
-
-                }
+        const story =
+            demoStories.find(
+                item => item.id === id
             );
 
-        }, 0);
+        if (!story) return;
+
+        const viewer =
+            document.getElementById("storyViewer");
+
+        const avatar =
+            document.getElementById("storyViewerAvatar");
+
+        const name =
+            document.getElementById("storyViewerName");
+
+        const image =
+            document.getElementById("storyViewerImage");
+
+        const text =
+            document.getElementById("storyViewerText");
+
+        if (!viewer) return;
+
+        avatar.textContent =
+            story.letter;
+
+        name.textContent =
+            story.name;
+
+        image.style.backgroundImage =
+            `url("${story.image}")`;
+
+        text.textContent =
+            story.text;
+
+        viewer.classList.add("open");
     }
 
-    function closeAllPostMenus() {
 
-        $$(".ars-post-popup-menu")
-            .forEach((menu) => menu.remove());
+    function closeStory() {
+
+        const viewer =
+            document.getElementById("storyViewer");
+
+        if (!viewer) return;
+
+        viewer.classList.remove("open");
     }
 
-    function handlePostMenuAction(action, post) {
+
+    /* =====================================================
+       POSTS
+    ===================================================== */
+
+    function renderPosts() {
+
+        const feed =
+            document.getElementById("feed");
+
+        if (!feed) return;
+
+        if (!posts.length) {
+
+            feed.innerHTML = `
+                <div class="empty-feed">
+
+                    <strong>
+                        Your feed is empty
+                    </strong>
+
+                    Follow people or create
+                    your first post.
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        feed.innerHTML =
+            posts.map(post => {
+
+                const imageHTML =
+                    post.image
+                        ? `
+                            <div class="post-media">
+                                <img
+                                    src="${escapeHTML(post.image)}"
+                                    alt="${escapeHTML(post.name)} post"
+                                    loading="lazy"
+                                    onerror="this.parentElement.style.display='none'"
+                                >
+                            </div>
+                        `
+                        : "";
+
+
+                return `
+                    <article
+                        class="post"
+                        data-post-id="${escapeHTML(post.id)}"
+                    >
+
+                        <header class="post-header">
+
+                            <div class="post-avatar">
+                                ${escapeHTML(post.letter)}
+                            </div>
+
+                            <div class="post-user">
+
+                                <div class="post-name-row">
+
+                                    <span class="post-name">
+                                        ${escapeHTML(post.name)}
+                                    </span>
+
+                                    ${
+                                        post.verified
+                                            ? `
+                                                <span class="verified">
+                                                    ✓
+                                                </span>
+                                            `
+                                            : ""
+                                    }
+
+                                </div>
+
+                                <div class="post-username">
+                                    @${escapeHTML(post.username)}
+                                    ·
+                                    ${escapeHTML(post.time)}
+                                </div>
+
+                            </div>
+
+                            <button
+                                class="post-menu"
+                                type="button"
+                                aria-label="More"
+                            >
+                                •••
+                            </button>
+
+                        </header>
+
+
+                        <div class="post-text">
+                            ${escapeHTML(post.text)}
+                        </div>
+
+
+                        ${imageHTML}
+
+
+                        <div class="post-actions">
+
+                            <button
+                                class="action-button ${
+                                    post.liked
+                                        ? "liked"
+                                        : ""
+                                }"
+                                type="button"
+                                data-action="like"
+                                data-post-id="${escapeHTML(post.id)}"
+                            >
+                                <i data-lucide="heart"></i>
+
+                                <span class="action-count">
+                                    ${formatNumber(post.likes)}
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="action-button"
+                                type="button"
+                                data-action="comment"
+                                data-post-id="${escapeHTML(post.id)}"
+                            >
+                                <i data-lucide="message-circle"></i>
+
+                                <span class="action-count">
+                                    ${formatNumber(post.comments)}
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="action-button ${
+                                    post.reposted
+                                        ? "reposted"
+                                        : ""
+                                }"
+                                type="button"
+                                data-action="repost"
+                                data-post-id="${escapeHTML(post.id)}"
+                            >
+                                <i data-lucide="repeat-2"></i>
+
+                                <span class="action-count">
+                                    ${formatNumber(post.reposts)}
+                                </span>
+                            </button>
+
+
+                            <button
+                                class="action-button"
+                                type="button"
+                                data-action="save"
+                                data-post-id="${escapeHTML(post.id)}"
+                            >
+                                <i data-lucide="bookmark"></i>
+                            </button>
+
+                        </div>
+
+
+                        <div class="post-stats">
+
+                            ${formatNumber(post.likes)}
+                            likes ·
+
+                            ${formatNumber(post.comments)}
+                            comments ·
+
+                            ${formatNumber(post.reposts)}
+                            reposts
+
+                        </div>
+
+                    </article>
+                `;
+
+            }).join("");
+
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+
+        bindPostActions();
+    }
+
+
+    /* =====================================================
+       POST ACTIONS
+    ===================================================== */
+
+    function bindPostActions() {
+
+        document
+            .querySelectorAll("[data-action]")
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const action =
+                            button.dataset.action;
+
+                        const id =
+                            button.dataset.postId;
+
+                        handlePostAction(
+                            action,
+                            id
+                        );
+
+                    }
+                );
+
+            });
+    }
+
+
+    function handlePostAction(action, id) {
+
+        const post =
+            posts.find(
+                item => item.id === id
+            );
+
+        if (!post) return;
+
+
+        if (action === "like") {
+
+            if (post.liked) {
+
+                post.liked = false;
+                post.likes = Math.max(
+                    0,
+                    post.likes - 1
+                );
+
+            } else {
+
+                post.liked = true;
+                post.likes += 1;
+
+            }
+
+            renderPosts();
+            return;
+        }
+
+
+        if (action === "comment") {
+
+            openComments(id);
+            return;
+        }
+
+
+        if (action === "repost") {
+
+            post.reposted =
+                !post.reposted;
+
+            post.reposts +=
+                post.reposted ? 1 : -1;
+
+            renderPosts();
+            return;
+        }
+
 
         if (action === "save") {
 
-            const saveButton =
-                $(".save-button", post);
-
-            saveButton?.click();
-
-            return;
-        }
-
-        if (action === "share") {
-
-            sharePost(post);
-
-            return;
-        }
-
-        if (action === "copy") {
-
-            copyPostLink(post);
-
-            return;
-        }
-
-        if (action === "report") {
-
-            showMessage(
-                "Thanks. This post has been reported."
+            buttonFeedback(
+                "Saved"
             );
 
         }
+
     }
 
-    /* =====================================================
-       SHARE
-    ===================================================== */
 
-    async function sharePost(post) {
+    function buttonFeedback(text) {
 
-        const postId =
-            post.dataset.postId || "";
+        const toast =
+            document.createElement("div");
 
-        const url =
-            `${window.location.origin}${window.location.pathname}` +
-            `${postId ? `?post=${encodeURIComponent(postId)}` : ""}`;
+        toast.textContent = text;
 
-        if (
-            navigator.share
-        ) {
+        toast.style.position = "fixed";
+        toast.style.left = "50%";
+        toast.style.bottom = "95px";
+        toast.style.transform =
+            "translateX(-50%)";
 
-            try {
+        toast.style.padding =
+            "10px 16px";
 
-                await navigator.share({
-                    title: "ΛRS",
-                    text: "Check this post on ΛRS.",
-                    url
-                });
+        toast.style.borderRadius =
+            "20px";
 
-            } catch {
-                // User cancelled share.
-            }
+        toast.style.background =
+            "#8d39ff";
 
-            return;
-        }
+        toast.style.color =
+            "#fff";
 
-        await copyText(url);
+        toast.style.fontSize =
+            "13px";
 
-        showMessage(
-            "Post link copied."
+        toast.style.fontWeight =
+            "700";
+
+        toast.style.zIndex =
+            "500";
+
+        document.body.appendChild(toast);
+
+        setTimeout(
+            () => toast.remove(),
+            1200
         );
     }
 
-    /* =====================================================
-       COPY POST LINK
-    ===================================================== */
-
-    async function copyPostLink(post) {
-
-        const postId =
-            post.dataset.postId || "";
-
-        const url =
-            `${window.location.origin}${window.location.pathname}` +
-            `${postId ? `?post=${encodeURIComponent(postId)}` : ""}`;
-
-        const copied =
-            await copyText(url);
-
-        if (copied) {
-            showMessage("Link copied.");
-        }
-    }
 
     /* =====================================================
-       COPY TEXT
+       COMMENTS
     ===================================================== */
 
-    async function copyText(text) {
+    function openComments(id) {
 
-        if (
-            navigator.clipboard &&
-            window.isSecureContext
-        ) {
+        activePostId = id;
 
-            try {
+        const sheet =
+            document.getElementById("commentsSheet");
 
-                await navigator.clipboard.writeText(text);
+        if (!sheet) return;
 
-                return true;
+        renderComments();
 
-            } catch {
-                return false;
-            }
-        }
-
-        try {
-
-            const textarea =
-                document.createElement("textarea");
-
-            textarea.value = text;
-
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-
-            document.body.appendChild(textarea);
-
-            textarea.select();
-
-            const success =
-                document.execCommand("copy");
-
-            textarea.remove();
-
-            return success;
-
-        } catch {
-            return false;
-        }
+        sheet.classList.add("open");
     }
+
+
+    function closeComments() {
+
+        const sheet =
+            document.getElementById("commentsSheet");
+
+        if (!sheet) return;
+
+        sheet.classList.remove("open");
+
+        activePostId = null;
+    }
+
+
+    function renderComments() {
+
+        const list =
+            document.getElementById("commentsList");
+
+        if (!list) return;
+
+        list.innerHTML = `
+            <div class="comment">
+
+                <div class="comment-avatar">
+                    L
+                </div>
+
+                <div class="comment-body">
+
+                    <div class="comment-name">
+                        Lina
+                    </div>
+
+                    <div class="comment-text">
+                        This is beautiful 💜
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="comment">
+
+                <div class="comment-avatar">
+                    N
+                </div>
+
+                <div class="comment-body">
+
+                    <div class="comment-name">
+                        Noah
+                    </div>
+
+                    <div class="comment-text">
+                        Love this!
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    function addComment() {
+
+        const input =
+            document.getElementById(
+                "commentInput"
+            );
+
+        if (!input) return;
+
+        const text =
+            input.value.trim();
+
+        if (!text) return;
+
+        const post =
+            posts.find(
+                item =>
+                    item.id === activePostId
+            );
+
+        if (post) {
+            post.comments += 1;
+        }
+
+        const list =
+            document.getElementById(
+                "commentsList"
+            );
+
+        const user =
+            getCurrentUser();
+
+        const comment =
+            document.createElement("div");
+
+        comment.className =
+            "comment";
+
+        comment.innerHTML = `
+            <div class="comment-avatar">
+                ${escapeHTML(user.letter)}
+            </div>
+
+            <div class="comment-body">
+
+                <div class="comment-name">
+                    ${escapeHTML(user.name)}
+                </div>
+
+                <div class="comment-text">
+                    ${escapeHTML(text)}
+                </div>
+
+            </div>
+        `;
+
+        list.appendChild(comment);
+
+        input.value = "";
+
+        renderPosts();
+    }
+
 
     /* =====================================================
        NAVIGATION
-    ===================================================== */
-
-    function navigateToPage(page) {
-
-        const routes = {
-
-            home: "home.html",
-            search: "search.html",
-            notifications: "notifications.html",
-            messages: "messages.html",
-            profile: "profile.html",
-            settings: "settings.html",
-            create: "create-post.html",
-            wheel: "wheel.html"
-
-        };
-
-        const destination =
-            routes[page] || page;
-
-        if (!destination) return;
-
-        window.location.href =
-            destination;
-    }
-
-    /* =====================================================
-       NUMBER PARSER
-    ===================================================== */
-
-    function parseNumber(value) {
-
-        if (!value) return 0;
-
-        const clean =
-            String(value)
-                .replace(/,/g, "")
-                .replace(/K/gi, "000")
-                .replace(/M/gi, "000000");
-
-        const number =
-            Number(clean);
-
-        return Number.isFinite(number)
-            ? number
-            : 0;
-    }
-
-    /* =====================================================
-       NUMBER FORMATTER
-    ===================================================== */
-
-    function formatNumber(number) {
-
-        if (number >= 1000000) {
-            return `${(number / 1000000).toFixed(1)}M`;
-        }
-
-        if (number >= 1000) {
-            return `${(number / 1000).toFixed(1)}K`;
-        }
-
-        return String(number);
-    }
-
-    /* =====================================================
-       MESSAGE
-    ===================================================== */
-
-    function showMessage(text) {
-
-        let message =
-            $("#arsToast");
-
-        if (!message) {
-
-            message =
-                document.createElement("div");
-
-            message.id =
-                "arsToast";
-
-            message.style.position =
-                "fixed";
-
-            message.style.left =
-                "50%";
-
-            message.style.bottom =
-                "105px";
-
-            message.style.transform =
-                "translateX(-50%) translateY(15px)";
-
-            message.style.zIndex =
-                "9999";
-
-            message.style.padding =
-                "12px 18px";
-
-            message.style.borderRadius =
-                "14px";
-
-            message.style.background =
-                "rgba(25,25,30,.96)";
-
-            message.style.border =
-                "1px solid rgba(139,53,255,.35)";
-
-            message.style.color =
-                "#fff";
-
-            message.style.fontSize =
-                "14px";
-
-            message.style.fontWeight =
-                "650";
-
-            message.style.opacity =
-                "0";
-
-            message.style.pointerEvents =
-                "none";
-
-            message.style.transition =
-                "opacity .2s ease, transform .2s ease";
-
-            document.body.appendChild(message);
-        }
-
-        
+    ==============================
