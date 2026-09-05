@@ -1,16 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>ΛRS</title>
 
-    <link rel="stylesheet" href="home.css">
-    <link rel="stylesheet" href="create-post.css">
+    <link
+        rel="stylesheet"
+        href="home.css"
+    >
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        rel="stylesheet"
+        href="create-post.css"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
@@ -35,7 +56,9 @@
             R
         </button>
 
-        <div class="logo">ΛRS</div>
+        <div class="logo">
+            ΛRS
+        </div>
 
         <button
             class="icon-button"
@@ -54,7 +77,9 @@
 
         <div class="stories-header">
 
-            <h2>Stories</h2>
+            <h2>
+                Stories
+            </h2>
 
             <button
                 id="viewAllStories"
@@ -80,7 +105,7 @@
     ></main>
 
 
-    <!-- CREATE POST -->
+    <!-- CREATE POST BUTTON -->
     <button
         id="newPost"
         class="new-post-button"
@@ -104,6 +129,7 @@
             <span>Home</span>
         </button>
 
+
         <button
             class="nav-button"
             type="button"
@@ -113,6 +139,7 @@
             <i data-lucide="search"></i>
             <span>Search</span>
         </button>
+
 
         <button
             class="nav-button"
@@ -124,6 +151,7 @@
             <span>Explore</span>
         </button>
 
+
         <button
             class="nav-button"
             type="button"
@@ -133,6 +161,7 @@
             <i data-lucide="bell"></i>
             <span>Alerts</span>
         </button>
+
 
         <button
             class="nav-button"
@@ -165,7 +194,9 @@
 
             <div class="comments-title-row">
 
-                <h3>Comments</h3>
+                <h3>
+                    Comments
+                </h3>
 
                 <button
                     id="closeComments"
@@ -178,16 +209,18 @@
 
         </div>
 
+
         <div
             id="commentsList"
             class="comments-list"
         ></div>
 
+
         <div class="comments-input">
 
             <div
-                class="my-comment-avatar"
                 id="myCommentAvatar"
+                class="my-comment-avatar"
             >
                 R
             </div>
@@ -260,15 +293,25 @@
 </div>
 
 
+<!-- CREATE POST WILL BE INSERTED BY create-post.js -->
+
+
 <script src="home.js"></script>
+
 <script src="create-post.js"></script>
 
+
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.lucide) {
-            lucide.createIcons();
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
         }
-    });
+    );
 </script>
 
 </body>
