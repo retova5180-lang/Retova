@@ -1,878 +1,653 @@
-/* =========================================================
-   ΛRS — CREATE POST
-========================================================= */
-
 (() => {
-
     "use strict";
 
+    let createPostScreen = null;
+    let mediaInput = null;
 
     const createPostState = {
-
-        media: [],
-
-        maxMedia: 10,
-
-        maxCharacters: 280,
-
-        allowComments: true,
-
-        allowReposts: true,
-
-        hideLikes: false,
-
-        visibility: "Public",
-
-        replyPermission: "Everyone",
-
-        language: "Auto",
-
-        hashtags: 0,
-
-        contentWarning: "None"
-
+        mode: "post",
+        mediaFile: null,
+        mediaUrl: null,
+        mediaType: null
     };
 
+    function getUser() {
+        try {
+            const user = JSON.parse(localStorage.getItem("ars_user"));
+            if (user) return user;
+        } catch (error) {}
 
-    /* =====================================================
-       OPEN
-    ===================================================== */
-
-    function openCreatePost() {
-
-        const existing =
-            document.getElementById(
-                "createPostScreen"
-            );
-
-        if (existing) {
-
-            existing.classList.add("active");
-
-            document.body.classList.add(
-                "create-post-open"
-            );
-
-            return;
-        }
-
-
-        createPostScreen();
-
-        document.body.classList.add(
-            "create-post-open"
-        );
+        return {
+            displayName: "You",
+            username: "you",
+            email: "",
+            letter: localStorage.getItem("ars_letter") || "R"
+        };
     }
 
-
-    /* =====================================================
-       CLOSE
-    ===================================================== */
-
-    function closeCreatePost() {
-
-        const screen =
-            document.getElementById(
-                "createPostScreen"
-            );
-
-        if (!screen) return;
-
-        screen.classList.remove("active");
-
-        setTimeout(
-            () => {
-
-                if (screen.parentNode) {
-                    screen.remove();
-                }
-
-            },
-            250
-        );
-
-        document.body.classList.remove(
-            "create-post-open"
-        );
+    function escapeHTML(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
+    function getLetter() {
+        return localStorage.getItem("ars_letter") ||
+            getUser().letter ||
+            getUser().displayName?.charAt(0) ||
+            "R";
+    }
 
-    /* =====================================================
-       CREATE SCREEN
-    ===================================================== */
+    function getAvatarColor() {
+        return localStorage.getItem("ars_letter_color") ||
+            "linear-gradient(135deg, #8B3DFF, #C54DFF)";
+    }
 
-    function createPostScreen() {
+    function getBackgroundColor() {
+        return localStorage.getItem("ars_background") ||
+            "linear-gradient(135deg, #18181D, #292936)";
+    }
 
-        const screen =
-            document.createElement("div");
+    function createScreen() {
+        if (createPostScreen) return;
 
-        screen.id =
-            "createPostScreen";
-
-        screen.className =
-            "create-post-screen active";
-
-
-        screen.innerHTML = `
+        createPostScreen = document.createElement("div");
+        createPostScreen.id = "createPostScreen";
+        createPostScreen.className = "create-post-screen";
+        createPostScreen.innerHTML = `
+            <div class="create-post-backdrop"></div>
 
             <div class="create-post-container">
 
                 <header class="create-post-header">
-
                     <button
-                        class="create-close"
-                        id="createPostClose"
                         type="button"
+                        class="create-post-close"
+                        id="createPostClose"
                         aria-label="Close"
                     >
                         ×
                     </button>
 
-                    <h1>Create Post</h1>
+                    <div class="create-post-title">
+                        <h2 id="createPostTitle">Create Post</h2>
+                        <span id="createPostSubtitle">Share something with your followers</span>
+                    </div>
 
                     <button
-                        class="publish-button"
-                        id="publishPost"
                         type="button"
-                        disabled
+                        class="create-post-publish"
+                        id="createPostPublish"
                     >
-                        Publish
+                        Post
                     </button>
-
                 </header>
 
+                <div class="create-post-tabs">
+                    <button
+                        type="button"
+                        class="create-post-tab active"
+                        data-create-mode="post"
+                    >
+                        Post
+                    </button>
 
-                <section class="create-user">
+                    <button
+                        type="button"
+                        class="create-post-tab"
+                        data-create-mode="story"
+                    >
+                        Story
+                    </button>
+                </div>
 
-                    <div class="create-avatar">
-                        R
-                    </div>
+                <main class="create-post-body">
 
-                    <div class="create-user-info">
-
-                        <div class="create-user-name">
-                            Retova
+                    <div class="create-post-user">
+                        <div
+                            class="create-post-avatar"
+                            id="createPostAvatar"
+                        >
+                            R
                         </div>
 
-                        <button
-                            class="visibility-button"
-                            id="visibilityButton"
-                            type="button"
-                        >
-                            <span>◉</span>
-
-                            <span id="visibilityText">
-                                Public
-                            </span>
-
-                            <span>⌄</span>
-                        </button>
-
+                        <div class="create-post-user-info">
+                            <strong id="createPostUserName">You</strong>
+                            <span id="createPostUserHandle">@you</span>
+                        </div>
                     </div>
-
-                </section>
-
-
-                <section class="create-text-section">
 
                     <textarea
                         id="createPostText"
-                        maxlength="280"
-                        placeholder="What's on your mind?"
+                        class="create-post-textarea"
+                        maxlength="1000"
+                        placeholder="What's happening?"
                     ></textarea>
 
-                    <div class="character-counter">
-                        <span id="characterCount">
-                            0
-                        </span>/280
-                    </div>
-
-                </section>
-
-
-                <section class="media-section">
-
                     <div
-                        class="media-preview"
-                        id="mediaPreview"
+                        id="createPostMediaPreview"
+                        class="create-post-media-preview"
                     ></div>
 
+                    <div class="create-post-actions">
+
+                        <button
+                            type="button"
+                            class="create-post-tool"
+                            id="createPostMediaButton"
+                        >
+                            <i data-lucide="image"></i>
+                            <span>Media</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="create-post-tool"
+                            id="createPostCameraButton"
+                        >
+                            <i data-lucide="camera"></i>
+                            <span>Camera</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="create-post-tool"
+                            id="createPostEmojiButton"
+                        >
+                            <i data-lucide="smile"></i>
+                            <span>Emoji</span>
+                        </button>
+
+                    </div>
+
+                    <div class="create-post-settings">
+
+                        <div class="create-post-setting-row">
+                            <div class="create-post-setting-icon">
+                                <i data-lucide="globe-2"></i>
+                            </div>
+
+                            <div class="create-post-setting-info">
+                                <strong>Visibility</strong>
+                                <span>Everyone can see this</span>
+                            </div>
+
+                            <select id="createPostVisibility">
+                                <option value="public">Everyone</option>
+                                <option value="followers">Followers</option>
+                                <option value="private">Only me</option>
+                            </select>
+                        </div>
+
+                        <div class="create-post-setting-row">
+                            <div class="create-post-setting-icon">
+                                <i data-lucide="sparkles"></i>
+                            </div>
+
+                            <div class="create-post-setting-info">
+                                <strong>Feelings</strong>
+                                <span>Add a feeling to your post</span>
+                            </div>
+
+                            <select id="createPostFeeling">
+                                <option value="">None</option>
+                                <option value="happy">Happy</option>
+                                <option value="excited">Excited</option>
+                                <option value="love">In love</option>
+                                <option value="proud">Proud</option>
+                                <option value="grateful">Grateful</option>
+                                <option value="chill">Chill</option>
+                            </select>
+                        </div>
+
+                    </div>
+
                     <div
-                        class="media-count"
-                        id="mediaCount"
+                        id="createPostCharacterCount"
+                        class="create-post-character-count"
                     >
-                        0/10 media
+                        0 / 1000
                     </div>
 
-                </section>
-
-
-                <section class="media-actions">
-
-                    <button
-                        class="media-action"
-                        type="button"
-                    >
-                        <span class="media-icon">
-                            ▧
-                        </span>
-
-                        <span>
-                            Photo
-                        </span>
-                    </button>
-
-
-                    <button
-                        class="media-action"
-                        type="button"
-                    >
-                        <span class="media-icon">
-                            ▶
-                        </span>
-
-                        <span>
-                            Video
-                        </span>
-                    </button>
-
-
-                    <button
-                        class="media-action"
-                        type="button"
-                    >
-                        <span class="media-icon">
-                            GIF
-                        </span>
-
-                        <span>
-                            GIF
-                        </span>
-                    </button>
-
-                </section>
-
-
-                <section class="post-settings">
-
-                    <div class="setting-row">
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                ♡
-                            </span>
-
-                            <span>
-                                Allow comments
-                            </span>
-
-                        </div>
-
-                        <button
-                            class="toggle active"
-                            id="commentsToggle"
-                            type="button"
-                        >
-                            <span></span>
-                        </button>
-
-                    </div>
-
-
-                    <div class="setting-row">
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                ↻
-                            </span>
-
-                            <span>
-                                Allow reposts
-                            </span>
-
-                        </div>
-
-                        <button
-                            class="toggle active"
-                            id="repostsToggle"
-                            type="button"
-                        >
-                            <span></span>
-                        </button>
-
-                    </div>
-
-
-                    <div class="setting-row">
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                ♡
-                            </span>
-
-                            <span>
-                                Hide like count
-                            </span>
-
-                        </div>
-
-                        <button
-                            class="toggle"
-                            id="likesToggle"
-                            type="button"
-                        >
-                            <span></span>
-                        </button>
-
-                    </div>
-
-
-                    <button
-                        class="setting-row"
-                        id="replySetting"
-                        type="button"
-                    >
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                ↪
-                            </span>
-
-                            <span>
-                                Who can reply
-                            </span>
-
-                        </div>
-
-                        <div class="setting-right">
-
-                            <span id="replyValue">
-                                Everyone
-                            </span>
-
-                            <span>›</span>
-
-                        </div>
-
-                    </button>
-
-
-                    <button
-                        class="setting-row"
-                        id="hashtagsSetting"
-                        type="button"
-                    >
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                #
-                            </span>
-
-                            <span>
-                                Add hashtags
-                            </span>
-
-                        </div>
-
-                        <div class="setting-right">
-
-                            <span id="hashtagsValue">
-                                0
-                            </span>
-
-                            <span>›</span>
-
-                        </div>
-
-                    </button>
-
-
-                    <button
-                        class="setting-row"
-                        id="languageSetting"
-                        type="button"
-                    >
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                文
-                            </span>
-
-                            <span>
-                                Language
-                            </span>
-
-                        </div>
-
-                        <div class="setting-right">
-
-                            <span id="languageValue">
-                                Auto
-                            </span>
-
-                            <span>›</span>
-
-                        </div>
-
-                    </button>
-
-
-                    <button
-                        class="setting-row"
-                        id="warningSetting"
-                        type="button"
-                    >
-
-                        <div class="setting-left">
-
-                            <span class="setting-icon">
-                                ◉
-                            </span>
-
-                            <span>
-                                Content warning
-                            </span>
-
-                        </div>
-
-                        <div class="setting-right">
-
-                            <span id="warningValue">
-                                None
-                            </span>
-
-                            <span>›</span>
-
-                        </div>
-
-                    </button>
-
-                </section>
-
-
-                <section class="create-bottom-tools">
-
-                    <button
-                        class="bottom-tool active"
-                        type="button"
-                    >
-                        ✦
-                    </button>
-
-                    <button
-                        class="bottom-tool"
-                        type="button"
-                    >
-                        ☷
-                    </button>
-
-                    <button
-                        class="bottom-tool"
-                        type="button"
-                    >
-                        ✎
-                    </button>
-
-                    <button
-                        class="bottom-tool"
-                        type="button"
-                    >
-                        ⚙
-                    </button>
-
-                </section>
-
-
-                <input
-                    type="file"
-                    id="createMediaInput"
-                    accept="image/*,video/*"
-                    multiple
-                    hidden
-                >
-
+                </main>
             </div>
         `;
 
+        document.body.appendChild(createPostScreen);
 
-        document.body.appendChild(screen);
+        mediaInput = document.createElement("input");
+        mediaInput.type = "file";
+        mediaInput.id = "createPostMediaInput";
+        mediaInput.accept = "image/*,video/*";
+        mediaInput.hidden = true;
 
-        setupCreatePostEvents();
+        document.body.appendChild(mediaInput);
+
+        bindEvents();
+        updateUserPreview();
+        updateCharacterCount();
+        refreshIcons();
     }
 
-
-    /* =====================================================
-       EVENTS
-    ===================================================== */
-
-    function setupCreatePostEvents() {
-
-        const closeButton =
-            document.getElementById(
-                "createPostClose"
-            );
-
-        const text =
-            document.getElementById(
-                "createPostText"
-            );
-
-        const counter =
-            document.getElementById(
-                "characterCount"
-            );
-
-        const publish =
-            document.getElementById(
-                "publishPost"
-            );
-
-        const mediaInput =
-            document.getElementById(
-                "createMediaInput"
-            );
-
-
-        if (closeButton) {
-
-            closeButton.addEventListener(
-                "click",
-                closeCreatePost
-            );
-
+    function refreshIcons() {
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons === "function"
+        ) {
+            window.lucide.createIcons();
         }
+    }
 
+    function bindEvents() {
+        const closeButton = document.getElementById("createPostClose");
+        const backdrop = createPostScreen.querySelector(
+            ".create-post-backdrop"
+        );
 
-        if (text) {
-
-            text.addEventListener(
-                "input",
-                () => {
-
-                    const length =
-                        text.value.length;
-
-                    counter.textContent =
-                        length;
-
-                    updatePublishButton();
-
-                }
-            );
-
-        }
-
+        closeButton?.addEventListener("click", closeCreatePost);
+        backdrop?.addEventListener("click", closeCreatePost);
 
         document
-            .querySelectorAll(".media-action")
+            .getElementById("createPostPublish")
+            ?.addEventListener("click", publishContent);
+
+        document
+            .getElementById("createPostMediaButton")
+            ?.addEventListener("click", openMediaPicker);
+
+        document
+            .getElementById("createPostCameraButton")
+            ?.addEventListener("click", openMediaPicker);
+
+        document
+            .getElementById("createPostEmojiButton")
+            ?.addEventListener("click", insertEmoji);
+
+        document
+            .getElementById("createPostText")
+            ?.addEventListener("input", updateCharacterCount);
+
+        createPostScreen
+            .querySelectorAll("[data-create-mode]")
             .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        if (mediaInput) {
-                            mediaInput.click();
-                        }
-
-                    }
-                );
-
+                button.addEventListener("click", () => {
+                    switchMode(button.dataset.createMode);
+                });
             });
 
+        mediaInput?.addEventListener("change", handleMediaSelection);
 
-        if (mediaInput) {
-
-            mediaInput.addEventListener(
-                "change",
-                handleMedia
-            );
-
-        }
-
-
-        setupToggle(
-            "commentsToggle",
-            "allowComments"
-        );
-
-        setupToggle(
-            "repostsToggle",
-            "allowReposts"
-        );
-
-        setupToggle(
-            "likesToggle",
-            "hideLikes"
-        );
-
-
-        const visibility =
-            document.getElementById(
-                "visibilityButton"
-            );
-
-        if (visibility) {
-
-            visibility.addEventListener(
-                "click",
-                changeVisibility
-            );
-
-        }
-
-
-        const replies =
-            document.getElementById(
-                "replySetting"
-            );
-
-        if (replies) {
-
-            replies.addEventListener(
-                "click",
-                changeReplyPermission
-            );
-
-        }
-
-
-        const hashtags =
-            document.getElementById(
-                "hashtagsSetting"
-            );
-
-        if (hashtags) {
-
-            hashtags.addEventListener(
-                "click",
-                changeHashtags
-            );
-
-        }
-
-
-        const language =
-            document.getElementById(
-                "languageSetting"
-            );
-
-        if (language) {
-
-            language.addEventListener(
-                "click",
-                changeLanguage
-            );
-
-        }
-
-
-        const warning =
-            document.getElementById(
-                "warningSetting"
-            );
-
-        if (warning) {
-
-            warning.addEventListener(
-                "click",
-                changeContentWarning
-            );
-
-        }
-
-
-        if (publish) {
-
-            publish.addEventListener(
-                "click",
-                publishPost
-            );
-
-        }
-
+        document.addEventListener("keydown", event => {
+            if (
+                event.key === "Escape" &&
+                createPostScreen?.classList.contains("open")
+            ) {
+                closeCreatePost();
+            }
+        });
     }
 
+    function updateUserPreview() {
+        const user = getUser();
 
-    /* =====================================================
-       TOGGLE
-    ===================================================== */
+        const avatar = document.getElementById("createPostAvatar");
+        const name = document.getElementById("createPostUserName");
+        const handle = document.getElementById("createPostUserHandle");
 
-    function setupToggle(
-        id,
-        stateKey
-    ) {
+        if (!avatar) return;
 
-        const button =
-            document.getElementById(id);
+        const letter = escapeHTML(
+            String(getLetter()).charAt(0).toUpperCase()
+        );
 
-        if (!button) return;
+        avatar.textContent = letter;
+        avatar.style.background = getBackgroundColor();
+        avatar.style.setProperty("--avatar-gradient", getAvatarColor());
 
-        button.addEventListener(
-            "click",
-            () => {
+        if (user.displayName) {
+            name.textContent = user.displayName;
+        }
 
-                createPostState[stateKey] =
-                    !createPostState[stateKey];
+        if (user.username) {
+            handle.textContent = `@${user.username}`;
+        }
+    }
 
+    function switchMode(mode) {
+        createPostState.mode = mode;
+
+        const title = document.getElementById("createPostTitle");
+        const subtitle = document.getElementById("createPostSubtitle");
+        const publish = document.getElementById("createPostPublish");
+        const textarea = document.getElementById("createPostText");
+
+        createPostScreen
+            .querySelectorAll("[data-create-mode]")
+            .forEach(button => {
                 button.classList.toggle(
                     "active",
-                    createPostState[stateKey]
+                    button.dataset.createMode === mode
                 );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       MEDIA
-    ===================================================== */
-
-    function handleMedia(event) {
-
-        const selected =
-            [
-                ...event.target.files
-            ].slice(
-                0,
-                createPostState.maxMedia
-                -
-                createPostState.media.length
-            );
-
-
-        selected.forEach(file => {
-
-            if (
-                !file.type.startsWith("image/")
-                &&
-                !file.type.startsWith("video/")
-            ) {
-                return;
-            }
-
-
-            const url =
-                URL.createObjectURL(file);
-
-
-            createPostState.media.push({
-
-                file,
-
-                url,
-
-                type:
-                    file.type.startsWith("video/")
-                        ? "video"
-                        : "image"
-
             });
 
-        });
-
-
-        renderMedia();
-
-        updatePublishButton();
-
-        event.target.value = "";
+        if (mode === "story") {
+            title.textContent = "Create Story";
+            subtitle.textContent = "Share something for 24 hours";
+            publish.textContent = "Share";
+            textarea.placeholder = "Write something for your story...";
+        } else {
+            title.textContent = "Create Post";
+            subtitle.textContent = "Share something with your followers";
+            publish.textContent = "Post";
+            textarea.placeholder = "What's happening?";
+        }
     }
 
+    function openCreatePost(mode = "post") {
+        createScreen();
 
-    function renderMedia() {
+        resetCreatePost();
 
-        const preview =
-            document.getElementById(
-                "mediaPreview"
-            );
+        switchMode(mode);
 
-        const count =
-            document.getElementById(
-                "mediaCount"
-            );
+        updateUserPreview();
+
+        requestAnimationFrame(() => {
+            createPostScreen.classList.add("open");
+            document.body.classList.add("create-post-open");
+
+            const textarea = document.getElementById("createPostText");
+            setTimeout(() => textarea?.focus(), 100);
+        });
+    }
+
+    function closeCreatePost() {
+        if (!createPostScreen) return;
+
+        createPostScreen.classList.remove("open");
+        document.body.classList.remove("create-post-open");
+
+        setTimeout(() => {
+            if (!createPostScreen) return;
+            resetCreatePost();
+        }, 250);
+    }
+
+    function resetCreatePost() {
+        createPostState.mode = "post";
+        createPostState.mediaFile = null;
+        createPostState.mediaType = null;
+
+        if (createPostState.mediaUrl) {
+            try {
+                URL.revokeObjectURL(createPostState.mediaUrl);
+            } catch (error) {}
+        }
+
+        createPostState.mediaUrl = null;
+
+        const textarea = document.getElementById("createPostText");
+        const visibility = document.getElementById("createPostVisibility");
+        const feeling = document.getElementById("createPostFeeling");
+        const preview = document.getElementById("createPostMediaPreview");
+
+        if (textarea) textarea.value = "";
+        if (visibility) visibility.value = "public";
+        if (feeling) feeling.value = "";
+        if (preview) preview.innerHTML = "";
+
+        updateCharacterCount();
+
+        if (mediaInput) {
+            mediaInput.value = "";
+        }
+    }
+
+    function openMediaPicker() {
+        if (!mediaInput) {
+            createScreen();
+        }
+
+        mediaInput?.click();
+    }
+
+    function handleMediaSelection(event) {
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith("image/") &&
+            !file.type.startsWith("video/")) {
+            showCreateToast("Please select an image or video.");
+            return;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+            showCreateToast("The file is too large. Maximum is 50MB.");
+            return;
+        }
+
+        if (createPostState.mediaUrl) {
+            try {
+                URL.revokeObjectURL(createPostState.mediaUrl);
+            } catch (error) {}
+        }
+
+        createPostState.mediaFile = file;
+        createPostState.mediaType = file.type.startsWith("video/")
+            ? "video"
+            : "image";
+
+        createPostState.mediaUrl = URL.createObjectURL(file);
+
+        renderMediaPreview();
+    }
+
+    function renderMediaPreview() {
+        const preview = document.getElementById(
+            "createPostMediaPreview"
+        );
 
         if (!preview) return;
 
+        preview.innerHTML = "";
 
-        preview.innerHTML =
-            createPostState.media
-                .map(
-                    (media, index) => {
-
-                        return `
-                            <div
-                                class="media-item"
-                            >
-
-                                ${
-                                    media.type === "video"
-                                        ? `
-                                            <video
-                                                src="${media.url}"
-                                                controls
-                                            ></video>
-                                        `
-                                        : `
-                                            <img
-                                                src="${media.url}"
-                                                alt="Selected media"
-                                            >
-                                        `
-                                }
-
-                                <button
-                                    class="media-remove"
-                                    type="button"
-                                    data-media-index="${index}"
-                                >
-                                    ×
-                                </button>
-
-                            </div>
-                        `;
-
-                    }
-                )
-                .join("");
-
-
-        if (count) {
-
-            count.textContent =
-                `${createPostState.media.length}/10 media`;
-
+        if (!createPostState.mediaUrl) {
+            return;
         }
 
+        const wrapper = document.createElement("div");
+        wrapper.className = "create-post-media-wrapper";
 
-        preview
-            .querySelectorAll(".media-remove")
-            .forEach(button => {
+        let mediaElement;
 
-                button.addEventListener(
-                    "click",
-                    () => {
+        if (createPostState.mediaType === "video") {
+            mediaElement = document.createElement("video");
+            mediaElement.src = createPostState.mediaUrl;
+            mediaElement.controls = true;
+            mediaElement.playsInline = true;
+        } else {
+            mediaElement = document.createElement("img");
+            mediaElement.src = createPostState.mediaUrl;
+            mediaElement.alt = "Selected media";
+        }
 
-                        const index =
-                            Number(
-                                button.dataset.mediaIndex
-                            );
+        mediaElement.className = "create-post-selected-media";
 
-                        const media =
-                            createPostState.media[
-                                index
-                            ];
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "create-post-remove-media";
+        removeButton.innerHTML = "×";
+        removeButton.setAttribute("aria-label", "Remove media");
 
-                        if (media) {
+        removeButton.addEventListener("click", removeMedia);
 
-                            URL.revokeObjectURL(
-                                media.url
+        wrapper.appendChild(mediaElement);
+        wrapper.appendChild(removeButton);
+        preview.appendChild(wrapper);
+    }
+
+    function removeMedia() {
+        if (createPostState.mediaUrl) {
+            try {
+                URL.revokeObjectURL(createPostState.mediaUrl);
+            } catch (error) {}
+        }
+
+        createPostState.mediaFile = null;
+        createPostState.mediaUrl = null;
+        createPostState.mediaType = null;
+
+        const preview = document.getElementById(
+            "createPostMediaPreview"
+        );
+
+        if (preview) {
+            preview.innerHTML = "";
+        }
+
+        if (mediaInput) {
+            mediaInput.value = "";
+        }
+    }
+
+    function insertEmoji() {
+        const textarea = document.getElementById("createPostText");
+
+        if (!textarea) return;
+
+        const emojis = [
+            "✨",
+            "💜",
+            "🔥",
+            "😍",
+            "😂",
+            "🥹",
+            "💫",
+            "🫶",
+            "🎀",
+            "🌙"
+        ];
+
+        const emoji =
+            emojis[Math.floor(Math.random() * emojis.length)];
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        textarea.value =
+            textarea.value.substring(0, start) +
+            emoji +
+            textarea.value.substring(end);
+
+        textarea.selectionStart = start + emoji.length;
+        textarea.selectionEnd = start + emoji.length;
+
+        updateCharacterCount();
+        textarea.focus();
+    }
+
+    function updateCharacterCount() {
+        const textarea = document.getElementById("createPostText");
+        const counter = document.getElementById(
+            "createPostCharacterCount"
+        );
+
+        if (!textarea || !counter) return;
+
+        counter.textContent =
+            `${textarea.value.length} / 1000`;
+    }
+
+    async function publishContent() {
+        const textarea = document.getElementById("createPostText");
+        const visibility =
+            document.getElementById("createPostVisibility")?.value ||
+            "public";
+
+        const feeling =
+            document.getElementById("createPostFeeling")?.value ||
+            "";
+
+        const text = textarea?.value.trim() || "";
+
+        if (!text && !createPostState.mediaFile) {
+            showCreateToast(
+                createPostState.mode === "story"
+                    ? "Add text or media to your story."
+                    : "Add text or media to your post."
+            );
+            return;
+        }
+
+        const publishButton =
+            document.getElementById("createPostPublish");
+
+        if (publishButton) {
+            publishButton.disabled = true;
+            publishButton.textContent =
+                createPostState.mode === "story"
+                    ? "Sharing..."
+                    : "Posting...";
+        }
+
+        try {
+            if (createPostState.mode === "story") {
+                await createStory(text, visibility, feeling);
+            } else {
+                await createPost(text, visibility, feeling);
+            }
+
+            closeCreatePost();
+        } catch (error) {
+            console.error("Create content error:", error);
+
+            showCreateToast(
+                "Something went wrong. Please try again."
+            );
+        } finally {
+            if (publishButton) {
+                publishButton.disabled = false;
+
+                publishButton.textContent =
+                    createPostState.mode === "story"
+                        ? "Share"
+                        : "Post";
+            }
+        }
+    }
+
+    async function createPost(text, visibility, feeling) {
+        const user = getUser();
+
+        let media = null;
+
+        if (
+            createPostState.mediaFile &&
+            createPostState.mediaType === "image"
+        ) {
+            media = await fileToDataURL(
+                createPostState.mediaFile
+            );
+        }
+
+        const post = {
+            id: `local-post-${Date.now()}`,
+            author: {
+                name: user.displayName || "You",
+                username: user.username || "you",
+                letter: getLetter()
+            },
+            text,
+            image: media,
+            video: null,
+            visibility,
+            feeling,
+            time: "Just now",
+            likes: 0,
+            comments: [],
+            reposts: 0,
            
