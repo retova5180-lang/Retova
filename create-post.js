@@ -1,653 +1,869 @@
 (() => {
     "use strict";
 
-    let createPostScreen = null;
-    let mediaInput = null;
-
-    const createPostState = {
+    const state = {
         mode: "post",
-        mediaFile: null,
-        mediaUrl: null,
+        media: null,
         mediaType: null
     };
 
+
     function getUser() {
         try {
-            const user = JSON.parse(localStorage.getItem("ars_user"));
-            if (user) return user;
-        } catch (error) {}
-
-        return {
-            displayName: "You",
-            username: "you",
-            email: "",
-            letter: localStorage.getItem("ars_letter") || "R"
-        };
+            return JSON.parse(
+                localStorage.getItem("ars_user") || "null"
+            );
+        } catch {
+            return null;
+        }
     }
 
-    function escapeHTML(value) {
-        return String(value || "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
 
     function getLetter() {
-        return localStorage.getItem("ars_letter") ||
-            getUser().letter ||
-            getUser().displayName?.charAt(0) ||
-            "R";
+        const user = getUser();
+
+        return (
+            user?.letter ||
+            localStorage.getItem("ars_letter") ||
+            "R"
+        )
+        .slice(0, 1)
+        .toUpperCase();
     }
 
-    function getAvatarColor() {
-        return localStorage.getItem("ars_letter_color") ||
-            "linear-gradient(135deg, #8B3DFF, #C54DFF)";
-    }
 
-    function getBackgroundColor() {
-        return localStorage.getItem("ars_background") ||
-            "linear-gradient(135deg, #18181D, #292936)";
-    }
+    function ensureUI() {
 
-    function createScreen() {
-        if (createPostScreen) return;
+        if (
+            document.getElementById(
+                "createPostScreen"
+            )
+        ) {
+            return;
+        }
 
-        createPostScreen = document.createElement("div");
-        createPostScreen.id = "createPostScreen";
-        createPostScreen.className = "create-post-screen";
-        createPostScreen.innerHTML = `
-            <div class="create-post-backdrop"></div>
+        const screen =
+            document.createElement("div");
 
-            <div class="create-post-container">
+        screen.id =
+            "createPostScreen";
 
-                <header class="create-post-header">
+        screen.innerHTML = `
+            <div class="create-post-panel">
+
+                <div class="create-post-header">
+
+                    <div class="create-post-title">
+                        <strong id="createPostTitle">
+                            Create post
+                        </strong>
+
+                        <span id="createPostSubtitle">
+                            Share something with ΛRS
+                        </span>
+                    </div>
+
                     <button
-                        type="button"
                         class="create-post-close"
-                        id="createPostClose"
-                        aria-label="Close"
+                        id="closeCreatePost"
+                        type="button"
                     >
                         ×
                     </button>
 
-                    <div class="create-post-title">
-                        <h2 id="createPostTitle">Create Post</h2>
-                        <span id="createPostSubtitle">Share something with your followers</span>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="create-post-publish"
-                        id="createPostPublish"
-                    >
-                        Post
-                    </button>
-                </header>
+                </div>
 
                 <div class="create-post-tabs">
+
                     <button
-                        type="button"
                         class="create-post-tab active"
                         data-create-mode="post"
+                        type="button"
                     >
                         Post
                     </button>
 
                     <button
-                        type="button"
                         class="create-post-tab"
                         data-create-mode="story"
+                        type="button"
                     >
                         Story
                     </button>
+
                 </div>
 
-                <main class="create-post-body">
+                <div class="create-post-body">
 
                     <div class="create-post-user">
+
                         <div
-                            class="create-post-avatar"
+                            class="create-post-user-avatar"
                             id="createPostAvatar"
                         >
                             R
                         </div>
 
-                        <div class="create-post-user-info">
-                            <strong id="createPostUserName">You</strong>
-                            <span id="createPostUserHandle">@you</span>
+                        <div>
+                            <div
+                                class="create-post-user-name"
+                                id="createPostUserName"
+                            >
+                                You
+                            </div>
+
+                            <div class="create-post-user-sub">
+                                Everyone
+                            </div>
                         </div>
+
                     </div>
 
                     <textarea
                         id="createPostText"
-                        class="create-post-textarea"
                         maxlength="1000"
                         placeholder="What's happening?"
                     ></textarea>
 
                     <div
-                        id="createPostMediaPreview"
-                        class="create-post-media-preview"
-                    ></div>
+                        class="create-post-preview"
+                        id="createPostPreview"
+                    >
+                        <button
+                            class="create-post-remove-media"
+                            id="removeCreateMedia"
+                            type="button"
+                        >
+                            ×
+                        </button>
 
-                    <div class="create-post-actions">
+                        <div id="createPostMedia"></div>
+                    </div>
+
+                    <div class="create-post-tools">
 
                         <button
-                            type="button"
                             class="create-post-tool"
-                            id="createPostMediaButton"
+                            id="createImage"
+                            type="button"
+                            title="Image"
                         >
                             <i data-lucide="image"></i>
-                            <span>Media</span>
                         </button>
 
                         <button
-                            type="button"
                             class="create-post-tool"
-                            id="createPostCameraButton"
+                            id="createVideo"
+                            type="button"
+                            title="Video"
                         >
-                            <i data-lucide="camera"></i>
-                            <span>Camera</span>
+                            <i data-lucide="video"></i>
                         </button>
 
                         <button
-                            type="button"
                             class="create-post-tool"
-                            id="createPostEmojiButton"
+                            id="createEmoji"
+                            type="button"
+                            title="Emoji"
                         >
-                            <i data-lucide="smile"></i>
-                            <span>Emoji</span>
+                            😊
                         </button>
 
                     </div>
 
-                    <div class="create-post-settings">
+                    <div class="create-post-options">
 
-                        <div class="create-post-setting-row">
-                            <div class="create-post-setting-icon">
-                                <i data-lucide="globe-2"></i>
-                            </div>
+                        <button
+                            class="create-post-option active"
+                            type="button"
+                        >
+                            Everyone
+                        </button>
 
-                            <div class="create-post-setting-info">
-                                <strong>Visibility</strong>
-                                <span>Everyone can see this</span>
-                            </div>
+                        <button
+                            class="create-post-option"
+                            type="button"
+                        >
+                            Friends
+                        </button>
 
-                            <select id="createPostVisibility">
-                                <option value="public">Everyone</option>
-                                <option value="followers">Followers</option>
-                                <option value="private">Only me</option>
-                            </select>
-                        </div>
-
-                        <div class="create-post-setting-row">
-                            <div class="create-post-setting-icon">
-                                <i data-lucide="sparkles"></i>
-                            </div>
-
-                            <div class="create-post-setting-info">
-                                <strong>Feelings</strong>
-                                <span>Add a feeling to your post</span>
-                            </div>
-
-                            <select id="createPostFeeling">
-                                <option value="">None</option>
-                                <option value="happy">Happy</option>
-                                <option value="excited">Excited</option>
-                                <option value="love">In love</option>
-                                <option value="proud">Proud</option>
-                                <option value="grateful">Grateful</option>
-                                <option value="chill">Chill</option>
-                            </select>
-                        </div>
+                        <button
+                            class="create-post-option"
+                            type="button"
+                        >
+                            Subscribers
+                        </button>
 
                     </div>
 
-                    <div
-                        id="createPostCharacterCount"
-                        class="create-post-character-count"
-                    >
-                        0 / 1000
+                    <div class="create-post-bottom">
+
+                        <div
+                            class="create-post-meta"
+                            id="createPostCount"
+                        >
+                            0 / 1000
+                        </div>
+
+                        <button
+                            class="create-post-publish"
+                            id="publishCreatePost"
+                            type="button"
+                            disabled
+                        >
+                            Post
+                        </button>
+
                     </div>
 
-                </main>
+                </div>
+
             </div>
         `;
 
-        document.body.appendChild(createPostScreen);
+        document.body.appendChild(screen);
 
-        mediaInput = document.createElement("input");
-        mediaInput.type = "file";
-        mediaInput.id = "createPostMediaInput";
-        mediaInput.accept = "image/*,video/*";
-        mediaInput.hidden = true;
+        const imageInput =
+            document.createElement("input");
 
-        document.body.appendChild(mediaInput);
+        imageInput.type = "file";
+        imageInput.accept = "image/*";
+        imageInput.hidden = true;
+        imageInput.id = "arsImageInput";
 
-        bindEvents();
-        updateUserPreview();
-        updateCharacterCount();
-        refreshIcons();
+        document.body.appendChild(imageInput);
+
+
+        const videoInput =
+            document.createElement("input");
+
+        videoInput.type = "file";
+        videoInput.accept = "video/*";
+        videoInput.hidden = true;
+        videoInput.id = "arsVideoInput";
+
+        document.body.appendChild(videoInput);
+
+        bindUI();
     }
 
-    function refreshIcons() {
-        if (
-            window.lucide &&
-            typeof window.lucide.createIcons === "function"
-        ) {
-            window.lucide.createIcons();
-        }
-    }
 
-    function bindEvents() {
-        const closeButton = document.getElementById("createPostClose");
-        const backdrop = createPostScreen.querySelector(
-            ".create-post-backdrop"
-        );
-
-        closeButton?.addEventListener("click", closeCreatePost);
-        backdrop?.addEventListener("click", closeCreatePost);
+    function bindUI() {
 
         document
-            .getElementById("createPostPublish")
-            ?.addEventListener("click", publishContent);
+            .getElementById("closeCreatePost")
+            ?.addEventListener(
+                "click",
+                closeCreatePost
+            );
 
         document
-            .getElementById("createPostMediaButton")
-            ?.addEventListener("click", openMediaPicker);
+            .getElementById("createPostScreen")
+            ?.addEventListener(
+                "click",
+                event => {
+
+                    if (
+                        event.target.id ===
+                        "createPostScreen"
+                    ) {
+                        closeCreatePost();
+                    }
+                }
+            );
 
         document
-            .getElementById("createPostCameraButton")
-            ?.addEventListener("click", openMediaPicker);
-
-        document
-            .getElementById("createPostEmojiButton")
-            ?.addEventListener("click", insertEmoji);
-
-        document
-            .getElementById("createPostText")
-            ?.addEventListener("input", updateCharacterCount);
-
-        createPostScreen
-            .querySelectorAll("[data-create-mode]")
+            .querySelectorAll(
+                "[data-create-mode]"
+            )
             .forEach(button => {
-                button.addEventListener("click", () => {
-                    switchMode(button.dataset.createMode);
-                });
-            });
 
-        mediaInput?.addEventListener("change", handleMediaSelection);
-
-        document.addEventListener("keydown", event => {
-            if (
-                event.key === "Escape" &&
-                createPostScreen?.classList.contains("open")
-            ) {
-                closeCreatePost();
-            }
-        });
-    }
-
-    function updateUserPreview() {
-        const user = getUser();
-
-        const avatar = document.getElementById("createPostAvatar");
-        const name = document.getElementById("createPostUserName");
-        const handle = document.getElementById("createPostUserHandle");
-
-        if (!avatar) return;
-
-        const letter = escapeHTML(
-            String(getLetter()).charAt(0).toUpperCase()
-        );
-
-        avatar.textContent = letter;
-        avatar.style.background = getBackgroundColor();
-        avatar.style.setProperty("--avatar-gradient", getAvatarColor());
-
-        if (user.displayName) {
-            name.textContent = user.displayName;
-        }
-
-        if (user.username) {
-            handle.textContent = `@${user.username}`;
-        }
-    }
-
-    function switchMode(mode) {
-        createPostState.mode = mode;
-
-        const title = document.getElementById("createPostTitle");
-        const subtitle = document.getElementById("createPostSubtitle");
-        const publish = document.getElementById("createPostPublish");
-        const textarea = document.getElementById("createPostText");
-
-        createPostScreen
-            .querySelectorAll("[data-create-mode]")
-            .forEach(button => {
-                button.classList.toggle(
-                    "active",
-                    button.dataset.createMode === mode
+                button.addEventListener(
+                    "click",
+                    () => {
+                        setMode(
+                            button.dataset.createMode
+                        );
+                    }
                 );
             });
 
-        if (mode === "story") {
-            title.textContent = "Create Story";
-            subtitle.textContent = "Share something for 24 hours";
-            publish.textContent = "Share";
-            textarea.placeholder = "Write something for your story...";
-        } else {
-            title.textContent = "Create Post";
-            subtitle.textContent = "Share something with your followers";
-            publish.textContent = "Post";
-            textarea.placeholder = "What's happening?";
-        }
+
+        document
+            .getElementById("createImage")
+            ?.addEventListener(
+                "click",
+                () => {
+                    document
+                        .getElementById(
+                            "arsImageInput"
+                        )
+                        ?.click();
+                }
+            );
+
+
+        document
+            .getElementById("createVideo")
+            ?.addEventListener(
+                "click",
+                () => {
+                    document
+                        .getElementById(
+                            "arsVideoInput"
+                        )
+                        ?.click();
+                }
+            );
+
+
+        document
+            .getElementById("arsImageInput")
+            ?.addEventListener(
+                "change",
+                event => {
+
+                    const file =
+                        event.target.files?.[0];
+
+                    if (file) {
+                        loadMedia(
+                            file,
+                            "image"
+                        );
+                    }
+                }
+            );
+
+
+        document
+            .getElementById("arsVideoInput")
+            ?.addEventListener(
+                "change",
+                event => {
+
+                    const file =
+                        event.target.files?.[0];
+
+                    if (file) {
+                        loadMedia(
+                            file,
+                            "video"
+                        );
+                    }
+                }
+            );
+
+
+        document
+            .getElementById(
+                "removeCreateMedia"
+            )
+            ?.addEventListener(
+                "click",
+                removeMedia
+            );
+
+
+        document
+            .getElementById("createEmoji")
+            ?.addEventListener(
+                "click",
+                addEmoji
+            );
+
+
+        document
+            .getElementById("createPostText")
+            ?.addEventListener(
+                "input",
+                updateCounter
+            );
+
+
+        document
+            .getElementById(
+                "publishCreatePost"
+            )
+            ?.addEventListener(
+                "click",
+                publish
+            );
+
+
+        document
+            .querySelectorAll(
+                ".create-post-option"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        document
+                            .querySelectorAll(
+                                ".create-post-option"
+                            )
+                            .forEach(item =>
+                                item.classList.remove(
+                                    "active"
+                                )
+                            );
+
+                        button.classList.add(
+                            "active"
+                        );
+                    }
+                );
+            });
     }
 
+
+    function setMode(mode) {
+
+        state.mode =
+            mode === "story"
+                ? "story"
+                : "post";
+
+        document
+            .querySelectorAll(
+                "[data-create-mode]"
+            )
+            .forEach(button => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.createMode ===
+                    state.mode
+                );
+            });
+
+        const title =
+            document.getElementById(
+                "createPostTitle"
+            );
+
+        const subtitle =
+            document.getElementById(
+                "createPostSubtitle"
+            );
+
+        const publishButton =
+            document.getElementById(
+                "publishCreatePost"
+            );
+
+        const textarea =
+            document.getElementById(
+                "createPostText"
+            );
+
+        if (state.mode === "story") {
+
+            title.textContent =
+                "Create story";
+
+            subtitle.textContent =
+                "Share a moment for 24 hours";
+
+            publishButton.textContent =
+                "Add Story";
+
+            textarea.placeholder =
+                "Add something to your story...";
+
+        } else {
+
+            title.textContent =
+                "Create post";
+
+            subtitle.textContent =
+                "Share something with ΛRS";
+
+            publishButton.textContent =
+                "Post";
+
+            textarea.placeholder =
+                "What's happening?";
+        }
+
+        updateCounter();
+    }
+
+
     function openCreatePost(mode = "post") {
-        createScreen();
 
-        resetCreatePost();
+        ensureUI();
 
-        switchMode(mode);
+        reset();
+
+        setMode(mode);
 
         updateUserPreview();
 
-        requestAnimationFrame(() => {
-            createPostScreen.classList.add("open");
-            document.body.classList.add("create-post-open");
+        document
+            .getElementById(
+                "createPostScreen"
+            )
+            ?.classList.add("open");
 
-            const textarea = document.getElementById("createPostText");
-            setTimeout(() => textarea?.focus(), 100);
-        });
+        document.body.style.overflow =
+            "hidden";
+
+        document
+            .getElementById(
+                "createPostText"
+            )
+            ?.focus();
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
     }
+
 
     function closeCreatePost() {
-        if (!createPostScreen) return;
 
-        createPostScreen.classList.remove("open");
-        document.body.classList.remove("create-post-open");
+        document
+            .getElementById(
+                "createPostScreen"
+            )
+            ?.classList.remove("open");
 
-        setTimeout(() => {
-            if (!createPostScreen) return;
-            resetCreatePost();
-        }, 250);
+        document.body.style.overflow =
+            "";
     }
 
-    function resetCreatePost() {
-        createPostState.mode = "post";
-        createPostState.mediaFile = null;
-        createPostState.mediaType = null;
 
-        if (createPostState.mediaUrl) {
-            try {
-                URL.revokeObjectURL(createPostState.mediaUrl);
-            } catch (error) {}
+    function reset() {
+
+        state.media = null;
+        state.mediaType = null;
+
+        const textarea =
+            document.getElementById(
+                "createPostText"
+            );
+
+        if (textarea) {
+            textarea.value = "";
         }
 
-        createPostState.mediaUrl = null;
-
-        const textarea = document.getElementById("createPostText");
-        const visibility = document.getElementById("createPostVisibility");
-        const feeling = document.getElementById("createPostFeeling");
-        const preview = document.getElementById("createPostMediaPreview");
-
-        if (textarea) textarea.value = "";
-        if (visibility) visibility.value = "public";
-        if (feeling) feeling.value = "";
-        if (preview) preview.innerHTML = "";
-
-        updateCharacterCount();
-
-        if (mediaInput) {
-            mediaInput.value = "";
-        }
-    }
-
-    function openMediaPicker() {
-        if (!mediaInput) {
-            createScreen();
-        }
-
-        mediaInput?.click();
-    }
-
-    function handleMediaSelection(event) {
-        const file = event.target.files?.[0];
-
-        if (!file) return;
-
-        if (!file.type.startsWith("image/") &&
-            !file.type.startsWith("video/")) {
-            showCreateToast("Please select an image or video.");
-            return;
-        }
-
-        if (file.size > 50 * 1024 * 1024) {
-            showCreateToast("The file is too large. Maximum is 50MB.");
-            return;
-        }
-
-        if (createPostState.mediaUrl) {
-            try {
-                URL.revokeObjectURL(createPostState.mediaUrl);
-            } catch (error) {}
-        }
-
-        createPostState.mediaFile = file;
-        createPostState.mediaType = file.type.startsWith("video/")
-            ? "video"
-            : "image";
-
-        createPostState.mediaUrl = URL.createObjectURL(file);
-
-        renderMediaPreview();
-    }
-
-    function renderMediaPreview() {
-        const preview = document.getElementById(
-            "createPostMediaPreview"
-        );
-
-        if (!preview) return;
-
-        preview.innerHTML = "";
-
-        if (!createPostState.mediaUrl) {
-            return;
-        }
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "create-post-media-wrapper";
-
-        let mediaElement;
-
-        if (createPostState.mediaType === "video") {
-            mediaElement = document.createElement("video");
-            mediaElement.src = createPostState.mediaUrl;
-            mediaElement.controls = true;
-            mediaElement.playsInline = true;
-        } else {
-            mediaElement = document.createElement("img");
-            mediaElement.src = createPostState.mediaUrl;
-            mediaElement.alt = "Selected media";
-        }
-
-        mediaElement.className = "create-post-selected-media";
-
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.className = "create-post-remove-media";
-        removeButton.innerHTML = "×";
-        removeButton.setAttribute("aria-label", "Remove media");
-
-        removeButton.addEventListener("click", removeMedia);
-
-        wrapper.appendChild(mediaElement);
-        wrapper.appendChild(removeButton);
-        preview.appendChild(wrapper);
-    }
-
-    function removeMedia() {
-        if (createPostState.mediaUrl) {
-            try {
-                URL.revokeObjectURL(createPostState.mediaUrl);
-            } catch (error) {}
-        }
-
-        createPostState.mediaFile = null;
-        createPostState.mediaUrl = null;
-        createPostState.mediaType = null;
-
-        const preview = document.getElementById(
-            "createPostMediaPreview"
-        );
+        const preview =
+            document.getElementById(
+                "createPostPreview"
+            );
 
         if (preview) {
-            preview.innerHTML = "";
+            preview.classList.remove(
+                "show"
+            );
         }
 
-        if (mediaInput) {
-            mediaInput.value = "";
+        const media =
+            document.getElementById(
+                "createPostMedia"
+            );
+
+        if (media) {
+            media.innerHTML = "";
+        }
+
+        updateCounter();
+    }
+
+
+    function updateUserPreview() {
+
+        const user = getUser();
+
+        const avatar =
+            document.getElementById(
+                "createPostAvatar"
+            );
+
+        const name =
+            document.getElementById(
+                "createPostUserName"
+            );
+
+        if (!avatar) return;
+
+        avatar.textContent =
+            (
+                user?.letter ||
+                localStorage.getItem(
+                    "ars_letter"
+                ) ||
+                "R"
+            )
+            .slice(0, 1)
+            .toUpperCase();
+
+        avatar.style.background =
+            user?.background ||
+            localStorage.getItem(
+                "ars_background"
+            ) ||
+            "linear-gradient(135deg,#8b3dff,#ff4fb3)";
+
+        avatar.style.color =
+            user?.letterColor ||
+            localStorage.getItem(
+                "ars_letter_color"
+            ) ||
+            "#fff";
+
+        if (user?.avatar) {
+
+            avatar.innerHTML = `
+                <img
+                    src="${escapeAttr(user.avatar)}"
+                    alt=""
+                >
+            `;
+        }
+
+        if (name) {
+            name.textContent =
+                user?.displayName ||
+                user?.username ||
+                "You";
         }
     }
 
-    function insertEmoji() {
-        const textarea = document.getElementById("createPostText");
 
-        if (!textarea) return;
+    function loadMedia(file, type) {
 
-        const emojis = [
-            "✨",
-            "💜",
-            "🔥",
-            "😍",
-            "😂",
-            "🥹",
-            "💫",
-            "🫶",
-            "🎀",
-            "🌙"
-        ];
-
-        const emoji =
-            emojis[Math.floor(Math.random() * emojis.length)];
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-
-        textarea.value =
-            textarea.value.substring(0, start) +
-            emoji +
-            textarea.value.substring(end);
-
-        textarea.selectionStart = start + emoji.length;
-        textarea.selectionEnd = start + emoji.length;
-
-        updateCharacterCount();
-        textarea.focus();
-    }
-
-    function updateCharacterCount() {
-        const textarea = document.getElementById("createPostText");
-        const counter = document.getElementById(
-            "createPostCharacterCount"
-        );
-
-        if (!textarea || !counter) return;
-
-        counter.textContent =
-            `${textarea.value.length} / 1000`;
-    }
-
-    async function publishContent() {
-        const textarea = document.getElementById("createPostText");
-        const visibility =
-            document.getElementById("createPostVisibility")?.value ||
-            "public";
-
-        const feeling =
-            document.getElementById("createPostFeeling")?.value ||
-            "";
-
-        const text = textarea?.value.trim() || "";
-
-        if (!text && !createPostState.mediaFile) {
-            showCreateToast(
-                createPostState.mode === "story"
-                    ? "Add text or media to your story."
-                    : "Add text or media to your post."
+        if (file.size > 30 * 1024 * 1024) {
+            alert(
+                "Please choose a file smaller than 30MB."
             );
             return;
         }
 
-        const publishButton =
-            document.getElementById("createPostPublish");
+        const reader =
+            new FileReader();
 
-        if (publishButton) {
-            publishButton.disabled = true;
-            publishButton.textContent =
-                createPostState.mode === "story"
-                    ? "Sharing..."
-                    : "Posting...";
+        reader.onload = () => {
+
+            state.media =
+                reader.result;
+
+            state.mediaType =
+                type;
+
+            const preview =
+                document.getElementById(
+                    "createPostPreview"
+                );
+
+            const media =
+                document.getElementById(
+                    "createPostMedia"
+                );
+
+            if (!preview || !media) {
+                return;
+            }
+
+            if (type === "image") {
+
+                media.innerHTML = `
+                    <img
+                        src="${escapeAttr(
+                            state.media
+                        )}"
+                        alt=""
+                    >
+                `;
+
+            } else {
+
+                media.innerHTML = `
+                    <video
+                        src="${escapeAttr(
+                            state.media
+                        )}"
+                        controls
+                        playsinline
+                    ></video>
+                `;
+            }
+
+            preview.classList.add(
+                "show"
+            );
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+
+    function removeMedia() {
+
+        state.media = null;
+        state.mediaType = null;
+
+        const preview =
+            document.getElementById(
+                "createPostPreview"
+            );
+
+        const media =
+            document.getElementById(
+                "createPostMedia"
+            );
+
+        if (preview) {
+            preview.classList.remove(
+                "show"
+            );
         }
 
-        try {
-            if (createPostState.mode === "story") {
-                await createStory(text, visibility, feeling);
-            } else {
-                await createPost(text, visibility, feeling);
-            }
+        if (media) {
+            media.innerHTML = "";
+        }
 
-            closeCreatePost();
-        } catch (error) {
-            console.error("Create content error:", error);
-
-            showCreateToast(
-                "Something went wrong. Please try again."
+        const image =
+            document.getElementById(
+                "arsImageInput"
             );
-        } finally {
-            if (publishButton) {
-                publishButton.disabled = false;
 
-                publishButton.textContent =
-                    createPostState.mode === "story"
-                        ? "Share"
-                        : "Post";
-            }
+        const video =
+            document.getElementById(
+                "arsVideoInput"
+            );
+
+        if (image) image.value = "";
+        if (video) video.value = "";
+    }
+
+
+    function addEmoji() {
+
+        const input =
+            document.getElementById(
+                "createPostText"
+            );
+
+        if (!input) return;
+
+        const emoji =
+            [
+                "✨",
+                "💜",
+                "🔥",
+                "😭",
+                "😂",
+                "😍",
+                "🎀",
+                "🫶",
+                "😎"
+            ][
+                Math.floor(
+                    Math.random() * 9
+                )
+            ];
+
+        input.value += emoji;
+
+        updateCounter();
+
+        input.focus();
+    }
+
+
+    function updateCounter() {
+
+        const input =
+            document.getElementById(
+                "createPostText"
+            );
+
+        const count =
+            document.getElementById(
+                "createPostCount"
+            );
+
+        const publish =
+            document.getElementById(
+                "publishCreatePost"
+            );
+
+        if (!input) return;
+
+        const length =
+            input.value.length;
+
+        if (count) {
+            count.textContent =
+                `${length} / 1000`;
+        }
+
+        if (publish) {
+            publish.disabled =
+                length === 0 &&
+                !state.media;
         }
     }
 
-    async function createPost(text, visibility, feeling) {
-        const user = getUser();
 
-        let media = null;
+    function publish() {
 
-        if (
-            createPostState.mediaFile &&
-            createPostState.mediaType === "image"
-        ) {
-            media = await fileToDataURL(
-                createPostState.mediaFile
+        const input =
+            document.getElementById(
+                "createPostText"
             );
+
+        if (!input) return;
+
+        const text =
+            input.value.trim();
+
+        if (!text && !state.media) {
+            return;
         }
 
-        const post = {
-            id: `local-post-${Date.now()}`,
-            author: {
-                name: user.displayName || "You",
-                username: user.username || "you",
-                letter: getLetter()
-            },
-            text,
-            image: media,
-            video: null,
-            visibility,
-            feeling,
-            time: "Just now",
-            likes: 0,
-            comments: [],
-            reposts: 0,
-           
+        const user =
+            getUser();
+
+        const now =
+            new Date();
+
+        const id =
+            `${state.mode}-${Date.now()}`;
+
+        const base = {
+            id,
+
+            name:
+                user?.displayName ||
+                user?.username ||
+                "You",
+
+            username:
+                user?.username
+                    ? `@${user.username}`
+                    : "@you",
+
+            letter:
+                (
+                    user?.letter ||
+                    getLetter()
+                )
+                .slice(0,1)
+                .toUpperCase(),
+
+            color:
+                user?.letterColor ||
+                localStorage.getItem(
+                    "ars_letter_color"
+                ) ||
+                "#fff",
+
+            gradient:
+                user?.background ||
+                localStorage.getItem(
+                    "ars_backgro
