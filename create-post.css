@@ -1,105 +1,53 @@
-/* =========================================================
-   ΛRS — CREATE POST
-   ========================================================= */
-
-.ars-create-overlay {
+#createPostScreen {
     position: fixed;
 
     inset: 0;
 
-    z-index: 5000;
+    z-index: 200;
 
-    display: flex;
+    display: none;
 
-    align-items: center;
+    background: rgba(0,0,0,.72);
 
-    justify-content: center;
-
-    padding: 16px;
-
-    background:
-        rgba(0,0,0,.78);
-
-    backdrop-filter:
-        blur(18px);
-
-    -webkit-backdrop-filter:
-        blur(18px);
-
-    opacity: 0;
-
-    visibility: hidden;
-
-    pointer-events: none;
-
-    transition:
-        opacity .25s ease;
+    backdrop-filter: blur(12px);
 }
 
-
-.ars-create-overlay.open {
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
+#createPostScreen.open {
+    display: block;
 }
 
+.create-post-panel {
+    position: absolute;
 
-.ars-create-container {
-    width:
-        min(
-            100%,
-            560px
-        );
+    left: 50%;
+    top: 50%;
 
-    max-height:
-        calc(100vh - 30px);
+    transform: translate(-50%, -50%);
+
+    width: min(680px, calc(100% - 24px));
+
+    max-height: 92vh;
 
     overflow-y: auto;
 
-    border-radius: 26px;
+    background: #111116;
 
-    background:
-        linear-gradient(
-            180deg,
-            #18181f,
-            #0c0c10
-        );
+    border: 1px solid #292934;
 
-    border:
-        1px solid
-        rgba(255,255,255,.08);
+    border-radius: 27px;
 
     box-shadow:
-        0 30px 100px
-        rgba(0,0,0,.7);
-
-    color: white;
-
-    transform:
-        translateY(20px)
-        scale(.97);
-
-    transition:
-        transform .25s ease;
+        0 30px 100px rgba(0,0,0,.65);
 }
 
+.create-post-header {
+    position: sticky;
 
-.ars-create-overlay.open
-.ars-create-container {
-    transform:
-        translateY(0)
-        scale(1);
-}
+    top: 0;
 
+    z-index: 5;
 
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-.ars-create-header {
-    height: 66px;
+    height: 64px;
 
     display: flex;
 
@@ -107,32 +55,40 @@
 
     justify-content: space-between;
 
-    padding:
-        0 18px;
+    padding: 0 16px;
 
-    border-bottom:
-        1px solid
-        rgba(255,255,255,.06);
+    background: rgba(17,17,22,.95);
+
+    backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid #292934;
 }
 
+.create-post-title {
+    display: flex;
 
-.ars-create-title {
-    font-size: 18px;
+    flex-direction: column;
 
-    font-weight: 800;
+    gap: 3px;
 }
 
+.create-post-title strong {
+    font-size: 15px;
+}
 
-.ars-create-close {
+.create-post-title span {
+    font-size: 10px;
+
+    color: #8c8c97;
+}
+
+.create-post-close {
     width: 38px;
     height: 38px;
 
-    border: 0;
+    border-radius: 12px;
 
-    border-radius: 50%;
-
-    background:
-        rgba(255,255,255,.07);
+    background: #1b1b22;
 
     color: white;
 
@@ -141,177 +97,208 @@
     cursor: pointer;
 }
 
+.create-post-tabs {
+    display: grid;
 
-/* =========================================================
-   BODY
-   ========================================================= */
+    grid-template-columns: 1fr 1fr;
 
-.ars-create-body {
-    padding:
-        18px;
+    margin: 14px;
+
+    padding: 4px;
+
+    border-radius: 14px;
+
+    background: #18181f;
 }
 
+.create-post-tab {
+    padding: 11px;
 
-.ars-create-user {
+    border-radius: 11px;
+
+    color: #8c8c97;
+
+    background: transparent;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.create-post-tab.active {
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8b3dff,
+            #c84dff
+        );
+}
+
+.create-post-body {
+    padding: 0 16px 16px;
+}
+
+.create-post-user {
     display: flex;
 
     align-items: center;
 
-    gap: 11px;
+    gap: 10px;
 
-    margin-bottom: 16px;
+    margin-bottom: 13px;
 }
 
-
-.ars-create-avatar {
+.create-post-user-avatar {
     width: 42px;
     height: 42px;
 
     border-radius: 50%;
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
 
     color: white;
-
-    font-size: 14px;
 
     font-weight: 800;
 
     overflow: hidden;
 }
 
-
-.ars-create-avatar img {
+.create-post-user-avatar img {
     width: 100%;
     height: 100%;
 
     object-fit: cover;
-
-    display: block;
 }
 
-
-.ars-create-user-name {
-    font-size: 14px;
+.create-post-user-name {
+    font-size: 12px;
 
     font-weight: 800;
 }
 
-
-.ars-create-user-hint {
+.create-post-user-sub {
     margin-top: 3px;
 
-    color:
-        #777780;
+    color: #8c8c97;
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
-
-/* =========================================================
-   TEXT
-   ========================================================= */
-
-.ars-create-text {
+#createPostText {
     width: 100%;
 
-    min-height: 145px;
+    min-height: 170px;
 
     resize: vertical;
 
-    border: 0;
+    border: 1px solid #292934;
 
-    outline: none;
+    border-radius: 18px;
 
-    background:
-        transparent;
+    padding: 15px;
+
+    background: #0c0c10;
 
     color: white;
 
-    font-size: 15px;
+    outline: none;
 
-    line-height: 1.65;
+    line-height: 1.6;
+
+    font-size: 13px;
 }
 
-
-.ars-create-text::placeholder {
-    color:
-        #62626b;
+#createPostText:focus {
+    border-color: #8b3dff;
 }
 
+.create-post-tools {
+    display: flex;
 
-/* =========================================================
-   MEDIA
-   ========================================================= */
+    align-items: center;
 
-.ars-create-media {
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+.create-post-tool {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 12px;
+
+    display: grid;
+    place-items: center;
+
+    color: #c5c5cf;
+
+    background: #18181f;
+
+    border: 1px solid #292934;
+
+    cursor: pointer;
+}
+
+.create-post-tool:hover {
+    color: white;
+
+    border-color: #8b3dff;
+}
+
+.create-post-preview {
     display: none;
 
     position: relative;
 
-    margin-top: 8px;
-
-    border-radius: 18px;
+    margin-top: 13px;
 
     overflow: hidden;
 
-    background:
-        #09090c;
+    border-radius: 18px;
 
-    border:
-        1px solid
-        rgba(255,255,255,.07);
+    background: #050507;
+
+    border: 1px solid #292934;
 }
 
-
-.ars-create-media.show {
+.create-post-preview.show {
     display: block;
 }
 
-
-.ars-create-media img {
+.create-post-preview img,
+.create-post-preview video {
     display: block;
 
     width: 100%;
-
-    max-height: 450px;
+    max-height: 430px;
 
     object-fit: cover;
 }
 
-
-.ars-create-remove-image {
+.create-post-remove-media {
     position: absolute;
 
-    right: 10px;
     top: 10px;
+    right: 10px;
 
     width: 36px;
     height: 36px;
 
-    border: 0;
-
-    border-radius: 50%;
-
-    background:
-        rgba(0,0,0,.65);
+    border-radius: 11px;
 
     color: white;
 
-    cursor: pointer;
+    background: rgba(0,0,0,.7);
 
-    font-size: 21px;
+    cursor: pointer;
 }
 
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.ars-create-footer {
+.create-post-bottom {
     display: flex;
 
     align-items: center;
@@ -320,161 +307,93 @@
 
     gap: 10px;
 
-    padding:
-        13px 18px;
-
-    border-top:
-        1px solid
-        rgba(255,255,255,.06);
+    margin-top: 13px;
 }
 
+.create-post-meta {
+    color: #8c8c97;
 
-.ars-create-tools {
-    display: flex;
-
-    align-items: center;
-
-    gap: 7px;
+    font-size: 10px;
 }
 
+.create-post-publish {
+    min-width: 120px;
 
-.ars-create-tool {
-    width: 40px;
-    height: 40px;
-
-    border: 0;
-
-    border-radius: 12px;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    background:
-        rgba(255,255,255,.055);
-
-    color:
-        #a978ff;
-
-    cursor: pointer;
-}
-
-
-.ars-create-tool:hover {
-    background:
-        rgba(139,61,255,.14);
-}
-
-
-.ars-create-tool svg {
-    width: 19px;
-    height: 19px;
-}
-
-
-.ars-create-counter {
-    color:
-        #696972;
-
-    font-size: 11px;
-
-    margin-left: 3px;
-}
-
-
-.ars-create-post-button {
-    height: 43px;
-
-    padding:
-        0 19px;
-
-    border: 0;
+    padding: 12px 16px;
 
     border-radius: 14px;
+
+    color: white;
 
     background:
         linear-gradient(
             135deg,
-            #8B3DFF,
-            #EC4899
+            #8b3dff,
+            #ff4fb3
         );
 
-    color: white;
-
-    font-size: 13px;
+    font-size: 12px;
 
     font-weight: 800;
 
     cursor: pointer;
 }
 
+.create-post-publish:disabled {
+    opacity: .45;
 
-.ars-create-post-button:disabled {
-    opacity: .4;
-
-    cursor:
-        not-allowed;
+    cursor: not-allowed;
 }
 
+.create-post-options {
+    display: flex;
 
-/* =========================================================
-   HIDDEN FILE
-   ========================================================= */
+    flex-wrap: wrap;
 
-.ars-create-file {
-    display: none;
+    gap: 7px;
+
+    margin-top: 10px;
 }
 
+.create-post-option {
+    padding: 8px 10px;
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
+    border-radius: 11px;
 
-@media (max-width: 600px) {
+    color: #aaaab5;
 
-    .ars-create-overlay {
-        padding:
-            0;
-    }
+    background: #18181f;
 
+    border: 1px solid #292934;
 
-    .ars-create-container {
+    font-size: 10px;
+
+    cursor: pointer;
+}
+
+.create-post-option.active {
+    color: white;
+
+    border-color: #8b3dff;
+
+    background: rgba(139,61,255,.15);
+}
+
+@media (max-width: 500px) {
+
+    .create-post-panel {
         width: 100%;
-
         height: 100%;
 
-        max-height: none;
+        max-height: 100vh;
 
-        border-radius:
-            0;
+        border-radius: 0;
 
-        border:
-            0;
+        border-left: 0;
+        border-right: 0;
     }
 
-
-    .ars-create-header {
-        padding:
-            0 16px;
+    #createPostText {
+        min-height: 190px;
     }
-
-
-    .ars-create-body {
-        padding:
-            17px;
-    }
-
-
-    .ars-create-footer {
-        padding:
-            12px 15px;
-
-        padding-bottom:
-            calc(
-                12px +
-                env(safe-area-inset-bottom)
-            );
-    }
-
-}
+                     }
