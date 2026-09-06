@@ -1,36 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>ΛRS</title>
 
-    <link
-        rel="stylesheet"
-        href="home.css"
-    >
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="create-post.css">
 
-    <link
-        rel="stylesheet"
-        href="create-post.css"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
@@ -56,9 +36,7 @@
             R
         </button>
 
-        <div class="logo">
-            ΛRS
-        </div>
+        <div class="logo">ΛRS</div>
 
         <button
             class="icon-button"
@@ -72,40 +50,48 @@
     </header>
 
 
+    <!-- STREAK -->
+    <section class="streak-bar">
+
+        <div class="streak-left">
+            <div class="streak-fire">🔥</div>
+
+            <div>
+                <strong>Streak</strong>
+                <span id="streakCount">1 day</span>
+            </div>
+        </div>
+
+        <button id="openWheelFromStreak" type="button">
+            Spin Wheel
+        </button>
+
+    </section>
+
+
     <!-- STORIES -->
     <section class="stories-section">
 
         <div class="stories-header">
 
-            <h2>
-                Stories
-            </h2>
+            <h2>Stories</h2>
 
-            <button
-                id="viewAllStories"
-                type="button"
-            >
+            <button id="viewAllStories" type="button">
                 View all
             </button>
 
         </div>
 
-        <div
-            id="stories"
-            class="stories"
-        ></div>
+        <div id="stories" class="stories"></div>
 
     </section>
 
 
     <!-- FEED -->
-    <main
-        id="feed"
-        class="feed"
-    ></main>
+    <main id="feed" class="feed"></main>
 
 
-    <!-- CREATE POST BUTTON -->
+    <!-- CREATE POST -->
     <button
         id="newPost"
         class="new-post-button"
@@ -122,51 +108,42 @@
         <button
             class="nav-button active"
             type="button"
-            aria-label="Home"
             data-page="home"
         >
             <i data-lucide="house"></i>
             <span>Home</span>
         </button>
 
-
         <button
             class="nav-button"
             type="button"
-            aria-label="Search"
             data-page="search"
         >
             <i data-lucide="search"></i>
             <span>Search</span>
         </button>
 
-
         <button
             class="nav-button"
             type="button"
-            aria-label="Explore"
             data-page="explore"
         >
             <i data-lucide="flame"></i>
             <span>Explore</span>
         </button>
 
-
         <button
             class="nav-button"
             type="button"
-            aria-label="Notifications"
             data-page="notifications"
         >
             <i data-lucide="bell"></i>
             <span>Alerts</span>
         </button>
 
-
         <button
             class="nav-button"
             type="button"
-            aria-label="Messages"
             data-page="messages"
         >
             <i data-lucide="mail"></i>
@@ -179,10 +156,7 @@
 
 
 <!-- COMMENTS -->
-<div
-    id="commentsSheet"
-    class="comments-sheet"
->
+<div id="commentsSheet" class="comments-sheet">
 
     <div class="comments-overlay"></div>
 
@@ -194,14 +168,9 @@
 
             <div class="comments-title-row">
 
-                <h3>
-                    Comments
-                </h3>
+                <h3>Comments</h3>
 
-                <button
-                    id="closeComments"
-                    type="button"
-                >
+                <button id="closeComments" type="button">
                     ×
                 </button>
 
@@ -209,18 +178,13 @@
 
         </div>
 
-
-        <div
-            id="commentsList"
-            class="comments-list"
-        ></div>
-
+        <div id="commentsList" class="comments-list"></div>
 
         <div class="comments-input">
 
             <div
-                id="myCommentAvatar"
                 class="my-comment-avatar"
+                id="myCommentAvatar"
             >
                 R
             </div>
@@ -232,10 +196,7 @@
                 placeholder="Write a comment..."
             >
 
-            <button
-                id="sendComment"
-                type="button"
-            >
+            <button id="sendComment" type="button">
                 Send
             </button>
 
@@ -246,11 +207,38 @@
 </div>
 
 
+<!-- POST DETAILS -->
+<div id="postDetails" class="post-details">
+
+    <div class="post-details-overlay"></div>
+
+    <div class="post-details-panel">
+
+        <div class="post-details-top">
+
+            <button
+                id="closePostDetails"
+                type="button"
+                class="post-details-close"
+            >
+                ×
+            </button>
+
+            <strong>Post</strong>
+
+            <span></span>
+
+        </div>
+
+        <div id="postDetailsContent"></div>
+
+    </div>
+
+</div>
+
+
 <!-- STORY VIEWER -->
-<div
-    id="storyViewer"
-    class="story-viewer"
->
+<div id="storyViewer" class="story-viewer">
 
     <div class="story-viewer-background"></div>
 
@@ -293,25 +281,14 @@
 </div>
 
 
-<!-- CREATE POST WILL BE INSERTED BY create-post.js -->
-
-
+<script src="create-post.js"></script>
+<script src="wheel.js"></script>
 <script src="home.js"></script>
 
-<script src="create-post.js"></script>
-
-
 <script>
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
-
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-
-        }
-    );
+    if (window.lucide) {
+        lucide.createIcons();
+    }
 </script>
 
 </body>
