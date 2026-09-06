@@ -1,544 +1,474 @@
 (() => {
     "use strict";
 
-    const STORAGE = {
+    const MAX_SPINS = 2;
+
+    const KEYS = {
         date: "ars_wheel_date",
         spins: "ars_wheel_spins",
         streak: "ars_streak",
         streakDate: "ars_streak_date",
         challenge: "ars_active_challenge",
-        tempRewards: "ars_temp_rewards",
-        freeAvatarUntil: "ars_free_avatar_until",
-        vipUntil: "ars_temp_vip_until",
-        themeUntil: "ars_favorite_theme_until"
+        rewards: "ars_temp_rewards",
+        freeAvatar: "ars_free_avatar_until",
+        vip: "ars_temp_vip_until",
+        theme: "ars_favorite_theme_until"
     };
 
-    const MAX_SPINS = 2;
-    const CHALLENGE_DURATION = 60 * 60 * 1000;
 
-    const rewards = [
+    const REWARDS = [
         {
-            id: "streak1",
-            type: "reward",
+            type: "streak",
+            amount: 1,
             title: "+1 Streak",
-            description: "Your streak increased by 1.",
             icon: "🔥"
         },
+
         {
-            id: "streak2",
-            type: "reward",
+            type: "streak",
+            amount: 2,
             title: "+2 Streak",
-            description: "Your streak increased by 2.",
             icon: "🔥"
         },
+
         {
-            id: "freeAvatar",
-            type: "reward",
+            type: "avatar",
             title: "Free Avatar",
-            description: "Use an image avatar for 1 day.",
-            icon: "🖼️"
+            icon: "🖼️",
+            duration: 24 * 60 * 60 * 1000
         },
+
         {
-            id: "vipBadge",
-            type: "reward",
+            type: "vip",
             title: "VIP Badge",
-            description: "VIP Badge activated for 1 day.",
-            icon: "👑"
+            icon: "💎",
+            duration: 24 * 60 * 60 * 1000
         },
+
         {
-            id: "favoriteTheme",
-            type: "reward",
+            type: "theme",
             title: "Favorite Theme",
-            description: "Favorite Theme activated for 1 hour.",
-            icon: "✨"
+            icon: "🎀",
+            duration: 60 * 60 * 1000
         }
     ];
 
-    const challenges = [
+
+    const CHALLENGES = [
         {
-            id: "post",
-            type: "challenge",
-            action: "post",
-            title: "Create a Post",
-            description: "Create one post.",
+            type: "post",
+            title: "Create a post",
             icon: "📝"
         },
+
         {
-            id: "like",
-            type: "challenge",
-            action: "like",
-            title: "Like a Post",
-            description: "Like one post.",
+            type: "like",
+            title: "Like a post",
             icon: "❤️"
         },
+
         {
-            id: "comment",
-            type: "challenge",
-            action: "comment",
-            title: "Leave a Comment",
-            description: "Comment on one post.",
+            type: "comment",
+            title: "Reply to a post",
             icon: "💬"
         },
+
         {
-            id: "follow",
-            type: "challenge",
-            action: "follow",
-            title: "Follow Someone",
-            description: "Follow one user.",
-            icon: "➕"
-        },
-        {
-            id: "explore",
-            type: "challenge",
-            action: "explore",
-            title: "Explore",
-            description: "Explore something new.",
-            icon: "🔥"
-        },
-        {
-            id: "repost",
-            type: "challenge",
-            action: "repost",
-            title: "Repost",
-            description: "Repost one post.",
-            icon: "🔁"
-        },
-        {
-            id: "story",
-            type: "challenge",
-            action: "story",
-            title: "Share a Story",
-            description: "Share one story.",
-            icon: "⭕"
-        },
-        {
-            id: "message",
-            type: "challenge",
-            action: "message",
-            title: "Send a Message",
-            description: "Send one message.",
-            icon: "✉️"
-        },
-        {
-            id: "profile",
-            type: "challenge",
-            action: "profile",
-            title: "Open a Profile",
-            description: "Open one profile.",
+            type: "follow",
+            title: "Follow someone",
             icon: "👤"
         },
+
         {
-            id: "save",
-            type: "challenge",
-            action: "save",
-            title: "Save a Post",
-            description: "Save one post.",
+            type: "explore",
+            title: "Explore ΛRS",
+            icon: "🔥"
+        },
+
+        {
+            type: "repost",
+            title: "Repost a post",
+            icon: "🔁"
+        },
+
+        {
+            type: "story",
+            title: "Create a story",
+            icon: "📸"
+        },
+
+        {
+            type: "message",
+            title: "Send a message",
+            icon: "✉️"
+        },
+
+        {
+            type: "profile",
+            title: "Open your profile",
+            icon: "👤"
+        },
+
+        {
+            type: "save",
+            title: "Save a post",
             icon: "🔖"
         }
     ];
 
-    const wheelItems = [
-        rewards[0],
-        challenges[0],
-        rewards[1],
-        challenges[1],
-        rewards[2],
-        challenges[2],
-        rewards[3],
-        challenges[3],
-        rewards[4],
-        challenges[4]
+
+    const WHEEL_ITEMS = [
+        REWARDS[0],
+        CHALLENGES[0],
+        REWARDS[1],
+        CHALLENGES[1],
+        REWARDS[2],
+        CHALLENGES[2],
+        REWARDS[3],
+        CHALLENGES[3],
+        REWARDS[4],
+        CHALLENGES[4]
     ];
 
-    let wheelModal = null;
-    let wheelDisc = null;
-    let wheelResult = null;
-    let wheelResultTitle = null;
-    let wheelResultDescription = null;
-    let wheelResultIcon = null;
-    let wheelSpinButton = null;
-    let wheelSpinsText = null;
-    let wheelStreakText = null;
-    let wheelStage = null;
 
-    let currentRotation = 0;
-    let spinning = false;
+    const state = {
+        modal: null,
+        wheel: null,
+        spinning: false,
+        rotation: 0,
+        selectedItem: null
+    };
+
 
     function todayKey() {
-        const now = new Date();
+
+        const now =
+            new Date();
 
         return [
             now.getFullYear(),
-            String(now.getMonth() + 1).padStart(2, "0"),
-            String(now.getDate()).padStart(2, "0")
+            String(
+                now.getMonth() + 1
+            ).padStart(2, "0"),
+            String(
+                now.getDate()
+            ).padStart(2, "0")
         ].join("-");
     }
 
+
     function getSpins() {
-        resetDailySpins();
 
-        const value = Number(
-            localStorage.getItem(STORAGE.spins)
+        resetWheelIfNeeded();
+
+        return Number(
+            localStorage.getItem(
+                KEYS.spins
+            ) || 0
         );
-
-        if (!Number.isFinite(value)) {
-            localStorage.setItem(
-                STORAGE.spins,
-                String(MAX_SPINS)
-            );
-
-            return MAX_SPINS;
-        }
-
-        return Math.max(0, Math.min(MAX_SPINS, value));
     }
 
-    function resetDailySpins() {
-        const today = todayKey();
-        const savedDate = localStorage.getItem(STORAGE.date);
 
-        if (savedDate !== today) {
+    function resetWheelIfNeeded() {
+
+        const today =
+            todayKey();
+
+        const saved =
+            localStorage.getItem(
+                KEYS.date
+            );
+
+        if (saved !== today) {
+
             localStorage.setItem(
-                STORAGE.date,
+                KEYS.date,
                 today
             );
 
             localStorage.setItem(
-                STORAGE.spins,
-                String(MAX_SPINS)
+                KEYS.spins,
+                "0"
             );
         }
     }
 
-    function useSpin() {
-        const spins = getSpins();
-
-        if (spins <= 0) {
-            return false;
-        }
-
-        localStorage.setItem(
-            STORAGE.spins,
-            String(spins - 1)
-        );
-
-        return true;
-    }
 
     function getStreak() {
-        const value = Number(
-            localStorage.getItem(STORAGE.streak)
-        );
 
-        return Number.isFinite(value)
-            ? Math.max(0, value)
-            : 0;
+        const value =
+            Number(
+                localStorage.getItem(
+                    KEYS.streak
+                ) || 1
+            );
+
+        return Number.isFinite(value) &&
+            value > 0
+            ? value
+            : 1;
     }
 
+
     function setStreak(value) {
+
+        const safe =
+            Math.max(
+                1,
+                Number(value) || 1
+            );
+
         localStorage.setItem(
-            STORAGE.streak,
-            String(Math.max(0, value))
+            KEYS.streak,
+            String(safe)
         );
 
         updateStreakUI();
     }
 
-    function addStreak(amount) {
-        setStreak(
-            getStreak() + Number(amount || 0)
-        );
-
-        localStorage.setItem(
-            STORAGE.streakDate,
-            todayKey()
-        );
-
-        window.dispatchEvent(
-            new CustomEvent("ars:streak-updated", {
-                detail: {
-                    streak: getStreak()
-                }
-            })
-        );
-    }
 
     function maintainDailyStreak() {
-        const today = todayKey();
-        const lastDate = localStorage.getItem(
-            STORAGE.streakDate
-        );
 
-        if (!lastDate) {
-            setStreak(1);
+        const today =
+            todayKey();
+
+        const last =
+            localStorage.getItem(
+                KEYS.streakDate
+            );
+
+        if (!last) {
 
             localStorage.setItem(
-                STORAGE.streakDate,
+                KEYS.streakDate,
                 today
             );
 
+            if (
+                !localStorage.getItem(
+                    KEYS.streak
+                )
+            ) {
+                setStreak(1);
+            }
+
             return;
         }
 
-        if (lastDate === today) {
+        if (last === today) {
+            updateStreakUI();
             return;
         }
 
-        const previous = new Date(
-            `${lastDate}T00:00:00`
-        );
+        const previous =
+            new Date(
+                `${last}T00:00:00`
+            );
 
-        const current = new Date(
-            `${today}T00:00:00`
-        );
+        const current =
+            new Date(
+                `${today}T00:00:00`
+            );
 
         const difference =
             Math.round(
-                (current - previous) /
+                (
+                    current -
+                    previous
+                ) /
                 86400000
             );
 
         if (difference === 1) {
-            addStreak(1);
+
+            setStreak(
+                getStreak() + 1
+            );
+
         } else if (difference > 1) {
+
             setStreak(1);
-
-            localStorage.setItem(
-                STORAGE.streakDate,
-                today
-            );
         }
-    }
-
-    function saveTemporaryReward(id, until) {
-        let rewardsList = [];
-
-        try {
-            rewardsList = JSON.parse(
-                localStorage.getItem(
-                    STORAGE.tempRewards
-                ) || "[]"
-            );
-        } catch (error) {
-            rewardsList = [];
-        }
-
-        rewardsList = rewardsList.filter(
-            reward =>
-                reward &&
-                reward.until &&
-                reward.until > Date.now()
-        );
-
-        rewardsList.push({
-            id,
-            until
-        });
 
         localStorage.setItem(
-            STORAGE.tempRewards,
-            JSON.stringify(rewardsList)
+            KEYS.streakDate,
+            today
         );
+
+        updateStreakUI();
     }
+
+
+    function updateStreakUI() {
+
+        const element =
+            document.getElementById(
+                "streakCount"
+            );
+
+        if (!element) return;
+
+        const count =
+            getStreak();
+
+        element.textContent =
+            `${count} ${
+                count === 1
+                    ? "day"
+                    : "days"
+            }`;
+    }
+
 
     function cleanExpiredRewards() {
-        const now = Date.now();
 
-        let rewardsList = [];
+        const now =
+            Date.now();
+
+        let changed = false;
+
+        [
+            KEYS.freeAvatar,
+            KEYS.vip,
+            KEYS.theme
+        ].forEach(key => {
+
+            const value =
+                Number(
+                    localStorage.getItem(
+                        key
+                    ) || 0
+                );
+
+            if (
+                value &&
+                value <= now
+            ) {
+                localStorage.removeItem(
+                    key
+                );
+
+                changed = true;
+            }
+        });
+
+
+        let rewards = [];
 
         try {
-            rewardsList = JSON.parse(
+            rewards =
+                JSON.parse(
+                    localStorage.getItem(
+                        KEYS.rewards
+                    ) || "[]"
+                );
+        } catch {
+            rewards = [];
+        }
+
+        if (!Array.isArray(rewards)) {
+            rewards = [];
+        }
+
+        const filtered =
+            rewards.filter(
+                reward =>
+                    Number(
+                        reward.expiresAt || 0
+                    ) > now
+            );
+
+        if (
+            filtered.length !==
+            rewards.length
+        ) {
+            localStorage.setItem(
+                KEYS.rewards,
+                JSON.stringify(
+                    filtered
+                )
+            );
+
+            changed = true;
+        }
+
+        applyTemporaryRewardsToPage();
+
+        return changed;
+    }
+
+
+    function applyTemporaryRewardsToPage() {
+
+        const now =
+            Date.now();
+
+        const body =
+            document.body;
+
+        if (!body) return;
+
+
+        const avatar =
+            document.getElementById(
+                "myAvatar"
+            );
+
+
+        const freeAvatarUntil =
+            Number(
                 localStorage.getItem(
-                    STORAGE.tempRewards
-                ) || "[]"
+                    KEYS.freeAvatar
+                ) || 0
             );
-        } catch (error) {
-            rewardsList = [];
+
+
+        const vipUntil =
+            Number(
+                localStorage.getItem(
+                    KEYS.vip
+                ) || 0
+            );
+
+
+        const themeUntil =
+            Number(
+                localStorage.getItem(
+                    KEYS.theme
+                ) || 0
+            );
+
+
+        body.classList.toggle(
+            "ars-favorite-theme",
+            themeUntil > now
+        );
+
+
+        if (avatar) {
+
+            avatar.classList.toggle(
+                "ars-vip-avatar",
+                vipUntil > now
+            );
+
+
+            avatar.dataset.freeAvatar =
+                freeAvatarUntil > now
+                    ? "true"
+                    : "false";
         }
-
-        rewardsList = rewardsList.filter(
-            reward =>
-                reward &&
-                Number(reward.until) > now
-        );
-
-        localStorage.setItem(
-            STORAGE.tempRewards,
-            JSON.stringify(rewardsList)
-        );
-
-        const freeAvatarUntil = Number(
-            localStorage.getItem(
-                STORAGE.freeAvatarUntil
-            ) || 0
-        );
-
-        if (
-            freeAvatarUntil &&
-            freeAvatarUntil <= now
-        ) {
-            localStorage.removeItem(
-                STORAGE.freeAvatarUntil
-            );
-
-            localStorage.removeItem(
-                "ars_temp_avatar_image"
-            );
-        }
-
-        const vipUntil = Number(
-            localStorage.getItem(
-                STORAGE.vipUntil
-            ) || 0
-        );
-
-        if (
-            vipUntil &&
-            vipUntil <= now
-        ) {
-            localStorage.removeItem(
-                STORAGE.vipUntil
-            );
-        }
-
-        const themeUntil = Number(
-            localStorage.getItem(
-                STORAGE.themeUntil
-            ) || 0
-        );
-
-        if (
-            themeUntil &&
-            themeUntil <= now
-        ) {
-            localStorage.removeItem(
-                STORAGE.themeUntil
-            );
-
-            document.body.classList.remove(
-                "ars-favorite-theme"
-            );
-        }
-
-        applyTemporaryRewardsToPage();
     }
 
-    function applyReward(reward) {
-        const now = Date.now();
-
-        if (reward.id === "streak1") {
-            addStreak(1);
-        }
-
-        if (reward.id === "streak2") {
-            addStreak(2);
-        }
-
-        if (reward.id === "freeAvatar") {
-            const until =
-                now +
-                24 * 60 * 60 * 1000;
-
-            localStorage.setItem(
-                STORAGE.freeAvatarUntil,
-                String(until)
-            );
-
-            saveTemporaryReward(
-                "freeAvatar",
-                until
-            );
-
-            /*
-             * Demo image.
-             * It is only active for the reward duration.
-             */
-            localStorage.setItem(
-                "ars_temp_avatar_image",
-                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80"
-            );
-        }
-
-        if (reward.id === "vipBadge") {
-            const until =
-                now +
-                24 * 60 * 60 * 1000;
-
-            localStorage.setItem(
-                STORAGE.vipUntil,
-                String(until)
-            );
-
-            saveTemporaryReward(
-                "vipBadge",
-                until
-            );
-        }
-
-        if (reward.id === "favoriteTheme") {
-            const until =
-                now +
-                60 * 60 * 1000;
-
-            localStorage.setItem(
-                STORAGE.themeUntil,
-                String(until)
-            );
-
-            saveTemporaryReward(
-                "favoriteTheme",
-                until
-            );
-        }
-
-        applyTemporaryRewardsToPage();
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "ars:wheel-reward",
-                {
-                    detail: reward
-                }
-            )
-        );
-    }
-
-    function applyChallenge(challenge) {
-        const activeChallenge = {
-            id: challenge.id,
-            action: challenge.action,
-            title: challenge.title,
-            description: challenge.description,
-            icon: challenge.icon,
-            createdAt: Date.now(),
-            expiresAt:
-                Date.now() +
-                CHALLENGE_DURATION
-        };
-
-        localStorage.setItem(
-            STORAGE.challenge,
-            JSON.stringify(
-                activeChallenge
-            )
-        );
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "ars:challenge-created",
-                {
-                    detail: activeChallenge
-                }
-            )
-        );
-    }
 
     function getActiveChallenge() {
+
         try {
+
             const challenge =
                 JSON.parse(
                     localStorage.getItem(
-                        STORAGE.challenge
+                        KEYS.challenge
                     ) || "null"
                 );
 
@@ -547,292 +477,539 @@
             }
 
             if (
-                Number(challenge.expiresAt) <=
-                Date.now()
+                Number(
+                    challenge.expiresAt
+                ) <= Date.now()
             ) {
                 localStorage.removeItem(
-                    STORAGE.challenge
+                    KEYS.challenge
                 );
 
                 return null;
             }
 
             return challenge;
-        } catch (error) {
-            localStorage.removeItem(
-                STORAGE.challenge
-            );
 
+        } catch {
             return null;
         }
     }
 
-    function completeChallenge(action) {
+
+    function setActiveChallenge(
+        challenge
+    ) {
+
+        localStorage.setItem(
+            KEYS.challenge,
+            JSON.stringify(
+                challenge
+            )
+        );
+    }
+
+
+    function completeChallenge(
+        type
+    ) {
+
         const challenge =
             getActiveChallenge();
 
-        if (!challenge) {
-            return false;
-        }
-
-        if (challenge.action !== action) {
+        if (
+            !challenge ||
+            challenge.type !== type
+        ) {
             return false;
         }
 
         localStorage.removeItem(
-            STORAGE.challenge
+            KEYS.challenge
         );
 
-        addStreak(1);
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "ars:challenge-completed",
-                {
-                    detail: challenge
-                }
-            )
+        setStreak(
+            getStreak() + 1
         );
+
+        updateWheelUI();
 
         showToast(
-            `Challenge completed! +1 Streak 🔥`
+            "Challenge completed! +1 Streak 🔥"
         );
 
         return true;
     }
 
+
+    function grantReward(
+        reward
+    ) {
+
+        const now =
+            Date.now();
+
+
+        if (
+            reward.type ===
+            "streak"
+        ) {
+
+            setStreak(
+                getStreak() +
+                Number(
+                    reward.amount || 1
+                )
+            );
+
+            return;
+        }
+
+
+        if (
+            reward.type ===
+            "avatar"
+        ) {
+
+            const until =
+                now +
+                reward.duration;
+
+            localStorage.setItem(
+                KEYS.freeAvatar,
+                String(until)
+            );
+
+            addTemporaryReward(
+                reward.title,
+                until
+            );
+
+            return;
+        }
+
+
+        if (
+            reward.type ===
+            "vip"
+        ) {
+
+            const until =
+                now +
+                reward.duration;
+
+            localStorage.setItem(
+                KEYS.vip,
+                String(until)
+            );
+
+            addTemporaryReward(
+                reward.title,
+                until
+            );
+
+            return;
+        }
+
+
+        if (
+            reward.type ===
+            "theme"
+        ) {
+
+            const until =
+                now +
+                reward.duration;
+
+            localStorage.setItem(
+                KEYS.theme,
+                String(until)
+            );
+
+            addTemporaryReward(
+                reward.title,
+                until
+            );
+        }
+    }
+
+
+    function addTemporaryReward(
+        title,
+        expiresAt
+    ) {
+
+        let rewards = [];
+
+        try {
+            rewards =
+                JSON.parse(
+                    localStorage.getItem(
+                        KEYS.rewards
+                    ) || "[]"
+                );
+        } catch {
+            rewards = [];
+        }
+
+        if (!Array.isArray(rewards)) {
+            rewards = [];
+        }
+
+        rewards.push({
+            title,
+            expiresAt
+        });
+
+        localStorage.setItem(
+            KEYS.rewards,
+            JSON.stringify(
+                rewards
+            )
+        );
+
+        applyTemporaryRewardsToPage();
+    }
+
+
     function createWheelUI() {
+
         if (
             document.getElementById(
                 "arsWheelModal"
             )
         ) {
             connectWheelElements();
+            updateWheelUI();
             return;
         }
 
-        wheelModal =
-            document.createElement("div");
 
-        wheelModal.id =
+        const modal =
+            document.createElement(
+                "div"
+            );
+
+        modal.id =
             "arsWheelModal";
 
-        wheelModal.className =
+        modal.className =
             "ars-wheel-modal";
 
-        wheelModal.setAttribute(
-            "aria-hidden",
-            "true"
-        );
 
-        wheelModal.innerHTML = `
+        modal.innerHTML = `
             <div class="ars-wheel-backdrop"></div>
 
             <div class="ars-wheel-panel">
 
-                <div class="ars-wheel-header">
-                    <div>
-                        <span class="ars-wheel-kicker">
-                            DAILY WHEEL
-                        </span>
+                <button
+                    class="ars-wheel-close"
+                    id="arsWheelClose"
+                    type="button"
+                >
+                    ×
+                </button>
 
-                        <h2>Spin the Wheel</h2>
-
-                        <p>
-                            Rewards or challenges.
-                            Your luck decides.
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="ars-wheel-close"
-                        id="arsWheelClose"
-                        aria-label="Close wheel"
-                    >
-                        ×
-                    </button>
+                <div class="ars-wheel-title">
+                    <span>ΛRS</span>
+                    Wheel
                 </div>
 
-                <div
-                    class="ars-wheel-stage"
-                    id="arsWheelStage"
-                >
+                <div class="ars-wheel-subtitle">
+                    Spin. Win. Complete. Repeat.
+                </div>
+
+
+                <div class="ars-wheel-stats">
+
+                    <div>
+                        <strong id="arsWheelSpins">
+                            2
+                        </strong>
+                        <span>Spins left</span>
+                    </div>
+
+                    <div>
+                        <strong id="arsWheelStreak">
+                            1
+                        </strong>
+                        <span>Streak</span>
+                    </div>
+
+                </div>
+
+
+                <div class="ars-wheel-stage">
+
                     <div class="ars-wheel-pointer">
                         ▼
                     </div>
 
                     <div
-                        class="ars-wheel-disc"
-                        id="arsWheelDisc"
-                    >
-                        ${createWheelLabels()}
+                        class="ars-wheel"
+                        id="arsWheel"
+                    ></div>
 
-                        <button
-                            type="button"
-                            class="ars-wheel-center"
-                            id="arsWheelSpin"
-                        >
-                            <span>SPIN</span>
-                            <small>LUCK</small>
-                        </button>
+                    <div class="ars-wheel-center">
+                        ΛRS
                     </div>
+
                 </div>
 
-                <div class="ars-wheel-stats">
-                    <div class="ars-wheel-stat">
-                        <strong
-                            id="arsWheelSpins"
-                        >
-                            2
-                        </strong>
-
-                        <span>
-                            Spins left
-                        </span>
-                    </div>
-
-                    <div class="ars-wheel-stat">
-                        <strong
-                            id="arsWheelStreak"
-                        >
-                            0
-                        </strong>
-
-                        <span>
-                            Streak
-                        </span>
-                    </div>
-                </div>
 
                 <div
                     class="ars-wheel-result"
                     id="arsWheelResult"
-                    hidden
                 >
+
                     <div
                         class="ars-wheel-result-icon"
                         id="arsWheelResultIcon"
                     >
-                        🎁
+                        ✨
                     </div>
 
-                    <div>
-                        <span>
-                            YOU GOT
-                        </span>
-
-                        <h3
-                            id="arsWheelResultTitle"
-                        >
-                            Reward
-                        </h3>
-
-                        <p
-                            id="arsWheelResultDescription"
-                        >
-                            Nice!
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="ars-wheel-exit"
-                        id="arsWheelExit"
+                    <strong
+                        id="arsWheelResultTitle"
                     >
-                        Exit
-                    </button>
+                        Ready?
+                    </strong>
+
+                    <span
+                        id="arsWheelResultText"
+                    >
+                        Spin the wheel.
+                    </span>
+
                 </div>
+
 
                 <div
                     class="ars-wheel-challenge"
                     id="arsWheelChallenge"
-                    hidden
                 >
-                    <span>ACTIVE CHALLENGE</span>
 
-                    <strong
-                        id="arsWheelChallengeTitle"
-                    ></strong>
+                    <div
+                        class="ars-wheel-challenge-icon"
+                        id="arsChallengeIcon"
+                    >
+                        🎯
+                    </div>
 
-                    <p
-                        id="arsWheelChallengeDescription"
-                    ></p>
+                    <div>
+                        <strong>
+                            Challenge
+                        </strong>
+
+                        <span
+                            id="arsChallengeText"
+                        >
+                            Complete the challenge
+                        </span>
+                    </div>
+
                 </div>
+
+
+                <button
+                    class="ars-wheel-spin"
+                    id="arsWheelSpin"
+                    type="button"
+                >
+                    SPIN
+                </button>
 
             </div>
         `;
 
         document.body.appendChild(
-            wheelModal
+            modal
         );
 
+        buildWheel();
+
         connectWheelElements();
+
+        updateWheelUI();
     }
 
-    function createWheelLabels() {
-        return wheelItems
-            .map((item, index) => {
-                const angle =
-                    index * 36 + 18;
 
-                return `
-                    <span
-                        class="ars-wheel-label"
-                        style="
-                            transform:
-                                rotate(${angle}deg)
-                                translateY(-112px)
-                                rotate(-${angle}deg);
-                        "
-                    >
-                        ${item.icon}
-                    </span>
-                `;
-            })
-            .join("");
+    function buildWheel() {
+
+        const wheel =
+            document.getElementById(
+                "arsWheel"
+            );
+
+        if (!wheel) return;
+
+        const colors = [
+            "#8b3dff",
+            "#c84dff",
+            "#ff4fb3",
+            "#713cff",
+            "#9c54ff",
+            "#ff5d9d",
+            "#6331d8",
+            "#ad46e9",
+            "#ff3e9f",
+            "#7c3aed"
+        ];
+
+
+        const count =
+            WHEEL_ITEMS.length;
+
+        const angle =
+            360 / count;
+
+
+        wheel.innerHTML =
+            WHEEL_ITEMS
+                .map(
+                    (item, index) => {
+
+                        const rotate =
+                            index *
+                            angle;
+
+                        const color =
+                            colors[index];
+
+                        return `
+                            <div
+                                class="ars-wheel-segment"
+                                style="
+                                    --i:${index};
+                                    --segment-angle:${angle}deg;
+                                    --segment-color:${color};
+                                    transform:
+                                        rotate(${rotate}deg);
+                                "
+                            >
+                                <span>
+                                    ${
+                                        item.icon
+                                    }
+                                    <small>
+                                        ${
+                                            item.title
+                                        }
+                                    </small>
+                                </span>
+                            </div>
+                        `;
+                    }
+                )
+                .join("");
     }
+
 
     function connectWheelElements() {
-        wheelModal =
+
+        state.modal =
             document.getElementById(
                 "arsWheelModal"
             );
 
-        if (!wheelModal) {
-            return;
-        }
-
-        wheelDisc =
+        state.wheel =
             document.getElementById(
-                "arsWheelDisc"
+                "arsWheel"
             );
 
-        wheelResult =
-            document.getElementById(
-                "arsWheelResult"
+        document
+            .getElementById(
+                "arsWheelClose"
+            )
+            ?.addEventListener(
+                "click",
+                closeWheel
             );
 
-        wheelResultTitle =
-            document.getElementById(
-                "arsWheelResultTitle"
+
+        state.modal
+            ?.querySelector(
+                ".ars-wheel-backdrop"
+            )
+            ?.addEventListener(
+                "click",
+                closeWheel
             );
 
-        wheelResultDescription =
+
+        document
+            .getElementById(
+                "arsWheelSpin"
+            )
+            ?.addEventListener(
+                "click",
+                spin
+            );
+    }
+
+
+    function updateWheelUI() {
+
+        cleanExpiredRewards();
+
+        const spins =
+            getSpins();
+
+        const active =
+            getActiveChallenge();
+
+        const spinElement =
             document.getElementById(
-                "arsWheelResultDescription"
+                "arsWheelSpins"
             );
 
-        wheelResultIcon =
+        const streakElement =
             document.getElementById(
-                "arsWheelResultIcon"
+                "arsWheelStreak"
             );
 
-        wheelSpinButton =
+        const spinButton =
             document.getElementById(
                 "arsWheelSpin"
             );
 
-        wheelSpinsText =
+        const challengeBox =
             document.getElementById(
-                "a
+                "arsWheelChallenge"
+            );
+
+        const challengeText =
+            document.getElementById(
+                "arsChallengeText"
+            );
+
+        const challengeIcon =
+            document.getElementById(
+                "arsChallengeIcon"
+            );
+
+
+        if (spinElement) {
+            spinElement.textContent =
+                Math.max(
+                    0,
+                    MAX_SPINS - spins
+                );
+        }
+
+
+        if (streakElement) {
+            streakElement.textContent =
+                getStreak();
+        }
+
+
+        if (spinButton) {
+
+            spinButton.disabled =
+                state.spinning ||
+                spins >= MAX_SPINS ||
+                Boolean(active);
+
+            spinButton.textContent =
+                state.spinning
+                    ?
