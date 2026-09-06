@@ -1224,3 +1224,448 @@ input:focus-visible {
     }
 
    }
+/* =========================
+   ΛRS WHEEL
+========================= */
+
+.ars-wheel-modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 400;
+
+    display: none;
+}
+
+.ars-wheel-modal.open {
+    display: block;
+}
+
+.ars-wheel-backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0,0,0,.78);
+
+    backdrop-filter: blur(16px);
+}
+
+.ars-wheel-panel {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: min(460px, calc(100% - 24px));
+
+    max-height: 94vh;
+
+    overflow-y: auto;
+
+    padding: 24px 18px 22px;
+
+    border-radius: 30px;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(139,61,255,.22),
+            transparent 48%
+        ),
+        #101014;
+
+    border: 1px solid #302f3c;
+
+    box-shadow:
+        0 35px 120px rgba(0,0,0,.65);
+
+    text-align: center;
+}
+
+.ars-wheel-close {
+    position: absolute;
+
+    top: 14px;
+    right: 14px;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 12px;
+
+    color: white;
+
+    background: rgba(255,255,255,.06);
+
+    font-size: 23px;
+
+    cursor: pointer;
+}
+
+.ars-wheel-title {
+    margin-top: 5px;
+
+    font-size: 25px;
+
+    font-weight: 800;
+}
+
+.ars-wheel-title span {
+    background:
+        linear-gradient(
+            90deg,
+            #8b3dff,
+            #ff4fb3
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    color: transparent;
+}
+
+.ars-wheel-subtitle {
+    margin-top: 6px;
+
+    color: #8c8c97;
+
+    font-size: 11px;
+}
+
+.ars-wheel-stats {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: 18px;
+}
+
+.ars-wheel-stats div {
+    padding: 11px;
+
+    border-radius: 15px;
+
+    background: #18181f;
+
+    border: 1px solid #292934;
+}
+
+.ars-wheel-stats strong {
+    display: block;
+
+    font-size: 17px;
+}
+
+.ars-wheel-stats span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #8c8c97;
+
+    font-size: 9px;
+}
+
+.ars-wheel-stage {
+    position: relative;
+
+    width: 330px;
+    height: 330px;
+
+    max-width: 82vw;
+    max-height: 82vw;
+
+    margin: 24px auto 20px;
+}
+
+.ars-wheel {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 50%;
+
+    overflow: hidden;
+
+    border: 8px solid #24232d;
+
+    background: #18181f;
+
+    box-shadow:
+        0 0 0 5px #0b0b0e,
+        0 18px 50px rgba(0,0,0,.45);
+}
+
+.ars-wheel-segment {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 50%;
+    height: 50%;
+
+    transform-origin: 0 0;
+
+    clip-path:
+        polygon(
+            0 0,
+            100% 0,
+            70% 100%,
+            0 100%
+        );
+
+    background: var(--segment-color);
+}
+
+.ars-wheel-segment span {
+    position: absolute;
+
+    left: 42px;
+    top: 37px;
+
+    width: 95px;
+
+    transform:
+        rotate(
+            calc(
+                var(--segment-angle) * -.5
+            )
+        );
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 3px;
+
+    color: white;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    text-shadow:
+        0 2px 4px rgba(0,0,0,.35);
+}
+
+.ars-wheel-segment small {
+    font-size: 7px;
+
+    line-height: 1.1;
+
+    text-align: center;
+
+    max-width: 75px;
+}
+
+.ars-wheel-pointer {
+    position: absolute;
+
+    left: 50%;
+    top: -12px;
+
+    transform:
+        translateX(-50%);
+
+    z-index: 5;
+
+    color: white;
+
+    font-size: 26px;
+
+    filter:
+        drop-shadow(
+            0 4px 8px rgba(0,0,0,.5)
+        );
+}
+
+.ars-wheel-center {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 4;
+
+    width: 68px;
+    height: 68px;
+
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    background: #09090c;
+
+    border: 5px solid #282731;
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.45);
+}
+
+.ars-wheel-result {
+    display: none;
+
+    margin: 10px 0;
+
+    padding: 14px;
+
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(139,61,255,.14),
+            rgba(255,79,179,.09)
+        );
+
+    border: 1px solid rgba(139,61,255,.28);
+}
+
+.ars-wheel-result.show {
+    display: block;
+}
+
+.ars-wheel-result-icon {
+    font-size: 28px;
+
+    margin-bottom: 4px;
+}
+
+.ars-wheel-result strong {
+    display: block;
+
+    font-size: 14px;
+}
+
+.ars-wheel-result span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #9b9ba7;
+
+    font-size: 10px;
+}
+
+.ars-wheel-challenge {
+    display: none;
+
+    align-items: center;
+
+    gap: 10px;
+
+    text-align: left;
+
+    margin: 10px 0;
+
+    padding: 12px;
+
+    border-radius: 16px;
+
+    background: #18181f;
+
+    border: 1px solid #34333f;
+}
+
+.ars-wheel-challenge.show {
+    display: flex;
+}
+
+.ars-wheel-challenge-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 13px;
+
+    display: grid;
+    place-items: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8b3dff,
+            #ff4fb3
+        );
+
+    font-size: 20px;
+}
+
+.ars-wheel-challenge strong {
+    display: block;
+
+    font-size: 12px;
+}
+
+.ars-wheel-challenge span {
+    display: block;
+
+    color: #9999a5;
+
+    font-size: 10px;
+
+    margin-top: 3px;
+}
+
+.ars-wheel-spin {
+    width: 100%;
+
+    margin-top: 10px;
+
+    padding: 15px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8b3dff,
+            #ff4fb3
+        );
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    letter-spacing: 1px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 12px 35px rgba(139,61,255,.25);
+}
+
+.ars-wheel-spin:disabled {
+    opacity: .45;
+
+    cursor: not-allowed;
+}
+
+.ars-vip-avatar {
+    box-shadow:
+        0 0 0 3px #ffd45a,
+        0 0 22px rgba(255,212,90,.55);
+}
+
+body.ars-favorite-theme {
+    --purple: #ff4fb3;
+    --purple2: #8b3dff;
+                          }
