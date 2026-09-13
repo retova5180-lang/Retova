@@ -1,869 +1,972 @@
 (() => {
-    "use strict";
+  "use strict";
 
-    const state = {
-        mode: "post",
-        media: null,
-        mediaType: null
+  const POST_KEY =
+    "ars_local_posts";
+
+  const STORY_KEY =
+    "ars_local_stories";
+
+  const state = {
+    mode: "post",
+    media: [],
+    maxMedia: 6
+  };
+
+  const user = () => {
+    try {
+      return (
+        JSON.parse(
+          localStorage.getItem(
+            "ars_user"
+          )
+        ) || {}
+      );
+    } catch {
+      return {};
+    }
+  };
+
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(
+      /[&<>'"]/g,
+      (char) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#039;",
+          '"': "&quot;"
+        })[char]
+    );
+
+  const read = (
+    key
+  ) => {
+    try {
+      return (
+        JSON.parse(
+          localStorage.getItem(
+            key
+          )
+        ) || []
+      );
+    } catch {
+      return [];
+    }
+  };
+
+  const write = (
+    key,
+    value
+  ) => {
+    localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
+  };
+
+  function reset() {
+    state.mode =
+      "post";
+
+    state.media.forEach(
+      (media) => {
+        if (media.url) {
+          URL.revokeObjectURL(
+            media.url
+          );
+        }
+      }
+    );
+
+    state.media = [];
+  }
+
+  function getUserProfile() {
+    const u = user();
+
+    return {
+      name:
+        u.displayName ||
+        u.name ||
+        "You",
+
+      username:
+        u.username ||
+        "you",
+
+      letter:
+        u.letter ||
+        "R",
+
+      gradient: [
+        u.letterColor ||
+          "#8B3DFF",
+
+        u.background ||
+          "#C54DFF"
+      ]
     };
+  }
 
+  function openCreatePost(
+    mode = "post"
+  ) {
+    const old =
+      document.getElementById(
+        "createPostScreen"
+      );
 
-    function getUser() {
-        try {
-            return JSON.parse(
-                localStorage.getItem("ars_user") || "null"
-            );
-        } catch {
-            return null;
-        }
+    if (old) {
+      old.remove();
     }
 
+    reset();
 
-    function getLetter() {
-        const user = getUser();
+    state.mode =
+      mode;
 
-        return (
-            user?.letter ||
-            localStorage.getItem("ars_letter") ||
-            "R"
-        )
-        .slice(0, 1)
-        .toUpperCase();
+    render();
+
+    document.body.classList.add(
+      "create-post-open"
+    );
+  }
+
+  function closeCreatePost() {
+    const element =
+      document.getElementById(
+        "createPostScreen"
+      );
+
+    if (element) {
+      element.remove();
     }
 
-
-    function ensureUI() {
-
-        if (
-            document.getElementById(
-                "createPostScreen"
-            )
-        ) {
-            return;
+    state.media.forEach(
+      (media) => {
+        if (media.url) {
+          URL.revokeObjectURL(
+            media.url
+          );
         }
+      }
+    );
 
-        const screen =
-            document.createElement("div");
+    state.media = [];
 
-        screen.id =
-            "createPostScreen";
+    document.body.classList.remove(
+      "create-post-open"
+    );
+  }
 
-        screen.innerHTML = `
-            <div class="create-post-panel">
+  function render() {
+    const u =
+      getUserProfile();
 
-                <div class="create-post-header">
+    const element =
+      document.createElement(
+        "div"
+      );
 
-                    <div class="create-post-title">
-                        <strong id="createPostTitle">
-                            Create post
-                        </strong>
+    element.id =
+      "createPostScreen";
 
-                        <span id="createPostSubtitle">
-                            Share something with ΛRS
-                        </span>
-                    </div>
+    element.className =
+      "create-post-screen active";
 
-                    <button
-                        class="create-post-close"
-                        id="closeCreatePost"
-                        type="button"
-                    >
-                        ×
-                    </button>
+    element.innerHTML = `
+      <div class="create-post-container">
 
-                </div>
+        <header class="create-post-header">
 
-                <div class="create-post-tabs">
+          <button
+            class="create-close"
+            id="cpClose"
+            type="button"
+          >
+            <i data-lucide="x"></i>
+          </button>
 
-                    <button
-                        class="create-post-tab active"
-                        data-create-mode="post"
-                        type="button"
-                    >
-                        Post
-                    </button>
+          <h1 id="cpTitle">
+            ${
+              state.mode === "story"
+                ? "Create Story"
+                : "Create Post"
+            }
+          </h1>
 
-                    <button
-                        class="create-post-tab"
-                        data-create-mode="story"
-                        type="button"
-                    >
-                        Story
-                    </button>
+          <button
+            class="publish-button"
+            id="cpPublish"
+            type="button"
+            disabled
+          >
+            Publish
+          </button>
 
-                </div>
+        </header>
 
-                <div class="create-post-body">
 
-                    <div class="create-post-user">
+        <div class="cp-tabs">
 
-                        <div
-                            class="create-post-user-avatar"
-                            id="createPostAvatar"
-                        >
-                            R
-                        </div>
+          <button
+            data-mode="post"
+            class="${
+              state.mode === "post"
+                ? "active"
+                : ""
+            }"
+          >
+            Post
+          </button>
 
-                        <div>
-                            <div
-                                class="create-post-user-name"
-                                id="createPostUserName"
-                            >
-                                You
-                            </div>
+          <button
+            data-mode="story"
+            class="${
+              state.mode === "story"
+                ? "active"
+                : ""
+            }"
+          >
+            Story
+          </button>
 
-                            <div class="create-post-user-sub">
-                                Everyone
-                            </div>
-                        </div>
+        </div>
 
-                    </div>
 
-                    <textarea
-                        id="createPostText"
-                        maxlength="1000"
-                        placeholder="What's happening?"
-                    ></textarea>
+        <section class="create-user">
 
-                    <div
-                        class="create-post-preview"
-                        id="createPostPreview"
-                    >
-                        <button
-                            class="create-post-remove-media"
-                            id="removeCreateMedia"
-                            type="button"
-                        >
-                            ×
-                        </button>
+          <div
+            class="create-avatar"
+            style="
+              background:
+                linear-gradient(
+                  135deg,
+                  ${escapeHTML(
+                    u.gradient[0]
+                  )},
+                  ${escapeHTML(
+                    u.gradient[1]
+                  )}
+                )
+            "
+          >
+            ${escapeHTML(
+              u.letter
+            )}
+          </div>
 
-                        <div id="createPostMedia"></div>
-                    </div>
+          <div class="create-user-info">
 
-                    <div class="create-post-tools">
+            <div class="create-user-name">
+              ${escapeHTML(
+                u.name
+              )}
+            </div>
 
-                        <button
-                            class="create-post-tool"
-                            id="createImage"
-                            type="button"
-                            title="Image"
-                        >
-                            <i data-lucide="image"></i>
-                        </button>
+            <div class="visibility-button">
+              Public
+            </div>
 
-                        <button
-                            class="create-post-tool"
-                            id="createVideo"
-                            type="button"
-                            title="Video"
-                        >
-                            <i data-lucide="video"></i>
-                        </button>
+          </div>
 
-                        <button
-                            class="create-post-tool"
-                            id="createEmoji"
-                            type="button"
-                            title="Emoji"
-                        >
-                            😊
-                        </button>
+        </section>
 
-                    </div>
 
-                    <div class="create-post-options">
+        <section class="create-text-section">
 
-                        <button
-                            class="create-post-option active"
-                            type="button"
-                        >
-                            Everyone
-                        </button>
+          <textarea
+            id="cpText"
+            maxlength="280"
+            placeholder="${
+              state.mode === "story"
+                ? "Write a story..."
+                : "What's on your mind?"
+            }"
+          ></textarea>
 
-                        <button
-                            class="create-post-option"
-                            type="button"
-                        >
-                            Friends
-                        </button>
+          <div class="character-counter">
+            <span id="cpCount">
+              0
+            </span>
+            /280
+          </div>
 
-                        <button
-                            class="create-post-option"
-                            type="button"
-                        >
-                            Subscribers
-                        </button>
+        </section>
 
-                    </div>
 
-                    <div class="create-post-bottom">
+        <section class="media-section">
 
-                        <div
-                            class="create-post-meta"
-                            id="createPostCount"
-                        >
-                            0 / 1000
-                        </div>
+          <div
+            id="cpPreview"
+            class="media-preview"
+          ></div>
 
-                        <button
-                            class="create-post-publish"
-                            id="publishCreatePost"
-                            type="button"
-                            disabled
-                        >
-                            Post
-                        </button>
+          <div
+            id="cpMediaCount"
+            class="media-count"
+          >
+            0/${state.maxMedia} media
+          </div>
 
-                    </div>
+        </section>
 
-                </div>
+
+        <section class="media-actions">
+
+          <button
+            class="media-action"
+            data-pick="image"
+            type="button"
+          >
+            <i data-lucide="image"></i>
+            <span>Photo</span>
+          </button>
+
+          <button
+            class="media-action"
+            data-pick="video"
+            type="button"
+          >
+            <i data-lucide="video"></i>
+            <span>Video</span>
+          </button>
+
+          <button
+            class="media-action"
+            data-emoji="😀"
+            type="button"
+          >
+            <i data-lucide="smile"></i>
+            <span>Emoji</span>
+          </button>
+
+        </section>
+
+
+        <section class="post-settings">
+
+          <div class="setting-row">
+
+            <div class="setting-left">
+              <i
+                class="setting-icon"
+                data-lucide="message-circle"
+              ></i>
+
+              <span>
+                Allow replies
+              </span>
+            </div>
+
+            <button
+              class="toggle active"
+              id="cpReplies"
+              type="button"
+            >
+              <span></span>
+            </button>
+
+          </div>
+
+
+          <div class="setting-row">
+
+            <div class="setting-left">
+
+              <i
+                class="setting-icon"
+                data-lucide="repeat-2"
+              ></i>
+
+              <span>
+                Allow reposts
+              </span>
 
             </div>
-        `;
 
-        document.body.appendChild(screen);
+            <button
+              class="toggle active"
+              id="cpReposts"
+              type="button"
+            >
+              <span></span>
+            </button>
 
-        const imageInput =
-            document.createElement("input");
+          </div>
 
-        imageInput.type = "file";
-        imageInput.accept = "image/*";
-        imageInput.hidden = true;
-        imageInput.id = "arsImageInput";
-
-        document.body.appendChild(imageInput);
+        </section>
 
 
-        const videoInput =
-            document.createElement("input");
+        <input
+          id="cpFile"
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          hidden
+        />
 
-        videoInput.type = "file";
-        videoInput.accept = "video/*";
-        videoInput.hidden = true;
-        videoInput.id = "arsVideoInput";
+      </div>
+    `;
 
-        document.body.appendChild(videoInput);
+    document.body.appendChild(
+      element
+    );
 
-        bindUI();
+    if (window.lucide) {
+      window.lucide.createIcons();
     }
 
+    bind();
+    update();
+  }
 
-    function bindUI() {
+  function bind() {
+    const root =
+      document.getElementById(
+        "createPostScreen"
+      );
 
-        document
-            .getElementById("closeCreatePost")
-            ?.addEventListener(
-                "click",
-                closeCreatePost
-            );
+    root.addEventListener(
+      "click",
+      (event) => {
 
-        document
-            .getElementById("createPostScreen")
-            ?.addEventListener(
-                "click",
-                event => {
+        const mode =
+          event.target.closest(
+            "[data-mode]"
+          );
 
-                    if (
-                        event.target.id ===
-                        "createPostScreen"
-                    ) {
-                        closeCreatePost();
-                    }
-                }
-            );
+        if (mode) {
+          state.mode =
+            mode.dataset.mode;
 
-        document
-            .querySelectorAll(
-                "[data-create-mode]"
-            )
-            .forEach(button => {
+          openCreatePost(
+            state.mode
+          );
 
-                button.addEventListener(
-                    "click",
-                    () => {
-                        setMode(
-                            button.dataset.createMode
-                        );
-                    }
-                );
-            });
+          return;
+        }
 
 
-        document
-            .getElementById("createImage")
-            ?.addEventListener(
-                "click",
-                () => {
-                    document
-                        .getElementById(
-                            "arsImageInput"
-                        )
-                        ?.click();
-                }
-            );
+        if (
+          event.target.closest(
+            "#cpClose"
+          )
+        ) {
+          closeCreatePost();
+          return;
+        }
 
 
-        document
-            .getElementById("createVideo")
-            ?.addEventListener(
-                "click",
-                () => {
-                    document
-                        .getElementById(
-                            "arsVideoInput"
-                        )
-                        ?.click();
-                }
-            );
+        const pick =
+          event.target.closest(
+            "[data-pick]"
+          );
 
-
-        document
-            .getElementById("arsImageInput")
-            ?.addEventListener(
-                "change",
-                event => {
-
-                    const file =
-                        event.target.files?.[0];
-
-                    if (file) {
-                        loadMedia(
-                            file,
-                            "image"
-                        );
-                    }
-                }
-            );
-
-
-        document
-            .getElementById("arsVideoInput")
-            ?.addEventListener(
-                "change",
-                event => {
-
-                    const file =
-                        event.target.files?.[0];
-
-                    if (file) {
-                        loadMedia(
-                            file,
-                            "video"
-                        );
-                    }
-                }
-            );
-
-
-        document
+        if (pick) {
+          document
             .getElementById(
-                "removeCreateMedia"
+              "cpFile"
             )
-            ?.addEventListener(
-                "click",
-                removeMedia
-            );
+            .click();
 
-
-        document
-            .getElementById("createEmoji")
-            ?.addEventListener(
-                "click",
-                addEmoji
-            );
-
-
-        document
-            .getElementById("createPostText")
-            ?.addEventListener(
-                "input",
-                updateCounter
-            );
-
-
-        document
-            .getElementById(
-                "publishCreatePost"
-            )
-            ?.addEventListener(
-                "click",
-                publish
-            );
-
-
-        document
-            .querySelectorAll(
-                ".create-post-option"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        document
-                            .querySelectorAll(
-                                ".create-post-option"
-                            )
-                            .forEach(item =>
-                                item.classList.remove(
-                                    "active"
-                                )
-                            );
-
-                        button.classList.add(
-                            "active"
-                        );
-                    }
-                );
-            });
-    }
-
-
-    function setMode(mode) {
-
-        state.mode =
-            mode === "story"
-                ? "story"
-                : "post";
-
-        document
-            .querySelectorAll(
-                "[data-create-mode]"
-            )
-            .forEach(button => {
-                button.classList.toggle(
-                    "active",
-                    button.dataset.createMode ===
-                    state.mode
-                );
-            });
-
-        const title =
-            document.getElementById(
-                "createPostTitle"
-            );
-
-        const subtitle =
-            document.getElementById(
-                "createPostSubtitle"
-            );
-
-        const publishButton =
-            document.getElementById(
-                "publishCreatePost"
-            );
-
-        const textarea =
-            document.getElementById(
-                "createPostText"
-            );
-
-        if (state.mode === "story") {
-
-            title.textContent =
-                "Create story";
-
-            subtitle.textContent =
-                "Share a moment for 24 hours";
-
-            publishButton.textContent =
-                "Add Story";
-
-            textarea.placeholder =
-                "Add something to your story...";
-
-        } else {
-
-            title.textContent =
-                "Create post";
-
-            subtitle.textContent =
-                "Share something with ΛRS";
-
-            publishButton.textContent =
-                "Post";
-
-            textarea.placeholder =
-                "What's happening?";
+          return;
         }
 
-        updateCounter();
-    }
-
-
-    function openCreatePost(mode = "post") {
-
-        ensureUI();
-
-        reset();
-
-        setMode(mode);
-
-        updateUserPreview();
-
-        document
-            .getElementById(
-                "createPostScreen"
-            )
-            ?.classList.add("open");
-
-        document.body.style.overflow =
-            "hidden";
-
-        document
-            .getElementById(
-                "createPostText"
-            )
-            ?.focus();
-
-        if (window.lucide) {
-            lucide.createIcons();
-        }
-    }
-
-
-    function closeCreatePost() {
-
-        document
-            .getElementById(
-                "createPostScreen"
-            )
-            ?.classList.remove("open");
-
-        document.body.style.overflow =
-            "";
-    }
-
-
-    function reset() {
-
-        state.media = null;
-        state.mediaType = null;
-
-        const textarea =
-            document.getElementById(
-                "createPostText"
-            );
-
-        if (textarea) {
-            textarea.value = "";
-        }
-
-        const preview =
-            document.getElementById(
-                "createPostPreview"
-            );
-
-        if (preview) {
-            preview.classList.remove(
-                "show"
-            );
-        }
-
-        const media =
-            document.getElementById(
-                "createPostMedia"
-            );
-
-        if (media) {
-            media.innerHTML = "";
-        }
-
-        updateCounter();
-    }
-
-
-    function updateUserPreview() {
-
-        const user = getUser();
-
-        const avatar =
-            document.getElementById(
-                "createPostAvatar"
-            );
-
-        const name =
-            document.getElementById(
-                "createPostUserName"
-            );
-
-        if (!avatar) return;
-
-        avatar.textContent =
-            (
-                user?.letter ||
-                localStorage.getItem(
-                    "ars_letter"
-                ) ||
-                "R"
-            )
-            .slice(0, 1)
-            .toUpperCase();
-
-        avatar.style.background =
-            user?.background ||
-            localStorage.getItem(
-                "ars_background"
-            ) ||
-            "linear-gradient(135deg,#8b3dff,#ff4fb3)";
-
-        avatar.style.color =
-            user?.letterColor ||
-            localStorage.getItem(
-                "ars_letter_color"
-            ) ||
-            "#fff";
-
-        if (user?.avatar) {
-
-            avatar.innerHTML = `
-                <img
-                    src="${escapeAttr(user.avatar)}"
-                    alt=""
-                >
-            `;
-        }
-
-        if (name) {
-            name.textContent =
-                user?.displayName ||
-                user?.username ||
-                "You";
-        }
-    }
-
-
-    function loadMedia(file, type) {
-
-        if (file.size > 30 * 1024 * 1024) {
-            alert(
-                "Please choose a file smaller than 30MB."
-            );
-            return;
-        }
-
-        const reader =
-            new FileReader();
-
-        reader.onload = () => {
-
-            state.media =
-                reader.result;
-
-            state.mediaType =
-                type;
-
-            const preview =
-                document.getElementById(
-                    "createPostPreview"
-                );
-
-            const media =
-                document.getElementById(
-                    "createPostMedia"
-                );
-
-            if (!preview || !media) {
-                return;
-            }
-
-            if (type === "image") {
-
-                media.innerHTML = `
-                    <img
-                        src="${escapeAttr(
-                            state.media
-                        )}"
-                        alt=""
-                    >
-                `;
-
-            } else {
-
-                media.innerHTML = `
-                    <video
-                        src="${escapeAttr(
-                            state.media
-                        )}"
-                        controls
-                        playsinline
-                    ></video>
-                `;
-            }
-
-            preview.classList.add(
-                "show"
-            );
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-
-    function removeMedia() {
-
-        state.media = null;
-        state.mediaType = null;
-
-        const preview =
-            document.getElementById(
-                "createPostPreview"
-            );
-
-        const media =
-            document.getElementById(
-                "createPostMedia"
-            );
-
-        if (preview) {
-            preview.classList.remove(
-                "show"
-            );
-        }
-
-        if (media) {
-            media.innerHTML = "";
-        }
-
-        const image =
-            document.getElementById(
-                "arsImageInput"
-            );
-
-        const video =
-            document.getElementById(
-                "arsVideoInput"
-            );
-
-        if (image) image.value = "";
-        if (video) video.value = "";
-    }
-
-
-    function addEmoji() {
-
-        const input =
-            document.getElementById(
-                "createPostText"
-            );
-
-        if (!input) return;
 
         const emoji =
+          event.target.closest(
+            "[data-emoji]"
+          );
+
+        if (emoji) {
+
+          const text =
+            document.getElementById(
+              "cpText"
+            );
+
+          text.value +=
+            emoji.dataset.emoji;
+
+          text.dispatchEvent(
+            new Event(
+              "input"
+            )
+          );
+
+          text.focus();
+
+          return;
+        }
+
+
+        const remove =
+          event.target.closest(
+            "[data-remove]"
+          );
+
+        if (remove) {
+
+          const index =
+            Number(
+              remove.dataset.remove
+            );
+
+          const media =
+            state.media[index];
+
+          if (media?.url) {
+            URL.revokeObjectURL(
+              media.url
+            );
+          }
+
+          state.media.splice(
+            index,
+            1
+          );
+
+          renderPreview();
+          update();
+        }
+
+      }
+    );
+
+
+    document
+      .getElementById(
+        "cpText"
+      )
+      .addEventListener(
+        "input",
+        update
+      );
+
+
+    document
+      .getElementById(
+        "cpFile"
+      )
+      .addEventListener(
+        "change",
+        (event) => {
+
+          addMedia(
             [
-                "✨",
-                "💜",
-                "🔥",
-                "😭",
-                "😂",
-                "😍",
-                "🎀",
-                "🫶",
-                "😎"
-            ][
-                Math.floor(
-                    Math.random() * 9
-                )
-            ];
+              ...event.target.files
+            ]
+          );
 
-        input.value += emoji;
+          event.target.value =
+            "";
+        }
+      );
 
-        updateCounter();
 
-        input.focus();
+    document
+      .getElementById(
+        "cpPublish"
+      )
+      .addEventListener(
+        "click",
+        publish
+      );
+
+
+    [
+      "cpReplies",
+      "cpReposts"
+    ].forEach(
+      (id) => {
+
+        document
+          .getElementById(
+            id
+          )
+          .addEventListener(
+            "click",
+            (event) => {
+              event.currentTarget.classList.toggle(
+                "active"
+              );
+            }
+          );
+
+      }
+    );
+  }
+
+  function addMedia(
+    files
+  ) {
+
+    for (
+      const file of files
+    ) {
+
+      if (
+        state.media.length >=
+        state.maxMedia
+      ) {
+        break;
+      }
+
+      if (
+        !file.type.startsWith(
+          "image/"
+        ) &&
+        !file.type.startsWith(
+          "video/"
+        )
+      ) {
+        continue;
+      }
+
+      state.media.push({
+        type:
+          file.type.startsWith(
+            "video/"
+          )
+            ? "video"
+            : "image",
+
+        url:
+          URL.createObjectURL(
+            file
+          ),
+
+        file
+      });
     }
 
+    renderPreview();
+    update();
+  }
 
-    function updateCounter() {
+  function renderPreview() {
+    const box =
+      document.getElementById(
+        "cpPreview"
+      );
 
-        const input =
-            document.getElementById(
-                "createPostText"
-            );
+    if (!box) return;
 
-        const count =
-            document.getElementById(
-                "createPostCount"
-            );
+    box.innerHTML =
+      state.media
+        .map(
+          (media, index) => `
+            <div class="media-item">
 
-        const publish =
-            document.getElementById(
-                "publishCreatePost"
-            );
+              ${
+                media.type ===
+                "image"
+                  ? `
+                    <img
+                      src="${media.url}"
+                      alt=""
+                    >
+                  `
+                  : `
+                    <video
+                      src="${media.url}"
+                      controls
+                    ></video>
+                  `
+              }
 
-        if (!input) return;
+              <button
+                class="remove-media"
+                type="button"
+                data-remove="${index}"
+              >
+                ×
+              </button>
 
-        const length =
-            input.value.length;
+            </div>
+          `
+        )
+        .join("");
 
-        if (count) {
-            count.textContent =
-                `${length} / 1000`;
-        }
+    document.getElementById(
+      "cpMediaCount"
+    ).textContent =
+      `${state.media.length}/${state.maxMedia} media`;
+  }
 
-        if (publish) {
-            publish.disabled =
-                length === 0 &&
-                !state.media;
-        }
+  function update() {
+    const text =
+      document.getElementById(
+        "cpText"
+      );
+
+    const button =
+      document.getElementById(
+        "cpPublish"
+      );
+
+    if (!text || !button) {
+      return;
     }
 
+    document.getElementById(
+      "cpCount"
+    ).textContent =
+      text.value.length;
 
-    function publish() {
+    button.disabled =
+      !text.value.trim() &&
+      !state.media.length;
+  }
 
-        const input =
-            document.getElementById(
-                "createPostText"
+  function fileToDataURL(
+    file
+  ) {
+    return new Promise(
+      (resolve, reject) => {
+
+        const reader =
+          new FileReader();
+
+        reader.onload =
+          () =>
+            resolve(
+              reader.result
             );
 
-        if (!input) return;
+        reader.onerror =
+          reject;
 
-        const text =
-            input.value.trim();
+        reader.readAsDataURL(
+          file
+        );
+      }
+    );
+  }
 
-        if (!text && !state.media) {
-            return;
-        }
+  async function publish() {
 
-        const user =
-            getUser();
+    const text =
+      document.getElementById(
+        "cpText"
+      );
 
-        const now =
-            new Date();
+    const button =
+      document.getElementById(
+        "cpPublish"
+      );
 
-        const id =
-            `${state.mode}-${Date.now()}`;
+    const cleanText =
+      text.value.trim();
 
-        const base = {
-            id,
+    if (
+      !cleanText &&
+      !state.media.length
+    ) {
+      return;
+    }
 
-            name:
-                user?.displayName ||
-                user?.username ||
-                "You",
+    button.disabled =
+      true;
 
-            username:
-                user?.username
-                    ? `@${user.username}`
-                    : "@you",
+    try {
 
-            letter:
-                (
-                    user?.letter ||
-                    getLetter()
+      const u =
+        getUserProfile();
+
+      const storedMedia =
+        await Promise.all(
+          state.media.map(
+            async (media) => ({
+              type:
+                media.type,
+
+              url:
+                await fileToDataURL(
+                  media.file
                 )
-                .slice(0,1)
-                .toUpperCase(),
+            })
+          )
+        );
 
-            color:
-                user?.letterColor ||
-                localStorage.getItem(
-                    "ars_letter_color"
-                ) ||
-                "#fff",
 
-            gradient:
-                user?.background ||
-                localStorage.getItem(
-                    "ars_backgro
+      const base = {
+        id:
+          `local-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 7)}`,
+
+        name:
+          u.name,
+
+        username:
+          u.username,
+
+        letter:
+          u.letter,
+
+        gradient:
+          u.gradient,
+
+        verified:
+          false,
+
+        vip:
+          false,
+
+        time:
+          "now",
+
+        text:
+          cleanText,
+
+        likes:
+          0,
+
+        comments:
+          0,
+
+        reposts:
+          0,
+
+        views:
+          0,
+
+        images:
+          storedMedia
+            .filter(
+              (item) =>
+                item.type ===
+                "image"
+            )
+            .map(
+              (item) =>
+                item.url
+            ),
+
+        videos:
+          storedMedia
+            .filter(
+              (item) =>
+                item.type ===
+                "video"
+            )
+            .map(
+              (item) =>
+                item.url
+            ),
+
+        replies:
+          [],
+
+        allowReplies:
+          document
+            .getElementById(
+              "cpReplies"
+            )
+            .classList.contains(
+              "active"
+            ),
+
+        allowReposts:
+          document
+            .getElementById(
+              "cpReposts"
+            )
+            .classList.contains(
+              "active"
+            )
+      };
+
+
+      if (
+        state.mode ===
+        "story"
+      ) {
+
+        const storyList =
+          read(
+            STORY_KEY
+          );
+
+        storyList.unshift({
+          ...base,
+
+          id:
+            `story-${base.id}`,
+
+          expiresAt:
+            Date.now() +
+            86400000
+        });
+
+        write(
+          STORY_KEY,
+          storyList
+        );
+
+        document.dispatchEvent(
+          new CustomEvent(
+            "ars:story-created",
+            {
+              detail:
+                base
+            }
+          )
+        );
+
+      } else {
+
+        const posts =
+          read(
+            POST_KEY
+          );
+
+        posts.unshift(
+          base
+        );
+
+        write(
+          POST_KEY,
+          posts
+        );
+
+        document.dispatchEvent(
+          new CustomEvent(
+            "ars:post-created",
+            {
+              detail:
+                base
+            }
+          )
+        );
+      }
+
+      closeCreatePost();
+
+    } catch (error) {
+
+      console.error(
+        "ΛRS: media could not be saved.",
+        error
+      );
+
+      button.disabled =
+        false;
+
+      alert(
+        "Could not save this post. Please try again."
+      );
+    }
+  }
+
+  window.openCreatePost =
+    openCreatePost;
+
+  window.closeCreatePost =
+    closeCreatePost;
+
+})();
