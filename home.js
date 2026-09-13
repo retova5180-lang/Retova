@@ -1,744 +1,1098 @@
 (() => {
-    "use strict";
+  "use strict";
 
-    const DEMO_STORIES = [
+  const POST_KEY = "ars_local_posts";
+  const STORY_KEY = "ars_local_stories";
+  const STATE_KEY = "ars_home_state";
+  const STREAK_KEY = "ars_streak_state";
+
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+  const feed = $("#feed");
+  const stories = $("#stories");
+  const detail = $("#postDetail");
+  const detailBody = $("#detailPostBody");
+  const replies = $("#detailReplies");
+  const replyForm = $("#replyForm");
+  const replyInput = $("#replyInput");
+  const replyCount = $("#replyCount");
+
+  let activePostId = null;
+
+  const app = {
+    posts: [],
+    stories: [],
+    liked: new Set(),
+    reposted: new Set(),
+    saved: new Set()
+  };
+
+  const demoPosts = [
+    {
+      id: "demo-1",
+      name: "Apple",
+      username: "apple",
+      letter: "A",
+      gradient: ["#202020", "#666"],
+      verified: true,
+      time: "12m",
+      text: "A cleaner way to create, share and discover what matters to you. #ARS #CreateShareConnect",
+      images: [],
+      videos: [],
+      likes: 28400,
+      comments: 1843,
+      reposts: 3902,
+      views: 2400000,
+      replies: [
         {
-            id: "story-lina",
-            name: "Lina",
-            username: "@lina",
-            letter: "L",
-            color: "#ffffff",
-            gradient: "linear-gradient(135deg,#8b3dff,#ff4fb3)",
-            text: "New day ✨",
-            image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=85"
+          name: "Lina",
+          letter: "L",
+          text: "This looks amazing.",
+          likes: 24
         },
         {
-            id: "story-noah",
-            name: "Noah",
-            username: "@noah",
-            letter: "N",
-            color: "#fff",
-            gradient: "linear-gradient(135deg,#3023ae,#c86dd7)",
-            text: "Weekend mood.",
-            image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=85"
-        },
-        {
-            id: "story-sara",
-            name: "Sara",
-            username: "@sara",
-            letter: "S",
-            color: "#fff",
-            gradient: "linear-gradient(135deg,#ff9966,#ff5e62)",
-            text: "Good vibes.",
-            image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=85"
-        },
-        {
-            id: "story-alex",
-            name: "Alex",
-            username: "@alex",
-            letter: "A",
-            color: "#fff",
-            gradient: "linear-gradient(135deg,#00c6ff,#0072ff)",
-            text: "Let's go!",
-            image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=85"
+          name: "Noah",
+          letter: "N",
+          text: "Can't wait for this.",
+          likes: 8
         }
-    ];
+      ]
+    },
 
-
-    const DEMO_POSTS = [
+    {
+      id: "demo-2",
+      name: "Lina",
+      username: "lina",
+      letter: "L",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      verified: false,
+      vip: true,
+      time: "28m",
+      text: "Finally finished my new workspace setup. ✨ #Workspace #Purple",
+      images: [],
+      videos: [],
+      likes: 4211,
+      comments: 291,
+      reposts: 88,
+      views: 119000,
+      replies: [
         {
-            id: "post-lina",
-            name: "Lina",
-            username: "@lina",
-            letter: "L",
-            verified: true,
-            time: "12 min",
-            text: "A little update from today ✨",
-            image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1000&q=85",
-            likes: 284,
-            comments: 31,
-            reposts: 18,
-            saves: 44
-        },
-
-        {
-            id: "post-noah",
-            name: "Noah",
-            username: "@noah",
-            letter: "N",
-            verified: false,
-            time: "34 min",
-            text: "Which one are you choosing?",
-            image: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?auto=format&fit=crop&w=1000&q=85",
-            likes: 148,
-            comments: 22,
-            reposts: 9,
-            saves: 17
-        },
-
-        {
-            id: "post-sara",
-            name: "Sara",
-            username: "@sara",
-            letter: "S",
-            verified: true,
-            time: "1 h",
-            text: "Sometimes the simple days are the best days.",
-            image: "",
-            likes: 392,
-            comments: 47,
-            reposts: 26,
-            saves: 81
-        },
-
-        {
-            id: "post-alex-repost",
-            name: "Alex",
-            username: "@alex",
-            letter: "A",
-            verified: false,
-            time: "2 h",
-            text: "This is so true.",
-            image: "",
-            likes: 67,
-            comments: 8,
-            reposts: 12,
-            saves: 9,
-            repostOf: "Lina",
-            originalText: "A little update from today ✨"
+          name: "Maya",
+          letter: "M",
+          text: "Love the purple setup!",
+          likes: 13
         }
-    ];
+      ]
+    },
 
+    {
+      id: "demo-3",
+      name: "Noah",
+      username: "noah",
+      letter: "N",
+      gradient: ["#2563EB", "#06B6D4"],
+      verified: false,
+      vip: false,
+      time: "43m",
+      text: "Morning thoughts. Keep moving even when nobody is watching. #Motivation",
+      images: [],
+      videos: [],
+      likes: 831,
+      comments: 41,
+      reposts: 12,
+      views: 15200,
+      replies: [
+        {
+          name: "Omar",
+          letter: "O",
+          text: "Needed this today.",
+          likes: 11
+        }
+      ]
+    },
 
-    const state = {
-        activePost: null,
-        activeStory: null
+    {
+      id: "demo-4",
+      name: "Sara",
+      username: "sara",
+      letter: "S",
+      gradient: ["#F43F5E", "#FB7185"],
+      verified: false,
+      vip: false,
+      time: "1h",
+      text: "Small wins still count. 🌙 #DailyLife #SmallWins",
+      images: [],
+      videos: [],
+      likes: 1260,
+      comments: 74,
+      reposts: 31,
+      views: 22000,
+      replies: []
+    },
+
+    {
+      id: "demo-5",
+      name: "Alex",
+      username: "alex",
+      letter: "Λ",
+      gradient: ["#8B3DFF", "#EC4899"],
+      verified: false,
+      vip: false,
+      time: "2h",
+      text: "Reposted this because it deserved another look. #ARS",
+      images: [],
+      videos: [],
+      likes: 320,
+      reposts: 19,
+      comments: 18,
+      views: 6800,
+      repostOf: "demo-1",
+      replies: []
+    }
+  ];
+
+  const demoStories = [
+    {
+      id: "s1",
+      name: "You",
+      letter: "R",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      mine: true,
+      seen: false,
+      text: "Your first story can start here."
+    },
+
+    {
+      id: "s2",
+      name: "Lina",
+      letter: "L",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      seen: false,
+      text: "Late night setup ✨"
+    },
+
+    {
+      id: "s3",
+      name: "Noah",
+      letter: "N",
+      gradient: ["#2563EB", "#06B6D4"],
+      seen: false,
+      text: "Good morning!"
+    },
+
+    {
+      id: "s4",
+      name: "Sara",
+      letter: "S",
+      gradient: ["#F43F5E", "#FB7185"],
+      seen: true,
+      text: "Weekend mood."
+    },
+
+    {
+      id: "s5",
+      name: "Alex",
+      letter: "Λ",
+      gradient: ["#8B3DFF", "#EC4899"],
+      seen: false,
+      text: "New post is up."
+    }
+  ];
+
+  const demoReplies = [
+    {
+      name: "Emma",
+      letter: "E",
+      text: "Love this.",
+      likes: 7
+    },
+
+    {
+      name: "Omar",
+      letter: "O",
+      text: "Exactly what I needed today.",
+      likes: 11
+    }
+  ];
+
+  const esc = (value) =>
+    String(value ?? "").replace(
+      /[&<>'"]/g,
+      (char) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#039;",
+          '"': "&quot;"
+        })[char]
+    );
+
+  const fmt = (number) => {
+    const n = Number(number) || 0;
+
+    if (n >= 1000000) {
+      return `${(n / 1000000).toFixed(1)}M`;
+    }
+
+    if (n >= 1000) {
+      return `${(n / 1000).toFixed(1)}K`;
+    }
+
+    return String(n);
+  };
+
+  const read = (key, fallback) => {
+    try {
+      const value = JSON.parse(
+        localStorage.getItem(key) || "null"
+      );
+
+      return value ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const write = (key, value) => {
+    localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
+  };
+
+  const localDateKey = () => {
+    const d = new Date();
+
+    const y = d.getFullYear();
+
+    const m = String(
+      d.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      d.getDate()
+    ).padStart(2, "0");
+
+    return `${y}-${m}-${day}`;
+  };
+
+  const daysBetween = (fromKey, toKey) => {
+    if (!fromKey || !toKey) {
+      return 999;
+    }
+
+    const from = new Date(
+      `${fromKey}T00:00:00`
+    );
+
+    const to = new Date(
+      `${toKey}T00:00:00`
+    );
+
+    return Math.round(
+      (to - from) / 86400000
+    );
+  };
+
+  function profile() {
+    try {
+      return (
+        JSON.parse(
+          localStorage.getItem("ars_user")
+        ) || {}
+      );
+    } catch {
+      return {};
+    }
+  }
+
+  function userAvatar() {
+    const user = profile();
+
+    return {
+      letter: String(
+        user.letter || "R"
+      ).slice(0, 1),
+
+      gradient: [
+        user.letterColor || "#8B3DFF",
+        user.background || "#C54DFF"
+      ],
+
+      name:
+        user.displayName ||
+        user.name ||
+        "You"
+    };
+  }
+
+  function streak() {
+    const today = localDateKey();
+
+    const current = read(
+      STREAK_KEY,
+      {
+        count: 0,
+        lastDate: null
+      }
+    );
+
+    const s = {
+      count: Number(current.count) || 0,
+      lastDate: current.lastDate || null
     };
 
-
-    function getUser() {
-        try {
-            return JSON.parse(
-                localStorage.getItem("ars_user") || "null"
-            );
-        } catch {
-            return null;
-        }
+    if (s.lastDate === today) {
+      return s;
     }
 
+    if (!s.lastDate) {
+      s.count = 1;
+    } else {
+      const gap = daysBetween(
+        s.lastDate,
+        today
+      );
 
-    function getLetter() {
-        const user = getUser();
-
-        if (
-            user &&
-            user.letter &&
-            typeof user.letter === "string"
-        ) {
-            return user.letter.slice(0, 1).toUpperCase();
-        }
-
-        return (
-            localStorage.getItem("ars_letter") ||
-            "R"
-        ).slice(0, 1).toUpperCase();
+      s.count =
+        gap === 1
+          ? s.count + 1
+          : 1;
     }
 
+    s.lastDate = today;
 
-    function getAvatarStyle() {
-        const user = getUser();
+    write(STREAK_KEY, s);
 
-        const color =
-            user?.letterColor ||
-            localStorage.getItem("ars_letter_color") ||
-            "#ffffff";
+    return s;
+  }
 
-        const background =
-            user?.background ||
-            localStorage.getItem("ars_background") ||
-            "linear-gradient(135deg,#8b3dff,#ff4fb3)";
+  function updateStreakUI() {
+    const s = read(
+      STREAK_KEY,
+      {
+        count: 0
+      }
+    );
 
-        return {
-            color,
-            background
-        };
-    }
+    const element =
+      $("#streakCount");
 
-
-    function safeJSON(key, fallback = []) {
-        try {
-            const value = JSON.parse(
-                localStorage.getItem(key) || "null"
-            );
-
-            return Array.isArray(value)
-                ? value
-                : fallback;
-
-        } catch {
-            return fallback;
-        }
-    }
-
-
-    function saveJSON(key, value) {
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
+    if (element) {
+      element.textContent =
+        String(
+          Number(s.count) || 0
         );
     }
+  }
 
+  function load() {
+    const state = read(
+      STATE_KEY,
+      {}
+    );
 
-    function getLocalPosts() {
-        return safeJSON("ars_local_posts");
-    }
+    app.liked = new Set(
+      Array.isArray(state.liked)
+        ? state.liked
+        : []
+    );
 
+    app.reposted = new Set(
+      Array.isArray(state.reposted)
+        ? state.reposted
+        : []
+    );
 
-    function getLocalStories() {
-        return safeJSON("ars_local_stories");
-    }
+    app.saved = new Set(
+      Array.isArray(state.saved)
+        ? state.saved
+        : []
+    );
 
+    const localPosts =
+      read(
+        POST_KEY,
+        []
+      );
 
-    function getAllPosts() {
-        const local = getLocalPosts();
+    const localStories =
+      read(
+        STORY_KEY,
+        []
+      );
 
-        const localIds = new Set(
-            local.map(post => post.id)
-        );
+    app.posts = [
+      ...localPosts,
+      ...demoPosts
+    ].map(normalizePost);
 
-        return [
-            ...local,
-            ...DEMO_POSTS.filter(
-                post => !localIds.has(post.id)
+    app.stories = [
+      ...localStories.filter(
+        (story) =>
+          !story.expiresAt ||
+          story.expiresAt > Date.now()
+      ),
+
+      ...demoStories
+    ];
+  }
+
+  function saveState() {
+    write(
+      STATE_KEY,
+      {
+        liked: [
+          ...app.liked
+        ],
+
+        reposted: [
+          ...app.reposted
+        ],
+
+        saved: [
+          ...app.saved
+        ]
+      }
+    );
+  }
+
+  function normalizePost(post) {
+    return {
+      ...post,
+
+      likes:
+        Number(post.likes) || 0,
+
+      comments:
+        Number(post.comments) || 0,
+
+      reposts:
+        Number(post.reposts) || 0,
+
+      views:
+        Number(post.views) || 0,
+
+      images:
+        Array.isArray(post.images)
+          ? post.images
+          : [],
+
+      videos:
+        Array.isArray(post.videos)
+          ? post.videos
+          : [],
+
+      replies:
+        Array.isArray(post.replies)
+          ? post.replies
+          : []
+    };
+  }
+
+  function avatarHTML(
+    person,
+    small = false
+  ) {
+    const gradient =
+      Array.isArray(person.gradient)
+        ? person.gradient
+        : [
+            "#8B3DFF",
+            "#C54DFF"
+          ];
+
+    const letter =
+      person.letter ||
+      person.name?.[0] ||
+      "Λ";
+
+    return `
+      <div
+        class="${small ? "reply-avatar" : "post-avatar"}"
+        style="
+          background:
+            linear-gradient(
+              135deg,
+              ${esc(gradient[0])},
+              ${esc(gradient[1])}
             )
-        ];
-    }
+        "
+      >
+        ${esc(letter)}
+      </div>
+    `;
+  }
 
+  function hashtagHTML(text) {
+    const escaped =
+      esc(text);
 
-    function getAllStories() {
-        const local = getLocalStories();
+    return escaped.replace(
+      /(^|\s)(#[a-zA-Z0-9_]+)/g,
+      '$1<span class="hashtag" data-hashtag="$2">$2</span>'
+    );
+  }
 
-        const localIds = new Set(
-            local.map(story => story.id)
-        );
+  function postHTML(
+    post,
+    detailMode = false
+  ) {
+    const liked =
+      app.liked.has(post.id);
 
-        return [
-            ...local,
-            ...DEMO_STORIES.filter(
-                story => !localIds.has(story.id)
-            )
-        ];
-    }
+    const reposted =
+      app.reposted.has(post.id);
 
+    const saved =
+      app.saved.has(post.id);
 
-    function renderMyAvatar() {
-        const letter = getLetter();
-        const style = getAvatarStyle();
-
-        const avatar =
-            document.getElementById("myAvatar");
-
-        const commentAvatar =
-            document.getElementById("myCommentAvatar");
-
-        if (avatar) {
-            avatar.textContent = letter;
-            avatar.style.color = style.color;
-            avatar.style.background = style.background;
-        }
-
-        if (commentAvatar) {
-            commentAvatar.textContent = letter;
-            commentAvatar.style.color = style.color;
-            commentAvatar.style.background = style.background;
-        }
-    }
-
-
-    function renderStreak() {
-        const element =
-            document.getElementById("streakCount");
-
-        if (!element) return;
-
-        let streak =
-            Number(
-                localStorage.getItem("ars_streak") || 1
-            );
-
-        if (!Number.isFinite(streak) || streak < 1) {
-            streak = 1;
-        }
-
-        element.textContent =
-            `${streak} ${streak === 1 ? "day" : "days"}`;
-    }
-
-
-    function storyAvatarHTML(story) {
-        const image =
-            story.image ||
-            story.avatar ||
-            "";
-
-        if (image) {
-            return `
-                <div class="story-avatar">
-                    <img
-                        src="${escapeAttr(image)}"
-                        alt=""
-                        onerror="this.style.display='none'"
-                    >
-                    <div
-                        class="story-avatar-inner"
-                        style="
-                            color:${escapeAttr(story.color || "#fff")};
-                            background:${escapeAttr(
-                                story.gradient ||
-                                "linear-gradient(135deg,#8b3dff,#ff4fb3)"
-                            )};
-                        "
-                    >
-                        ${escapeHTML(
-                            story.letter || "R"
-                        )}
-                    </div>
-                </div>
-            `;
-        }
-
-        return `
-            <div
-                class="story-avatar"
-                style="
-                    color:${escapeAttr(story.color || "#fff")};
-                    background:${escapeAttr(
-                        story.gradient ||
-                        "linear-gradient(135deg,#8b3dff,#ff4fb3)"
-                    )};
-                "
-            >
-                ${escapeHTML(story.letter || "R")}
+    const images =
+      post.images
+        .map(
+          (src) => `
+            <div class="post-image">
+              <img
+                src="${esc(src)}"
+                alt="Post image"
+                loading="lazy"
+              >
             </div>
-        `;
-    }
+          `
+        )
+        .join("");
 
+    const videos =
+      post.videos
+        .map(
+          (src) => `
+            <div class="post-image">
+              <video
+                class="post-video"
+                src="${esc(src)}"
+                controls
+                playsinline
+              ></video>
+            </div>
+          `
+        )
+        .join("");
 
-    function renderStories() {
-        const container =
-            document.getElementById("stories");
+    return `
+      <article
+        class="post ${
+          detailMode
+            ? "detail-post"
+            : "clickable"
+        }"
+        data-id="${esc(post.id)}"
+      >
 
-        if (!container) return;
+        <div class="post-header">
 
-        const stories = getAllStories();
+          <div class="post-user">
 
-        const user = getUser();
+            ${avatarHTML(post)}
 
-        const yourStory = {
-            id: "your-story",
-            name: "Your story",
-            letter: getLetter(),
-            color:
-                user?.letterColor ||
-                "#fff",
-            gradient:
-                user?.background ||
-                "linear-gradient(135deg,#8b3dff,#ff4fb3)"
-        };
+            <div class="post-info">
 
-        const html = [
-            `
-            <button
-                class="story yours"
-                type="button"
-                data-story-id="your-story"
-            >
-                <div class="story-avatar-wrap">
-                    ${storyAvatarHTML(yourStory)}
-                </div>
+              <div class="post-name">
 
-                <div class="story-name">
-                    Your story
-                </div>
-            </button>
-            `,
-            ...stories.map(story => `
-                <button
-                    class="story"
-                    type="button"
-                    data-story-id="${escapeAttr(story.id)}"
-                >
-                    <div class="story-avatar-wrap">
-                        ${storyAvatarHTML(story)}
-                    </div>
+                ${esc(post.name)}
 
-                    <div class="story-name">
-                        ${escapeHTML(story.name)}
-                    </div>
-                </button>
-            `)
-        ].join("");
-
-        container.innerHTML = html;
-
-        container
-            .querySelectorAll("[data-story-id]")
-            .forEach(button => {
-                button.addEventListener(
-                    "click",
-                    () => {
-                        const id =
-                            button.dataset.storyId;
-
-                        if (id === "your-story") {
-                            if (
-                                typeof window.openCreatePost ===
-                                "function"
-                            ) {
-                                window.openCreatePost(
-                                    "story"
-                                );
-                            }
-
-                            return;
-                        }
-
-                        const story =
-                            stories.find(
-                                item =>
-                                    item.id === id
-                            );
-
-                        if (story) {
-                            openStory(story);
-                        }
-                    }
-                );
-            });
-    }
-
-
-    function openStory(story) {
-        state.activeStory = story;
-
-        const viewer =
-            document.getElementById("storyViewer");
-
-        if (!viewer) return;
-
-        const avatar =
-            document.getElementById(
-                "storyViewerAvatar"
-            );
-
-        const name =
-            document.getElementById(
-                "storyViewerName"
-            );
-
-        const image =
-            document.getElementById(
-                "storyViewerImage"
-            );
-
-        const text =
-            document.getElementById(
-                "storyViewerText"
-            );
-
-        if (avatar) {
-            avatar.textContent =
-                story.letter || "R";
-
-            avatar.style.background =
-                story.gradient ||
-                "linear-gradient(135deg,#8b3dff,#ff4fb3)";
-
-            avatar.style.color =
-                story.color || "#fff";
-        }
-
-        if (name) {
-            name.textContent =
-                story.name || "Story";
-        }
-
-        if (image) {
-            image.innerHTML = "";
-
-            if (story.image) {
-                const img =
-                    document.createElement("img");
-
-                img.src = story.image;
-                img.alt = "";
-
-                image.appendChild(img);
-
-            } else {
-                image.style.background =
-                    story.gradient ||
-                    "linear-gradient(135deg,#8b3dff,#ff4fb3)";
-            }
-        }
-
-        if (text) {
-            text.textContent =
-                story.text || "";
-        }
-
-        viewer.classList.add("open");
-
-        document.body.style.overflow = "hidden";
-    }
-
-
-    function closeStory() {
-        const viewer =
-            document.getElementById("storyViewer");
-
-        if (!viewer) return;
-
-        viewer.classList.remove("open");
-
-        document.body.style.overflow = "";
-
-        state.activeStory = null;
-    }
-
-
-    function renderPosts() {
-        const feed =
-            document.getElementById("feed");
-
-        if (!feed) return;
-
-        const posts = getAllPosts();
-
-        feed.innerHTML =
-            posts.map(postHTML).join("");
-
-        feed
-            .querySelectorAll("[data-post-id]")
-            .forEach(card => {
-
-                card.addEventListener(
-                    "click",
-                    event => {
-
-                        if (
-                            event.target.closest(
-                                "button"
-                            ) ||
-                            event.target.closest(
-                                "a"
-                            )
-                        ) {
-                            return;
-                        }
-
-                        const id =
-                            card.dataset.postId;
-
-                        const post =
-                            posts.find(
-                                item =>
-                                    item.id === id
-                            );
-
-                        if (post) {
-                            openPostDetails(post);
-                        }
-                    }
-                );
-            });
-
-        bindPostActions(posts);
-    }
-
-
-    function postHTML(post) {
-
-        const liked =
-            post.liked === true;
-
-        const reposted =
-            post.reposted === true;
-
-        const saved =
-            post.saved === true;
-
-        const media =
-            post.video
-                ? `
-                    <video
-                        class="post-video"
-                        controls
-                        playsinline
-                    >
-                        <source
-                            src="${escapeAttr(post.video)}"
-                        >
-                    </video>
-                `
-                : post.image
+                ${
+                  post.verified
                     ? `
-                        <img
-                            class="post-media"
-                            src="${escapeAttr(post.image)}"
-                            alt=""
-                            loading="lazy"
-                            onerror="this.style.display='none'"
-                        >
+                      <span class="verify">
+                        <i data-lucide="badge-check"></i>
+                      </span>
                     `
-                    : "";
+                    : ""
+                }
 
-        const repost =
-            post.repostOf
-                ? `
-                    <div class="repost-label">
-                        <i data-lucide="repeat-2"></i>
-                        ${escapeHTML(post.name)}
-                        reposted
-                        ${escapeHTML(post.repostOf)}'s post
-                    </div>
-                `
-                : "";
+                ${
+                  post.vip
+                    ? `
+                      <span class="vip">
+                        VIP
+                      </span>
+                    `
+                    : ""
+                }
 
-        return `
-            <article
-                class="post-card"
-                data-post-id="${escapeAttr(post.id)}"
+              </div>
+
+              <div class="post-username">
+                @${esc(post.username)}
+              </div>
+
+              <div class="post-time">
+                ${esc(post.time)}
+              </div>
+
+            </div>
+
+          </div>
+
+          <button
+            class="post-more"
+            type="button"
+            data-action="more"
+            aria-label="More"
+          >
+            <i data-lucide="more-horizontal"></i>
+          </button>
+
+        </div>
+
+
+        ${
+          post.repostOf
+            ? `
+              <div class="repost-label">
+                <i data-lucide="repeat-2"></i>
+                Reposted
+              </div>
+            `
+            : ""
+        }
+
+
+        <div class="post-content">
+          ${hashtagHTML(post.text)}
+        </div>
+
+
+        ${images}
+
+        ${videos}
+
+
+        <div class="post-stats">
+
+          <span>
+            ${fmt(post.likes)} likes
+          </span>
+
+          <span>
+            ${fmt(post.comments)} replies
+          </span>
+
+          <span>
+            ${fmt(post.reposts)} reposts
+          </span>
+
+          <span>
+            ${fmt(post.views)} views
+          </span>
+
+        </div>
+
+
+        <div class="post-actions">
+
+          <div class="post-left-actions">
+
+            <button
+              class="action ${
+                liked ? "liked" : ""
+              }"
+              data-action="like"
+              type="button"
+              aria-label="Like"
+            >
+              <i data-lucide="heart"></i>
+              <span class="count">
+                ${fmt(post.likes)}
+              </span>
+            </button>
+
+
+            <button
+              class="action"
+              data-action="reply"
+              type="button"
+              aria-label="Reply"
+            >
+              <i data-lucide="message-circle"></i>
+              <span class="count">
+                ${fmt(post.comments)}
+              </span>
+            </button>
+
+
+            <button
+              class="action ${
+                reposted ? "active" : ""
+              }"
+              data-action="repost"
+              type="button"
+              aria-label="Repost"
+            >
+              <i data-lucide="repeat-2"></i>
+              <span class="count">
+                ${fmt(post.reposts)}
+              </span>
+            </button>
+
+
+            <button
+              class="action ${
+                saved ? "active" : ""
+              }"
+              data-action="save"
+              type="button"
+              aria-label="Save"
+            >
+              <i data-lucide="bookmark"></i>
+            </button>
+
+          </div>
+
+
+          <div class="action-views">
+
+            <i data-lucide="eye"></i>
+
+            ${fmt(post.views)}
+
+          </div>
+
+        </div>
+
+      </article>
+    `;
+  }
+
+  function renderStories() {
+    if (!stories) return;
+
+    stories.innerHTML =
+      app.stories
+        .map(
+          (story) => `
+            <button
+              class="
+                story
+                ${story.seen ? "seen" : ""}
+                ${story.mine ? "mine" : ""}
+              "
+              data-story-id="${esc(story.id)}"
+              type="button"
             >
 
-                <div class="post-head">
+              <div class="story-ring">
 
-                    <div
-                        class="post-avatar"
-                        style="
-                            color:${escapeAttr(
-                                post.color || "#fff"
-                            )};
-                            background:${escapeAttr(
-                                post.gradient ||
-                                "linear-gradient(135deg,#8b3dff,#ff4fb3)"
-                            )};
-                        "
-                    >
-                        ${
-                            post.avatar
-                                ? `
-                                    <img
-                                        src="${escapeAttr(post.avatar)}"
-                                        alt=""
-                                    >
-                                `
-                                : escapeHTML(
-                                    post.letter || "R"
-                                )
-                        }
-                    </div>
-
-                    <div class="post-author">
-
-                        <div class="post-author-row">
-
-                            <span class="post-author-name">
-                                ${escapeHTML(post.name)}
-                            </span>
-
-                            ${
-                                post.verified
-                                    ? `
-                                        <span class="verified">
-                                            <i data-lucide="badge-check"></i>
-                                        </span>
-                                    `
-                                    : ""
-                            }
-
-                        </div>
-
-                        <div class="post-time">
-                            ${escapeHTML(
-                                post.username ||
-                                "@user"
-                            )}
-                            ·
-                            ${escapeHTML(
-                                post.time ||
-                                "now"
-                            )}
-                        </div>
-
-                    </div>
-
-                    <button
-                        class="post-menu"
-                        type="button"
-                        aria-label="More"
-                    >
-                        <i data-lucide="more-horizontal"></i>
-                    </button>
-
-                </div>
-
-                ${repost}
-
-                <div class="post-text">
-                    ${escapeHTML(post.text || "")}
-                </div>
-
-                ${media}
-
-                <div class="post-stats">
-
-                    <span>
-                        ${formatNumber(post.likes || 0)}
-                        likes
-                    </span>
-
-                    <span>
-                        ${formatNumber(
-                            post.comments || 0
+                <div
+                  class="story-avatar"
+                  style="
+                    background:
+                      linear-gradient(
+                        135deg,
+                        ${esc(
+                          story.gradient?.[0] ||
+                          "#8B3DFF"
+                        )},
+                        ${esc(
+                          story.gradient?.[1] ||
+                          "#C54DFF"
                         )}
-                        comments ·
-                        ${formatNumber(
-                            post.reposts || 0
-                        )}
-                        reposts
-                    </span>
-
+                      )
+                  "
+                >
+                  ${esc(
+                    story.letter ||
+                    story.name?.[0] ||
+                    "Λ"
+                  )}
                 </div>
 
-                <div class="post-actions">
+              </div>
 
-                    <button
-                        class="post-action like ${
-                            liked ? "active" : ""
-                        }"
-                        data-action="like"
-                        data-post-id="${escapeAttr(post.id)}"
-                        type="button"
-                    >
-                        <i data-lucide="heart"></i>
-                        <span>Like</span>
-                    </button>
 
-                    <button
-                        class="post-action"
-                        data-action="comment"
-                        data-post-id="${escapeAttr(post.id)}"
-                        type="button"
-                    >
-                        <i data-lucide="message-circle"></i>
-                        <span>Reply</span>
-                    </button>
+              ${
+                story.mine
+                  ? `
+                    <span class="story-plus">
+                      +
+                    </span>
+                  `
+                  : ""
+              }
 
-                    <button
-                        class="post-action repost ${
-                            reposted ? "active" : ""
-                        }"
-                        data-action="repost"
-                        data-post-id="${escapeAttr(post.id)}"
-  
+
+              <div class="story-name">
+                ${esc(story.name)}
+              </div>
+
+            </button>
+          `
+        )
+        .join("");
+
+    refreshIcons();
+  }
+
+  function renderPosts() {
+    if (!feed) return;
+
+    if (!app.posts.length) {
+      feed.innerHTML = `
+        <div class="empty-state">
+          <strong>
+            No posts yet
+          </strong>
+
+          <span>
+            Create the first post.
+          </span>
+        </div>
+      `;
+
+      return;
+    }
+
+    feed.innerHTML =
+      app.posts
+        .map((post) =>
+          postHTML(post)
+        )
+        .join("");
+
+    refreshIcons();
+  }
+
+  function refreshIcons() {
+    if (
+      window.lucide
+    ) {
+      window.lucide.createIcons();
+    }
+  }
+
+  function openStory(id) {
+    const story =
+      app.stories.find(
+        (item) =>
+          String(item.id) ===
+          String(id)
+      );
+
+    if (!story) return;
+
+    story.seen = true;
+
+    renderStories();
+
+    const name =
+      $("#storyViewerName");
+
+    const avatar =
+      $("#storyViewerAvatar");
+
+    const image =
+      $("#storyViewerImage");
+
+    const text =
+      $("#storyViewerText");
+
+    if (name) {
+      name.textContent =
+        story.name ||
+        "Story";
+    }
+
+    if (avatar) {
+      avatar.textContent =
+        story.letter ||
+        story.name?.[0] ||
+        "Λ";
+
+      avatar.style.background =
+        `linear-gradient(
+          135deg,
+          ${story.gradient?.[0] || "#8B3DFF"},
+          ${story.gradient?.[1] || "#C54DFF"}
+        )`;
+    }
+
+    if (image) {
+      image.style.backgroundImage =
+        story.images?.[0]
+          ? `url("${String(
+              story.images[0]
+            ).replace(
+              /"/g,
+              '\\"'
+            )}")`
+          : "none";
+    }
+
+    if (text) {
+      text.textContent =
+        story.text ||
+        "";
+    }
+
+    $("#storyViewer")
+      ?.classList
+      .remove("hidden");
+
+    $("#storyViewer")
+      ?.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+  }
+
+  function closeStory() {
+    $("#storyViewer")
+      ?.classList
+      .add("hidden");
+
+    $("#storyViewer")
+      ?.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+  }
+
+  function getReplies(post) {
+    return post.replies?.length
+      ? post.replies
+      : demoReplies.map(
+          (reply) => ({
+            ...reply
+          })
+        );
+  }
+
+  function openPostDetail(id) {
+    const post =
+      app.posts.find(
+        (item) =>
+          String(item.id) ===
+          String(id)
+      );
+
+    if (!post) return;
+
+    activePostId =
+      post.id;
+
+    detailBody.innerHTML =
+      postHTML(
+        post,
+        true
+      );
+
+    const list =
+      getReplies(post);
+
+    replyCount.textContent =
+      String(
+        list.length
+      );
+
+    replies.innerHTML =
+      list
+        .map(
+          (reply) => `
+            <div class="reply">
+
+              ${avatarHTML(
+                reply,
+                true
+              )}
+
+              <div class="reply-main">
+
+                <div class="reply-name">
+                  ${esc(reply.name)}
+                </div>
+
+                <div class="reply-text">
+                  ${hashtagHTML(
+                    reply.text
+                  )}
+                </div>
+
+                <div class="reply-like">
+                  ♥ ${fmt(
+                    reply.likes || 0
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          `
+        )
+        .join("");
+
+    detail
+      .classList
+      .remove("hidden");
+
+    detail.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+    refreshIcons();
+  }
+
+  function closeDetail() {
+    detail?.classList.add(
+      "hidden"
+    );
+
+    detail?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    activePostId =
+      null;
+  }
+
+  function addReply(text) {
+    const post =
+      app.posts.find(
+        (item) =>
+          String(item.id) ===
+          String(activePostId)
+      );
+
+    const cleanText =
+      String(
+        text || ""
+      ).trim();
+
+    if (
+      !post ||
+      !cleanText
+    ) {
+      return;
+    }
+
+    const user =
+      userAvatar();
+
+    post.replies =
+      post.replies || [];
+
+    post.replies.push({
+      name: user.name,
+      letter: user.letter,
+      text: cleanText,
+      likes: 0
+    });
+
+    post.comments += 1;
+
+    persistPost(post);
+
+    o
