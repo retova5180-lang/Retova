@@ -1,295 +1,390 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#09090B">
+  <title>ΛRS</title>
 
-    <title>ΛRS</title>
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="create-post.css">
 
-    <link rel="stylesheet" href="home.css">
-    <link rel="stylesheet" href="create-post.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
-
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
 
-<div class="app">
+  <div class="app-shell">
 
-    <!-- HEADER -->
-    <header class="header">
+    <!-- TOP BAR -->
+    <header class="topbar">
+
+      <button
+        id="myAvatar"
+        class="top-avatar"
+        type="button"
+        aria-label="Profile"
+      >
+        R
+      </button>
+
+      <div class="brand">ΛRS</div>
+
+      <div class="top-actions">
 
         <button
-            class="avatar-button"
-            id="myAvatar"
-            type="button"
-            aria-label="Profile"
+          id="streakButton"
+          class="streak-pill"
+          type="button"
+          aria-label="Streak"
         >
-            R
+          <span>🔥</span>
+          <strong>Streak</strong>
+          <b id="streakCount">0</b>
         </button>
-
-        <div class="logo">ΛRS</div>
 
         <button
-            class="icon-button"
-            id="settings"
-            type="button"
-            aria-label="Settings"
+          id="settings"
+          class="icon-button"
+          type="button"
+          aria-label="Settings"
         >
-            <i data-lucide="settings-2"></i>
+          <i data-lucide="settings-2"></i>
         </button>
 
+      </div>
     </header>
-
-
-    <!-- STREAK -->
-    <section class="streak-bar">
-
-        <div class="streak-left">
-            <div class="streak-fire">🔥</div>
-
-            <div>
-                <strong>Streak</strong>
-                <span id="streakCount">1 day</span>
-            </div>
-        </div>
-
-        <button id="openWheelFromStreak" type="button">
-            Spin Wheel
-        </button>
-
-    </section>
 
 
     <!-- STORIES -->
     <section class="stories-section">
 
-        <div class="stories-header">
+      <div class="section-heading">
 
-            <h2>Stories</h2>
-
-            <button id="viewAllStories" type="button">
-                View all
-            </button>
-
+        <div>
+          <h2>Stories</h2>
+          <p>What people are sharing now</p>
         </div>
 
-        <div id="stories" class="stories"></div>
+        <button
+          id="viewAllStories"
+          type="button"
+        >
+          View all
+        </button>
+
+      </div>
+
+      <div
+        id="stories"
+        class="stories-row"
+        aria-label="Stories"
+      ></div>
 
     </section>
 
 
-    <!-- FEED -->
-    <main id="feed" class="feed"></main>
+    <!-- POSTS -->
+    <main
+      id="feed"
+      class="feed"
+      aria-label="Posts"
+    ></main>
 
 
     <!-- CREATE POST -->
     <button
-        id="newPost"
-        class="new-post-button"
-        type="button"
-        aria-label="Create post"
+      id="newPost"
+      class="new-post-button"
+      type="button"
+      aria-label="Create post"
     >
-        <i data-lucide="plus"></i>
+      <i data-lucide="plus"></i>
     </button>
 
 
     <!-- BOTTOM NAV -->
-    <nav class="bottom-nav">
+    <nav
+      class="bottom-nav"
+      aria-label="Main navigation"
+    >
 
-        <button
-            class="nav-button active"
-            type="button"
-            data-page="home"
-        >
-            <i data-lucide="house"></i>
-            <span>Home</span>
-        </button>
+      <button
+        class="nav-button active"
+        type="button"
+        data-page="home"
+      >
+        <i data-lucide="house"></i>
+        <span>Home</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            data-page="search"
-        >
-            <i data-lucide="search"></i>
-            <span>Search</span>
-        </button>
+      <button
+        class="nav-button"
+        type="button"
+        data-page="search"
+      >
+        <i data-lucide="search"></i>
+        <span>Search</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            data-page="explore"
-        >
-            <i data-lucide="flame"></i>
-            <span>Explore</span>
-        </button>
+      <button
+        class="nav-button"
+        type="button"
+        data-page="explore"
+      >
+        <i data-lucide="flame"></i>
+        <span>Explore</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            data-page="notifications"
-        >
-            <i data-lucide="bell"></i>
-            <span>Alerts</span>
-        </button>
+      <button
+        class="nav-button"
+        type="button"
+        data-page="notifications"
+      >
+        <i data-lucide="bell"></i>
+        <span>Alerts</span>
+      </button>
 
-        <button
-            class="nav-button"
-            type="button"
-            data-page="messages"
-        >
-            <i data-lucide="mail"></i>
-            <span>Messages</span>
-        </button>
+      <button
+        class="nav-button"
+        type="button"
+        data-page="messages"
+      >
+        <i data-lucide="mail"></i>
+        <span>Messages</span>
+      </button>
 
     </nav>
 
-</div>
+  </div>
 
 
-<!-- COMMENTS -->
-<div id="commentsSheet" class="comments-sheet">
+  <!-- STORY VIEWER -->
+  <div
+    id="storyViewer"
+    class="overlay hidden"
+    aria-hidden="true"
+  >
 
-    <div class="comments-overlay"></div>
+    <div
+      class="overlay-backdrop"
+      data-close-story
+    ></div>
+
+    <div
+      class="story-viewer-card"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Story"
+    >
+
+      <button
+        id="closeStory"
+        class="overlay-close"
+        type="button"
+        aria-label="Close"
+      >
+        <i data-lucide="x"></i>
+      </button>
+
+      <div class="story-progress">
+        <span></span>
+      </div>
+
+      <div
+        id="storyViewerAvatar"
+        class="viewer-avatar"
+      >
+        L
+      </div>
+
+      <div
+        id="storyViewerName"
+        class="viewer-name"
+      >
+        Lina
+      </div>
+
+      <div
+        id="storyViewerImage"
+        class="viewer-image"
+      ></div>
+
+      <div
+        id="storyViewerText"
+        class="viewer-text"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- POST DETAILS -->
+  <div
+    id="postDetail"
+    class="overlay hidden"
+    aria-hidden="true"
+  >
+
+    <div
+      class="overlay-backdrop"
+      data-close-post-detail
+    ></div>
+
+    <article
+      class="post-detail-card"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Post and replies"
+    >
+
+      <header class="detail-header">
+
+        <button
+          id="closePostDetail"
+          class="overlay-close inline"
+          type="button"
+          aria-label="Close"
+        >
+          <i data-lucide="x"></i>
+        </button>
+
+        <h3>Post</h3>
+
+        <span></span>
+
+      </header>
+
+      <div
+        id="detailPostBody"
+        class="detail-post-body"
+      ></div>
+
+      <div class="replies-title">
+        <span>Replies</span>
+        <b id="replyCount">0</b>
+      </div>
+
+      <div
+        id="detailReplies"
+        class="detail-replies"
+      ></div>
+
+      <form
+        id="replyForm"
+        class="reply-form"
+      >
+
+        <div
+          id="replyAvatar"
+          class="reply-avatar"
+        >
+          R
+        </div>
+
+        <input
+          id="replyInput"
+          maxlength="280"
+          autocomplete="off"
+          placeholder="Write a reply..."
+        >
+
+        <button type="submit">
+          Send
+        </button>
+
+      </form>
+
+    </article>
+
+  </div>
+
+
+  <!-- COMMENTS SHEET -->
+  <div
+    id="commentsSheet"
+    class="comments-sheet"
+    aria-hidden="true"
+  >
+
+    <div
+      class="comments-backdrop"
+      data-close-comments
+    ></div>
 
     <div class="comments-panel">
 
-        <div class="comments-header">
+      <div class="sheet-handle"></div>
 
-            <div class="comments-line"></div>
+      <div class="comments-title-row">
 
-            <div class="comments-title-row">
-
-                <h3>Comments</h3>
-
-                <button id="closeComments" type="button">
-                    ×
-                </button>
-
-            </div>
-
-        </div>
-
-        <div id="commentsList" class="comments-list"></div>
-
-        <div class="comments-input">
-
-            <div
-                class="my-comment-avatar"
-                id="myCommentAvatar"
-            >
-                R
-            </div>
-
-            <input
-                id="commentInput"
-                type="text"
-                maxlength="280"
-                placeholder="Write a comment..."
-            >
-
-            <button id="sendComment" type="button">
-                Send
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- POST DETAILS -->
-<div id="postDetails" class="post-details">
-
-    <div class="post-details-overlay"></div>
-
-    <div class="post-details-panel">
-
-        <div class="post-details-top">
-
-            <button
-                id="closePostDetails"
-                type="button"
-                class="post-details-close"
-            >
-                ×
-            </button>
-
-            <strong>Post</strong>
-
-            <span></span>
-
-        </div>
-
-        <div id="postDetailsContent"></div>
-
-    </div>
-
-</div>
-
-
-<!-- STORY VIEWER -->
-<div id="storyViewer" class="story-viewer">
-
-    <div class="story-viewer-background"></div>
-
-    <div class="story-viewer-content">
+        <h3>Replies</h3>
 
         <button
-            id="closeStory"
-            class="story-close"
-            type="button"
+          id="closeComments"
+          type="button"
         >
-            ×
+          ×
         </button>
 
+      </div>
+
+      <div
+        id="commentsList"
+        class="comments-list"
+      ></div>
+
+      <form
+        id="commentForm"
+        class="comments-input"
+      >
+
         <div
-            id="storyViewerAvatar"
-            class="story-viewer-avatar"
+          id="commentAvatar"
+          class="my-comment-avatar"
         >
-            L
+          R
         </div>
 
-        <div
-            id="storyViewerName"
-            class="story-viewer-name"
+        <input
+          id="commentInput"
+          maxlength="280"
+          autocomplete="off"
+          placeholder="Write a reply..."
         >
-            Lina
-        </div>
 
-        <div
-            id="storyViewerImage"
-            class="story-viewer-image"
-        ></div>
+        <button
+          id="sendComment"
+          type="submit"
+        >
+          Send
+        </button>
 
-        <div
-            id="storyViewerText"
-            class="story-viewer-text"
-        ></div>
+      </form>
 
     </div>
 
-</div>
+  </div>
 
 
-<script src="create-post.js"></script>
-<script src="wheel.js"></script>
-<script src="home.js"></script>
+  <!-- ORDER MATTERS -->
+  <script src="wheel.js"></script>
+  <script src="create-post.js"></script>
+  <script src="home.js"></script>
 
-<script>
+  <script>
     if (window.lucide) {
-        lucide.createIcons();
+      window.lucide.createIcons();
     }
-</script>
+  </script>
 
 </body>
-</html>
+            </html>
