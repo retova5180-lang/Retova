@@ -4,23 +4,19 @@
   const POST_KEY = "ars_local_posts";
   const STORY_KEY = "ars_local_stories";
   const STATE_KEY = "ars_home_state";
-  const STREAK_KEY = "ars_streak_state";
 
-  const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
+
+  const $$ = (selector, root = document) =>
+    [...root.querySelectorAll(selector)];
 
   const feed = $("#feed");
-  const stories = $("#stories");
-  const detail = $("#postDetail");
-  const detailBody = $("#detailPostBody");
-  const replies = $("#detailReplies");
-  const replyForm = $("#replyForm");
-  const replyInput = $("#replyInput");
-  const replyCount = $("#replyCount");
+  const storiesEl = $("#stories");
 
   let activePostId = null;
 
-  const app = {
+  const state = {
     posts: [],
     stories: [],
     liked: new Set(),
@@ -28,439 +24,329 @@
     saved: new Set()
   };
 
-  const demoPosts = [
+
+  /* -----------------------------
+     DEMO STORIES
+  ----------------------------- */
+
+  const demoStories = [
+
     {
-      id: "demo-1",
+      id: "you",
+      name: "You",
+      letter: "R",
+      gradient: ["#7d2cff", "#c54dff"],
+      mine: true,
+      text: "Add your first story."
+    },
+
+    {
+      id: "lina",
+      name: "Lina",
+      letter: "L",
+      gradient: ["#7d2cff", "#c54dff"],
+      text: "Sunset always hits different 💜",
+      image:
+        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80"
+    },
+
+    {
+      id: "noah",
+      name: "Noah",
+      letter: "N",
+      gradient: ["#222", "#555"],
+      text: "Focused on the journey."
+    },
+
+    {
+      id: "sara",
+      name: "Sara",
+      letter: "S",
+      gradient: ["#8b3dff", "#ee4cff"],
+      text: "Weekend mood ✨",
+      image:
+        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80"
+    },
+
+    {
+      id: "wheel",
+      name: "Wheel",
+      wheel: true
+    },
+
+    {
+      id: "apple",
       name: "Apple",
-      username: "apple",
-      letter: "A",
-      gradient: ["#202020", "#666"],
+      letter: "",
+      gradient: ["#09090b", "#3a3a40"],
+      verified: true,
+      text: "Apple updates."
+    },
+
+    {
+      id: "ferrari",
+      name: "Ferrari",
+      letter: "F",
+      gradient: ["#f01825", "#721018"],
+      verified: true,
+      text: "Racing weekend."
+    },
+
+    {
+      id: "bmw",
+      name: "BMW",
+      letter: "M",
+      gradient: ["#111", "#34343a"],
+      verified: true,
+      text: "Driven by progress."
+    }
+
+  ];
+
+
+  /* -----------------------------
+     DEMO POSTS
+  ----------------------------- */
+
+  const demoPosts = [
+
+    {
+      id: "demo-lina",
+      name: "Lina",
+      username: "lina.ae",
+      letter: "L",
+      gradient: ["#7d2cff", "#c54dff"],
       verified: true,
       time: "12m",
-      text: "A cleaner way to create, share and discover what matters to you. #ARS #CreateShareConnect",
-      images: [],
-      videos: [],
-      likes: 28400,
-      comments: 1843,
-      reposts: 3902,
-      views: 2400000,
+
+      text:
+        "Sunset always hits different 💜 #sunset #mood",
+
+      image:
+        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
+
+      likes: 2400,
+      comments: 186,
+      reposts: 312,
+      views: 48000,
+
       replies: [
-        {
-          name: "Lina",
-          letter: "L",
-          text: "This looks amazing.",
-          likes: 24
-        },
         {
           name: "Noah",
           letter: "N",
-          text: "Can't wait for this.",
-          likes: 8
-        }
-      ]
-    },
-
-    {
-      id: "demo-2",
-      name: "Lina",
-      username: "lina",
-      letter: "L",
-      gradient: ["#8B3DFF", "#C54DFF"],
-      verified: false,
-      vip: true,
-      time: "28m",
-      text: "Finally finished my new workspace setup. ✨ #Workspace #Purple",
-      images: [],
-      videos: [],
-      likes: 4211,
-      comments: 291,
-      reposts: 88,
-      views: 119000,
-      replies: [
+          text: "This is beautiful 💜",
+          likes: 24
+        },
         {
-          name: "Maya",
-          letter: "M",
-          text: "Love the purple setup!",
-          likes: 13
-        }
-      ]
-    },
-
-    {
-      id: "demo-3",
-      name: "Noah",
-      username: "noah",
-      letter: "N",
-      gradient: ["#2563EB", "#06B6D4"],
-      verified: false,
-      vip: false,
-      time: "43m",
-      text: "Morning thoughts. Keep moving even when nobody is watching. #Motivation",
-      images: [],
-      videos: [],
-      likes: 831,
-      comments: 41,
-      reposts: 12,
-      views: 15200,
-      replies: [
-        {
-          name: "Omar",
-          letter: "O",
-          text: "Needed this today.",
+          name: "Sara",
+          letter: "S",
+          text: "The colors are perfect.",
           likes: 11
         }
       ]
     },
 
+
     {
-      id: "demo-4",
+      id: "demo-apple",
+      name: "Apple",
+      username: "apple",
+      letter: "",
+      gradient: ["#0a0a0c", "#3b3b43"],
+      verified: true,
+      time: "28m",
+
+      text:
+        "Apple Intelligence expands to more languages later this year.",
+
+      image:
+        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
+
+      likes: 28400,
+      comments: 1800,
+      reposts: 3900,
+      views: 2400000,
+
+      replies: [
+        {
+          name: "Lina",
+          letter: "L",
+          text: "Huge update.",
+          likes: 19
+        }
+      ]
+    },
+
+
+    {
+      id: "demo-noah",
+      name: "Noah",
+      username: "noah.vibes",
+      letter: "N",
+      gradient: ["#17171c", "#51515a"],
+      verified: true,
+      time: "45m",
+
+      text:
+        "Focused on the journey. #focus #life",
+
+      image:
+        "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=85",
+
+      likes: 910,
+      comments: 73,
+      reposts: 118,
+      views: 18400,
+
+      replies: [
+        {
+          name: "Lina",
+          letter: "L",
+          text: "Keep going 🔥",
+          likes: 7
+        }
+      ]
+    },
+
+
+    {
+      id: "demo-repost",
       name: "Sara",
-      username: "sara",
+      username: "sara.vibes",
       letter: "S",
-      gradient: ["#F43F5E", "#FB7185"],
+      gradient: ["#8b3dff", "#e34dff"],
       verified: false,
-      vip: false,
       time: "1h",
-      text: "Small wins still count. 🌙 #DailyLife #SmallWins",
-      images: [],
-      videos: [],
+
+      text:
+        "Reposted this because it deserved another look. #inspiration",
+
+      image:
+        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
+
       likes: 1260,
       comments: 74,
       reposts: 31,
       views: 22000,
-      replies: []
-    },
 
-    {
-      id: "demo-5",
-      name: "Alex",
-      username: "alex",
-      letter: "Λ",
-      gradient: ["#8B3DFF", "#EC4899"],
-      verified: false,
-      vip: false,
-      time: "2h",
-      text: "Reposted this because it deserved another look. #ARS",
-      images: [],
-      videos: [],
-      likes: 320,
-      reposts: 19,
-      comments: 18,
-      views: 6800,
-      repostOf: "demo-1",
+      repostOf: "demo-lina",
+
       replies: []
     }
+
   ];
 
-  const demoStories = [
-    {
-      id: "s1",
-      name: "You",
-      letter: "R",
-      gradient: ["#8B3DFF", "#C54DFF"],
-      mine: true,
-      seen: false,
-      text: "Your first story can start here."
-    },
 
-    {
-      id: "s2",
-      name: "Lina",
-      letter: "L",
-      gradient: ["#8B3DFF", "#C54DFF"],
-      seen: false,
-      text: "Late night setup ✨"
-    },
+  /* -----------------------------
+     HELPERS
+  ----------------------------- */
 
-    {
-      id: "s3",
-      name: "Noah",
-      letter: "N",
-      gradient: ["#2563EB", "#06B6D4"],
-      seen: false,
-      text: "Good morning!"
-    },
-
-    {
-      id: "s4",
-      name: "Sara",
-      letter: "S",
-      gradient: ["#F43F5E", "#FB7185"],
-      seen: true,
-      text: "Weekend mood."
-    },
-
-    {
-      id: "s5",
-      name: "Alex",
-      letter: "Λ",
-      gradient: ["#8B3DFF", "#EC4899"],
-      seen: false,
-      text: "New post is up."
-    }
-  ];
-
-  const demoReplies = [
-    {
-      name: "Emma",
-      letter: "E",
-      text: "Love this.",
-      likes: 7
-    },
-
-    {
-      name: "Omar",
-      letter: "O",
-      text: "Exactly what I needed today.",
-      likes: 11
-    }
-  ];
-
-  const esc = (value) =>
+  const esc = value =>
     String(value ?? "").replace(
-      /[&<>'"]/g,
-      (char) =>
+      /[&<>"']/g,
+      char =>
         ({
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
-          "'": "&#039;",
-          '"': "&quot;"
-        })[char]
+          '"': "&quot;",
+          "'": "&#039;"
+        }[char])
     );
 
-  const fmt = (number) => {
-    const n = Number(number) || 0;
-
-    if (n >= 1000000) {
-      return `${(n / 1000000).toFixed(1)}M`;
-    }
-
-    if (n >= 1000) {
-      return `${(n / 1000).toFixed(1)}K`;
-    }
-
-    return String(n);
-  };
 
   const read = (key, fallback) => {
-    try {
-      const value = JSON.parse(
-        localStorage.getItem(key) || "null"
-      );
 
-      return value ?? fallback;
-    } catch {
+    try {
+      return (
+        JSON.parse(
+          localStorage.getItem(key)
+        ) ?? fallback
+      );
+    }
+
+    catch {
       return fallback;
     }
+
   };
 
+
   const write = (key, value) => {
+
     localStorage.setItem(
       key,
       JSON.stringify(value)
     );
+
   };
 
-  const localDateKey = () => {
-    const d = new Date();
 
-    const y = d.getFullYear();
+  const fmt = number => {
 
-    const m = String(
-      d.getMonth() + 1
-    ).padStart(2, "0");
+    number = Number(number) || 0;
 
-    const day = String(
-      d.getDate()
-    ).padStart(2, "0");
-
-    return `${y}-${m}-${day}`;
-  };
-
-  const daysBetween = (fromKey, toKey) => {
-    if (!fromKey || !toKey) {
-      return 999;
+    if (number >= 1000000) {
+      return (
+        number / 1000000
+      ).toFixed(1) + "M";
     }
 
-    const from = new Date(
-      `${fromKey}T00:00:00`
-    );
+    if (number >= 1000) {
+      return (
+        number / 1000
+      ).toFixed(1) + "K";
+    }
 
-    const to = new Date(
-      `${toKey}T00:00:00`
-    );
+    return String(number);
 
-    return Math.round(
-      (to - from) / 86400000
-    );
   };
 
-  function profile() {
+
+  function user() {
+
     try {
       return (
         JSON.parse(
           localStorage.getItem("ars_user")
         ) || {}
       );
-    } catch {
+    }
+
+    catch {
       return {};
     }
+
   }
 
-  function userAvatar() {
-    const user = profile();
+
+  function myAvatar() {
+
+    const u = user();
 
     return {
-      letter: String(
-        user.letter || "R"
-      ).slice(0, 1),
 
-      gradient: [
-        user.letterColor || "#8B3DFF",
-        user.background || "#C54DFF"
-      ],
+      letter:
+        u.letter || "R",
+
+      color:
+        u.letterColor || "#8b3dff",
+
+      background:
+        u.background || "#c54dff",
 
       name:
-        user.displayName ||
-        user.name ||
-        "You"
-    };
-  }
+        u.displayName || "You"
 
-  function streak() {
-    const today = localDateKey();
-
-    const current = read(
-      STREAK_KEY,
-      {
-        count: 0,
-        lastDate: null
-      }
-    );
-
-    const s = {
-      count: Number(current.count) || 0,
-      lastDate: current.lastDate || null
     };
 
-    if (s.lastDate === today) {
-      return s;
-    }
-
-    if (!s.lastDate) {
-      s.count = 1;
-    } else {
-      const gap = daysBetween(
-        s.lastDate,
-        today
-      );
-
-      s.count =
-        gap === 1
-          ? s.count + 1
-          : 1;
-    }
-
-    s.lastDate = today;
-
-    write(STREAK_KEY, s);
-
-    return s;
   }
 
-  function updateStreakUI() {
-    const s = read(
-      STREAK_KEY,
-      {
-        count: 0
-      }
-    );
 
-    const element =
-      $("#streakCount");
+  function normalize(post) {
 
-    if (element) {
-      element.textContent =
-        String(
-          Number(s.count) || 0
-        );
-    }
-  }
-
-  function load() {
-    const state = read(
-      STATE_KEY,
-      {}
-    );
-
-    app.liked = new Set(
-      Array.isArray(state.liked)
-        ? state.liked
-        : []
-    );
-
-    app.reposted = new Set(
-      Array.isArray(state.reposted)
-        ? state.reposted
-        : []
-    );
-
-    app.saved = new Set(
-      Array.isArray(state.saved)
-        ? state.saved
-        : []
-    );
-
-    const localPosts =
-      read(
-        POST_KEY,
-        []
-      );
-
-    const localStories =
-      read(
-        STORY_KEY,
-        []
-      );
-
-    app.posts = [
-      ...localPosts,
-      ...demoPosts
-    ].map(normalizePost);
-
-    app.stories = [
-      ...localStories.filter(
-        (story) =>
-          !story.expiresAt ||
-          story.expiresAt > Date.now()
-      ),
-
-      ...demoStories
-    ];
-  }
-
-  function saveState() {
-    write(
-      STATE_KEY,
-      {
-        liked: [
-          ...app.liked
-        ],
-
-        reposted: [
-          ...app.reposted
-        ],
-
-        saved: [
-          ...app.saved
-        ]
-      }
-    );
-  }
-
-  function normalizePost(post) {
     return {
+
       ...post,
 
       likes:
@@ -475,119 +361,198 @@
       views:
         Number(post.views) || 0,
 
-      images:
-        Array.isArray(post.images)
-          ? post.images
-          : [],
-
-      videos:
-        Array.isArray(post.videos)
-          ? post.videos
-          : [],
-
       replies:
         Array.isArray(post.replies)
           ? post.replies
           : []
+
     };
+
   }
+
+
+  /* -----------------------------
+     LOAD
+  ----------------------------- */
+
+  function load() {
+
+    const saved =
+      read(
+        STATE_KEY,
+        {}
+      );
+
+    state.liked =
+      new Set(
+        saved.liked || []
+      );
+
+    state.reposted =
+      new Set(
+        saved.reposted || []
+      );
+
+    state.saved =
+      new Set(
+        saved.saved || []
+      );
+
+
+    const localPosts =
+      read(
+        POST_KEY,
+        []
+      )
+      .filter(Boolean)
+      .map(normalize);
+
+
+    state.posts =
+      [
+        ...localPosts,
+        ...demoPosts
+      ]
+      .map(normalize);
+
+
+    const localStories =
+      read(
+        STORY_KEY,
+        []
+      )
+      .filter(
+        story =>
+          !story.expiresAt ||
+          story.expiresAt > Date.now()
+      );
+
+
+    state.stories =
+      [
+        ...localStories,
+        ...demoStories
+      ];
+
+  }
+
+
+  function saveState() {
+
+    write(
+      STATE_KEY,
+      {
+        liked:
+          [...state.liked],
+
+        reposted:
+          [...state.reposted],
+
+        saved:
+          [...state.saved]
+      }
+    );
+
+  }
+
+
+  /* -----------------------------
+     AVATAR
+  ----------------------------- */
 
   function avatarHTML(
     person,
-    small = false
+    reply = false
   ) {
-    const gradient =
-      Array.isArray(person.gradient)
-        ? person.gradient
-        : [
-            "#8B3DFF",
-            "#C54DFF"
-          ];
 
-    const letter =
-      person.letter ||
-      person.name?.[0] ||
-      "Λ";
+    const gradient =
+      person.gradient ||
+      ["#8b3dff", "#c54dff"];
+
+    const className =
+      reply
+        ? "reply-avatar"
+        : "post-avatar";
+
 
     return `
+
       <div
-        class="${small ? "reply-avatar" : "post-avatar"}"
+        class="${className}"
         style="
           background:
-            linear-gradient(
-              135deg,
-              ${esc(gradient[0])},
-              ${esc(gradient[1])}
-            )
+          linear-gradient(
+            135deg,
+            ${esc(gradient[0])},
+            ${esc(gradient[1])}
+          )
         "
       >
-        ${esc(letter)}
+
+        ${
+          person.avatar
+            ? `
+              <img
+                src="${esc(person.avatar)}"
+                alt=""
+              >
+            `
+            : esc(
+                person.letter ||
+                person.name?.[0] ||
+                "Λ"
+              )
+        }
+
       </div>
+
     `;
+
   }
 
-  function hashtagHTML(text) {
-    const escaped =
-      esc(text);
 
-    return escaped.replace(
+  /* -----------------------------
+     HASHTAGS
+  ----------------------------- */
+
+  function textHTML(text) {
+
+    return esc(text).replace(
       /(^|\s)(#[a-zA-Z0-9_]+)/g,
-      '$1<span class="hashtag" data-hashtag="$2">$2</span>'
+      '$1<span class="hashtag">$2</span>'
     );
+
   }
+
+
+  /* -----------------------------
+     POST HTML
+  ----------------------------- */
 
   function postHTML(
     post,
-    detailMode = false
+    detail = false
   ) {
+
     const liked =
-      app.liked.has(post.id);
+      state.liked.has(post.id);
 
     const reposted =
-      app.reposted.has(post.id);
+      state.reposted.has(post.id);
 
     const saved =
-      app.saved.has(post.id);
+      state.saved.has(post.id);
 
-    const images =
-      post.images
-        .map(
-          (src) => `
-            <div class="post-image">
-              <img
-                src="${esc(src)}"
-                alt="Post image"
-                loading="lazy"
-              >
-            </div>
-          `
-        )
-        .join("");
-
-    const videos =
-      post.videos
-        .map(
-          (src) => `
-            <div class="post-image">
-              <video
-                class="post-video"
-                src="${esc(src)}"
-                controls
-                playsinline
-              ></video>
-            </div>
-          `
-        )
-        .join("");
 
     return `
+
       <article
         class="post ${
-          detailMode
+          detail
             ? "detail-post"
             : "clickable"
         }"
-        data-id="${esc(post.id)}"
+        data-post-id="${esc(post.id)}"
       >
 
         <div class="post-header">
@@ -612,16 +577,6 @@
                     : ""
                 }
 
-                ${
-                  post.vip
-                    ? `
-                      <span class="vip">
-                        VIP
-                      </span>
-                    `
-                    : ""
-                }
-
               </div>
 
               <div class="post-username">
@@ -635,6 +590,7 @@
             </div>
 
           </div>
+
 
           <button
             class="post-more"
@@ -661,13 +617,38 @@
 
 
         <div class="post-content">
-          ${hashtagHTML(post.text)}
+          ${textHTML(post.text)}
         </div>
 
 
-        ${images}
+        ${
+          post.image
+            ? `
+              <div class="post-image">
+                <img
+                  src="${esc(post.image)}"
+                  alt="Post media"
+                  loading="lazy"
+                >
+              </div>
+            `
+            : ""
+        }
 
-        ${videos}
+
+        ${
+          post.video
+            ? `
+              <video
+                class="post-video"
+                controls
+                playsinline
+                preload="metadata"
+                src="${esc(post.video)}"
+              ></video>
+            `
+            : ""
+        }
 
 
         <div class="post-stats">
@@ -697,14 +678,15 @@
 
             <button
               class="action ${
-                liked ? "liked" : ""
+                liked
+                  ? "liked"
+                  : ""
               }"
               data-action="like"
               type="button"
-              aria-label="Like"
             >
               <i data-lucide="heart"></i>
-              <span class="count">
+              <span>
                 ${fmt(post.likes)}
               </span>
             </button>
@@ -714,10 +696,9 @@
               class="action"
               data-action="reply"
               type="button"
-              aria-label="Reply"
             >
               <i data-lucide="message-circle"></i>
-              <span class="count">
+              <span>
                 ${fmt(post.comments)}
               </span>
             </button>
@@ -725,14 +706,15 @@
 
             <button
               class="action ${
-                reposted ? "active" : ""
+                reposted
+                  ? "reposted"
+                  : ""
               }"
               data-action="repost"
               type="button"
-              aria-label="Repost"
             >
               <i data-lucide="repeat-2"></i>
-              <span class="count">
+              <span>
                 ${fmt(post.reposts)}
               </span>
             </button>
@@ -740,11 +722,12 @@
 
             <button
               class="action ${
-                saved ? "active" : ""
+                saved
+                  ? "saved"
+                  : ""
               }"
               data-action="save"
               type="button"
-              aria-label="Save"
             >
               <i data-lucide="bookmark"></i>
             </button>
@@ -763,24 +746,68 @@
         </div>
 
       </article>
+
     `;
+
   }
 
-  function renderStories() {
-    if (!stories) return;
 
-    stories.innerHTML =
-      app.stories
-        .map(
-          (story) => `
+  /* -----------------------------
+     STORIES
+  ----------------------------- */
+
+  function renderStories() {
+
+    if (!storiesEl) {
+      return;
+    }
+
+
+    storiesEl.innerHTML =
+      state.stories
+        .map(story => {
+
+          if (story.wheel) {
+
+            return `
+
+              <button
+                class="story story-wheel"
+                type="button"
+                data-wheel-story
+              >
+
+                <div class="story-ring">
+
+                  <div class="story-avatar"></div>
+
+                </div>
+
+                <div class="story-name">
+                  Wheel
+                </div>
+
+              </button>
+
+            `;
+
+          }
+
+
+          return `
+
             <button
-              class="
-                story
-                ${story.seen ? "seen" : ""}
-                ${story.mine ? "mine" : ""}
-              "
-              data-story-id="${esc(story.id)}"
+              class="story ${
+                story.seen
+                  ? "seen"
+                  : ""
+              } ${
+                story.mine
+                  ? "mine"
+                  : ""
+              }"
               type="button"
+              data-story-id="${esc(story.id)}"
             >
 
               <div class="story-ring">
@@ -789,24 +816,35 @@
                   class="story-avatar"
                   style="
                     background:
-                      linear-gradient(
-                        135deg,
-                        ${esc(
-                          story.gradient?.[0] ||
-                          "#8B3DFF"
-                        )},
-                        ${esc(
-                          story.gradient?.[1] ||
-                          "#C54DFF"
-                        )}
-                      )
+                    linear-gradient(
+                      135deg,
+                      ${esc(
+                        story.gradient?.[0] ||
+                        "#8b3dff"
+                      )},
+                      ${esc(
+                        story.gradient?.[1] ||
+                        "#c54dff"
+                      )}
+                    )
                   "
                 >
-                  ${esc(
-                    story.letter ||
-                    story.name?.[0] ||
-                    "Λ"
-                  )}
+
+                  ${
+                    story.image
+                      ? `
+                        <img
+                          src="${esc(story.image)}"
+                          alt=""
+                        >
+                      `
+                      : esc(
+                          story.letter ||
+                          story.name?.[0] ||
+                          "Λ"
+                        )
+                  }
+
                 </div>
 
               </div>
@@ -828,19 +866,35 @@
               </div>
 
             </button>
-          `
-        )
+
+          `;
+
+        })
         .join("");
 
-    refreshIcons();
+
+    icons();
+
   }
 
-  function renderPosts() {
-    if (!feed) return;
 
-    if (!app.posts.length) {
+  /* -----------------------------
+     POSTS
+  ----------------------------- */
+
+  function renderPosts() {
+
+    if (!feed) {
+      return;
+    }
+
+
+    if (!state.posts.length) {
+
       feed.innerHTML = `
+
         <div class="empty-state">
+
           <strong>
             No posts yet
           </strong>
@@ -848,251 +902,311 @@
           <span>
             Create the first post.
           </span>
+
         </div>
+
       `;
 
       return;
     }
 
+
     feed.innerHTML =
-      app.posts
-        .map((post) =>
-          postHTML(post)
-        )
+      state.posts
+        .map(post => postHTML(post))
         .join("");
 
-    refreshIcons();
+
+    icons();
+
   }
 
-  function refreshIcons() {
+
+  function icons() {
+
     if (
       window.lucide
     ) {
       window.lucide.createIcons();
     }
+
   }
 
+
+  /* -----------------------------
+     STORY VIEWER
+  ----------------------------- */
+
   function openStory(id) {
+
     const story =
-      app.stories.find(
-        (item) =>
+      state.stories.find(
+        item =>
           String(item.id) ===
           String(id)
       );
 
-    if (!story) return;
+
+    if (!story) {
+      return;
+    }
+
 
     story.seen = true;
 
     renderStories();
 
-    const name =
-      $("#storyViewerName");
 
-    const avatar =
-      $("#storyViewerAvatar");
+    $("#storyViewerName")
+      .textContent =
+      story.name;
+
+
+    $("#storyViewerAvatar")
+      .textContent =
+      story.letter ||
+      story.name?.[0] ||
+      "Λ";
+
+
+    $("#storyViewerAvatar")
+      .style.background =
+      `linear-gradient(
+        135deg,
+        ${
+          story.gradient?.[0] ||
+          "#8b3dff"
+        },
+        ${
+          story.gradient?.[1] ||
+          "#c54dff"
+        }
+      )`;
+
 
     const image =
       $("#storyViewerImage");
 
-    const text =
-      $("#storyViewerText");
 
-    if (name) {
-      name.textContent =
-        story.name ||
-        "Story";
-    }
+    image.style.backgroundImage =
+      story.image
+        ? `url("${story.image}")`
+        : "none";
 
-    if (avatar) {
-      avatar.textContent =
-        story.letter ||
-        story.name?.[0] ||
-        "Λ";
 
-      avatar.style.background =
-        `linear-gradient(
-          135deg,
-          ${story.gradient?.[0] || "#8B3DFF"},
-          ${story.gradient?.[1] || "#C54DFF"}
-        )`;
-    }
+    $("#storyViewerText")
+      .textContent =
+      story.text || "";
 
-    if (image) {
-      image.style.backgroundImage =
-        story.images?.[0]
-          ? `url("${String(
-              story.images[0]
-            ).replace(
-              /"/g,
-              '\\"'
-            )}")`
-          : "none";
-    }
-
-    if (text) {
-      text.textContent =
-        story.text ||
-        "";
-    }
 
     $("#storyViewer")
-      ?.classList
-      .remove("hidden");
+      .classList.remove("hidden");
+
 
     $("#storyViewer")
-      ?.setAttribute(
+      .setAttribute(
         "aria-hidden",
         "false"
       );
+
   }
+
 
   function closeStory() {
-    $("#storyViewer")
-      ?.classList
-      .add("hidden");
 
     $("#storyViewer")
-      ?.setAttribute(
-        "aria-hidden",
-        "true"
-      );
+      ?.classList.add("hidden");
+
   }
 
-  function getReplies(post) {
-    return post.replies?.length
-      ? post.replies
-      : demoReplies.map(
-          (reply) => ({
-            ...reply
-          })
-        );
-  }
 
-  function openPostDetail(id) {
+  /* -----------------------------
+     POST DETAIL
+  ----------------------------- */
+
+  function openPost(id) {
+
     const post =
-      app.posts.find(
-        (item) =>
+      state.posts.find(
+        item =>
           String(item.id) ===
           String(id)
       );
 
-    if (!post) return;
+
+    if (!post) {
+      return;
+    }
+
 
     activePostId =
       post.id;
 
-    detailBody.innerHTML =
+
+    $("#detailPostBody")
+      .innerHTML =
       postHTML(
         post,
         true
       );
 
-    const list =
-      getReplies(post);
 
-    replyCount.textContent =
-      String(
-        list.length
-      );
+    const replies =
+      post.replies || [];
 
-    replies.innerHTML =
-      list
-        .map(
-          (reply) => `
-            <div class="reply">
 
-              ${avatarHTML(
-                reply,
-                true
-              )}
+    $("#replyCount")
+      .textContent =
+      replies.length;
 
-              <div class="reply-main">
 
-                <div class="reply-name">
-                  ${esc(reply.name)}
-                </div>
+    $("#detailReplies")
+      .innerHTML =
+      replies.length
+        ? replies
+            .map(
+              reply => `
 
-                <div class="reply-text">
-                  ${hashtagHTML(
-                    reply.text
+                <div class="reply">
+
+                  ${avatarHTML(
+                    reply,
+                    true
                   )}
+
+                  <div class="reply-main">
+
+                    <div class="reply-name">
+                      ${esc(reply.name)}
+                    </div>
+
+                    <div class="reply-text">
+                      ${esc(reply.text)}
+                    </div>
+
+                    <div class="reply-like">
+                      ♥ ${fmt(reply.likes)}
+                    </div>
+
+                  </div>
+
                 </div>
 
-                <div class="reply-like">
-                  ♥ ${fmt(
-                    reply.likes || 0
-                  )}
-                </div>
-
-              </div>
-
+              `
+            )
+            .join("")
+        : `
+            <div class="empty-state">
+              No replies yet.
             </div>
-          `
-        )
-        .join("");
+          `;
 
-    detail
-      .classList
-      .remove("hidden");
 
-    detail.setAttribute(
-      "aria-hidden",
-      "false"
-    );
+    $("#postDetail")
+      .classList.remove("hidden");
 
-    refreshIcons();
-  }
 
-  function closeDetail() {
-    detail?.classList.add(
-      "hidden"
-    );
-
-    detail?.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    activePostId =
-      null;
-  }
-
-  function addReply(text) {
-    const post =
-      app.posts.find(
-        (item) =>
-          String(item.id) ===
-          String(activePostId)
+    $("#postDetail")
+      .setAttribute(
+        "aria-hidden",
+        "false"
       );
 
-    const cleanText =
-      String(
-        text || ""
-      ).trim();
+
+    icons();
+
+  }
+
+
+  function closePost() {
+
+    $("#postDetail")
+      ?.classList.add("hidden");
+
+    activePostId = null;
+
+  }
+
+
+  /* -----------------------------
+     SAVE LOCAL POST
+  ----------------------------- */
+
+  function persist(post) {
 
     if (
-      !post ||
-      !cleanText
+      !String(post.id)
+        .startsWith("local-")
     ) {
       return;
     }
 
-    const user =
-      userAvatar();
 
-    post.replies =
-      post.replies || [];
+    const posts =
+      read(
+        POST_KEY,
+        []
+      );
 
-    post.replies.push({
-      name: user.name,
-      letter: user.letter,
-      text: cleanText,
-      likes: 0
-    });
 
-    post.comments += 1;
+    const index =
+      posts.findIndex(
+        item =>
+          String(item.id) ===
+          String(post.id)
+      );
 
-    persistPost(post);
 
-    o
+    if (index >= 0) {
+      posts[index] = post;
+    }
+
+    else {
+      posts.unshift(post);
+    }
+
+
+    write(
+      POST_KEY,
+      posts
+    );
+
+  }
+
+
+  /* -----------------------------
+     ACTIONS
+  ----------------------------- */
+
+  function action(
+    id,
+    type
+  ) {
+
+    const post =
+      state.posts.find(
+        item =>
+          String(item.id) ===
+          String(id)
+      );
+
+
+    if (!post) {
+      return;
+    }
+
+
+    if (type === "like") {
+
+      if (
+        state.liked.has(
+          post.id
+        )
+      ) {
+
+        state.liked.delete(
+          post.id
+        );
+
+        post.likes =
+          Math.max(
