@@ -1,64 +1,59 @@
 (() => {
   "use strict";
 
-  const STATE_KEY =
-    "ars_wheel_state";
+  const KEY = "ars_daily_wheel";
 
-  const STREAK_KEY =
-    "ars_streak_state";
-
-  const REWARD_KEY =
-    "ars_temp_rewards";
-
-  const CHALLENGE_KEY =
-    "ars_active_challenge";
-
-  const MAX_SPINS = 2;
-
-  const CHALLENGE_DURATION =
-    60 * 60 * 1000;
+  const MAX = 2;
 
 
   const rewards = [
 
     {
-      id: "streak1",
-      title: "+1 Streak",
-      description:
-        "Your Streak increased by 1.",
-      kind: "reward"
-    },
-
-    {
-      id: "streak2",
-      title: "+2 Streak",
-      description:
-        "Your Streak increased by 2.",
-      kind: "reward"
-    },
-
-    {
-      id: "avatar",
       title: "Free Avatar",
       description:
         "Use an image avatar for 24 hours.",
-      kind: "reward"
+      kind: "reward",
+      id: "avatar"
     },
 
     {
-      id: "vip",
       title: "VIP Badge",
       description:
-        "Show a VIP badge for 24 hours.",
-      kind: "reward"
+        "Show the VIP badge for 24 hours.",
+      kind: "reward",
+      id: "vip"
     },
 
     {
-      id: "theme",
       title: "Favorite Theme",
       description:
-        "Unlock your favorite theme for 1 hour.",
-      kind: "reward"
+        "Unlock a special theme for 1 hour.",
+      kind: "reward",
+      id: "theme"
+    },
+
+    {
+      title: "Free Avatar",
+      description:
+        "Use an image avatar for 24 hours.",
+      kind: "reward",
+      id: "avatar2"
+    },
+
+    {
+      title: "Lucky Bonus",
+      description:
+        "A little ΛRS surprise was added to your rewards.",
+      kind: "reward",
+      id: "lucky"
+    },
+
+    {
+      title: "VIP Badge",
+      description:
+        "Show the VIP badge for 24 hours.",
+      kind: "reward",
+      id: "vip2"
     }
 
   ];
@@ -67,586 +62,198 @@
   const challenges = [
 
     {
-      id: "post",
       title: "Post Challenge",
       description:
-        "Create a post today."
+        "Create a post today.",
+      id: "post",
+      kind: "challenge"
     },
 
     {
-      id: "like",
       title: "Like Challenge",
       description:
-        "Like 5 posts today."
+        "Like 5 posts today.",
+      id: "like",
+      target: 5,
+      kind: "challenge"
     },
 
     {
-      id: "comment",
       title: "Comment Challenge",
       description:
-        "Leave a reply today."
+        "Leave a reply on a post today.",
+      id: "comment",
+      kind: "challenge"
     },
 
     {
-      id: "repost",
       title: "Repost Challenge",
       description:
-        "Repost a post today."
+        "Repost a post today.",
+      id: "repost",
+      kind: "challenge"
     },
 
     {
-      id: "story",
       title: "Story Challenge",
       description:
-        "Share a story today."
+        "Share a story today.",
+      id: "story",
+      kind: "challenge"
     },
 
     {
-      id: "save",
       title: "Save Challenge",
       description:
-        "Save a post today."
-    },
-
-    {
-      id: "profile",
-      title: "Profile Challenge",
-      description:
-        "Update your profile today."
-    },
-
-    {
-      id: "explore",
-      title: "Explore Challenge",
-      description:
-        "Explore posts today."
+        "Save a post today.",
+      id: "save",
+      kind: "challenge"
     }
 
   ];
 
 
-  const esc =
-    (value) =>
-      String(value ?? "").replace(
-        /[&<>'"]/g,
-        (char) =>
-          ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            "'": "&#039;",
-            '"': "&quot;"
-          })[char]
+  const $ =
+    selector =>
+      document.querySelector(
+        selector
       );
 
 
   const read =
-    (
-      key,
-      fallback
-    ) => {
+    (key, fallback) => {
+
       try {
 
         return (
           JSON.parse(
             localStorage.getItem(
               key
-            ) || "null"
+            )
           ) ?? fallback
         );
 
-      } catch {
+      }
+
+      catch {
 
         return fallback;
 
       }
+
     };
 
 
   const write =
-    (
-      key,
-      value
-    ) =>
+    (key, value) => {
+
       localStorage.setItem(
         key,
-        JSON.stringify(
-          value
-        )
+        JSON.stringify(value)
       );
 
-
-  const localDateKey =
-    () => {
-
-      const d =
-        new Date();
-
-      return `${d.getFullYear()}-${String(
-        d.getMonth() + 1
-      ).padStart(
-        2,
-        "0"
-      )}-${String(
-        d.getDate()
-      ).padStart(
-        2,
-        "0"
-      )}`;
     };
 
 
-  let state = {
-    date:
-      localDateKey(),
+  const today = () => {
 
-    spins:
-      0,
+    const date =
+      new Date();
 
-    rotation:
-      0,
+    return (
+      date.getFullYear() +
+      "-" +
+      String(
+        date.getMonth() + 1
+      ).padStart(2, "0") +
+      "-" +
+      String(
+        date.getDate()
+      ).padStart(2, "0")
+    );
 
-    spinning:
-      false
   };
 
+
+  let state = {
+
+    date:
+      today(),
+
+    spins: 0,
+
+    rotation: 0
+
+  };
+
+
+  /* -----------------------------
+     LOAD
+  ----------------------------- */
 
   function load() {
 
     const saved =
       read(
-        STATE_KEY,
+        KEY,
         {}
       );
 
+
     if (
-      saved.date !==
-      localDateKey()
+      saved.date ===
+      today()
     ) {
 
       state = {
-        date:
-          localDateKey(),
 
-        spins:
-          0,
-
-        rotation:
-          0,
-
-        spinning:
-          false
-      };
-
-    } else {
-
-      state = {
         ...state,
+
         ...saved,
 
         date:
-          localDateKey(),
+          today()
 
-        spinning:
-          false
       };
 
     }
 
-    write(
-      STATE_KEY,
-      state
-    );
-  }
+    else {
 
+      state = {
 
-  function save() {
+        date:
+          today(),
 
-    write(
-      STATE_KEY,
-      state
-    );
+        spins: 0,
 
-  }
+        rotation: 0
 
-
-  function streakState() {
-
-    return read(
-      STREAK_KEY,
-      {
-        count: 0,
-        lastDate: null
-      }
-    );
-
-  }
-
-
-  function setStreakDelta(
-    delta
-  ) {
-
-    const current =
-      streakState();
-
-    current.count =
-      Math.max(
-        0,
-        (Number(
-          current.count
-        ) || 0) +
-          delta
-      );
-
-    current.lastDate =
-      localDateKey();
-
-    write(
-      STREAK_KEY,
-      current
-    );
-
-    document.dispatchEvent(
-      new CustomEvent(
-        "ars:streak-updated"
-      )
-    );
-  }
-
-
-  function cleanRewards() {
-
-    const rewardsState =
-      read(
-        REWARD_KEY,
-        {}
-      );
-
-    const now =
-      Date.now();
-
-    let changed =
-      false;
-
-
-    [
-      "freeAvatarUntil",
-      "vipUntil",
-      "favoriteThemeUntil"
-    ].forEach(
-      (key) => {
-
-        if (
-          rewardsState[key] &&
-          rewardsState[key] <=
-            now
-        ) {
-
-          delete rewardsState[
-            key
-          ];
-
-          changed =
-            true;
-        }
-
-      }
-    );
-
-
-    if (changed) {
-
-      write(
-        REWARD_KEY,
-        rewardsState
-      );
-
-    }
-
-  }
-
-
-  function applyReward(
-    reward
-  ) {
-
-    const temporary =
-      read(
-        REWARD_KEY,
-        {}
-      );
-
-    const now =
-      Date.now();
-
-
-    if (
-      reward.id ===
-      "streak1"
-    ) {
-      setStreakDelta(
-        1
-      );
-    }
-
-
-    if (
-      reward.id ===
-      "streak2"
-    ) {
-      setStreakDelta(
-        2
-      );
-    }
-
-
-    if (
-      reward.id ===
-      "avatar"
-    ) {
-      temporary.freeAvatarUntil =
-        now +
-        86400000;
-    }
-
-
-    if (
-      reward.id ===
-      "vip"
-    ) {
-      temporary.vipUntil =
-        now +
-        86400000;
-    }
-
-
-    if (
-      reward.id ===
-      "theme"
-    ) {
-      temporary.favoriteThemeUntil =
-        now +
-        3600000;
-    }
-
-
-    temporary.lastReward =
-      {
-        title:
-          reward.title,
-
-        description:
-          reward.description,
-
-        at:
-          now
       };
 
+    }
+
 
     write(
-      REWARD_KEY,
-      temporary
-    );
-  }
-
-
-  function challengeState() {
-
-    return read(
-      CHALLENGE_KEY,
-      null
+      KEY,
+      state
     );
 
   }
 
 
-  function setChallenge(
-    challenge
-  ) {
+  /* -----------------------------
+     STYLES
+  ----------------------------- */
 
-    write(
-      CHALLENGE_KEY,
-      {
-        ...challenge,
-
-        progress:
-          0,
-
-        target:
-          challenge.id ===
-          "like"
-            ? 5
-            : 1,
-
-        expiresAt:
-          Date.now() +
-          CHALLENGE_DURATION
-      }
-    );
-
-    updateChallenge();
-  }
-
-
-  function completeChallenge(
-    id
-  ) {
-
-    const active =
-      challengeState();
-
+  function styles() {
 
     if (
-      !active ||
-      active.id !== id
+      $("#arsWheelStyles")
     ) {
-      return false;
-    }
-
-
-    if (
-      active.expiresAt <=
-      Date.now()
-    ) {
-
-      localStorage.removeItem(
-        CHALLENGE_KEY
-      );
-
-      updateChallenge();
-
-      return false;
-    }
-
-
-    active.progress =
-      Number(
-        active.progress
-      ) || 0;
-
-    active.target =
-      Number(
-        active.target
-      ) || 1;
-
-
-    active.progress +=
-      1;
-
-
-    if (
-      active.progress <
-      active.target
-    ) {
-
-      write(
-        CHALLENGE_KEY,
-        active
-      );
-
-      updateChallenge();
-
-      return false;
-    }
-
-
-    localStorage.removeItem(
-      CHALLENGE_KEY
-    );
-
-
-    setStreakDelta(
-      1
-    );
-
-    updateChallenge();
-
-    return true;
-  }
-
-
-  function updateChallenge() {
-
-    const box =
-      document.getElementById(
-        "wheelChallenge"
-      );
-
-    if (!box) {
-      return;
-    }
-
-
-    const active =
-      challengeState();
-
-
-    if (
-      !active ||
-      active.expiresAt <=
-        Date.now()
-    ) {
-
-      box.hidden =
-        true;
-
-      if (active) {
-
-        localStorage.removeItem(
-          CHALLENGE_KEY
-        );
-
-      }
 
       return;
-    }
 
-
-    box.hidden =
-      false;
-
-
-    const progress =
-      Number(
-        active.progress
-      ) || 0;
-
-
-    const target =
-      Number(
-        active.target
-      ) || 1;
-
-
-    box.innerHTML = `
-      <b>
-        ${esc(active.title)}
-      </b>
-
-      <span>
-        ${esc(
-          active.description
-        )}
-      </span>
-
-      <small>
-        Progress:
-        ${progress}/${target}
-        · Expires in 1 hour
-      </small>
-    `;
-  }
-
-
-  function injectStyles() {
-
-    if (
-      document.getElementById(
-        "arsWheelStyles"
-      )
-    ) {
-      return;
     }
 
 
@@ -655,107 +262,193 @@
         "style"
       );
 
+
     style.id =
       "arsWheelStyles";
 
 
     style.textContent = `
 
-      .ars-wheel-overlay{
-        position:fixed;
-        inset:0;
-        z-index:99999;
-        display:none;
-        align-items:center;
-        justify-content:center;
-        padding:16px;
-        background:rgba(0,0,0,.78);
-        backdrop-filter:blur(18px);
+      .ars-wheel-overlay {
+
+        position: fixed;
+
+        inset: 0;
+
+        z-index: 99999;
+
+        display: none;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 16px;
+
+        background:
+          rgba(0,0,0,.82);
+
+        backdrop-filter:
+          blur(18px);
+
       }
 
-      .ars-wheel-overlay.open{
-        display:flex;
+
+      .ars-wheel-overlay.open {
+
+        display: flex;
+
       }
 
-      .ars-wheel-panel{
-        width:min(470px,100%);
-        max-height:92vh;
-        overflow:auto;
+
+      .ars-wheel-panel {
+
+        width:
+          min(480px,100%);
+
+        max-height: 94vh;
+
+        overflow: auto;
+
         background:
           linear-gradient(
             180deg,
             #15151a,
-            #0d0d10
+            #0a0a0d
           );
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:30px;
-        padding:20px;
+
+        border:
+          1px solid
+          rgba(255,255,255,.09);
+
+        border-radius: 30px;
+
+        padding: 21px;
+
         box-shadow:
-          0 30px 90px rgba(0,0,0,.65);
+          0 30px 100px
+          rgba(0,0,0,.7);
+
       }
 
-      .ars-wheel-head{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
+
+      .ars-wheel-head {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content:
+          space-between;
+
       }
 
-      .ars-wheel-head h2{
-        font-size:24px;
+
+      .ars-wheel-head h2 {
+
+        font-size: 24px;
+
       }
 
-      .ars-wheel-close{
-        width:42px;
-        height:42px;
-        border-radius:50%;
-        background:rgba(255,255,255,.07);
-        font-size:24px;
+
+      .ars-wheel-close {
+
+        width: 42px;
+
+        height: 42px;
+
+        border-radius: 50%;
+
+        background:
+          rgba(255,255,255,.07);
+
+        font-size: 24px;
+
       }
 
-      .ars-wheel-sub{
-        color:#8f8f99;
-        font-size:13px;
-        margin:4px 0 18px;
+
+      .ars-wheel-sub {
+
+        margin:
+          5px
+          0
+          18px;
+
+        color: #92909b;
+
+        font-size: 13px;
+
       }
 
-      .ars-wheel-stage{
-        position:relative;
-        width:min(320px,78vw);
-        aspect-ratio:1;
-        margin:0 auto 18px;
+
+      .ars-wheel-stage {
+
+        position: relative;
+
+        width:
+          min(330px,78vw);
+
+        aspect-ratio: 1;
+
+        margin: auto;
+
       }
 
-      .ars-wheel-pointer{
-        position:absolute;
-        z-index:4;
-        top:-5px;
-        left:50%;
-        transform:translateX(-50%);
-        border-left:14px solid transparent;
-        border-right:14px solid transparent;
-        border-top:28px solid white;
+
+      .ars-wheel-pointer {
+
+        position: absolute;
+
+        z-index: 5;
+
+        top: -5px;
+
+        left: 50%;
+
+        transform:
+          translateX(-50%);
+
+        border-left:
+          14px solid transparent;
+
+        border-right:
+          14px solid transparent;
+
+        border-top:
+          29px solid #fff;
+
         filter:
           drop-shadow(
-            0 4px 8px rgba(0,0,0,.5)
+            0 4px 8px #000
           );
+
       }
 
-      .ars-wheel{
-        width:100%;
-        height:100%;
-        border:8px solid #26262e;
-        border-radius:50%;
+
+      .ars-wheel {
+
+        position: absolute;
+
+        inset: 0;
+
+        border:
+          8px solid
+          #26252e;
+
+        border-radius: 50%;
+
         background:
           conic-gradient(
-            #8B3DFF 0 45deg,
-            #24242b 45deg 90deg,
-            #C54DFF 90deg 135deg,
-            #24242b 135deg 180deg,
-            #8B3DFF 180deg 225deg,
-            #24242b 225deg 270deg,
-            #C54DFF 270deg 315deg,
-            #24242b 315deg 360deg
+            #8b3dff 0 45deg,
+            #201b28 45deg 90deg,
+            #c54dff 90deg 135deg,
+            #201b28 135deg 180deg,
+            #8b3dff 180deg 225deg,
+            #201b28 225deg 270deg,
+            #c54dff 270deg 315deg,
+            #201b28 315deg 360deg
           );
+
         transition:
           transform
           4s
@@ -765,187 +458,244 @@
             .18,
             1
           );
+
         box-shadow:
-          0 0 45px rgba(
-            139,
-            61,
-            255,
-            .25
-          );
+          0 0 55px
+          rgba(139,61,255,.3);
+
       }
 
-      .ars-wheel-center{
-        position:absolute;
-        inset:50% auto auto 50%;
+
+      .ars-wheel-center {
+
+        position: absolute;
+
+        z-index: 6;
+
+        left: 50%;
+
+        top: 50%;
+
         transform:
           translate(
             -50%,
             -50%
           );
-        width:82px;
-        height:82px;
-        border-radius:50%;
+
+        width: 84px;
+
+        height: 84px;
+
+        border-radius: 50%;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
         background:
           linear-gradient(
             135deg,
-            #8B3DFF,
-            #C54DFF
+            #7d2cff,
+            #c84eff
           );
-        border:5px solid #09090b;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:900;
-        z-index:3;
+
+        border:
+          6px solid
+          #09090b;
+
+        font-weight: 900;
+
+        box-shadow:
+          0 0 20px
+          rgba(174,74,255,.4);
+
       }
 
-      .ars-wheel-info{
-        display:flex;
-        justify-content:center;
-        gap:8px;
-        margin-bottom:14px;
+
+      .ars-wheel-info {
+
+        display: flex;
+
+        justify-content: center;
+
+        gap: 8px;
+
+        margin:
+          18px
+          0;
+
       }
 
-      .ars-wheel-badge{
-        padding:8px 12px;
-        border-radius:999px;
+
+      .ars-wheel-badge {
+
+        padding:
+          9px
+          13px;
+
+        border-radius:
+          999px;
+
         background:
-          rgba(
-            139,
-            61,
-            255,
-            .13
-          );
-        color:#cda8ff;
-        font-size:12px;
-        font-weight:800;
+          rgba(139,61,255,.13);
+
+        border:
+          1px solid
+          rgba(139,61,255,.2);
+
+        color:
+          #d1adff;
+
+        font-size:
+          12px;
+
+        font-weight:
+          800;
+
       }
 
-      .ars-wheel-spin{
-        width:100%;
-        height:54px;
-        border:0;
-        border-radius:17px;
+
+      .ars-wheel-spin {
+
+        width: 100%;
+
+        height: 54px;
+
+        border-radius: 17px;
+
         background:
           linear-gradient(
             135deg,
-            #8B3DFF,
-            #C54DFF
+            #7d2cff,
+            #c84eff
           );
-        font-weight:800;
-        font-size:16px;
+
+        font-weight: 800;
+
+        font-size: 16px;
+
       }
 
-      .ars-wheel-spin:disabled{
-        opacity:.4;
+
+      .ars-wheel-spin:disabled {
+
+        opacity: .4;
+
       }
 
-      .ars-wheel-result{
-        display:none;
-        margin-top:14px;
-        padding:18px;
-        border-radius:20px;
+
+      .ars-wheel-result {
+
+        display: none;
+
+        text-align: center;
+
+        margin-top: 14px;
+
+        padding: 18px;
+
+        border-radius: 20px;
+
         background:
-          rgba(
-            255,
-            255,
-            255,
-            .045
-          );
-        border:1px solid rgba(
-          255,
-          255,
-          255,
-          .07
-        );
-        text-align:center;
+          rgba(255,255,255,.045);
+
+        border:
+          1px solid
+          rgba(255,255,255,.07);
+
       }
 
-      .ars-wheel-result.show{
-        display:block;
+
+      .ars-wheel-result.show {
+
+        display: block;
+
       }
 
-      .ars-wheel-result h3{
-        font-size:20px;
+
+      .ars-wheel-result h3 {
+
+        font-size: 20px;
+
       }
 
-      .ars-wheel-result p{
-        color:#aaa;
-        line-height:1.6;
-        margin-top:6px;
+
+      .ars-wheel-result p {
+
+        color: #aaa;
+
+        line-height: 1.6;
+
+        margin-top: 6px;
+
       }
 
-      .ars-wheel-exit{
-        margin-top:14px;
-        width:100%;
-        height:46px;
-        border-radius:14px;
+
+      .ars-wheel-exit {
+
+        margin-top: 14px;
+
+        width: 100%;
+
+        height: 46px;
+
+        border-radius: 14px;
+
         background:
-          rgba(
-            255,
-            255,
-            255,
-            .08
-          );
-        font-weight:700;
+          rgba(255,255,255,.08);
+
+        font-weight: 800;
+
       }
 
-      .wheel-challenge{
-        margin-top:14px;
-        padding:15px;
-        border-radius:18px;
+
+      .wheel-challenge {
+
+        margin-top: 14px;
+
+        padding: 15px;
+
+        border-radius: 18px;
+
         background:
-          rgba(
-            139,
-            61,
-            255,
-            .1
-          );
-        border:1px solid rgba(
-          139,
-          61,
-          255,
-          .2
-        );
-        display:flex;
-        flex-direction:column;
-        gap:5px;
-      }
+          rgba(139,61,255,.1);
 
-      .wheel-challenge[hidden]{
-        display:none;
-      }
+        border:
+          1px solid
+          rgba(139,61,255,.2);
 
-      .wheel-challenge b{
-        font-size:14px;
-      }
+        display: flex;
 
-      .wheel-challenge span{
-        font-size:13px;
-        color:#d3d3da;
-      }
+        flex-direction: column;
 
-      .wheel-challenge small{
-        font-size:11px;
-        color:#9b9ba5;
+        gap: 5px;
+
       }
 
     `;
 
+
     document.head.appendChild(
       style
     );
+
   }
 
+
+  /* -----------------------------
+     BUILD
+  ----------------------------- */
 
   function build() {
 
     if (
-      document.getElementById(
-        "arsWheelOverlay"
-      )
+      $("#arsWheelOverlay")
     ) {
+
       return;
+
     }
 
 
@@ -954,8 +704,10 @@
         "div"
       );
 
+
     overlay.id =
       "arsWheelOverlay";
+
 
     overlay.className =
       "ars-wheel-overlay";
@@ -972,8 +724,8 @@
           </h2>
 
           <button
-            class="ars-wheel-close"
             id="wheelClose"
+            class="ars-wheel-close"
             type="button"
           >
             ×
@@ -983,22 +735,24 @@
 
 
         <div class="ars-wheel-sub">
-          Two spins every day.
-          Rewards and challenges
-          both count toward your Streak.
+          Spin twice a day for rewards or a challenge.
         </div>
 
 
         <div class="ars-wheel-stage">
 
-          <div class="ars-wheel-pointer"></div>
-
           <div
-            class="ars-wheel"
-            id="arsWheel"
+            class="ars-wheel-pointer"
           ></div>
 
-          <div class="ars-wheel-center">
+          <div
+            id="arsWheel"
+            class="ars-wheel"
+          ></div>
+
+          <div
+            class="ars-wheel-center"
+          >
             ΛRS
           </div>
 
@@ -1007,19 +761,15 @@
 
         <div class="ars-wheel-info">
 
-          <div class="ars-wheel-badge">
-            Spins left:
-            <span id="wheelSpins">
-              2
-            </span>
-          </div>
+          <span class="ars-wheel-badge">
 
-          <div class="ars-wheel-badge">
-            Streak:
-            <span id="wheelStreak">
-              0
-            </span>
-          </div>
+            Spins left:
+
+            <b id="wheelSpins">
+              2
+            </b>
+
+          </span>
 
         </div>
 
@@ -1029,7 +779,7 @@
           class="ars-wheel-spin"
           type="button"
         >
-          Spin
+          Spin the Wheel
         </button>
 
 
@@ -1056,13 +806,6 @@
 
         </div>
 
-
-        <div
-          id="wheelChallenge"
-          class="wheel-challenge"
-          hidden
-        ></div>
-
       </div>
 
     `;
@@ -1075,7 +818,7 @@
 
     overlay.addEventListener(
       "click",
-      (event) => {
+      event => {
 
         if (
           event.target ===
@@ -1083,27 +826,23 @@
           event.target.id ===
           "wheelClose"
         ) {
+
           closeWheel();
+
         }
 
       }
     );
 
 
-    overlay
-      .querySelector(
-        "#wheelExit"
-      )
+    $("#wheelExit", overlay)
       .addEventListener(
         "click",
         closeWheel
       );
 
 
-    overlay
-      .querySelector(
-        "#wheelSpin"
-      )
+    $("#wheelSpin", overlay)
       .addEventListener(
         "click",
         spin
@@ -1111,88 +850,77 @@
 
 
     updateUI();
+
   }
 
 
-  function updateUI() {
+  /* -----------------------------
+     UI
+  ----------------------------- */
 
-    cleanRewards();
+  function updateUI() {
 
     const left =
       Math.max(
         0,
-        MAX_SPINS -
-          state.spins
+        MAX - state.spins
       );
+
 
     const spins =
-      document.getElementById(
-        "wheelSpins"
-      );
-
-    const streak =
-      document.getElementById(
-        "wheelStreak"
-      );
-
-    const button =
-      document.getElementById(
-        "wheelSpin"
-      );
+      $("#wheelSpins");
 
 
     if (spins) {
+
       spins.textContent =
-        String(left);
+        left;
+
     }
 
 
-    if (streak) {
-      streak.textContent =
-        String(
-          streakState()
-            .count || 0
-        );
-    }
+    const button =
+      $("#wheelSpin");
 
 
     if (button) {
+
       button.disabled =
         left <= 0 ||
         state.spinning;
+
     }
 
-
-    updateChallenge();
   }
 
+
+  /* -----------------------------
+     OPEN / CLOSE
+  ----------------------------- */
 
   function openWheel() {
 
     load();
 
-    injectStyles();
+    styles();
 
     build();
 
-    document
-      .getElementById(
-        "arsWheelOverlay"
-      )
-      ?.classList.add(
+
+    $("#arsWheelOverlay")
+      .classList.add(
         "open"
       );
 
+
     updateUI();
+
   }
 
 
   function closeWheel() {
 
-    document
-      .getElementById(
-        "arsWheelOverlay"
-      )
+    $("#arsWheelOverlay")
       ?.classList.remove(
         "open"
       );
@@ -1200,26 +928,43 @@
   }
 
 
+  /* -----------------------------
+     SPIN
+  ----------------------------- */
+
   function spin() {
 
     if (
       state.spinning ||
-      state.spins >=
-        MAX_SPINS
+      state.spins >= MAX
     ) {
+
       return;
+
     }
 
 
     state.spinning =
       true;
 
-    state.spins +=
-      1;
+    state.spins++;
+
+
+    state.rotation +=
+      1440 +
+      Math.floor(
+        Math.random() * 360
+      );
+
+
+    write(
+      KEY,
+      state
+    );
 
 
     const pool =
-      Math.random() < 0.5
+      Math.random() < 0.55
         ? rewards
         : challenges;
 
@@ -1228,56 +973,28 @@
       pool[
         Math.floor(
           Math.random() *
-            pool.length
+          pool.length
         )
       ];
 
 
-    state.rotation +=
-      1440 +
-      Math.floor(
-        Math.random() *
-          360
-      );
-
-
-    save();
-
-
     const wheel =
-      document.getElementById(
-        "arsWheel"
-      );
+      $("#arsWheel");
+
 
     const result =
-      document.getElementById(
-        "wheelResult"
-      );
-
-    const title =
-      document.getElementById(
-        "wheelResultTitle"
-      );
-
-    const description =
-      document.getElementById(
-        "wheelResultDescription"
-      );
+      $("#wheelResult");
 
 
-    result?.classList.remove(
+    result.classList.remove(
       "show"
     );
 
 
-    if (wheel) {
-
-      wheel.style.transform =
-        `rotate(
-          ${state.rotation}deg
-        )`;
-
-    }
+    wheel.style.transform =
+      `rotate(
+        ${state.rotation}deg
+      )`;
 
 
     setTimeout(
@@ -1287,35 +1004,110 @@
           false;
 
 
-        if (
-          item.kind ===
-          "reward"
-        ) {
-          applyReward(
-            item
-          );
-        } else {
-          setChallenge(
-            item
-          );
-        }
+        $("#wheelResultTitle")
+          .textContent =
+          item.title;
 
 
-        if (title) {
-          title.textContent =
-            item.title;
-        }
+        $("#wheelResultDescription")
+          .textContent =
+          item.description;
 
 
-        if (description) {
-          description.textContent =
-            item.description;
-        }
-
-
-        result?.classList.add(
+        result.classList.add(
           "show"
         );
+
+
+        if (
+          item.kind ===
+          "challenge"
+        ) {
+
+          write(
+            "ars_active_challenge",
+            {
+              ...item,
+              expiresAt:
+                Date.now() +
+                3600000,
+
+              progress: 0
+            }
+          );
+
+        }
+
+
+        else {
+
+          const rewardsState =
+            read(
+              "ars_user_rewards",
+              {}
+            );
+
+
+          const now =
+            Date.now();
+
+
+          if (
+            item.id
+              .startsWith(
+                "avatar"
+              )
+          ) {
+
+            rewardsState.freeAvatarUntil =
+              now +
+              86400000;
+
+          }
+
+
+          if (
+            item.id
+              .startsWith(
+                "vip"
+              )
+          ) {
+
+            rewardsState.vipUntil =
+              now +
+              86400000;
+
+          }
+
+
+          if (
+            item.id
+              .startsWith(
+                "theme"
+              )
+          ) {
+
+            rewardsState.favoriteThemeUntil =
+              now +
+              3600000;
+
+          }
+
+
+          rewardsState.lastReward =
+            item.title;
+
+
+          rewardsState.lastRewardAt =
+            now;
+
+
+          write(
+            "ars_user_rewards",
+            rewardsState
+          );
+
+        }
 
 
         updateUI();
@@ -1323,44 +1115,85 @@
       },
       4100
     );
+
   }
 
 
-  /* INITIALIZE */
+  /* -----------------------------
+     CHALLENGE
+  ----------------------------- */
+
+  function completeChallenge(
+    id
+  ) {
+
+    const challenge =
+      read(
+        "ars_active_challenge",
+        null
+      );
+
+
+    if (
+      !challenge ||
+      challenge.id !== id ||
+      challenge.expiresAt <
+        Date.now()
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      challenge.target
+    ) {
+
+      challenge.progress =
+        (challenge.progress || 0) +
+        1;
+
+
+      if (
+        challenge.progress <
+        challenge.target
+      ) {
+
+        write(
+          "ars_active_challenge",
+          challenge
+        );
+
+        return false;
+
+      }
+
+    }
+
+
+    localStorage.removeItem(
+      "ars_active_challenge"
+    );
+
+
+    return true;
+
+  }
+
+
+  /* -----------------------------
+     START
+  ----------------------------- */
 
   load();
 
-  injectStyles();
-
-
-  /* CHALLENGES */
-
-  document.addEventListener(
-    "ars:post-created",
-    () =>
-      completeChallenge(
-        "post"
-      )
-  );
-
-
-  document.addEventListener(
-    "ars:story-created",
-    () =>
-      completeChallenge(
-        "story"
-      )
-  );
-
-
-  document.addEventListener(
-    "ars:streak-updated",
-    updateUI
-  );
+  styles();
 
 
   window.openWheel =
     openWheel;
+
 
   window.closeWheel =
     closeWheel;
@@ -1374,13 +1207,7 @@
     close:
       closeWheel,
 
-    completeChallenge,
-
-    cleanExpiredRewards:
-      () => {
-        cleanRewards();
-        updateUI();
-      }
+    completeChallenge
 
   };
 
