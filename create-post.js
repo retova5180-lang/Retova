@@ -1,20 +1,59 @@
 (() => {
   "use strict";
 
-  const POST_KEY =
-    "ars_local_posts";
+  const POST_KEY = "ars_local_posts";
+  const STORY_KEY = "ars_local_stories";
 
-  const STORY_KEY =
-    "ars_local_stories";
+  let mediaFile = null;
+  let mode = "post";
 
-  const state = {
-    mode: "post",
-    media: [],
-    maxMedia: 6
-  };
 
-  const user = () => {
+  const $ =
+    selector =>
+      document.querySelector(
+        selector
+      );
+
+
+  const read =
+    (key, fallback) => {
+
+      try {
+
+        return (
+          JSON.parse(
+            localStorage.getItem(
+              key
+            )
+          ) ?? fallback
+        );
+
+      }
+
+      catch {
+
+        return fallback;
+
+      }
+
+    };
+
+
+  const write =
+    (key, value) => {
+
+      localStorage.setItem(
+        key,
+        JSON.stringify(value)
+      );
+
+    };
+
+
+  function user() {
+
     try {
+
       return (
         JSON.parse(
           localStorage.getItem(
@@ -22,74 +61,490 @@
           )
         ) || {}
       );
-    } catch {
+
+    }
+
+    catch {
+
       return {};
+
     }
-  };
 
-  const escapeHTML = (value) =>
-    String(value ?? "").replace(
-      /[&<>'"]/g,
-      (char) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          "'": "&#039;",
-          '"': "&quot;"
-        })[char]
-    );
+  }
 
-  const read = (
-    key
-  ) => {
-    try {
-      return (
-        JSON.parse(
-          localStorage.getItem(
-            key
-          )
-        ) || []
+
+  /* -----------------------------
+     BUILD
+  ----------------------------- */
+
+  function build() {
+
+    if (
+      $("#createPostOverlay")
+    ) {
+
+      return;
+
+    }
+
+
+    const overlay =
+      document.createElement(
+        "div"
       );
-    } catch {
-      return [];
-    }
-  };
 
-  const write = (
-    key,
-    value
-  ) => {
-    localStorage.setItem(
-      key,
-      JSON.stringify(value)
+
+    overlay.id =
+      "createPostOverlay";
+
+
+    overlay.className =
+      "create-post-overlay";
+
+
+    overlay.innerHTML = `
+
+      <div class="create-post-modal">
+
+        <div class="create-post-head">
+
+          <h2 id="createTitle">
+            Create Post
+          </h2>
+
+          <button
+            id="createClose"
+            class="create-post-close"
+            type="button"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <div class="create-post-tabs">
+
+          <button
+            class="create-post-tab active"
+            data-mode="post"
+            type="button"
+          >
+            Post
+          </button>
+
+          <button
+            class="create-post-tab"
+            data-mode="story"
+            type="button"
+          >
+            Story
+          </button>
+
+        </div>
+
+
+        <textarea
+          id="createText"
+          maxlength="1000"
+          placeholder="What's happening?"
+        ></textarea>
+
+
+        <div
+          id="createPreview"
+          class="create-media-preview"
+        ></div>
+
+
+        <div class="create-post-options">
+
+          <label class="create-option">
+
+            <input
+              id="commentsAllowed"
+              type="checkbox"
+              checked
+            >
+
+            Comments
+
+          </label>
+
+
+          <label class="create-option">
+
+            <input
+              id="repostsAllowed"
+              type="checkbox"
+              checked
+            >
+
+            Reposts
+
+          </label>
+
+        </div>
+
+
+        <div class="create-post-bottom">
+
+          <label
+            class="create-media-label"
+          >
+
+            Add photo/video
+
+            <input
+              id="createMedia"
+              type="file"
+              accept="image/*,video/*"
+            >
+
+          </label>
+
+
+          <button
+            id="createSubmit"
+            class="create-post-submit"
+            type="button"
+          >
+            Publish
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    document.body.appendChild(
+      overlay
     );
-  };
 
-  function reset() {
-    state.mode =
-      "post";
 
-    state.media.forEach(
-      (media) => {
-        if (media.url) {
-          URL.revokeObjectURL(
-            media.url
-          );
+    overlay.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target ===
+          overlay ||
+          event.target.id ===
+          "createClose"
+        ) {
+
+          closeCreate();
+
         }
+
       }
     );
 
-    state.media = [];
+
+    overlay
+      .querySelectorAll(
+        "[data-mode]"
+      )
+      .forEach(
+        button => {
+
+          button.addEventListener(
+            "click",
+            () =>
+              setMode(
+                button.dataset.mode
+              )
+          );
+
+        }
+      );
+
+
+    $("#createMedia", overlay)
+      .addEventListener(
+        "change",
+        preview
+      );
+
+
+    $("#createSubmit", overlay)
+      .addEventListener(
+        "click",
+        publish
+      );
+
   }
 
-  function getUserProfile() {
-    const u = user();
 
-    return {
+  /* -----------------------------
+     MODE
+  ----------------------------- */
+
+  function setMode(
+    newMode
+  ) {
+
+    mode =
+      newMode;
+
+
+    $("#createTitle")
+      .textContent =
+      mode === "story"
+        ? "Create Story"
+        : "Create Post";
+
+
+    document
+      .querySelectorAll(
+        ".create-post-tab"
+      )
+      .forEach(
+        button => {
+
+          button.classList.toggle(
+            "active",
+            button.dataset.mode ===
+              mode
+          );
+
+        }
+      );
+
+
+    $("#createText")
+      .placeholder =
+      mode === "story"
+        ? "Add something to your story..."
+        : "What's happening?";
+
+  }
+
+
+  /* -----------------------------
+     OPEN
+  ----------------------------- */
+
+  function openCreate(
+    newMode = "post"
+  ) {
+
+    build();
+
+
+    mediaFile =
+      null;
+
+
+    $("#createText")
+      .value = "";
+
+
+    $("#createMedia")
+      .value = "";
+
+
+    $("#createPreview")
+      .innerHTML = "";
+
+
+    $("#createPreview")
+      .classList.remove(
+        "show"
+      );
+
+
+    setMode(
+      newMode
+    );
+
+
+    $("#createPostOverlay")
+      .classList.add(
+        "open"
+      );
+
+
+    $("#createText")
+      .focus();
+
+  }
+
+
+  function closeCreate() {
+
+    $("#createPostOverlay")
+      ?.classList.remove(
+        "open"
+      );
+
+  }
+
+
+  /* -----------------------------
+     PREVIEW
+  ----------------------------- */
+
+  function preview(
+    event
+  ) {
+
+    mediaFile =
+      event.target.files?.[0] ||
+      null;
+
+
+    const box =
+      $("#createPreview");
+
+
+    box.innerHTML =
+      "";
+
+
+    if (!mediaFile) {
+
+      box.classList.remove(
+        "show"
+      );
+
+      return;
+
+    }
+
+
+    const url =
+      URL.createObjectURL(
+        mediaFile
+      );
+
+
+    if (
+      mediaFile.type
+        .startsWith(
+          "video/"
+        )
+    ) {
+
+      box.innerHTML = `
+
+        <video
+          controls
+          playsinline
+          src="${url}"
+        ></video>
+
+      `;
+
+    }
+
+    else {
+
+      box.innerHTML = `
+
+        <img
+          src="${url}"
+          alt="Preview"
+        >
+
+      `;
+
+    }
+
+
+    box.classList.add(
+      "show"
+    );
+
+  }
+
+
+  /* -----------------------------
+     FILE TO DATA URL
+  ----------------------------- */
+
+  function toDataURL(
+    file
+  ) {
+
+    return new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        if (!file) {
+
+          resolve("");
+
+          return;
+
+        }
+
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          () =>
+            resolve(
+              reader.result
+            );
+
+
+        reader.onerror =
+          reject;
+
+
+        reader.readAsDataURL(
+          file
+        );
+
+      }
+    );
+
+  }
+
+
+  /* -----------------------------
+     PUBLISH
+  ----------------------------- */
+
+  async function publish() {
+
+    const text =
+      $("#createText")
+        .value
+        .trim();
+
+
+    if (
+      !text &&
+      !mediaFile
+    ) {
+
+      return;
+
+    }
+
+
+    const u =
+      user();
+
+
+    const media =
+      await toDataURL(
+        mediaFile
+      );
+
+
+    const base = {
+
       name:
         u.displayName ||
-        u.name ||
         "You",
 
       username:
@@ -100,873 +555,152 @@
         u.letter ||
         "R",
 
-      gradient: [
-        u.letterColor ||
-          "#8B3DFF",
+      gradient:
+        [
+          u.letterColor ||
+            "#8b3dff",
 
-        u.background ||
-          "#C54DFF"
-      ]
+          u.background ||
+            "#c54dff"
+        ],
+
+      avatar:
+        u.avatar ||
+        "",
+
+      text,
+
+      time:
+        "now",
+
+      likes: 0,
+
+      comments: 0,
+
+      reposts: 0,
+
+      views: 0,
+
+      replies: []
+
     };
-  }
 
-  function openCreatePost(
-    mode = "post"
-  ) {
-    const old =
-      document.getElementById(
-        "createPostScreen"
-      );
 
-    if (old) {
-      old.remove();
-    }
-
-    reset();
-
-    state.mode =
-      mode;
-
-    render();
-
-    document.body.classList.add(
-      "create-post-open"
-    );
-  }
-
-  function closeCreatePost() {
-    const element =
-      document.getElementById(
-        "createPostScreen"
-      );
-
-    if (element) {
-      element.remove();
-    }
-
-    state.media.forEach(
-      (media) => {
-        if (media.url) {
-          URL.revokeObjectURL(
-            media.url
-          );
-        }
-      }
-    );
-
-    state.media = [];
-
-    document.body.classList.remove(
-      "create-post-open"
-    );
-  }
-
-  function render() {
-    const u =
-      getUserProfile();
-
-    const element =
-      document.createElement(
-        "div"
-      );
-
-    element.id =
-      "createPostScreen";
-
-    element.className =
-      "create-post-screen active";
-
-    element.innerHTML = `
-      <div class="create-post-container">
-
-        <header class="create-post-header">
-
-          <button
-            class="create-close"
-            id="cpClose"
-            type="button"
-          >
-            <i data-lucide="x"></i>
-          </button>
-
-          <h1 id="cpTitle">
-            ${
-              state.mode === "story"
-                ? "Create Story"
-                : "Create Post"
-            }
-          </h1>
-
-          <button
-            class="publish-button"
-            id="cpPublish"
-            type="button"
-            disabled
-          >
-            Publish
-          </button>
-
-        </header>
-
-
-        <div class="cp-tabs">
-
-          <button
-            data-mode="post"
-            class="${
-              state.mode === "post"
-                ? "active"
-                : ""
-            }"
-          >
-            Post
-          </button>
-
-          <button
-            data-mode="story"
-            class="${
-              state.mode === "story"
-                ? "active"
-                : ""
-            }"
-          >
-            Story
-          </button>
-
-        </div>
-
-
-        <section class="create-user">
-
-          <div
-            class="create-avatar"
-            style="
-              background:
-                linear-gradient(
-                  135deg,
-                  ${escapeHTML(
-                    u.gradient[0]
-                  )},
-                  ${escapeHTML(
-                    u.gradient[1]
-                  )}
-                )
-            "
-          >
-            ${escapeHTML(
-              u.letter
-            )}
-          </div>
-
-          <div class="create-user-info">
-
-            <div class="create-user-name">
-              ${escapeHTML(
-                u.name
-              )}
-            </div>
-
-            <div class="visibility-button">
-              Public
-            </div>
-
-          </div>
-
-        </section>
-
-
-        <section class="create-text-section">
-
-          <textarea
-            id="cpText"
-            maxlength="280"
-            placeholder="${
-              state.mode === "story"
-                ? "Write a story..."
-                : "What's on your mind?"
-            }"
-          ></textarea>
-
-          <div class="character-counter">
-            <span id="cpCount">
-              0
-            </span>
-            /280
-          </div>
-
-        </section>
-
-
-        <section class="media-section">
-
-          <div
-            id="cpPreview"
-            class="media-preview"
-          ></div>
-
-          <div
-            id="cpMediaCount"
-            class="media-count"
-          >
-            0/${state.maxMedia} media
-          </div>
-
-        </section>
-
-
-        <section class="media-actions">
-
-          <button
-            class="media-action"
-            data-pick="image"
-            type="button"
-          >
-            <i data-lucide="image"></i>
-            <span>Photo</span>
-          </button>
-
-          <button
-            class="media-action"
-            data-pick="video"
-            type="button"
-          >
-            <i data-lucide="video"></i>
-            <span>Video</span>
-          </button>
-
-          <button
-            class="media-action"
-            data-emoji="😀"
-            type="button"
-          >
-            <i data-lucide="smile"></i>
-            <span>Emoji</span>
-          </button>
-
-        </section>
-
-
-        <section class="post-settings">
-
-          <div class="setting-row">
-
-            <div class="setting-left">
-              <i
-                class="setting-icon"
-                data-lucide="message-circle"
-              ></i>
-
-              <span>
-                Allow replies
-              </span>
-            </div>
-
-            <button
-              class="toggle active"
-              id="cpReplies"
-              type="button"
-            >
-              <span></span>
-            </button>
-
-          </div>
-
-
-          <div class="setting-row">
-
-            <div class="setting-left">
-
-              <i
-                class="setting-icon"
-                data-lucide="repeat-2"
-              ></i>
-
-              <span>
-                Allow reposts
-              </span>
-
-            </div>
-
-            <button
-              class="toggle active"
-              id="cpReposts"
-              type="button"
-            >
-              <span></span>
-            </button>
-
-          </div>
-
-        </section>
-
-
-        <input
-          id="cpFile"
-          type="file"
-          accept="image/*,video/*"
-          multiple
-          hidden
-        />
-
-      </div>
-    `;
-
-    document.body.appendChild(
-      element
-    );
-
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-
-    bind();
-    update();
-  }
-
-  function bind() {
-    const root =
-      document.getElementById(
-        "createPostScreen"
-      );
-
-    root.addEventListener(
-      "click",
-      (event) => {
-
-        const mode =
-          event.target.closest(
-            "[data-mode]"
-          );
-
-        if (mode) {
-          state.mode =
-            mode.dataset.mode;
-
-          openCreatePost(
-            state.mode
-          );
-
-          return;
-        }
-
-
-        if (
-          event.target.closest(
-            "#cpClose"
-          )
-        ) {
-          closeCreatePost();
-          return;
-        }
-
-
-        const pick =
-          event.target.closest(
-            "[data-pick]"
-          );
-
-        if (pick) {
-          document
-            .getElementById(
-              "cpFile"
-            )
-            .click();
-
-          return;
-        }
-
-
-        const emoji =
-          event.target.closest(
-            "[data-emoji]"
-          );
-
-        if (emoji) {
-
-          const text =
-            document.getElementById(
-              "cpText"
-            );
-
-          text.value +=
-            emoji.dataset.emoji;
-
-          text.dispatchEvent(
-            new Event(
-              "input"
-            )
-          );
-
-          text.focus();
-
-          return;
-        }
-
-
-        const remove =
-          event.target.closest(
-            "[data-remove]"
-          );
-
-        if (remove) {
-
-          const index =
-            Number(
-              remove.dataset.remove
-            );
-
-          const media =
-            state.media[index];
-
-          if (media?.url) {
-            URL.revokeObjectURL(
-              media.url
-            );
-          }
-
-          state.media.splice(
-            index,
-            1
-          );
-
-          renderPreview();
-          update();
-        }
-
-      }
-    );
-
-
-    document
-      .getElementById(
-        "cpText"
-      )
-      .addEventListener(
-        "input",
-        update
-      );
-
-
-    document
-      .getElementById(
-        "cpFile"
-      )
-      .addEventListener(
-        "change",
-        (event) => {
-
-          addMedia(
-            [
-              ...event.target.files
-            ]
-          );
-
-          event.target.value =
-            "";
-        }
-      );
-
-
-    document
-      .getElementById(
-        "cpPublish"
-      )
-      .addEventListener(
-        "click",
-        publish
-      );
-
-
-    [
-      "cpReplies",
-      "cpReposts"
-    ].forEach(
-      (id) => {
-
-        document
-          .getElementById(
-            id
-          )
-          .addEventListener(
-            "click",
-            (event) => {
-              event.currentTarget.classList.toggle(
-                "active"
-              );
-            }
-          );
-
-      }
-    );
-  }
-
-  function addMedia(
-    files
-  ) {
-
-    for (
-      const file of files
-    ) {
-
-      if (
-        state.media.length >=
-        state.maxMedia
-      ) {
-        break;
-      }
-
-      if (
-        !file.type.startsWith(
-          "image/"
-        ) &&
-        !file.type.startsWith(
-          "video/"
-        )
-      ) {
-        continue;
-      }
-
-      state.media.push({
-        type:
-          file.type.startsWith(
-            "video/"
-          )
-            ? "video"
-            : "image",
-
-        url:
-          URL.createObjectURL(
-            file
-          ),
-
-        file
-      });
-    }
-
-    renderPreview();
-    update();
-  }
-
-  function renderPreview() {
-    const box =
-      document.getElementById(
-        "cpPreview"
-      );
-
-    if (!box) return;
-
-    box.innerHTML =
-      state.media
-        .map(
-          (media, index) => `
-            <div class="media-item">
-
-              ${
-                media.type ===
-                "image"
-                  ? `
-                    <img
-                      src="${media.url}"
-                      alt=""
-                    >
-                  `
-                  : `
-                    <video
-                      src="${media.url}"
-                      controls
-                    ></video>
-                  `
-              }
-
-              <button
-                class="remove-media"
-                type="button"
-                data-remove="${index}"
-              >
-                ×
-              </button>
-
-            </div>
-          `
-        )
-        .join("");
-
-    document.getElementById(
-      "cpMediaCount"
-    ).textContent =
-      `${state.media.length}/${state.maxMedia} media`;
-  }
-
-  function update() {
-    const text =
-      document.getElementById(
-        "cpText"
-      );
-
-    const button =
-      document.getElementById(
-        "cpPublish"
-      );
-
-    if (!text || !button) {
-      return;
-    }
-
-    document.getElementById(
-      "cpCount"
-    ).textContent =
-      text.value.length;
-
-    button.disabled =
-      !text.value.trim() &&
-      !state.media.length;
-  }
-
-  function fileToDataURL(
-    file
-  ) {
-    return new Promise(
-      (resolve, reject) => {
-
-        const reader =
-          new FileReader();
-
-        reader.onload =
-          () =>
-            resolve(
-              reader.result
-            );
-
-        reader.onerror =
-          reject;
-
-        reader.readAsDataURL(
-          file
-        );
-      }
-    );
-  }
-
-  async function publish() {
-
-    const text =
-      document.getElementById(
-        "cpText"
-      );
-
-    const button =
-      document.getElementById(
-        "cpPublish"
-      );
-
-    const cleanText =
-      text.value.trim();
+    /* STORY */
 
     if (
-      !cleanText &&
-      !state.media.length
+      mode ===
+      "story"
     ) {
-      return;
-    }
 
-    button.disabled =
-      true;
-
-    try {
-
-      const u =
-        getUserProfile();
-
-      const storedMedia =
-        await Promise.all(
-          state.media.map(
-            async (media) => ({
-              type:
-                media.type,
-
-              url:
-                await fileToDataURL(
-                  media.file
-                )
-            })
-          )
-        );
-
-
-      const base = {
-        id:
-          `local-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2, 7)}`,
-
-        name:
-          u.name,
-
-        username:
-          u.username,
-
-        letter:
-          u.letter,
-
-        gradient:
-          u.gradient,
-
-        verified:
-          false,
-
-        vip:
-          false,
-
-        time:
-          "now",
-
-        text:
-          cleanText,
-
-        likes:
-          0,
-
-        comments:
-          0,
-
-        reposts:
-          0,
-
-        views:
-          0,
-
-        images:
-          storedMedia
-            .filter(
-              (item) =>
-                item.type ===
-                "image"
-            )
-            .map(
-              (item) =>
-                item.url
-            ),
-
-        videos:
-          storedMedia
-            .filter(
-              (item) =>
-                item.type ===
-                "video"
-            )
-            .map(
-              (item) =>
-                item.url
-            ),
-
-        replies:
-          [],
-
-        allowReplies:
-          document
-            .getElementById(
-              "cpReplies"
-            )
-            .classList.contains(
-              "active"
-            ),
-
-        allowReposts:
-          document
-            .getElementById(
-              "cpReposts"
-            )
-            .classList.contains(
-              "active"
-            )
-      };
-
-
-      if (
-        state.mode ===
-        "story"
-      ) {
-
-        const storyList =
-          read(
-            STORY_KEY
-          );
-
-        storyList.unshift({
-          ...base,
-
-          id:
-            `story-${base.id}`,
-
-          expiresAt:
-            Date.now() +
-            86400000
-        });
-
-        write(
+      const stories =
+        read(
           STORY_KEY,
-          storyList
+          []
         );
 
-        document.dispatchEvent(
-          new CustomEvent(
-            "ars:story-created",
-            {
-              detail:
-                base
-            }
-          )
-        );
 
-      } else {
+      stories.unshift({
 
-        const posts =
-          read(
-            POST_KEY
-          );
+        id:
+          "local-story-" +
+          Date.now(),
 
-        posts.unshift(
-          base
-        );
+        ...base,
 
-        write(
-          POST_KEY,
-          posts
-        );
+        image:
+          mediaFile?.type
+            .startsWith(
+              "image/"
+            )
+            ? media
+            : "",
 
-        document.dispatchEvent(
-          new CustomEvent(
-            "ars:post-created",
-            {
-              detail:
-                base
-            }
-          )
-        );
-      }
+        expiresAt:
+          Date.now() +
+          86400000
 
-      closeCreatePost();
+      });
 
-    } catch (error) {
 
-      console.error(
-        "ΛRS: media could not be saved.",
-        error
+      write(
+        STORY_KEY,
+        stories
       );
 
-      button.disabled =
-        false;
 
-      alert(
-        "Could not save this post. Please try again."
+      document.dispatchEvent(
+        new CustomEvent(
+          "ars:story-created"
+        )
       );
+
     }
+
+
+    /* POST */
+
+    else {
+
+      const posts =
+        read(
+          POST_KEY,
+          []
+        );
+
+
+      posts.unshift({
+
+        id:
+          "local-post-" +
+          Date.now(),
+
+        ...base,
+
+        image:
+          mediaFile?.type
+            .startsWith(
+              "image/"
+            )
+            ? media
+            : "",
+
+        video:
+          mediaFile?.type
+            .startsWith(
+              "video/"
+            )
+            ? media
+            : ""
+
+      });
+
+
+      write(
+        POST_KEY,
+        posts
+      );
+
+
+      document.dispatchEvent(
+        new CustomEvent(
+          "ars:post-created"
+        )
+      );
+
+    }
+
+
+    closeCreate();
+
   }
 
+
   window.openCreatePost =
-    openCreatePost;
+    openCreate;
+
 
   window.closeCreatePost =
-    closeCreatePost;
+    closeCreate;
 
 })();
