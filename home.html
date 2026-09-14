@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#09090B">
+  <meta name="theme-color" content="#050507">
+
   <title>ΛRS</title>
 
   <link rel="stylesheet" href="home.css">
@@ -11,6 +12,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
@@ -23,7 +25,7 @@
 
   <div class="app-shell">
 
-    <!-- TOP BAR -->
+    <!-- TOP -->
     <header class="topbar">
 
       <button
@@ -35,57 +37,34 @@
         R
       </button>
 
-      <div class="brand">ΛRS</div>
-
-      <div class="top-actions">
-
-        <button
-          id="streakButton"
-          class="streak-pill"
-          type="button"
-          aria-label="Streak"
-        >
-          <span>🔥</span>
-          <strong>Streak</strong>
-          <b id="streakCount">0</b>
-        </button>
-
-        <button
-          id="settings"
-          class="icon-button"
-          type="button"
-          aria-label="Settings"
-        >
-          <i data-lucide="settings-2"></i>
-        </button>
-
+      <div class="brand" aria-label="ΛRS">
+        ΛRS
       </div>
+
+      <!-- WHEEL -->
+      <button
+        id="headerWheel"
+        class="header-wheel"
+        type="button"
+        aria-label="Open Wheel"
+      >
+        <span class="wheel-mini">
+          <span></span>
+        </span>
+      </button>
+
     </header>
 
 
     <!-- STORIES -->
-    <section class="stories-section">
-
-      <div class="section-heading">
-
-        <div>
-          <h2>Stories</h2>
-          <p>What people are sharing now</p>
-        </div>
-
-        <button
-          id="viewAllStories"
-          type="button"
-        >
-          View all
-        </button>
-
-      </div>
+    <section
+      class="stories-section"
+      aria-label="Stories"
+    >
 
       <div
-        id="stories"
         class="stories-row"
-        aria-label="Stories"
+        id="stories"
       ></div>
 
     </section>
@@ -99,7 +78,7 @@
     ></main>
 
 
-    <!-- CREATE POST -->
+    <!-- CREATE -->
     <button
       id="newPost"
       class="new-post-button"
@@ -125,6 +104,7 @@
         <span>Home</span>
       </button>
 
+
       <button
         class="nav-button"
         type="button"
@@ -134,14 +114,16 @@
         <span>Search</span>
       </button>
 
+
       <button
         class="nav-button"
         type="button"
-        data-page="explore"
+        data-page="trending"
       >
         <i data-lucide="flame"></i>
-        <span>Explore</span>
+        <span>Trending</span>
       </button>
+
 
       <button
         class="nav-button"
@@ -149,8 +131,10 @@
         data-page="notifications"
       >
         <i data-lucide="bell"></i>
-        <span>Alerts</span>
+        <span>Notifications</span>
+        <b class="nav-dot"></b>
       </button>
+
 
       <button
         class="nav-button"
@@ -227,7 +211,7 @@
   </div>
 
 
-  <!-- POST DETAILS -->
+  <!-- POST DETAIL -->
   <div
     id="postDetail"
     class="overlay hidden"
@@ -263,20 +247,24 @@
 
       </header>
 
+
       <div
         id="detailPostBody"
         class="detail-post-body"
       ></div>
+
 
       <div class="replies-title">
         <span>Replies</span>
         <b id="replyCount">0</b>
       </div>
 
+
       <div
         id="detailReplies"
         class="detail-replies"
       ></div>
+
 
       <form
         id="replyForm"
@@ -308,83 +296,16 @@
   </div>
 
 
-  <!-- COMMENTS SHEET -->
-  <div
-    id="commentsSheet"
-    class="comments-sheet"
-    aria-hidden="true"
-  >
-
-    <div
-      class="comments-backdrop"
-      data-close-comments
-    ></div>
-
-    <div class="comments-panel">
-
-      <div class="sheet-handle"></div>
-
-      <div class="comments-title-row">
-
-        <h3>Replies</h3>
-
-        <button
-          id="closeComments"
-          type="button"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div
-        id="commentsList"
-        class="comments-list"
-      ></div>
-
-      <form
-        id="commentForm"
-        class="comments-input"
-      >
-
-        <div
-          id="commentAvatar"
-          class="my-comment-avatar"
-        >
-          R
-        </div>
-
-        <input
-          id="commentInput"
-          maxlength="280"
-          autocomplete="off"
-          placeholder="Write a reply..."
-        >
-
-        <button
-          id="sendComment"
-          type="submit"
-        >
-          Send
-        </button>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- ORDER MATTERS -->
+  <!-- SCRIPTS -->
   <script src="wheel.js"></script>
   <script src="create-post.js"></script>
   <script src="home.js"></script>
 
   <script>
-    if (window.lucide) {
+ (window.lucide) {
       window.lucide.createIcons();
     }
   </script>
 
 </body>
-            </html>
+        </html>
