@@ -3,27 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
   <meta name="theme-color" content="#050507">
+  <meta name="color-scheme" content="dark">
+
   <title>ΛRS</title>
 
+  <!-- Main Home Styles -->
   <link rel="stylesheet" href="home.css">
+
+  <!-- Create Post Styles -->
   <link rel="stylesheet" href="create-post.css">
 
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
   >
 
+  <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
+
   <div class="app-shell">
 
+    <!-- =========================
+         TOP BAR
+    ========================== -->
     <header class="topbar">
+
+      <!-- User Avatar -->
       <button
         id="myAvatar"
         class="top-avatar"
@@ -33,38 +46,58 @@
         R
       </button>
 
-      <div class="brand" aria-label="ΛRS">
+      <!-- Logo -->
+      <div
+        class="brand"
+        aria-label="ΛRS"
+      >
         ΛRS
       </div>
 
+      <!-- Wheel -->
       <button
         id="headerWheel"
         class="header-wheel"
         type="button"
         aria-label="Open Wheel"
       >
-        <span class="wheel-mini" aria-hidden="true">
-          <span class="wheel-mini-core"></span>
+        <span class="wheel-mini">
+          <span></span>
         </span>
       </button>
+
     </header>
 
+
+    <!-- =========================
+         STORIES
+    ========================== -->
     <section
       class="stories-section"
       aria-label="Stories"
     >
+
       <div
         class="stories-row"
         id="stories"
       ></div>
+
     </section>
 
+
+    <!-- =========================
+         MAIN FEED
+    ========================== -->
     <main
       id="feed"
       class="feed"
       aria-label="Posts"
     ></main>
 
+
+    <!-- =========================
+         CREATE POST BUTTON
+    ========================== -->
     <button
       id="newPost"
       class="new-post-button"
@@ -74,10 +107,16 @@
       <i data-lucide="plus"></i>
     </button>
 
+
+    <!-- =========================
+         BOTTOM NAVIGATION
+    ========================== -->
     <nav
       class="bottom-nav"
       aria-label="Main navigation"
     >
+
+      <!-- Home -->
       <button
         class="nav-button active"
         type="button"
@@ -87,6 +126,8 @@
         <span>Home</span>
       </button>
 
+
+      <!-- Search -->
       <button
         class="nav-button"
         type="button"
@@ -96,6 +137,8 @@
         <span>Search</span>
       </button>
 
+
+      <!-- Trending -->
       <button
         class="nav-button"
         type="button"
@@ -105,6 +148,8 @@
         <span>Trending</span>
       </button>
 
+
+      <!-- Notifications -->
       <button
         class="nav-button"
         type="button"
@@ -112,9 +157,15 @@
       >
         <i data-lucide="bell"></i>
         <span>Notifications</span>
-        <b class="nav-dot" aria-hidden="true"></b>
+
+        <b
+          class="nav-dot"
+          aria-hidden="true"
+        ></b>
       </button>
 
+
+      <!-- Messages -->
       <button
         class="nav-button"
         type="button"
@@ -123,18 +174,26 @@
         <i data-lucide="mail"></i>
         <span>Messages</span>
       </button>
+
     </nav>
+
   </div>
 
+
+  <!-- =========================
+       STORY VIEWER
+  ========================== -->
   <div
     id="storyViewer"
     class="overlay hidden"
     aria-hidden="true"
   >
+
     <div
       class="overlay-backdrop"
       data-close-story
     ></div>
+
 
     <div
       class="story-viewer-card"
@@ -142,6 +201,8 @@
       aria-modal="true"
       aria-label="Story"
     >
+
+      <!-- Close -->
       <button
         id="closeStory"
         class="overlay-close"
@@ -151,10 +212,14 @@
         <i data-lucide="x"></i>
       </button>
 
+
+      <!-- Progress -->
       <div class="story-progress">
         <span></span>
       </div>
 
+
+      <!-- Story Avatar -->
       <div
         id="storyViewerAvatar"
         class="viewer-avatar"
@@ -162,6 +227,8 @@
         L
       </div>
 
+
+      <!-- Story Name -->
       <div
         id="storyViewerName"
         class="viewer-name"
@@ -169,27 +236,39 @@
         Lina
       </div>
 
+
+      <!-- Story Image -->
       <div
         id="storyViewerImage"
         class="viewer-image"
       ></div>
 
+
+      <!-- Story Text -->
       <div
         id="storyViewerText"
         class="viewer-text"
       ></div>
+
     </div>
+
   </div>
 
+
+  <!-- =========================
+       POST DETAIL / REPLIES
+  ========================== -->
   <div
     id="postDetail"
     class="overlay hidden"
     aria-hidden="true"
   >
+
     <div
       class="overlay-backdrop"
       data-close-post-detail
     ></div>
+
 
     <article
       class="post-detail-card"
@@ -197,7 +276,10 @@
       aria-modal="true"
       aria-label="Post and replies"
     >
+
+      <!-- Detail Header -->
       <header class="detail-header">
+
         <button
           id="closePostDetail"
           class="overlay-close inline"
@@ -210,27 +292,42 @@
         <h3>Post</h3>
 
         <span></span>
+
       </header>
 
+
+      <!-- Selected Post -->
       <div
         id="detailPostBody"
         class="detail-post-body"
       ></div>
 
+
+      <!-- Replies Title -->
       <div class="replies-title">
+
         <span>Replies</span>
-        <b id="replyCount">0</b>
+
+        <b id="replyCount">
+          0
+        </b>
+
       </div>
 
+
+      <!-- Replies -->
       <div
         id="detailReplies"
         class="detail-replies"
       ></div>
 
+
+      <!-- Reply Form -->
       <form
         id="replyForm"
         class="reply-form"
       >
+
         <div
           id="replyAvatar"
           class="reply-avatar"
@@ -238,28 +335,53 @@
           R
         </div>
 
+
         <input
           id="replyInput"
+          type="text"
           maxlength="280"
           autocomplete="off"
           placeholder="Write a reply..."
         >
 
+
         <button type="submit">
           Send
         </button>
+
       </form>
+
     </article>
+
   </div>
 
+
+  <!-- =========================
+       ΛRS JAVASCRIPT
+  ========================== -->
+
+  <!-- Wheel -->
   <script src="wheel.js"></script>
+
+  <!-- Create Post -->
   <script src="create-post.js"></script>
+
+  <!-- Main Home Logic -->
   <script src="home.js"></script>
 
+  <!-- Stories + Posts
+       This file is directly connected
+       to #stories and #feed above.
+  -->
+  <script src="stories-posts.js"></script>
+
+
+  <!-- Icons -->
   <script>
     if (window.lucide) {
       window.lucide.createIcons();
     }
   </script>
+
 </body>
-</html>
+          </html>
