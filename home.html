@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#050507">
-
   <title>ΛRS</title>
 
   <link rel="stylesheet" href="home.css">
@@ -22,12 +21,9 @@
 </head>
 
 <body>
-
   <div class="app-shell">
 
-    <!-- TOP -->
     <header class="topbar">
-
       <button
         id="myAvatar"
         class="top-avatar"
@@ -41,44 +37,34 @@
         ΛRS
       </div>
 
-      <!-- WHEEL -->
       <button
         id="headerWheel"
         class="header-wheel"
         type="button"
         aria-label="Open Wheel"
       >
-        <span class="wheel-mini">
-          <span></span>
+        <span class="wheel-mini" aria-hidden="true">
+          <span class="wheel-mini-core"></span>
         </span>
       </button>
-
     </header>
 
-
-    <!-- STORIES -->
     <section
       class="stories-section"
       aria-label="Stories"
     >
-
       <div
         class="stories-row"
         id="stories"
       ></div>
-
     </section>
 
-
-    <!-- POSTS -->
     <main
       id="feed"
       class="feed"
       aria-label="Posts"
     ></main>
 
-
-    <!-- CREATE -->
     <button
       id="newPost"
       class="new-post-button"
@@ -88,13 +74,10 @@
       <i data-lucide="plus"></i>
     </button>
 
-
-    <!-- BOTTOM NAV -->
     <nav
       class="bottom-nav"
       aria-label="Main navigation"
     >
-
       <button
         class="nav-button active"
         type="button"
@@ -103,7 +86,6 @@
         <i data-lucide="house"></i>
         <span>Home</span>
       </button>
-
 
       <button
         class="nav-button"
@@ -114,7 +96,6 @@
         <span>Search</span>
       </button>
 
-
       <button
         class="nav-button"
         type="button"
@@ -124,7 +105,6 @@
         <span>Trending</span>
       </button>
 
-
       <button
         class="nav-button"
         type="button"
@@ -132,9 +112,8 @@
       >
         <i data-lucide="bell"></i>
         <span>Notifications</span>
-        <b class="nav-dot"></b>
+        <b class="nav-dot" aria-hidden="true"></b>
       </button>
-
 
       <button
         class="nav-button"
@@ -144,19 +123,14 @@
         <i data-lucide="mail"></i>
         <span>Messages</span>
       </button>
-
     </nav>
-
   </div>
 
-
-  <!-- STORY VIEWER -->
   <div
     id="storyViewer"
     class="overlay hidden"
     aria-hidden="true"
   >
-
     <div
       class="overlay-backdrop"
       data-close-story
@@ -168,7 +142,6 @@
       aria-modal="true"
       aria-label="Story"
     >
-
       <button
         id="closeStory"
         class="overlay-close"
@@ -205,19 +178,14 @@
         id="storyViewerText"
         class="viewer-text"
       ></div>
-
     </div>
-
   </div>
 
-
-  <!-- POST DETAIL -->
   <div
     id="postDetail"
     class="overlay hidden"
     aria-hidden="true"
   >
-
     <div
       class="overlay-backdrop"
       data-close-post-detail
@@ -229,9 +197,7 @@
       aria-modal="true"
       aria-label="Post and replies"
     >
-
       <header class="detail-header">
-
         <button
           id="closePostDetail"
           class="overlay-close inline"
@@ -244,33 +210,27 @@
         <h3>Post</h3>
 
         <span></span>
-
       </header>
-
 
       <div
         id="detailPostBody"
         class="detail-post-body"
       ></div>
 
-
       <div class="replies-title">
         <span>Replies</span>
         <b id="replyCount">0</b>
       </div>
-
 
       <div
         id="detailReplies"
         class="detail-replies"
       ></div>
 
-
       <form
         id="replyForm"
         class="reply-form"
       >
-
         <div
           id="replyAvatar"
           class="reply-avatar"
@@ -288,24 +248,18 @@
         <button type="submit">
           Send
         </button>
-
       </form>
-
     </article>
-
   </div>
 
-
-  <!-- SCRIPTS -->
   <script src="wheel.js"></script>
   <script src="create-post.js"></script>
   <script src="home.js"></script>
 
   <script>
- (window.lucide) {
+    if (window.lucide) {
       window.lucide.createIcons();
     }
   </script>
-
 </body>
-        </html>
+</html>
