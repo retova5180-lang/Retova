@@ -5,17 +5,20 @@
   const STORY_KEY = "ars_local_stories";
   const STATE_KEY = "ars_home_state";
 
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const $ = (selector, root = document) => {
+    return root.querySelector(selector);
+  };
 
   const feed = $("#feed");
   const storiesEl = $("#stories");
+
   const postDetail = $("#postDetail");
   const detailPostBody = $("#detailPostBody");
   const detailReplies = $("#detailReplies");
   const replyForm = $("#replyForm");
   const replyInput = $("#replyInput");
   const replyCount = $("#replyCount");
+  const replyAvatar = $("#replyAvatar");
 
   let activePostId = null;
 
@@ -29,7 +32,7 @@
 
   const demoStories = [
     {
-      id: "you",
+      id: "demo-story-you",
       name: "You",
       letter: "R",
       gradient: ["#8b3dff", "#c54dff"],
@@ -37,36 +40,38 @@
       text: "Add your first story."
     },
     {
-      id: "lina",
+      id: "demo-story-lina",
       name: "Lina",
       letter: "L",
       gradient: ["#8b3dff", "#c54dff"],
       text: "Sunset always hits different 💜",
-      image: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=85"
+      image:
+        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=85"
     },
     {
-      id: "noah",
+      id: "demo-story-noah",
       name: "Noah",
       letter: "N",
       gradient: ["#252b38", "#5b6578"],
       text: "Focused on the journey."
     },
     {
-      id: "sara",
+      id: "demo-story-sara",
       name: "Sara",
       letter: "S",
       gradient: ["#8b3dff", "#ee4cff"],
       text: "Weekend mood ✨",
-      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=85"
+      image:
+        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=85"
     },
     {
-      id: "wheel",
+      id: "demo-story-wheel",
       name: "Wheel",
       wheel: true,
       text: "Spin the wheel."
     },
     {
-      id: "apple",
+      id: "demo-story-apple",
       name: "Apple",
       letter: "",
       gradient: ["#09090b", "#44444c"],
@@ -74,7 +79,7 @@
       text: "Apple updates."
     },
     {
-      id: "ferrari",
+      id: "demo-story-ferrari",
       name: "Ferrari",
       letter: "F",
       gradient: ["#f01825", "#721018"],
@@ -82,954 +87,7 @@
       text: "Racing weekend."
     },
     {
-      id: "bmw",
-      name: "BMW",
-      letter: "M",
-      gradient: ["#111111", "#4a4a52"],
-      verified: true,
-      text: "Driven by progress."
-    }
-  ];
-
-  const demoPosts = [
-    {
-      id: "demo-lina",
-      name: "Lina",
-      username: "lina.ae",
-      letter: "L",
-      gradient: ["#8b3dff", "#c54dff"],
-      verified: true,
-      time: "12m",
-      text: "Sunset always hits different 💜 #sunset #mood",
-      image: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
-      likes: 2400,
-      comments: 186,
-      reposts: 312,
-      views: 48000,
-      replies: [
-        {
-          name: "Noah",
-          letter: "N",
-          gradient: ["#252b38", "#5b6578"],
-          text: "This is beautiful 💜",
-          likes: 24
-        },
-        {
-          name: "Sara",
-          letter: "S",
-          gradient: ["#8b3dff", "#ee4cff"],
-          text: "The colors are perfect.",
-          likes: 11
-        }
-      ]
-    },
-    {
-      id: "demo-apple",
-      name: "Apple",
-      username: "apple",
-      letter: "",
-      gradient: ["#0a0a0c", "#3b3b43"],
-      verified: true,
-      time: "28m",
-      text: "Apple Intelligence expands to more languages later this year.",
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
-      likes: 28400,
-      comments: 1800,
-      reposts: 3900,
-      views: 2400000,
-      replies: [
-        {
-          name: "Lina",
-          letter: "L",
-          gradient: ["#8b3dff", "#c54dff"],
-          text: "Huge update.",
-          likes: 19
-        }
-      ]
-    },
-    {
-      id: "demo-noah",
-      name: "Noah",
-      username: "noah.vibes",
-      letter: "N",
-      gradient: ["#17171c", "#51515a"],
-      verified: true,
-      time: "45m",
-      text: "Focused on the journey. #focus #life",
-      image: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=85",
-      likes: 910,
-      comments: 73,
-      reposts: 118,
-      views: 18400,
-      replies: [
-        {
-          name: "Lina",
-          letter: "L",
-          gradient: ["#8b3dff", "#c54dff"],
-          text: "Keep going 🔥",
-          likes: 7
-        }
-      ]
-    },
-    {
-      id: "demo-repost",
-      name: "Sara",
-      username: "sara.vibes",
-      letter: "S",
-      gradient: ["#8b3dff", "#e34dff"],
-      verified: false,
-      time: "1h",
-      text: "Reposted this because it deserved another look. #inspiration",
-      image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
-      likes: 1260,
-      comments: 74,
-      reposts: 31,
-      views: 22000,
-      repostOf: "demo-lina",
-      replies: []
-    }
-  ];
-
-  const esc = value =>
-    String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[char]));
-
-  const fmt = value => {
-    const number = Number(value) || 0;
-
-    if (number >= 1000000) {
-      return (number / 1000000).toFixed(1) + "M";
-    }
-
-    if (number >= 1000) {
-      return (number / 1000).toFixed(1) + "K";
-    }
-
-    return String(number);
-  };
-
-  const read = (key, fallback) => {
-    try {
-      return JSON.parse(localStorage.getItem(key)) ?? fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
-  const write = (key, value) =>
-    localStorage.setItem(key, JSON.stringify(value));
-
-  function user() {
-    try {
-      return JSON.parse(localStorage.getItem("ars_user")) || {};
-    } catch {
-      return {};
-    }
-  }
-
-  function myAvatar() {
-    const u = user();
-
-    return {
-      letter: u.letter || "R",
-      color: u.letterColor || "#8b3dff",
-      background: u.background || "#c54dff",
-      name: u.displayName || "You"
-    };
-  }
-
-  function normalize(post) {
-    return {
-      ...post,
-      likes: Number(post.likes) || 0,
-      comments: Number(post.comments) || 0,
-      reposts: Number(post.reposts) || 0,
-      views: Number(post.views) || 0,
-      replies: Array.isArray(post.replies) ? post.replies : []
-    };
-  }
-
-  function load() {
-    const saved = read(STATE_KEY, {});
-
-    state.liked = new Set(saved.liked || []);
-    state.reposted = new Set(saved.reposted || []);
-    state.saved = new Set(saved.saved || []);
-
-    const localPosts = read(POST_KEY, [])
-      .filter(Boolean)
-      .map(normalize);
-
-    state.posts = [
-      ...localPosts,
-      ...demoPosts
-    ].map(normalize);
-
-    const localStories = read(STORY_KEY, [])
-      .filter(story =>
-        !story.expiresAt ||
-        story.expiresAt > Date.now()
-      );
-
-    state.stories = [
-      ...localStories,
-      ...demoStories
-    ];
-  }
-
-  function saveState() {
-    write(STATE_KEY, {
-      liked: [...state.liked],
-      reposted: [...state.reposted],
-      saved: [...state.saved]
-    });
-  }
-
-  function avatarHTML(person, reply = false) {
-    const gradient =
-      person.gradient ||
-      ["#8b3dff", "#c54dff"];
-
-    const className =
-      reply
-        ? "reply-avatar"
-        : "post-avatar";
-
-    const image =
-      person.avatar ||
-      "";
-
-    return `
-      <div
-        class="${className}"
-        style="background:linear-gradient(135deg,${esc(gradient[0])},${esc(gradient[1])})"
-      >
-        ${
-          image
-            ? `<img src="${esc(image)}" alt="">`
-            : esc(
-                person.letter ||
-                person.name?.[0] ||
-                "Λ"
-              )
-        }
-      </div>
-    `;
-  }
-
-  function textHTML(text) {
-    return esc(text).replace(
-      /(^|\s)(#[a-zA-Z0-9_]+)/g,
-      '$1<span class="hashtag">$2</span>'
-    );
-  }
-
-  function postHTML(post, detail = false) {
-    const liked =
-      state.liked.has(post.id);
-
-    const reposted =
-      state.reposted.has(post.id);
-
-    const saved =
-      state.saved.has(post.id);
-
-    const mediaImage =
-      post.image ||
-      post.images?.[0] ||
-      "";
-
-    const mediaVideo =
-      post.video ||
-      post.videos?.[0] ||
-      "";
-
-    return `
-      <article
-        class="post ${detail ? "detail-post" : "clickable"}"
-        data-post-id="${esc(post.id)}"
-      >
-        <div class="post-header">
-          <div class="post-user">
-            ${avatarHTML(post)}
-
-            <div class="post-info">
-              <div class="post-name">
-                ${esc(post.name)}
-
-                ${
-                  post.verified
-                    ? `
-                      <span class="verify">
-                        <i data-lucide="badge-check"></i>
-                      </span>
-                    `
-                    : ""
-                }
-              </div>
-
-              <div class="post-username">
-                @${esc(post.username)}
-              </div>
-
-              <div class="post-time">
-                ${esc(post.time)}
-              </div>
-            </div>
-          </div>
-
-          <button
-            class="post-more"
-            type="button"
-            data-action="more"
-            aria-label="More"
-          >
-            <i data-lucide="more-horizontal"></i>
-          </button>
-        </div>
-
-        ${
-          post.repostOf
-            ? `
-              <div class="repost-label">
-                <i data-lucide="repeat-2"></i>
-                Reposted
-              </div>
-            `
-            : ""
-        }
-
-        <div class="post-content">
-          ${textHTML(post.text)}
-        </div>
-
-        ${
-          mediaImage
-            ? `
-              <div class="post-image">
-                <img
-                  src="${esc(mediaImage)}"
-                  alt="Post media"
-                  loading="lazy"
-                >
-              </div>
-            `
-            : ""
-        }
-
-        ${
-          mediaVideo
-            ? `
-              <video
-                class="post-video"
-                controls
-                playsinline
-                preload="metadata"
-                src="${esc(mediaVideo)}"
-              ></video>
-            `
-            : ""
-        }
-
-        <div class="post-stats">
-          <span>${fmt(post.likes)} likes</span>
-          <span>${fmt(post.comments)} replies</span>
-          <span>${fmt(post.reposts)} reposts</span>
-          <span>${fmt(post.views)} views</span>
-        </div>
-
-        <div class="post-actions">
-          <div class="post-left-actions">
-            <button
-              class="action ${liked ? "liked" : ""}"
-              data-action="like"
-              type="button"
-            >
-              <i data-lucide="heart"></i>
-              <span>${fmt(post.likes)}</span>
-            </button>
-
-            <button
-              class="action"
-              data-action="reply"
-              type="button"
-            >
-              <i data-lucide="message-circle"></i>
-              <span>${fmt(post.comments)}</span>
-            </button>
-
-            <button
-              class="action ${reposted ? "reposted" : ""}"
-              data-action="repost"
-              type="button"
-            >
-              <i data-lucide="repeat-2"></i>
-              <span>${fmt(post.reposts)}</span>
-            </button>
-
-            <button
-              class="action ${saved ? "saved" : ""}"
-              data-action="save"
-              type="button"
-            >
-              <i data-lucide="bookmark"></i>
-            </button>
-          </div>
-
-          <div class="action-views">
-            <i data-lucide="eye"></i>
-            ${fmt(post.views)}
-          </div>
-        </div>
-      </article>
-    `;
-  }
-
-  function renderStories() {
-    if (!storiesEl) return;
-
-    storiesEl.innerHTML =
-      state.stories
-        .map(story => {
-          if (story.wheel) {
-            return `
-              <button
-                class="story story-wheel"
-                type="button"
-                data-wheel-story
-              >
-                <div class="story-ring">
-                  <div class="story-avatar"></div>
-                </div>
-
-                <div class="story-name">
-                  Wheel
-                </div>
-              </button>
-            `;
-          }
-
-          return `
-            <button
-              class="story ${story.seen ? "seen" : ""} ${story.mine ? "mine" : ""}"
-              type="button"
-              data-story-id="${esc(story.id)}"
-            >
-              <div class="story-ring">
-                <div
-                  class="story-avatar"
-                  style="background:linear-gradient(135deg,${esc(story.gradient?.[0] || "#8b3dff")},${esc(story.gradient?.[1] || "#c54dff")})"
-                >
-                  ${
-                    story.image
-                      ? `<img src="${esc(story.image)}" alt="">`
-                      : esc(
-                          story.letter ||
-                          story.name?.[0] ||
-                          "Λ"
-                        )
-                  }
-                </div>
-              </div>
-
-              ${
-                story.mine
-                  ? `<span class="story-plus">+</span>`
-                  : ""
-              }
-
-              <div class="story-name">
-                ${esc(story.name)}
-              </div>
-            </button>
-          `;
-        })
-        .join("");
-
-    icons();
-  }
-
-  function renderPosts() {
-    if (!feed) return;
-
-    if (!state.posts.length) {
-      feed.innerHTML = `
-        <div class="empty-state">
-          <strong>No posts yet</strong>
-          <span>Create the first post.</span>
-        </div>
-      `;
-      return;
-    }
-
-    feed.innerHTML =
-      state.posts
-        .map(post => postHTML(post))
-        .join("");
-
-    icons();
-  }
-
-  function icons() {
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-  }
-
-  function openStory(id) {
-    const story =
-      state.stories.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
-
-    if (!story) return;
-
-    story.seen = true;
-    renderStories();
-
-    $("#storyViewerName").textContent =
-      story.name;
-
-    $("#storyViewerAvatar").textContent =
-      story.letter ||
-      story.name?.[0] ||
-      "Λ";
-
-    $("#storyViewerAvatar").style.background =
-      `linear-gradient(
-        135deg,
-        ${story.gradient?.[0] || "#8b3dff"},
-        ${story.gradient?.[1] || "#c54dff"}
-      )`;
-
-    const image =
-      $("#storyViewerImage");
-
-    image.style.backgroundImage =
-      story.image
-        ? `url("${story.image}")`
-        : "none";
-
-    $("#storyViewerText").textContent =
-      story.text || "";
-
-    $("#storyViewer")
-      .classList.remove("hidden");
-
-    $("#storyViewer")
-      .setAttribute(
-        "aria-hidden",
-        "false"
-      );
-  }
-
-  function closeStory() {
-    $("#storyViewer")
-      ?.classList.add("hidden");
-
-    $("#storyViewer")
-      ?.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-  }
-
-  function openPost(id) {
-    const post =
-      state.posts.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
-
-    if (!post) return;
-
-    activePostId =
-      post.id;
-
-    detailPostBody.innerHTML =
-      postHTML(
-        post,
-        true
-      );
-
-    const replies =
-      post.replies || [];
-
-    replyCount.textContent =
-      replies.length;
-
-    detailReplies.innerHTML =
-      replies.length
-        ? replies
-            .map(
-              reply => `
-                <div class="reply">
-                  ${avatarHTML(reply, true)}
-
-                  <div class="reply-main">
-                    <div class="reply-name">
-                      ${esc(reply.name)}
-                    </div>
-
-                    <div class="reply-text">
-                      ${esc(reply.text)}
-                    </div>
-
-                    <div class="reply-like">
-                      ♥ ${fmt(reply.likes)}
-                    </div>
-                  </div>
-                </div>
-              `
-            )
-            .join("")
-        : `
-            <div class="empty-state">
-              <strong>No replies yet.</strong>
-              <span>Be the first to reply.</span>
-            </div>
-          `;
-
-    postDetail
-      .classList.remove("hidden");
-
-    postDetail
-      .setAttribute(
-        "aria-hidden",
-        "false"
-      );
-
-    icons();
-  }
-
-  function closePost() {
-    postDetail
-      ?.classList.add("hidden");
-
-    postDetail
-      ?.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-    activePostId = null;
-  }
-
-  function persist(post) {
-    if (
-      !String(post.id)
-        .startsWith("local-")
-    ) {
-      return;
-    }
-
-    const posts =
-      read(
-        POST_KEY,
-        []
-      );
-
-    const index =
-      posts.findIndex(
-        item =>
-          String(item.id) ===
-          String(post.id)
-      );
-
-    if (index >= 0) {
-      posts[index] = post;
-    } else {
-      posts.unshift(post);
-    }
-
-    write(
-      POST_KEY,
-      posts
-    );
-  }
-
-  function action(id, type) {
-    const post =
-      state.posts.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
-
-    if (!post) return;
-
-    if (type === "like") {
-      if (
-        state.liked.has(
-          post.id
-        )
-      ) {
-        state.liked.delete(
-          post.id
-        );
-
-        post.likes =
-          Math.max(
-            0,
-            post.likes - 1
-          );
-      } else {
-        state.liked.add(
-          post.id
-        );
-
-        post.likes += 1;
-      }
-    }
-
-    if (type === "repost") {
-      if (
-        state.reposted.has(
-          post.id
-        )
-      ) {
-        state.reposted.delete(
-          post.id
-        );
-
-        post.reposts =
-          Math.max(
-            0,
-            post.reposts - 1
-          );
-      } else {
-        state.reposted.add(
-          post.id
-        );
-
-        post.reposts += 1;
-      }
-    }
-
-    if (type === "save") {
-      if (
-        state.saved.has(
-          post.id
-        )
-      ) {
-        state.saved.delete(
-          post.id
-        );
-      } else {
-        state.saved.add(
-          post.id
-        );
-      }
-    }
-
-    saveState();
-    persist(post);
-    renderPosts();
-  }
-
-  function addReply(text) {
-    const post =
-      state.posts.find(
-        item =>
-          String(item.id) ===
-          String(activePostId)
-      );
-
-    if (!post || !text.trim()) return;
-
-    const me =
-      myAvatar();
-
-    post.replies =
-      post.replies || [];
-
-    post.replies.push({
-      name: me.name,
-      letter: me.letter,
-      gradient: [
-        me.color,
-        me.background
-      ],
-      text: text.trim(),
-      likes: 0
-    });
-
-    post.comments += 1;
-
-    persist(post);
-    openPost(post.id);
-  }
-
-  document.addEventListener(
-    "click",
-    event => {
-      const wheelStory =
-        event.target.closest(
-          "[data-wheel-story]"
-        );
-
-      if (wheelStory) {
-        window.openWheel?.();
-        return;
-      }
-
-      const story =
-        event.target.closest(
-          "[data-story-id]"
-        );
-
-      if (story) {
-        openStory(
-          story.dataset.storyId
-        );
-        return;
-      }
-
-      const post =
-        event.target.closest(
-          ".post"
-        );
-
-      if (!post) return;
-
-      const clickedAction =
-        event.target.closest(
-          "[data-action]"
-        );
-
-      const actionName =
-        clickedAction?.dataset.action;
-
-      if (actionName) {
-        event.stopPropagation();
-
-        if (actionName === "reply") {
-          openPost(
-            post.dataset.postId
-          );
-        } else if (
-          actionName !== "more"
-        ) {
-          action(
-            post.dataset.postId,
-            actionName
-          );
-        }
-
-        return;
-      }
-
-      if (
-        post.classList.contains(
-          "clickable"
-        )
-      ) {
-        openPost(
-          post.dataset.postId
-        );
-      }
-    }
-  );
-
-  $("#headerWheel")
-    ?.addEventListener(
-      "click",
-      () => window.ope
-(() => {
-  "use strict";
-
-  const POST_KEY = "ars_local_posts";
-  const STORY_KEY = "ars_local_stories";
-  const STATE_KEY = "ars_home_state";
-
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-
-  const feed = $("#feed");
-  const storiesEl = $("#stories");
-  const postDetail = $("#postDetail");
-  const detailPostBody = $("#detailPostBody");
-  const detailReplies = $("#detailReplies");
-  const replyForm = $("#replyForm");
-  const replyInput = $("#replyInput");
-  const replyCount = $("#replyCount");
-
-  let activePostId = null;
-
-  const state = {
-    posts: [],
-    stories: [],
-    liked: new Set(),
-    reposted: new Set(),
-    saved: new Set()
-  };
-
-  const demoStories = [
-    {
-      id: "you",
-      name: "You",
-      letter: "R",
-      gradient: ["#8b3dff", "#c54dff"],
-      mine: true,
-      text: "Add your first story."
-    },
-    {
-      id: "lina",
-      name: "Lina",
-      letter: "L",
-      gradient: ["#8b3dff", "#c54dff"],
-      text: "Sunset always hits different 💜",
-      image:
-        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=85"
-    },
-    {
-      id: "noah",
-      name: "Noah",
-      letter: "N",
-      gradient: ["#252b38", "#5b6578"],
-      text: "Focused on the journey."
-    },
-    {
-      id: "sara",
-      name: "Sara",
-      letter: "S",
-      gradient: ["#8b3dff", "#ee4cff"],
-      text: "Weekend mood ✨",
-      image:
-        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=85"
-    },
-    {
-      id: "wheel",
-      name: "Wheel",
-      wheel: true,
-      text: "Spin the wheel."
-    },
-    {
-      id: "apple",
-      name: "Apple",
-      letter: "",
-      gradient: ["#09090b", "#44444c"],
-      verified: true,
-      text: "Apple updates."
-    },
-    {
-      id: "ferrari",
-      name: "Ferrari",
-      letter: "F",
-      gradient: ["#f01825", "#721018"],
-      verified: true,
-      text: "Racing weekend."
-    },
-    {
-      id: "bmw",
+      id: "demo-story-bmw",
       name: "BMW",
       letter: "M",
       gradient: ["#111111", "#4a4a52"],
@@ -1079,7 +137,8 @@
       gradient: ["#0a0a0c", "#3b3b43"],
       verified: true,
       time: "28m",
-      text: "Apple Intelligence expands to more languages later this year.",
+      text:
+        "Apple Intelligence expands to more languages later this year.",
       image:
         "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
       likes: 28400,
@@ -1129,7 +188,8 @@
       gradient: ["#8b3dff", "#e34dff"],
       verified: false,
       time: "1h",
-      text: "Reposted this because it deserved another look. #inspiration",
+      text:
+        "Reposted this because it deserved another look. #inspiration",
       image:
         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
       likes: 1260,
@@ -1141,91 +201,151 @@
     }
   ];
 
-  const esc = value =>
-    String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[char]));
+  function escapeHTML(value) {
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      (character) => {
+        const map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        };
 
-  const fmt = value => {
+        return map[character];
+      }
+    );
+  }
+
+  function formatNumber(value) {
     const number = Number(value) || 0;
 
     if (number >= 1000000) {
-      return (number / 1000000).toFixed(1) + "M";
+      return `${(number / 1000000).toFixed(1)}M`;
     }
 
     if (number >= 1000) {
-      return (number / 1000).toFixed(1) + "K";
+      return `${(number / 1000).toFixed(1)}K`;
     }
 
     return String(number);
-  };
+  }
 
-  const read = (key, fallback) => {
+  function readStorage(key, fallback) {
     try {
-      return JSON.parse(localStorage.getItem(key)) ?? fallback;
+      const value = localStorage.getItem(key);
+
+      if (!value) {
+        return fallback;
+      }
+
+      return JSON.parse(value);
     } catch {
       return fallback;
     }
-  };
+  }
 
-  const write = (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
-  };
-
-  function user() {
+  function writeStorage(key, value) {
     try {
-      return JSON.parse(localStorage.getItem("ars_user")) || {};
+      localStorage.setItem(
+        key,
+        JSON.stringify(value)
+      );
+    } catch {
+      return;
+    }
+  }
+
+  function getUser() {
+    try {
+      return (
+        JSON.parse(
+          localStorage.getItem("ars_user")
+        ) || {}
+      );
     } catch {
       return {};
     }
   }
 
-  function myAvatar() {
-    const u = user();
+  function getMyAvatar() {
+    const user = getUser();
 
     return {
-      letter: u.letter || "R",
-      color: u.letterColor || "#8b3dff",
-      background: u.background || "#c54dff",
-      name: u.displayName || "You"
+      name: user.displayName || "You",
+      username: user.username || "you",
+      letter: user.letter || "R",
+      avatar: user.avatar || "",
+      letterColor:
+        user.letterColor || "#8b3dff",
+      background:
+        user.background || "#c54dff"
     };
   }
 
-  function normalize(post) {
+  function normalizePost(post) {
     return {
       ...post,
       likes: Number(post.likes) || 0,
       comments: Number(post.comments) || 0,
       reposts: Number(post.reposts) || 0,
       views: Number(post.views) || 0,
-      replies: Array.isArray(post.replies) ? post.replies : []
+      replies: Array.isArray(post.replies)
+        ? post.replies
+        : []
     };
   }
 
-  function load() {
-    const saved = read(STATE_KEY, {});
+  function loadState() {
+    const savedState =
+      readStorage(
+        STATE_KEY,
+        {}
+      );
 
-    state.liked = new Set(saved.liked || []);
-    state.reposted = new Set(saved.reposted || []);
-    state.saved = new Set(saved.saved || []);
+    state.liked = new Set(
+      Array.isArray(savedState.liked)
+        ? savedState.liked
+        : []
+    );
 
-    const localPosts = read(POST_KEY, [])
-      .filter(Boolean)
-      .map(normalize);
+    state.reposted = new Set(
+      Array.isArray(savedState.reposted)
+        ? savedState.reposted
+        : []
+    );
+
+    state.saved = new Set(
+      Array.isArray(savedState.saved)
+        ? savedState.saved
+        : []
+    );
+
+    const localPosts =
+      readStorage(
+        POST_KEY,
+        []
+      )
+        .filter(Boolean)
+        .map(normalizePost);
 
     state.posts = [
       ...localPosts,
       ...demoPosts
-    ].map(normalize);
+    ].map(normalizePost);
 
-    const localStories = read(STORY_KEY, [])
-      .filter(story => {
-        return !story.expiresAt || story.expiresAt > Date.now();
-      });
+    const now = Date.now();
+
+    const localStories =
+      readStorage(
+        STORY_KEY,
+        []
+      ).filter(
+        (story) =>
+          !story.expiresAt ||
+          Number(story.expiresAt) > now
+      );
 
     state.stories = [
       ...localStories,
@@ -1234,52 +354,175 @@
   }
 
   function saveState() {
-    write(STATE_KEY, {
-      liked: [...state.liked],
-      reposted: [...state.reposted],
-      saved: [...state.saved]
-    });
+    writeStorage(
+      STATE_KEY,
+      {
+        liked: [...state.liked],
+        reposted: [...state.reposted],
+        saved: [...state.saved]
+      }
+    );
+  }
+
+  function saveLocalPost(post) {
+    if (
+      !String(post.id).startsWith("post-")
+    ) {
+      return;
+    }
+
+    const posts =
+      readStorage(
+        POST_KEY,
+        []
+      );
+
+    const index =
+      posts.findIndex(
+        (item) =>
+          String(item.id) ===
+          String(post.id)
+      );
+
+    if (index >= 0) {
+      posts[index] = post;
+    } else {
+      posts.unshift(post);
+    }
+
+    writeStorage(
+      POST_KEY,
+      posts
+    );
   }
 
   function avatarHTML(person, reply = false) {
     const gradient =
-      person.gradient ||
-      ["#8b3dff", "#c54dff"];
+      Array.isArray(person.gradient)
+        ? person.gradient
+        : ["#8b3dff", "#c54dff"];
 
     const className =
       reply
         ? "reply-avatar"
         : "post-avatar";
 
-    const image =
-      person.avatar ||
-      "";
+    if (person.avatar) {
+      return `
+        <div
+          class="${className}"
+          style="background:linear-gradient(135deg,${escapeHTML(
+            gradient[0]
+          )},${escapeHTML(gradient[1])})"
+        >
+          <img
+            src="${escapeHTML(person.avatar)}"
+            alt=""
+          >
+        </div>
+      `;
+    }
 
     return `
       <div
         class="${className}"
-        style="background:linear-gradient(135deg,${esc(
+        style="background:linear-gradient(135deg,${escapeHTML(
           gradient[0]
-        )},${esc(gradient[1])})"
+        )},${escapeHTML(gradient[1])})"
       >
-        ${
-          image
-            ? `<img src="${esc(image)}" alt="">`
-            : esc(
-                person.letter ||
-                person.name?.[0] ||
-                "Λ"
-              )
-        }
+        ${escapeHTML(
+          person.letter ||
+          person.name?.[0] ||
+          "Λ"
+        )}
       </div>
     `;
   }
 
   function textHTML(text) {
-    return esc(text).replace(
+    return escapeHTML(text).replace(
       /(^|\s)(#[a-zA-Z0-9_]+)/g,
-      '$1<span class="hashtag">$2</span>'
+      "$1<span class=\"hashtag\">$2</span>"
     );
+  }
+
+  function mediaHTML(post) {
+    const images = [];
+
+    if (post.image) {
+      images.push({
+        type: "image",
+        data: post.image
+      });
+    }
+
+    if (Array.isArray(post.images)) {
+      post.images.forEach(
+        (image) => {
+          if (image) {
+            images.push({
+              type: "image",
+              data: image
+            });
+          }
+        }
+      );
+    }
+
+    if (post.video) {
+      images.push({
+        type: "video",
+        data: post.video
+      });
+    }
+
+    if (Array.isArray(post.videos)) {
+      post.videos.forEach(
+        (video) => {
+          if (video) {
+            images.push({
+              type: "video",
+              data: video
+            });
+          }
+        }
+      );
+    }
+
+    const uniqueMedia =
+      images.filter(
+        (item, index, array) =>
+          array.findIndex(
+            (other) =>
+              other.data === item.data
+          ) === index
+      );
+
+    return uniqueMedia
+      .map((media) => {
+        if (media.type === "video") {
+          return `
+            <video
+              class="post-video"
+              controls
+              playsinline
+              preload="metadata"
+              src="${escapeHTML(media.data)}"
+            ></video>
+          `;
+        }
+
+        return `
+          <div class="post-image">
+            <img
+              src="${escapeHTML(media.data)}"
+              alt="Post media"
+              loading="lazy"
+            >
+          </div>
+        `;
+      })
+      .join("");
   }
 
   function postHTML(post, detail = false) {
@@ -1292,28 +535,22 @@
     const saved =
       state.saved.has(post.id);
 
-    const mediaImage =
-      post.image ||
-      post.images?.[0] ||
-      "";
-
-    const mediaVideo =
-      post.video ||
-      post.videos?.[0] ||
-      "";
-
     return `
       <article
         class="post ${detail ? "detail-post" : "clickable"}"
-        data-post-id="${esc(post.id)}"
+        data-post-id="${escapeHTML(post.id)}"
       >
+
         <div class="post-header">
+
           <div class="post-user">
             ${avatarHTML(post)}
 
             <div class="post-info">
+
               <div class="post-name">
-                ${esc(post.name)}
+
+                ${escapeHTML(post.name)}
 
                 ${
                   post.verified
@@ -1324,15 +561,31 @@
                     `
                     : ""
                 }
+
+                ${
+                  post.vip
+                    ? `
+                      <span class="vip">
+                        VIP
+                      </span>
+                    `
+                    : ""
+                }
+
               </div>
 
               <div class="post-username">
-                @${esc(post.username)}
+                @${escapeHTML(
+                  post.username || "user"
+                )}
               </div>
 
               <div class="post-time">
-                ${esc(post.time)}
+                ${escapeHTML(
+                  post.time || "now"
+                )}
               </div>
+
             </div>
           </div>
 
@@ -1344,6 +597,7 @@
           >
             <i data-lucide="more-horizontal"></i>
           </button>
+
         </div>
 
         ${
@@ -1358,97 +612,96 @@
         }
 
         <div class="post-content">
-          ${textHTML(post.text)}
+          ${textHTML(post.text || "")}
         </div>
 
-        ${
-          mediaImage
-            ? `
-              <div class="post-image">
-                <img
-                  src="${esc(mediaImage)}"
-                  alt="Post media"
-                  loading="lazy"
-                >
-              </div>
-            `
-            : ""
-        }
-
-        ${
-          mediaVideo
-            ? `
-              <video
-                class="post-video"
-                controls
-                playsinline
-                preload="metadata"
-                src="${esc(mediaVideo)}"
-              ></video>
-            `
-            : ""
-        }
+        ${mediaHTML(post)}
 
         <div class="post-stats">
-          <span>${fmt(post.likes)} likes</span>
-          <span>${fmt(post.comments)} replies</span>
-          <span>${fmt(post.reposts)} reposts</span>
-          <span>${fmt(post.views)} views</span>
+          <span>
+            ${formatNumber(post.likes)} likes
+          </span>
+
+          <span>
+            ${formatNumber(post.comments)} replies
+          </span>
+
+          <span>
+            ${formatNumber(post.reposts)} reposts
+          </span>
+
+          <span>
+            ${formatNumber(post.views)} views
+          </span>
         </div>
 
         <div class="post-actions">
+
           <div class="post-left-actions">
+
             <button
               class="action ${liked ? "liked" : ""}"
-              data-action="like"
               type="button"
+              data-action="like"
             >
               <i data-lucide="heart"></i>
-              <span>${fmt(post.likes)}</span>
+              <span>
+                ${formatNumber(post.likes)}
+              </span>
             </button>
 
             <button
               class="action"
-              data-action="reply"
               type="button"
+              data-action="reply"
             >
               <i data-lucide="message-circle"></i>
-              <span>${fmt(post.comments)}</span>
+              <span>
+                ${formatNumber(post.comments)}
+              </span>
             </button>
 
             <button
               class="action ${reposted ? "reposted" : ""}"
-              data-action="repost"
               type="button"
+              data-action="repost"
             >
               <i data-lucide="repeat-2"></i>
-              <span>${fmt(post.reposts)}</span>
+              <span>
+                ${formatNumber(post.reposts)}
+              </span>
             </button>
 
             <button
               class="action ${saved ? "saved" : ""}"
-              data-action="save"
               type="button"
+              data-action="save"
+              aria-label="Save"
             >
               <i data-lucide="bookmark"></i>
             </button>
+
           </div>
 
           <div class="action-views">
             <i data-lucide="eye"></i>
-            ${fmt(post.views)}
+            ${formatNumber(post.views)}
           </div>
+
         </div>
+
       </article>
     `;
   }
 
   function renderStories() {
-    if (!storiesEl) return;
+    if (!storiesEl) {
+      return;
+    }
 
     storiesEl.innerHTML =
       state.stories
-        .map(story => {
+        .map((story) => {
           if (story.wheel) {
             return `
               <button
@@ -1467,208 +720,223 @@
             `;
           }
 
+          const gradient =
+            Array.isArray(story.gradient)
+              ? story.gradient
+              : ["#8b3dff", "#c54dff"];
+
           return `
             <button
-              class="story ${story.seen ? "seen" : ""} ${
-                story.mine ? "mine" : ""
+              class="story ${
+                story.seen
+                  ? "seen"
+                  : ""
+              } ${
+                story.mine
+                  ? "mine"
+                  : ""
               }"
               type="button"
-              data-story-id="${esc(story.id)}"
+              data-story-id="${escapeHTML(
+                story.id
+              )}"
             >
+
               <div class="story-ring">
+
                 <div
                   class="story-avatar"
-                  style="background:linear-gradient(
-                    135deg,
-                    ${esc(story.gradient?.[0] || "#8b3dff")},
-                    ${esc(story.gradient?.[1] || "#c54dff")}
-                  )"
+                  style="background:linear-gradient(135deg,${escapeHTML(
+                    gradient[0]
+                  )},${escapeHTML(
+                    gradient[1]
+                  )})"
                 >
+
                   ${
-                    story.image
-                      ? `<img src="${esc(story.image)}" alt="">`
-                      : esc(
+                    story.avatar
+                      ? `
+                        <img
+                          src="${escapeHTML(
+                            story.avatar
+                          )}"
+                          alt=""
+                        >
+                      `
+                      : escapeHTML(
                           story.letter ||
                           story.name?.[0] ||
                           "Λ"
                         )
                   }
+
                 </div>
+
               </div>
 
               ${
                 story.mine
-                  ? `<span class="story-plus">+</span>`
+                  ? `
+                    <span class="story-plus">
+                      +
+                    </span>
+                  `
                   : ""
               }
 
               <div class="story-name">
-                ${esc(story.name)}
+                ${escapeHTML(
+                  story.name
+                )}
               </div>
+
             </button>
           `;
         })
         .join("");
 
-    icons();
+    refreshIcons();
   }
 
   function renderPosts() {
-    if (!feed) return;
+    if (!feed) {
+      return;
+    }
 
     if (!state.posts.length) {
       feed.innerHTML = `
         <div class="empty-state">
           <strong>No posts yet</strong>
-          <span>Create the first post.</span>
+          <span>
+            Create the first post.
+          </span>
         </div>
       `;
+
       return;
     }
 
     feed.innerHTML =
       state.posts
-        .map(post => postHTML(post))
+        .map(
+          (post) =>
+            postHTML(post)
+        )
         .join("");
 
-    icons();
+    refreshIcons();
   }
 
-  function icons() {
-    if (window.lucide) {
+  function refreshIcons() {
+    if (
+      window.lucide &&
+      typeof window.lucide.createIcons ===
+        "function"
+    ) {
       window.lucide.createIcons();
     }
   }
 
-  function openStory(id) {
-    const story =
-      state.stories.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
+  function renderReply(reply) {
+    return `
+      <div class="reply">
 
-    if (!story) return;
+        ${avatarHTML(
+          reply,
+          true
+        )}
 
-    story.seen = true;
-    renderStories();
+        <div class="reply-body">
 
-    const viewerName = $("#storyViewerName");
-    const viewerAvatar = $("#storyViewerAvatar");
-    const viewerImage = $("#storyViewerImage");
-    const viewerText = $("#storyViewerText");
-    const viewer = $("#storyViewer");
+          <div class="reply-name">
+            ${escapeHTML(
+              reply.name || "User"
+            )}
+          </div>
 
-    if (!viewerName || !viewerAvatar || !viewerImage || !viewerText || !viewer) {
-      return;
-    }
+          <div class="reply-text">
+            ${escapeHTML(
+              reply.text || ""
+            )}
+          </div>
 
-    viewerName.textContent = story.name;
+          <div class="reply-likes">
+            ${formatNumber(
+              reply.likes
+            )} likes
+          </div>
 
-    viewerAvatar.textContent =
-      story.letter ||
-      story.name?.[0] ||
-      "Λ";
+        </div>
 
-    viewerAvatar.style.background =
-      `linear-gradient(
-        135deg,
-        ${story.gradient?.[0] || "#8b3dff"},
-        ${story.gradient?.[1] || "#c54dff"}
-      )`;
-
-    viewerImage.style.backgroundImage =
-      story.image
-        ? `url("${story.image}")`
-        : "none";
-
-    viewerText.textContent =
-      story.text || "";
-
-    viewer.classList.remove("hidden");
-    viewer.setAttribute("aria-hidden", "false");
+      </div>
+    `;
   }
 
-  function closeStory() {
-    const viewer = $("#storyViewer");
-
-    if (!viewer) return;
-
-    viewer.classList.add("hidden");
-    viewer.setAttribute("aria-hidden", "true");
-  }
-
-  function openPost(id) {
+  function openPost(postId) {
     const post =
       state.posts.find(
-        item =>
+        (item) =>
           String(item.id) ===
-          String(id)
+          String(postId)
       );
 
-    if (!post) return;
-
-    if (!detailPostBody || !detailReplies || !replyCount || !postDetail) {
+    if (!post || !postDetail) {
       return;
     }
 
     activePostId = post.id;
 
-    detailPostBody.innerHTML =
-      postHTML(post, true);
-
-    const replies =
-      post.replies || [];
-
-    replyCount.textContent =
-      replies.length;
-
-    detailReplies.innerHTML =
-      replies.length
-        ? replies
-            .map(
-              reply => `
-                <div class="reply">
-                  ${avatarHTML(reply, true)}
-
-                  <div class="reply-main">
-                    <div class="reply-name">
-                      ${esc(reply.name)}
-                    </div>
-
-                    <div class="reply-text">
-                      ${esc(reply.text)}
-                    </div>
-
-                    <div class="reply-like">
-                      ♥ ${fmt(reply.likes)}
-                    </div>
-                  </div>
-                </div>
-              `
-            )
-            .join("")
-        : `
-            <div class="empty-state">
-              <strong>No replies yet.</strong>
-              <span>Be the first to reply.</span>
-            </div>
-          `;
-
-    postDetail.classList.remove("hidden");
+    postDetail.classList.remove(
+      "hidden"
+    );
 
     postDetail.setAttribute(
       "aria-hidden",
       "false"
     );
 
-    icons();
+    if (detailPostBody) {
+      detailPostBody.innerHTML =
+        postHTML(
+          post,
+          true
+        );
+    }
+
+    if (detailReplies) {
+      detailReplies.innerHTML =
+        post.replies.length
+          ? post.replies
+              .map(renderReply)
+              .join("")
+          : `
+            <div class="empty-state">
+              <span>
+                No replies yet.
+              </span>
+            </div>
+          `;
+    }
+
+    if (replyCount) {
+      replyCount.textContent =
+        String(
+          post.replies.length
+        );
+    }
+
+    updateReplyAvatar();
+    refreshIcons();
   }
 
   function closePost() {
-    if (!postDetail) return;
+    if (!postDetail) {
+      return;
+    }
 
-    postDetail.classList.add("hidden");
+    postDetail.classList.add(
+      "hidden"
+    );
 
     postDetail.setAttribute(
       "aria-hidden",
@@ -1678,196 +946,23 @@
     activePostId = null;
   }
 
-  function persist(post) {
-    if (
-      !String(post.id)
-        .startsWith("local-")
-    ) {
+  function openStory(storyId) {
+    const story =
+      state.stories.find(
+        (item) =>
+          String(item.id) ===
+          String(storyId)
+      );
+
+    if (!story) {
       return;
     }
 
-    const posts =
-      read(
-        POST_KEY,
-        []
-      );
+    story.seen = true;
 
-    const index =
-      posts.findIndex(
-        item =>
-          String(item.id) ===
-          String(post.id)
-      );
+    renderStories();
 
-    if (index >= 0) {
-      posts[index] = post;
-    } else {
-      posts.unshift(post);
-    }
+    const viewer =
+      $("#storyViewer");
 
-    write(
-      POST_KEY,
-      posts
-    );
-  }
-
-  function action(id, type) {
-    const post =
-      state.posts.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
-
-    if (!post) return;
-
-    if (type === "like") {
-      if (
-        state.liked.has(
-          post.id
-        )
-      ) {
-        state.liked.delete(
-          post.id
-        );
-
-        post.likes =
-          Math.max(
-            0,
-            post.likes - 1
-          );
-      } else {
-        state.liked.add(
-          post.id
-        );
-
-        post.likes += 1;
-      }
-    }
-
-    if (type === "repost") {
-      if (
-        state.reposted.has(
-          post.id
-        )
-      ) {
-        state.reposted.delete(
-          post.id
-        );
-
-        post.reposts =
-          Math.max(
-            0,
-            post.reposts - 1
-          );
-      } else {
-        state.reposted.add(
-          post.id
-        );
-
-        post.reposts += 1;
-      }
-    }
-
-    if (type === "save") {
-      if (
-        state.saved.has(
-          post.id
-        )
-      ) {
-        state.saved.delete(
-          post.id
-        );
-      } else {
-        state.saved.add(
-          post.id
-        );
-      }
-    }
-
-    saveState();
-    persist(post);
-    renderPosts();
-  }
-
-  function addReply(text) {
-    const post =
-      state.posts.find(
-        item =>
-          String(item.id) ===
-          String(activePostId)
-      );
-
-    if (!post || !text.trim()) return;
-
-    const me =
-      myAvatar();
-
-    post.replies =
-      post.replies || [];
-
-    post.replies.push({
-      name: me.name,
-      letter: me.letter,
-      gradient: [
-        me.color,
-        me.background
-      ],
-      text: text.trim(),
-      likes: 0
-    });
-
-    post.comments += 1;
-
-    persist(post);
-    openPost(post.id);
-  }
-
-  document.addEventListener(
-    "click",
-    event => {
-      const wheelStory =
-        event.target.closest(
-          "[data-wheel-story]"
-        );
-
-      if (wheelStory) {
-        window.openWheel?.();
-        return;
-      }
-
-      const story =
-        event.target.closest(
-          "[data-story-id]"
-        );
-
-      if (story) {
-        openStory(
-          story.dataset.storyId
-        );
-        return;
-      }
-
-      const post =
-        event.target.closest(
-          ".post"
-        );
-
-      if (!post) return;
-
-      const clickedAction =
-        event.target.closest(
-          "[data-action]"
-        );
-
-      const actionName =
-        clickedAction?.dataset.action;
-
-      if (actionName) {
-        event.stopPropagation();
-
-        if (actionName === "reply") {
-          openPost(
-            post.dataset.postId
-          );
-       
+    const vi 
