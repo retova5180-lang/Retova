@@ -18,37 +18,13 @@
       window.ARSHome.renderPosts();
     }
 
-    if (window.lucide) {
+    if (
+      window.lucide &&
+      typeof window.lucide.createIcons ===
+        "function"
+    ) {
       window.lucide.createIcons();
     }
-  }
-
-  function start() {
-    refresh();
-
-    document.addEventListener(
-      "ars:post-created",
-      refresh
-    );
-
-    document.addEventListener(
-      "ars:story-created",
-      refresh
-    );
-
-    window.addEventListener(
-      "storage",
-      event => {
-        if (
-          event.key ===
-            "ars_local_posts" ||
-          event.key ===
-            "ars_local_stories"
-        ) {
-          refresh();
-        }
-      }
-    );
   }
 
   if (
@@ -57,12 +33,38 @@
   ) {
     document.addEventListener(
       "DOMContentLoaded",
-      start,
-      { once: true }
+      refresh,
+      {
+        once: true
+      }
     );
   } else {
-    start();
+    refresh();
   }
+
+  document.addEventListener(
+    "ars:post-created",
+    refresh
+  );
+
+  document.addEventListener(
+    "ars:story-created",
+    refresh
+  );
+
+  window.addEventListener(
+    "storage",
+    (event) => {
+      if (
+        event.key ===
+          "ars_local_posts" ||
+        event.key ===
+          "ars_local_stories"
+      ) {
+        refresh();
+      }
+    }
+  );
 
   window.ARSStoriesPosts = {
     refresh
