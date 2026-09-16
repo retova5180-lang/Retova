@@ -7,13 +7,20 @@
   const STORY_KEY =
     "ars_local_stories";
 
-  let selectedType = "post";
+  let selectedType =
+    "post";
+
   let selectedFiles = [];
 
-  function read(key, fallback) {
+  function read(
+    key,
+    fallback
+  ) {
     try {
       const value =
-        localStorage.getItem(key);
+        localStorage.getItem(
+          key
+        );
 
       return value
         ? JSON.parse(value)
@@ -23,21 +30,49 @@
     }
   }
 
-  function write(key, value) {
+  function write(
+    key,
+    value
+  ) {
     try {
       localStorage.setItem(
         key,
         JSON.stringify(value)
       );
     } catch {
-      // Ignore storage errors.
+      return;
     }
   }
 
-  function createId(prefix) {
+  function escapeHTML(
+    value
+  ) {
+    return String(
+      value ?? ""
+    ).replace(
+      /[&<>"']/g,
+      (character) => {
+        const map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        };
+
+        return map[
+          character
+        ];
+      }
+    );
+  }
+
+  function createId(
+    prefix
+  ) {
     return `${prefix}-${Date.now()}-${Math.random()
       .toString(36)
-      .slice(2, 8)}`;
+      .slice(2, 9)}`;
   }
 
   function getUser() {
@@ -54,6 +89,16 @@
     }
   }
 
+  function refreshIcons() {
+    if (
+      window.lucide &&
+      typeof window.lucide.createIcons ===
+        "function"
+    ) {
+      window.lucide.createIcons();
+    }
+  }
+
   function buildScreen() {
     if (
       document.getElementById(
@@ -64,7 +109,9 @@
     }
 
     const screen =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     screen.id =
       "createPostScreen";
@@ -137,14 +184,18 @@
               R
             </div>
 
-            <div>
-              <strong id="createUserName">
+            <div class="create-user-info">
+
+              <strong
+                id="createUserName"
+              >
                 You
               </strong>
 
               <span>
                 Share with ΛRS
               </span>
+
             </div>
 
           </div>
@@ -209,10 +260,14 @@
       </section>
     `;
 
-    document.body.appendChild(screen);
+    document.body.appendChild(
+      screen
+    );
 
     bindEvents();
     updateUserPreview();
+    updatePlaceholder();
+    updateNotice();
     refreshIcons();
   }
 
@@ -226,44 +281,52 @@
       ?.querySelectorAll(
         "[data-create-close]"
       )
-      .forEach(button => {
-        button.addEventListener(
-          "click",
-          closeCreatePost
-        );
-      });
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            closeCreatePost
+          );
+        }
+      );
 
     screen
       ?.querySelectorAll(
         "[data-create-type]"
       )
-      .forEach(button => {
-        button.addEventListener(
-          "click",
-          () => {
-            selectedType =
-              button.dataset.createType ||
-              "post";
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              selectedType =
+                button.dataset
+                  .createType ===
+                "story"
+                  ? "story"
+                  : "post";
 
-            screen
-              .querySelectorAll(
-                "[data-create-type]"
-              )
-              .forEach(item =>
-                item.classList.remove(
-                  "active"
+              screen
+                .querySelectorAll(
+                  "[data-create-type]"
                 )
-              );
+                .forEach(
+                  (item) => {
+                    item.classList.toggle(
+                      "active",
+                      item.dataset
+                        .createType ===
+                        selectedType
+                    );
+                  }
+                );
 
-            button.classList.add(
-              "active"
-            );
-
-            updatePlaceholder();
-            updateNotice();
-          }
-        );
-      });
+              updatePlaceholder();
+              updateNotice();
+            }
+          );
+        }
+      );
 
     document
       .getElementById(
@@ -271,14 +334,18 @@
       )
       ?.addEventListener(
         "change",
-        event => {
+        (event) => {
           const files =
-            [...(
-              event.target.files || []
-            )];
+            Array.from(
+              event.target.files ||
+                []
+            );
 
           selectedFiles =
-            files.slice(0, 6);
+            files.slice(
+              0,
+              6
+            );
 
           renderMediaPreview();
         }
@@ -300,7 +367,9 @@
       ?.addEventListener(
         "click",
         () => {
-          insertText("✨ ");
+          insertText(
+            "✨ "
+          );
         }
       );
 
@@ -311,23 +380,26 @@
       ?.addEventListener(
         "click",
         () => {
-          insertText("#");
+          insertText(
+            "#"
+          );
         }
       );
   }
 
   function updatePlaceholder() {
-    const input =
+    const textarea =
       document.getElementById(
         "createText"
       );
 
-    if (!input) {
+    if (!textarea) {
       return;
     }
 
-    input.placeholder =
-      selectedType === "story"
+    textarea.placeholder =
+      selectedType ===
+      "story"
         ? "Add something to your story..."
         : "What's happening?";
   }
@@ -343,7 +415,8 @@
     }
 
     notice.textContent =
-      selectedType === "story"
+      selectedType ===
+      "story"
         ? "Stories disappear after 24 hours."
         : "You can add photos or videos to your post.";
   }
@@ -372,13 +445,25 @@
       return;
     }
 
-    if (user.avatar) {
-      avatar.innerHTML = `
-        <img
-          src="${escapeHTML(user.avatar)}"
-          alt=""
-        >
-      `;
+    avatar.innerHTML =
+      "";
+
+    if (
+      user.avatar
+    ) {
+      const image =
+        document.createElement(
+          "img"
+        );
+
+      image.src =
+        user.avatar;
+
+      image.alt = "";
+
+      avatar.appendChild(
+        image
+      );
 
       avatar.style.background =
         "#18181d";
@@ -387,23 +472,20 @@
     }
 
     avatar.textContent =
-      user.letter || "R";
+      user.letter ||
+      "R";
 
     avatar.style.background =
       `linear-gradient(
         135deg,
-        ${escapeHTML(
-          user.letterColor ||
-          "#8b3dff"
-        )},
-        ${escapeHTML(
-          user.background ||
-          "#c54dff"
-        )}
+        ${user.letterColor || "#8b3dff"},
+        ${user.background || "#c54dff"}
       )`;
   }
 
-  function insertText(text) {
+  function insertText(
+    text
+  ) {
     const textarea =
       document.getElementById(
         "createText"
@@ -434,8 +516,12 @@
     textarea.focus();
 
     textarea.selectionStart =
-      textarea.selectionEnd =
-        start + text.length;
+      start +
+      text.length;
+
+    textarea.selectionEnd =
+      start +
+      text.length;
   }
 
   function renderMediaPreview() {
@@ -448,7 +534,8 @@
       return;
     }
 
-    preview.innerHTML = "";
+    preview.innerHTML =
+      "";
 
     selectedFiles.forEach(
       (file, index) => {
@@ -465,10 +552,14 @@
             "button"
           );
 
-        remove.type = "button";
+        remove.type =
+          "button";
+
         remove.className =
           "create-media-remove";
-        remove.textContent = "×";
+
+        remove.textContent =
+          "×";
 
         remove.addEventListener(
           "click",
@@ -483,27 +574,47 @@
         );
 
         const url =
-          URL.createObjectURL(file);
+          URL.createObjectURL(
+            file
+          );
 
         if (
           file.type.startsWith(
             "video/"
           )
         ) {
-          item.innerHTML = `
-            <video
-              src="${url}"
-              muted
-              playsinline
-            ></video>
-          `;
+          const video =
+            document.createElement(
+              "video"
+            );
+
+          video.src =
+            url;
+
+          video.muted =
+            true;
+
+          video.playsInline =
+            true;
+
+          item.appendChild(
+            video
+          );
         } else {
-          item.innerHTML = `
-            <img
-              src="${url}"
-              alt=""
-            >
-          `;
+          const image =
+            document.createElement(
+              "img"
+            );
+
+          image.src =
+            url;
+
+          image.alt =
+            "";
+
+          item.appendChild(
+            image
+          );
         }
 
         item.appendChild(
@@ -517,21 +628,35 @@
     );
   }
 
-  function fileToDataURL(file) {
+  function fileToDataURL(
+    file
+  ) {
     return new Promise(
       (resolve, reject) => {
         const reader =
           new FileReader();
 
         reader.onload =
-          () => resolve(
-            String(reader.result)
-          );
+          () => {
+            resolve(
+              String(
+                reader.result
+              )
+            );
+          };
 
         reader.onerror =
-          reject;
+          () => {
+            reject(
+              new Error(
+                "Could not read file."
+              )
+            );
+          };
 
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(
+          file
+        );
       }
     );
   }
@@ -543,11 +668,13 @@
       );
 
     const text =
-      textarea?.value.trim() || "";
+      textarea?.value.trim() ||
+      "";
 
     if (
       !text &&
-      selectedFiles.length === 0
+      selectedFiles.length ===
+        0
     ) {
       showNotice(
         "Add text or media first."
@@ -556,12 +683,26 @@
       return;
     }
 
+    const publishButton =
+      document.getElementById(
+        "createPublish"
+      );
+
+    if (publishButton) {
+      publishButton.disabled =
+        true;
+
+      publishButton.textContent =
+        "Publishing...";
+    }
+
     try {
       const media =
         [];
 
       for (
-        const file of selectedFiles
+        const file of
+          selectedFiles
       ) {
         media.push({
           type:
@@ -570,64 +711,95 @@
             )
               ? "video"
               : "image",
+
           data:
-            await fileToDataURL(file),
-          name: file.name
+            await fileToDataURL(
+              file
+            ),
+
+          name:
+            file.name
         });
       }
 
       const user =
         getUser();
 
-      const avatar =
-        user.avatar || "";
-
       const gradient = [
         user.letterColor ||
           "#8b3dff",
+
         user.background ||
           "#c54dff"
       ];
 
       const base = {
         id: createId(
-          selectedType
+          selectedType ===
+            "story"
+            ? "story"
+            : "post"
         ),
+
         name:
           user.displayName ||
           "You",
+
         username:
           user.username ||
           "you",
+
         letter:
           user.letter ||
           "R",
-        avatar,
+
+        avatar:
+          user.avatar ||
+          "",
+
         gradient,
-        verified: false,
-        vip: false,
-        time: "now",
+
+        verified:
+          false,
+
+        vip:
+          false,
+
+        time:
+          "now",
+
         text,
-        likes: 0,
-        comments: 0,
-        reposts: 0,
-        views: 0,
-        replies: []
+
+        likes:
+          0,
+
+        comments:
+          0,
+
+        reposts:
+          0,
+
+        views:
+          0,
+
+        replies:
+          []
       };
 
       if (
-        selectedType === "story"
+        selectedType ===
+        "story"
       ) {
         const firstImage =
           media.find(
-            item =>
+            (item) =>
               item.type ===
               "image"
           );
 
         const firstVideo =
           media.find(
-            item =>
+            (item) =>
               item.type ===
               "video"
           );
@@ -640,10 +812,15 @@
 
         stories.unshift({
           ...base,
+
           image:
-            firstImage?.data || "",
+            firstImage?.data ||
+            "",
+
           video:
-            firstVideo?.data || "",
+            firstVideo?.data ||
+            "",
+
           expiresAt:
             Date.now() +
             86400000
@@ -660,20 +837,6 @@
           )
         );
       } else {
-        const firstImage =
-          media.find(
-            item =>
-              item.type ===
-              "image"
-          );
-
-        const firstVideo =
-          media.find(
-            item =>
-              item.type ===
-              "video"
-          );
-
         const posts =
           read(
             POST_KEY,
@@ -682,32 +845,46 @@
 
         posts.unshift({
           ...base,
+
           images:
             media
               .filter(
-                item =>
+                (item) =>
                   item.type ===
                   "image"
               )
               .map(
-                item =>
+                (item) =>
                   item.data
               ),
+
           videos:
             media
               .filter(
-                item =>
+                (item) =>
                   item.type ===
                   "video"
               )
               .map(
-                item =>
+                (item) =>
                   item.data
               ),
+
           image:
-            firstImage?.data || "",
+            media.find(
+              (item) =>
+                item.type ===
+                "image"
+            )?.data ||
+            "",
+
           video:
-            firstVideo?.data || ""
+            media.find(
+              (item) =>
+                item.type ===
+                "video"
+            )?.data ||
+            ""
         });
 
         write(
@@ -732,10 +909,20 @@
       showNotice(
         "Could not create this content."
       );
+    } finally {
+      if (publishButton) {
+        publishButton.disabled =
+          false;
+
+        publishButton.textContent =
+          "Publish";
+      }
     }
   }
 
-  function showNotice(message) {
+  function showNotice(
+    message
+  ) {
     const notice =
       document.getElementById(
         "createNotice"
@@ -757,7 +944,8 @@
         ? "story"
         : "post";
 
-    selectedFiles = [];
+    selectedFiles =
+      [];
 
     const screen =
       document.getElementById(
@@ -772,13 +960,16 @@
       ?.querySelectorAll(
         "[data-create-type]"
       )
-      .forEach(button => {
-        button.classList.toggle(
-          "active",
-          button.dataset.createType ===
-            selectedType
-        );
-      });
+      .forEach(
+        (button) => {
+          button.classList.toggle(
+            "active",
+            button.dataset
+              .createType ===
+              selectedType
+          );
+        }
+      );
 
     const textarea =
       document.getElementById(
@@ -786,7 +977,8 @@
       );
 
     if (textarea) {
-      textarea.value = "";
+      textarea.value =
+        "";
     }
 
     const input =
@@ -795,38 +987,29 @@
       );
 
     if (input) {
-      input.value = "";
+      input.value =
+        "";
     }
 
     renderMediaPreview();
     updatePlaceholder();
     updateNotice();
     updateUserPreview();
+    refreshIcons();
   }
 
   function closeCreatePost() {
-    document
-      .getElementById(
+    const screen =
+      document.getElementById(
         "createPostScreen"
-      )
-      ?.classList.remove(
-        "show"
       );
-  }
 
-  function refreshIcons() {
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-  }
+    screen?.classList.remove(
+      "show"
+    );
 
-  function escapeHTML(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    selectedFiles =
+      [];
   }
 
   window.openCreatePost =
@@ -834,22 +1017,4 @@
 
   window.closeCreatePost =
     closeCreatePost;
-
-  window.ARSCreatePost = {
-    open: openCreatePost,
-    close: closeCreatePost
-  };
-
-  if (
-    document.readyState ===
-    "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      refreshIcons,
-      { once: true }
-    );
-  } else {
-    refreshIcons();
-  }
 })();
