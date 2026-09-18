@@ -1,42 +1,62 @@
 (() => {
   "use strict";
 
-  const CONFIG = {
-    storageKey:
-      "ars_daily_wheel_state",
+  const STATE_KEY = "ars_daily_wheel_state";
+  const REWARD_KEY = "ars_user_rewards";
+  const CHALLENGE_KEY = "ars_active_challenge";
 
-    rewardsKey:
-      "ars_user_rewards",
-
-    maxSpinsPerDay: 2,
-
-    animationDuration: 4200
-  };
+  const MAX_SPINS = 2;
+  const SPIN_DURATION = 4100;
 
   const rewards = [
     {
       id: "avatar",
       title: "Free Avatar",
       description:
-        "Use an image avatar for 24 hours."
+        "Use an image avatar for 24 hours.",
+      kind: "reward"
     },
     {
       id: "vip",
       title: "VIP Badge",
       description:
-        "Display a VIP badge for 24 hours."
+        "Show a VIP badge for 24 hours.",
+      kind: "reward"
     },
     {
       id: "theme",
       title: "Favorite Theme",
       description:
-        "Unlock your favorite theme for 1 hour."
+        "Unlock your favorite theme for 1 hour.",
+      kind: "reward"
     },
     {
-      id: "lucky",
+      id: "avatar-2",
+      title: "Free Avatar",
+      description:
+        "Use an image avatar for 24 hours.",
+      kind: "reward"
+    },
+    {
+      id: "vip-2",
+      title: "VIP Badge",
+      description:
+        "Show a VIP badge for 24 hours.",
+      kind: "reward"
+    },
+    {
+      id: "theme-2",
+      title: "Favorite Theme",
+      description:
+        "Unlock your favorite theme for 1 hour.",
+      kind: "reward"
+    },
+    {
+      id: "bonus",
       title: "Lucky Bonus",
       description:
-        "A little ΛRS bonus has been added to your rewards."
+        "You found a Lucky Bonus from the wheel.",
+      kind: "reward"
     }
   ];
 
@@ -45,50 +65,60 @@
       id: "post",
       title: "Post Challenge",
       description:
-        "Create a post today."
+        "Create a post today.",
+      kind: "challenge"
     },
     {
       id: "like",
       title: "Like Challenge",
       description:
-        "Like 5 posts today."
+        "Like 5 posts today.",
+      kind: "challenge"
     },
     {
       id: "comment",
       title: "Comment Challenge",
       description:
-        "Leave 3 comments today."
+        "Leave 3 replies today.",
+      kind: "challenge"
     },
     {
       id: "repost",
       title: "Repost Challenge",
       description:
-        "Repost 2 posts today."
+        "Repost 2 posts today.",
+      kind: "challenge"
     },
     {
       id: "story",
       title: "Story Challenge",
       description:
-        "Share a story today."
+        "Share a story today.",
+      kind: "challenge"
     },
     {
       id: "save",
       title: "Save Challenge",
       description:
-        "Save 3 posts today."
+        "Save 3 posts today.",
+      kind: "challenge"
     }
   ];
 
-  let state = {
-    date: getTodayKey(),
-    spins: 0,
-    spinning: false,
-    lastResult: null
-  };
+  const esc = (value) =>
+    String(value ?? "").replace(
+      /[&<>'"]/g,
+      (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#039;",
+        '"': "&quot;"
+      }[character])
+    );
 
-  function getTodayKey() {
-    const date =
-      new Date();
+  function todayKey() {
+    const date = new Date();
 
     return [
       date.getFullYear(),
@@ -104,17 +134,11 @@
   function read(key, fallback) {
     try {
       const value =
-        localStorage.getItem(
-          key
-        );
+        localStorage.getItem(key);
 
-      if (!value) {
-        return fallback;
-      }
-
-      return JSON.parse(
-        value
-      );
+      return value
+        ? JSON.parse(value)
+        : fallback;
     } catch {
       return fallback;
     }
@@ -126,20 +150,27 @@
         key,
         JSON.stringify(value)
       );
-    } catch {
-      return;
+    } catch (error) {
+      console.error(
+        "ΛRS wheel storage error:",
+        error
+      );
     }
   }
 
-  function loadState() {
+  let state = {
+    date: todayKey(),
+    spins: 0,
+    rotation: 0,
+    result: null
+  };
+
+  function load() {
     const saved =
-      read(
-        CONFIG.storageKey,
-        null
-      );
+      read(STATE_KEY, null);
 
     const today =
-      getTodayKey();
+      todayKey();
 
     if (
       !saved ||
@@ -148,126 +179,97 @@
       state = {
         date: today,
         spins: 0,
-        spinning: false,
-        lastResult: null
+        rotation: 0,
+        result: null
       };
 
-      saveState();
+      save();
 
       return;
     }
 
-    state.date =
-      today;
-
-    state.spins =
-      Math.max(
-        0,
-        Math.min(
-          CONFIG.maxSpinsPerDay,
-          Number(saved.spins) || 0
-        )
-      );
-
-    state.spinning =
-      false;
-
-    state.lastResult =
-      saved.lastResult ||
-      null;
+    state = {
+      date: today,
+      spins:
+        Number(saved.spins) || 0,
+      rotation:
+        Number(saved.rotation) || 0,
+      result:
+        saved.result || null
+    };
   }
 
-  function saveState() {
+  function save() {
     write(
-      CONFIG.storageKey,
-      {
-        date: state.date,
-        spins: state.spins,
-        lastResult:
-          state.lastResult
-      }
+      STATE_KEY,
+      state
     );
   }
 
-  function cleanRewards() {
-    const data =
-      read(
-        CONFIG.rewardsKey,
-        {}
-      );
+  function cleanExpiredRewards() {
+    const rewardsState =
+      read(REWARD_KEY, {});
 
-    const now =
-      Date.now();
+    const now = Date.now();
 
-    Object.keys(
-      data
-    ).forEach(
-      (key) => {
-        if (
-          key.endsWith(
-            "Until"
-          ) &&
-          Number(data[key]) <=
-            now
-        ) {
-          delete data[key];
-        }
+    let changed = false;
+
+    [
+      "freeAvatarUntil",
+      "vipUntil",
+      "favoriteThemeUntil"
+    ].forEach((key) => {
+      if (
+        Number(rewardsState[key]) &&
+        Number(rewardsState[key]) <= now
+      ) {
+        delete rewardsState[key];
+        changed = true;
       }
-    );
+    });
 
-    write(
-      CONFIG.rewardsKey,
-      data
-    );
+    if (changed) {
+      write(
+        REWARD_KEY,
+        rewardsState
+      );
+    }
   }
 
-  function applyReward(
-    reward
-  ) {
-    const data =
-      read(
-        CONFIG.rewardsKey,
-        {}
-      );
+  function applyReward(reward) {
+    const rewardsState =
+      read(REWARD_KEY, {});
 
-    const now =
-      Date.now();
+    const now = Date.now();
 
     if (
-      reward.id ===
-      "avatar"
+      reward.id.startsWith(
+        "avatar"
+      )
     ) {
-      data.freeAvatarUntil =
+      rewardsState.freeAvatarUntil =
         now + 86400000;
     }
 
     if (
-      reward.id ===
-      "vip"
+      reward.id.startsWith(
+        "vip"
+      )
     ) {
-      data.vipUntil =
+      rewardsState.vipUntil =
         now + 86400000;
     }
 
     if (
-      reward.id ===
-      "theme"
+      reward.id.startsWith(
+        "theme"
+      )
     ) {
-      data.favoriteThemeUntil =
+      rewardsState.favoriteThemeUntil =
         now + 3600000;
     }
 
-    if (
-      reward.id ===
-      "lucky"
-    ) {
-      data.luckyBonus =
-        Number(
-          data.luckyBonus
-        ) + 1;
-    }
-
-    data.lastReward = {
+    rewardsState.lastReward = {
       id: reward.id,
       title: reward.title,
       description:
@@ -276,8 +278,8 @@
     };
 
     write(
-      CONFIG.rewardsKey,
-      data
+      REWARD_KEY,
+      rewardsState
     );
 
     window.dispatchEvent(
@@ -286,178 +288,169 @@
         {
           detail: {
             reward,
-            data
+            rewards:
+              rewardsState
           }
         }
       )
     );
   }
 
-  function pickResult() {
-    const combined = [
-      ...rewards.map(
-        (item) => ({
-          ...item,
-          type: "reward"
-        })
-      ),
-      ...challenges.map(
-        (item) => ({
-          ...item,
-          type: "challenge"
-        })
-      )
-    ];
+  function setChallenge(challenge) {
+    write(
+      CHALLENGE_KEY,
+      {
+        ...challenge,
+        expiresAt:
+          Date.now() +
+          86400000,
+        progress: 0
+      }
+    );
 
-    return combined[
-      Math.floor(
-        Math.random() *
-          combined.length
-      )
-    ];
+    updateChallenge();
   }
 
-  function wheelHTML() {
-    return `
-      <div class="ars-wheel-overlay">
+  function requiredForChallenge(id) {
+    if (id === "like") {
+      return 5;
+    }
 
-        <div
-          class="ars-wheel-backdrop"
-          data-wheel-close
-        ></div>
+    if (id === "comment") {
+      return 3;
+    }
 
-        <section
-          class="ars-wheel-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Daily Wheel"
-        >
+    if (id === "repost") {
+      return 2;
+    }
 
-          <button
-            class="ars-wheel-close"
-            type="button"
-            data-wheel-close
-            aria-label="Close"
-          >
-            ×
-          </button>
+    if (id === "save") {
+      return 3;
+    }
 
-          <div class="ars-wheel-header">
+    return 1;
+  }
 
-            <div class="ars-wheel-brand">
-              ΛRS
-            </div>
+  function completeChallenge(id) {
+    const challenge =
+      read(
+        CHALLENGE_KEY,
+        null
+      );
 
-            <h2>
-              Daily Wheel
-            </h2>
+    if (
+      !challenge ||
+      challenge.id !== id ||
+      Number(
+        challenge.expiresAt
+      ) <= Date.now()
+    ) {
+      return false;
+    }
 
-            <p>
-              Spin twice a day for a reward or challenge.
-            </p>
+    const required =
+      requiredForChallenge(
+        id
+      );
 
-          </div>
+    const progress =
+      Math.min(
+        required,
+        (Number(
+          challenge.progress
+        ) || 0) + 1
+      );
 
-          <div class="ars-wheel-stage">
+    challenge.progress =
+      progress;
 
-            <div class="ars-wheel-pointer">
-              ▼
-            </div>
+    challenge.required =
+      required;
 
-            <div
-              id="arsWheelCircle"
-              class="ars-wheel-circle"
-            >
+    if (
+      progress >= required
+    ) {
+      challenge.completed =
+        true;
 
-              <div class="wheel-segment segment-one">
-                Reward
-              </div>
+      challenge.completedAt =
+        Date.now();
+    }
 
-              <div class="wheel-segment segment-two">
-                Challenge
-              </div>
+    write(
+      CHALLENGE_KEY,
+      challenge
+    );
 
-              <div class="wheel-segment segment-three">
-                Reward
-              </div>
+    updateChallenge();
 
-              <div class="wheel-segment segment-four">
-                Challenge
-              </div>
+    return (
+      progress >= required
+    );
+  }
 
-              <div class="wheel-segment segment-five">
-                Reward
-              </div>
+  function updateChallenge() {
+    const box =
+      document.getElementById(
+        "wheelChallenge"
+      );
 
-              <div class="wheel-segment segment-six">
-                Challenge
-              </div>
+    if (!box) return;
 
-              <div class="wheel-segment segment-seven">
-                Reward
-              </div>
+    const challenge =
+      read(
+        CHALLENGE_KEY,
+        null
+      );
 
-              <div class="wheel-segment segment-eight">
-                Challenge
-              </div>
+    if (
+      !challenge ||
+      Number(
+        challenge.expiresAt
+      ) <= Date.now()
+    ) {
+      box.hidden = true;
 
-              <div class="ars-wheel-center">
-                ΛRS
-              </div>
+      localStorage.removeItem(
+        CHALLENGE_KEY
+      );
 
-            </div>
+      return;
+    }
 
-          </div>
+    const required =
+      Number(
+        challenge.required
+      ) ||
+      requiredForChallenge(
+        challenge.id
+      );
 
-          <div class="ars-wheel-info">
+    const progress =
+      Math.min(
+        required,
+        Number(
+          challenge.progress
+        ) || 0
+      );
 
-            <div class="ars-wheel-badge">
-              Spins left:
-              <strong id="arsWheelSpins">
-                2
-              </strong>
-            </div>
+    box.hidden = false;
 
-          </div>
+    box.innerHTML = `
+      <b>
+        ${esc(challenge.title)}
+      </b>
 
-          <button
-            id="arsWheelSpin"
-            class="ars-wheel-spin"
-            type="button"
-          >
-            Spin the Wheel
-          </button>
+      <span>
+        ${esc(
+          challenge.description
+        )}
+      </span>
 
-          <div
-            id="arsWheelResult"
-            class="ars-wheel-result hidden"
-          >
-
-            <div
-              id="arsWheelResultType"
-              class="ars-wheel-result-type"
-            ></div>
-
-            <h3
-              id="arsWheelResultTitle"
-            ></h3>
-
-            <p
-              id="arsWheelResultDescription"
-            ></p>
-
-            <button
-              id="arsWheelResultButton"
-              type="button"
-            >
-              Close
-            </button>
-
-          </div>
-
-        </section>
-
-      </div>
+      <small>
+        ${progress}/${required}
+        completed
+      </small>
     `;
   }
 
@@ -482,401 +475,251 @@
       .ars-wheel-overlay {
         position: fixed;
         inset: 0;
-        z-index: 9000;
-
-        display: flex;
+        z-index: 99999;
+        display: none;
         align-items: center;
         justify-content: center;
-
         padding: 16px;
-      }
-
-      .ars-wheel-backdrop {
-        position: absolute;
-        inset: 0;
-
-        background: rgba(0, 0, 0, 0.84);
+        background: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(18px);
       }
 
+      .ars-wheel-overlay.open {
+        display: flex;
+      }
+
       .ars-wheel-panel {
-        position: relative;
-        z-index: 2;
-
-        width: min(520px, 100%);
-        max-height: 94vh;
-
-        overflow-y: auto;
-
-        padding: 28px 22px 24px;
-
-        border-radius: 32px;
-
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
+        width: min(470px, 100%);
+        max-height: 92vh;
+        overflow: auto;
         background:
-          radial-gradient(
-            circle at 50% 20%,
-            rgba(139, 61, 255, 0.13),
-            transparent 38%
-          ),
-          #101014;
-
+          linear-gradient(
+            180deg,
+            #15151A,
+            #0D0D10
+          );
+        border:
+          1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 30px;
+        padding: 20px;
         box-shadow:
-          0 35px 100px rgba(0, 0, 0, 0.7);
+          0 30px 90px rgba(0, 0, 0, 0.65);
+      }
+
+      .ars-wheel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .ars-wheel-head h2 {
+        font-size: 24px;
       }
 
       .ars-wheel-close {
-        position: absolute;
-
-        right: 15px;
-        top: 15px;
-
         width: 42px;
         height: 42px;
-
         border-radius: 50%;
-
-        background: rgba(255, 255, 255, 0.07);
-
-        color: #ffffff;
-
-        font-size: 26px;
+        background:
+          rgba(255, 255, 255, 0.07);
+        font-size: 24px;
       }
 
-      .ars-wheel-header {
-        text-align: center;
-      }
-
-      .ars-wheel-brand {
-        color: #bd8bff;
-
+      .ars-wheel-sub {
+        color: #8F8F99;
         font-size: 13px;
-        font-weight: 800;
-
-        letter-spacing: 2px;
-      }
-
-      .ars-wheel-header h2 {
-        margin-top: 7px;
-
-        font-size: 25px;
-      }
-
-      .ars-wheel-header p {
-        margin-top: 7px;
-
-        color: #8f8f9b;
-
-        font-size: 12px;
+        line-height: 1.6;
+        margin: 4px 0 18px;
       }
 
       .ars-wheel-stage {
         position: relative;
-
-        width: min(330px, 82vw);
+        width: min(320px, 78vw);
         aspect-ratio: 1;
-
-        margin: 28px auto;
+        margin: 0 auto 18px;
       }
 
       .ars-wheel-pointer {
         position: absolute;
-
-        z-index: 5;
-
-        top: -13px;
+        z-index: 4;
+        top: -5px;
         left: 50%;
-
         transform: translateX(-50%);
-
-        color: #ffffff;
-
-        font-size: 27px;
-
+        border-left:
+          14px solid transparent;
+        border-right:
+          14px solid transparent;
+        border-top:
+          28px solid #FFFFFF;
         filter:
           drop-shadow(
-            0 0 8px rgba(197, 77, 255, 0.8)
+            0 4px 8px rgba(0, 0, 0, 0.5)
           );
       }
 
-      .ars-wheel-circle {
-        position: relative;
-
+      .ars-wheel {
         width: 100%;
         height: 100%;
-
-        overflow: hidden;
-
+        border: 8px solid #26262E;
         border-radius: 50%;
-
-        border: 8px solid #241735;
-
         background:
           conic-gradient(
-            #8b3dff 0deg 45deg,
-            #18151d 45deg 90deg,
-            #c54dff 90deg 135deg,
-            #18151d 135deg 180deg,
-            #8b3dff 180deg 225deg,
-            #18151d 225deg 270deg,
-            #c54dff 270deg 315deg,
-            #18151d 315deg 360deg
+            #8B3DFF 0deg 45deg,
+            #24242B 45deg 90deg,
+            #C54DFF 90deg 135deg,
+            #24242B 135deg 180deg,
+            #8B3DFF 180deg 225deg,
+            #24242B 225deg 270deg,
+            #C54DFF 270deg 315deg,
+            #24242B 315deg 360deg
           );
-
-        box-shadow:
-          0 0 45px rgba(139, 61, 255, 0.28),
-          inset 0 0 35px rgba(0, 0, 0, 0.5);
-
         transition:
-          transform 4.2s cubic-bezier(
-            0.15,
-            0.8,
+          transform 4s
+          cubic-bezier(
             0.12,
+            0.82,
+            0.18,
             1
           );
-      }
-
-      .wheel-segment {
-        position: absolute;
-
-        left: 50%;
-        top: 50%;
-
-        width: 110px;
-
-        transform-origin: 0 50%;
-
-        color: rgba(255, 255, 255, 0.88);
-
-        font-size: 11px;
-        font-weight: 800;
-
-        text-align: center;
-
-        pointer-events: none;
-      }
-
-      .segment-one {
-        transform:
-          rotate(22deg)
-          translateX(75px);
-      }
-
-      .segment-two {
-        transform:
-          rotate(67deg)
-          translateX(75px);
-      }
-
-      .segment-three {
-        transform:
-          rotate(112deg)
-          translateX(75px);
-      }
-
-      .segment-four {
-        transform:
-          rotate(157deg)
-          translateX(75px);
-      }
-
-      .segment-five {
-        transform:
-          rotate(202deg)
-          translateX(75px);
-      }
-
-      .segment-six {
-        transform:
-          rotate(247deg)
-          translateX(75px);
-      }
-
-      .segment-seven {
-        transform:
-          rotate(292deg)
-          translateX(75px);
-      }
-
-      .segment-eight {
-        transform:
-          rotate(337deg)
-          translateX(75px);
+        box-shadow:
+          0 0 45px
+          rgba(139, 61, 255, 0.25);
       }
 
       .ars-wheel-center {
         position: absolute;
-
         left: 50%;
         top: 50%;
-
         transform:
           translate(-50%, -50%);
-
         width: 82px;
         height: 82px;
-
         border-radius: 50%;
-
+        background:
+          linear-gradient(
+            135deg,
+            #8B3DFF,
+            #C54DFF
+          );
+        border:
+          5px solid #09090B;
         display: flex;
         align-items: center;
         justify-content: center;
-
-        background:
-          radial-gradient(
-            circle,
-            #c54dff,
-            #8b3dff 58%,
-            #4b197d
-          );
-
-        border:
-          4px solid rgba(
-            255,
-            255,
-            255,
-            0.86
-          );
-
-        box-shadow:
-          0 0 30px rgba(
-            197,
-            77,
-            255,
-            0.5
-          );
-
-        color: #ffffff;
-
-        font-size: 18px;
         font-weight: 900;
+        z-index: 3;
       }
 
       .ars-wheel-info {
         display: flex;
         justify-content: center;
+        margin-bottom: 14px;
       }
 
       .ars-wheel-badge {
-        padding: 9px 14px;
-
+        padding: 8px 12px;
         border-radius: 999px;
-
         background:
-          rgba(255, 255, 255, 0.06);
-
-        color: #8f8f9b;
-
+          rgba(139, 61, 255, 0.13);
+        color: #CDA8FF;
         font-size: 12px;
-      }
-
-      .ars-wheel-badge strong {
-        color: #ffffff;
+        font-weight: 800;
       }
 
       .ars-wheel-spin {
-        display: block;
-
         width: 100%;
-
-        margin-top: 18px;
-
-        padding: 15px;
-
+        height: 54px;
         border-radius: 17px;
-
         background:
           linear-gradient(
             135deg,
-            #8b3dff,
-            #c54dff
+            #8B3DFF,
+            #C54DFF
           );
-
-        color: #ffffff;
-
-        font-size: 13px;
         font-weight: 800;
-
-        box-shadow:
-          0 12px 30px rgba(
-            139,
-            61,
-            255,
-            0.3
-          );
+        font-size: 16px;
       }
 
       .ars-wheel-spin:disabled {
-        opacity: 0.45;
+        opacity: 0.4;
       }
 
       .ars-wheel-result {
-        margin-top: 18px;
-
+        display: none;
+        margin-top: 14px;
         padding: 18px;
-
         border-radius: 20px;
-
         background:
-          rgba(255, 255, 255, 0.055);
-
+          rgba(255, 255, 255, 0.045);
         border:
-          1px solid rgba(
-            255,
-            255,
-            255,
-            0.07
-          );
-
+          1px solid rgba(255, 255, 255, 0.07);
         text-align: center;
       }
 
-      .ars-wheel-result-type {
-        color: #bd8bff;
-
-        font-size: 10px;
-        font-weight: 800;
-
-        text-transform: uppercase;
-        letter-spacing: 1px;
+      .ars-wheel-result.show {
+        display: block;
       }
 
       .ars-wheel-result h3 {
-        margin-top: 7px;
-
-        font-size: 19px;
+        font-size: 20px;
       }
 
       .ars-wheel-result p {
-        margin-top: 7px;
-
-        color: #9a9aa5;
-
-        font-size: 12px;
-        line-height: 1.5;
+        color: #AAAAAF;
+        line-height: 1.6;
+        margin-top: 6px;
       }
 
-      .ars-wheel-result button {
-        margin-top: 15px;
-
-        padding: 10px 18px;
-
-        border-radius: 999px;
-
+      .ars-wheel-exit {
+        margin-top: 14px;
+        width: 100%;
+        height: 46px;
+        border-radius: 14px;
         background:
           rgba(255, 255, 255, 0.08);
-
-        color: #ffffff;
-
-        font-size: 11px;
         font-weight: 700;
       }
 
-      @media (max-width: 600px) {
+      .wheel-challenge {
+        margin-top: 14px;
+        padding: 15px;
+        border-radius: 18px;
+        background:
+          rgba(139, 61, 255, 0.1);
+        border:
+          1px solid rgba(139, 61, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .wheel-challenge[hidden] {
+        display: none;
+      }
+
+      .wheel-challenge b {
+        font-size: 14px;
+      }
+
+      .wheel-challenge span {
+        font-size: 13px;
+        color: #D3D3DA;
+      }
+
+      .wheel-challenge small {
+        font-size: 11px;
+        color: #9B9BA5;
+      }
+
+      @media (max-width: 520px) {
         .ars-wheel-panel {
-          border-radius: 27px;
-          padding: 25px 17px 20px;
+          padding: 17px;
+          border-radius: 25px;
+        }
+
+        .ars-wheel-stage {
+          width: min(300px, 82vw);
         }
       }
     `;
@@ -886,246 +729,364 @@
     );
   }
 
-  function updateUI() {
-    const spins =
-      document.getElementById(
-        "arsWheelSpins"
-      );
-
-    const button =
-      document.getElementById(
-        "arsWheelSpin"
-      );
-
-    const remaining =
-      Math.max(
-        0,
-        CONFIG.maxSpinsPerDay -
-          state.spins
-      );
-
-    if (spins) {
-      spins.textContent =
-        String(remaining);
-    }
-
-    if (button) {
-      button.disabled =
-        state.spinning ||
-        remaining <= 0;
-
-      button.textContent =
-        remaining <= 0
-          ? "No Spins Left Today"
-          : state.spinning
-          ? "Spinning..."
-          : "Spin the Wheel";
-    }
-  }
-
-  function showResult(result) {
-    const resultBox =
-      document.getElementById(
-        "arsWheelResult"
-      );
-
-    const type =
-      document.getElementById(
-        "arsWheelResultType"
-      );
-
-    const title =
-      document.getElementById(
-        "arsWheelResultTitle"
-      );
-
-    const description =
-      document.getElementById(
-        "arsWheelResultDescription"
-      );
-
+  function build() {
     if (
-      !resultBox ||
-      !type ||
-      !title ||
-      !description
+      document.getElementById(
+        "arsWheelOverlay"
+      )
     ) {
       return;
     }
 
-    type.textContent =
-      result.type === "reward"
-        ? "Reward"
-        : "Challenge";
+    const overlay =
+      document.createElement(
+        "div"
+      );
 
-    title.textContent =
-      result.title;
+    overlay.id =
+      "arsWheelOverlay";
 
-    description.textContent =
-      result.description;
+    overlay.className =
+      "ars-wheel-overlay";
 
-    resultBox.classList.remove(
-      "hidden"
+    overlay.innerHTML = `
+      <div
+        class="ars-wheel-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Daily Wheel"
+      >
+        <div class="ars-wheel-head">
+          <h2>
+            Daily Wheel
+          </h2>
+
+          <button
+            class="ars-wheel-close"
+            id="wheelClose"
+            type="button"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <p class="ars-wheel-sub">
+          Two spins every day.
+          Land on a reward or a challenge.
+        </p>
+
+        <div class="ars-wheel-stage">
+          <div class="ars-wheel-pointer">
+            ▼
+          </div>
+
+          <div
+            class="ars-wheel"
+            id="arsWheel"
+          ></div>
+
+          <div class="ars-wheel-center">
+            ΛRS
+          </div>
+        </div>
+
+        <div class="ars-wheel-info">
+          <div class="ars-wheel-badge">
+            Spins left:
+            <span id="wheelSpins">
+              2
+            </span>
+          </div>
+        </div>
+
+        <button
+          id="wheelSpin"
+          class="ars-wheel-spin"
+          type="button"
+        >
+          Spin
+        </button>
+
+        <div
+          id="wheelResult"
+          class="ars-wheel-result"
+        >
+          <h3
+            id="wheelResultTitle"
+          ></h3>
+
+          <p
+            id="wheelResultDescription"
+          ></p>
+
+          <button
+            id="wheelExit"
+            class="ars-wheel-exit"
+            type="button"
+          >
+            Close
+          </button>
+        </div>
+
+        <div
+          id="wheelChallenge"
+          class="wheel-challenge"
+          hidden
+        ></div>
+      </div>
+    `;
+
+    document.body.appendChild(
+      overlay
     );
+
+    overlay.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.target ===
+            overlay ||
+          event.target.id ===
+            "wheelClose"
+        ) {
+          closeWheel();
+        }
+      }
+    );
+
+    overlay
+      .querySelector(
+        "#wheelExit"
+      )
+      ?.addEventListener(
+        "click",
+        closeWheel
+      );
+
+    overlay
+      .querySelector(
+        "#wheelSpin"
+      )
+      ?.addEventListener(
+        "click",
+        spin
+      );
+  }
+
+  function updateUI() {
+    cleanExpiredRewards();
+
+    const spinsLeft =
+      Math.max(
+        0,
+        MAX_SPINS -
+          state.spins
+      );
+
+    const spinsElement =
+      document.getElementById(
+        "wheelSpins"
+      );
+
+    const spinButton =
+      document.getElementById(
+        "wheelSpin"
+      );
+
+    if (spinsElement) {
+      spinsElement.textContent =
+        String(spinsLeft);
+    }
+
+    if (spinButton) {
+      spinButton.disabled =
+        spinsLeft <= 0 ||
+        state.spinning;
+    }
+
+    updateChallenge();
+  }
+
+  function openWheel() {
+    load();
+    injectStyles();
+    build();
+
+    const overlay =
+      document.getElementById(
+        "arsWheelOverlay"
+      );
+
+    if (!overlay) return;
+
+    overlay.classList.add(
+      "open"
+    );
+
+    updateUI();
+  }
+
+  function closeWheel() {
+    document
+      .getElementById(
+        "arsWheelOverlay"
+      )
+      ?.classList.remove(
+        "open"
+      );
+  }
+
+  function pickResult() {
+    const pool =
+      Math.random() < 0.5
+        ? rewards
+        : challenges;
+
+    return pool[
+      Math.floor(
+        Math.random() *
+          pool.length
+      )
+    ];
   }
 
   function spin() {
     if (
       state.spinning ||
       state.spins >=
-        CONFIG.maxSpinsPerDay
+        MAX_SPINS
     ) {
       return;
     }
 
-    const circle =
+    const wheel =
       document.getElementById(
-        "arsWheelCircle"
+        "arsWheel"
       );
 
-    if (!circle) {
+    const result =
+      document.getElementById(
+        "wheelResult"
+      );
+
+    const title =
+      document.getElementById(
+        "wheelResultTitle"
+      );
+
+    const description =
+      document.getElementById(
+        "wheelResultDescription"
+      );
+
+    if (
+      !wheel ||
+      !result ||
+      !title ||
+      !description
+    ) {
       return;
     }
 
-    state.spinning = true;
+    state.spinning =
+      true;
 
     state.spins += 1;
 
-    const result =
+    state.result =
       pickResult();
 
-    state.lastResult = {
-      ...result,
-      time: Date.now()
-    };
-
-    saveState();
-
-    updateUI();
-
-    const rotations =
+    state.rotation +=
       1440 +
       Math.floor(
-        Math.random() * 1080
+        Math.random() *
+          360
       );
 
-    const offset =
-      Math.floor(
-        Math.random() * 360
-      );
+    save();
 
-    circle.style.transform =
-      `rotate(${rotations + offset}deg)`;
+    result.classList.remove(
+      "show"
+    );
+
+    wheel.style.transform =
+      `rotate(${state.rotation}deg)`;
+
+    updateUI();
 
     window.setTimeout(
       () => {
-        state.spinning = false;
+        state.spinning =
+          false;
 
         if (
-          result.type ===
+          state.result.kind ===
           "reward"
         ) {
           applyReward(
-            result
+            state.result
+          );
+        } else {
+          setChallenge(
+            state.result
           );
         }
 
-        showResult(
-          result
+        title.textContent =
+          state.result.title;
+
+        description.textContent =
+          state.result.description;
+
+        result.classList.add(
+          "show"
         );
+
+        save();
 
         updateUI();
       },
-      CONFIG.animationDuration
+      SPIN_DURATION
     );
   }
 
-  function closeWheel() {
-    const overlay =
-      document.querySelector(
-        ".ars-wheel-overlay"
-      );
+  load();
+  injectStyles();
 
-    if (overlay) {
-      overlay.remove();
+  document.addEventListener(
+    "ars:post-created",
+    () => {
+      completeChallenge(
+        "post"
+      );
     }
+  );
 
-    document.body.style.overflow =
-      "";
-  }
-
-  function openWheel() {
-    cleanRewards();
-    loadState();
-    injectStyles();
-
-    const old =
-      document.querySelector(
-        ".ars-wheel-overlay"
+  document.addEventListener(
+    "ars:story-created",
+    () => {
+      completeChallenge(
+        "story"
       );
-
-    if (old) {
-      old.remove();
     }
-
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      wheelHTML()
-    );
-
-    document.body.style.overflow =
-      "hidden";
-
-    document
-      .querySelectorAll(
-        "[data-wheel-close]"
-      )
-      .forEach(
-        (element) => {
-          element.addEventListener(
-            "click",
-            closeWheel
-          );
-        }
-      );
-
-    document
-      .getElementById(
-        "arsWheelSpin"
-      )
-      ?.addEventListener(
-        "click",
-        spin
-      );
-
-    document
-      .getElementById(
-        "arsWheelResultButton"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
-          document
-            .getElementById(
-              "arsWheelResult"
-            )
-            ?.classList.add(
-              "hidden"
-            );
-        }
-      );
-
-    updateUI();
-  }
+  );
 
   window.openWheel =
     openWheel;
 
+  window.closeWheel =
+    closeWheel;
+
   window.ARSWheel = {
     open: openWheel,
     close: closeWheel,
-    getState: () => ({
-      ...state
-    })
+    completeChallenge,
+
+    cleanExpiredRewards:
+      () => {
+        cleanExpiredRewards();
+        updateUI();
+      }
   };
 })();
