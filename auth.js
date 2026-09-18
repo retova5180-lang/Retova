@@ -1,29 +1,6 @@
 (() => {
   "use strict";
 
-  /*
-   * ==================================================
-   * ΛRS AUTH
-   * ==================================================
-   *
-   * CURRENT MODE:
-   * Local development authentication.
-   *
-   * FUTURE SUPABASE CONNECTION:
-   *
-   * Put the Supabase Project URL and Publishable/Anon
-   * Key in the constants below when we start the
-   * backend connection.
-   *
-   * Do NOT put a service_role key in frontend code.
-   * ==================================================
-   */
-
-  const SUPABASE_CONFIG = {
-    url: "",
-    publishableKey: ""
-  };
-
 
   /* =========================
      STORAGE KEYS
@@ -45,7 +22,8 @@
   const DEFAULT_PROFILE = {
     letter: "R",
     letterColor: "#ffffff",
-    background: "#8b3dff"
+    background:
+      "linear-gradient(135deg, #8b3dff, #c54dff)"
   };
 
 
@@ -53,12 +31,21 @@
      SELECTORS
   ========================== */
 
-  const $ = (selector, root = document) => {
+  const $ = (
+    selector,
+    root = document
+  ) => {
     return root.querySelector(selector);
   };
 
-  const $$ = (selector, root = document) => {
-    return [...root.querySelectorAll(selector)];
+
+  const $$ = (
+    selector,
+    root = document
+  ) => {
+    return [
+      ...root.querySelectorAll(selector)
+    ];
   };
 
 
@@ -66,18 +53,32 @@
      ELEMENTS
   ========================== */
 
-  const loginForm = $("#loginForm");
-  const registerForm = $("#registerForm");
+  const loginForm =
+    $("#loginForm");
 
-  const loginMessage = $("#loginMessage");
-  const registerMessage = $("#registerMessage");
+  const registerForm =
+    $("#registerForm");
 
-  const profileSetup = $("#profileSetup");
-  const openProfileSetup = $("#openProfileSetup");
+  const loginMessage =
+    $("#loginMessage");
 
-  const profileModal = $("#profileModal");
-  const profileModalClose = $("#profileModalClose");
-  const closeProfileSetup = $("#closeProfileSetup");
+  const registerMessage =
+    $("#registerMessage");
+
+  const profileSetup =
+    $("#profileSetup");
+
+  const openProfileSetup =
+    $("#openProfileSetup");
+
+  const profileModal =
+    $("#profileModal");
+
+  const profileModalClose =
+    $("#profileModalClose");
+
+  const closeProfileSetup =
+    $("#closeProfileSetup");
 
   const largeAvatarPreview =
     $("#largeAvatarPreview");
@@ -113,6 +114,7 @@
     "Λ"
   ];
 
+
   const letterColorOptions = [
     "#ffffff",
     "#f4c2ff",
@@ -127,6 +129,7 @@
     "#ffd166",
     "#f5f5f5"
   ];
+
 
   const backgroundOptions = [
     ["#8b3dff", "#c54dff"],
@@ -157,10 +160,13 @@
 
 
   /* =========================
-     SAFE STORAGE
+     STORAGE HELPERS
   ========================== */
 
-  function readStorage(key, fallback = null) {
+  function readStorage(
+    key,
+    fallback = null
+  ) {
     try {
       const value =
         localStorage.getItem(key);
@@ -180,7 +186,11 @@
     }
   }
 
-  function readJSON(key, fallback = null) {
+
+  function readJSON(
+    key,
+    fallback = null
+  ) {
     try {
       const value =
         localStorage.getItem(key);
@@ -192,7 +202,7 @@
       return JSON.parse(value);
     } catch (error) {
       console.error(
-        "ΛRS JSON storage error:",
+        "ΛRS JSON storage read error:",
         error
       );
 
@@ -200,7 +210,11 @@
     }
   }
 
-  function writeStorage(key, value) {
+
+  function writeStorage(
+    key,
+    value
+  ) {
     try {
       localStorage.setItem(
         key,
@@ -251,6 +265,7 @@
       .test(email);
   }
 
+
   function validateUsername(username) {
     return /^[a-zA-Z0-9_.]{3,20}$/
       .test(username);
@@ -283,78 +298,30 @@
 
 
   /* =========================
-     AUTH TABS
+     USER
   ========================== */
 
-  function setupTabs() {
-    const tabs =
-      $$(".auth-tab");
+  function getUser() {
+    return (
+      readJSON(
+        STORAGE.user,
+        {}
+      ) || {}
+    );
+  }
 
-    const forms = [
-      loginForm,
-      registerForm
-    ];
 
-    tabs.forEach(tab => {
-      tab.addEventListener(
-        "click",
-        () => {
-          const target =
-            tab.dataset.authTab;
-
-          tabs.forEach(item => {
-            item.classList.toggle(
-              "active",
-              item === tab
-            );
-          });
-
-          forms.forEach(form => {
-            if (!form) {
-              return;
-            }
-
-            const isLogin =
-              form === loginForm;
-
-            form.classList.toggle(
-              "active",
-              (
-                target === "login" &&
-                isLogin
-              ) ||
-              (
-                target === "register" &&
-                !isLogin
-              )
-            );
-          });
-
-          setMessage(
-            loginMessage,
-            ""
-          );
-
-          setMessage(
-            registerMessage,
-            ""
-          );
-        }
-      );
-    });
+  function saveUser(user) {
+    return writeStorage(
+      STORAGE.user,
+      JSON.stringify(user)
+    );
   }
 
 
   /* =========================
-     PROFILE DATA
+     PROFILE
   ========================== */
-
-  function getUser() {
-    return readJSON(
-      STORAGE.user,
-      {}
-    ) || {};
-  }
 
   function getProfile() {
     const user =
@@ -386,14 +353,53 @@
 
 
   /* =========================
-     SAVE USER
+     AUTH TABS
   ========================== */
 
-  function saveUser(user) {
-    return writeStorage(
-      STORAGE.user,
-      JSON.stringify(user)
-    );
+  function setupTabs() {
+    const tabs =
+      $$(".auth-tab");
+
+    tabs.forEach(tab => {
+      tab.addEventListener(
+        "click",
+        () => {
+          const target =
+            tab.dataset.authTab;
+
+          tabs.forEach(item => {
+            item.classList.toggle(
+              "active",
+              item === tab
+            );
+          });
+
+          if (loginForm) {
+            loginForm.classList.toggle(
+              "active",
+              target === "login"
+            );
+          }
+
+          if (registerForm) {
+            registerForm.classList.toggle(
+              "active",
+              target === "register"
+            );
+          }
+
+          setMessage(
+            loginMessage,
+            ""
+          );
+
+          setMessage(
+            registerMessage,
+            ""
+          );
+        }
+      );
+    });
   }
 
 
@@ -416,7 +422,8 @@
     const username =
       $("#registerUsername")
         ?.value
-        .trim() || "";
+        .trim()
+        .toLowerCase() || "";
 
     const email =
       $("#registerEmail")
@@ -443,6 +450,7 @@
       return;
     }
 
+
     if (!validateUsername(username)) {
       setMessage(
         registerMessage,
@@ -453,6 +461,7 @@
       return;
     }
 
+
     if (!validateEmail(email)) {
       setMessage(
         registerMessage,
@@ -462,6 +471,7 @@
 
       return;
     }
+
 
     if (password.length < 8) {
       setMessage(
@@ -475,23 +485,22 @@
 
 
     /* -------------------------
-       CREATE LOCAL USER
+       PROFILE
     ------------------------- */
 
     const existingUser =
       getUser();
 
-    const profile = {
-      ...getProfile(),
-      name:
-        existingUser.name ||
-        displayName
-    };
+    const existingProfile =
+      getProfile();
+
 
     const user = {
       id:
         existingUser.id ||
-        `local-${Date.now()}`,
+        `local-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`,
 
       displayName,
 
@@ -502,13 +511,13 @@
       password,
 
       letter:
-        profile.letter,
+        existingProfile.letter,
 
       letterColor:
-        profile.letterColor,
+        existingProfile.letterColor,
 
       background:
-        profile.background,
+        existingProfile.background,
 
       avatar:
         existingUser.avatar ||
@@ -529,6 +538,7 @@
 
       return;
     }
+
 
     writeStorage(
       STORAGE.letter,
@@ -553,14 +563,10 @@
 
     setMessage(
       registerMessage,
-      "Account created.",
+      "Account created. Customize your profile.",
       "success"
     );
 
-
-    /*
-     * Show profile setup before entering Home.
-     */
 
     showProfileSetup();
   }
@@ -577,6 +583,7 @@
       return;
     }
 
+
     const email =
       $("#loginEmail")
         ?.value
@@ -587,6 +594,7 @@
       $("#loginPassword")
         ?.value || "";
 
+
     if (!validateEmail(email)) {
       setMessage(
         loginMessage,
@@ -596,6 +604,7 @@
 
       return;
     }
+
 
     if (!password) {
       setMessage(
@@ -611,6 +620,7 @@
     const user =
       getUser();
 
+
     if (
       !user.email ||
       !user.password
@@ -623,6 +633,7 @@
 
       return;
     }
+
 
     if (
       user.email !== email ||
@@ -642,6 +653,7 @@
       STORAGE.loggedIn,
       "true"
     );
+
 
     setMessage(
       loginMessage,
@@ -664,9 +676,11 @@
       return;
     }
 
+
     profileSetup.classList.remove(
       "hidden"
     );
+
 
     if (loginForm) {
       loginForm.classList.remove(
@@ -674,17 +688,24 @@
       );
     }
 
+
     if (registerForm) {
       registerForm.classList.remove(
         "active"
       );
     }
 
-    $$(".auth-tab").forEach(tab => {
-      tab.classList.remove(
-        "active"
-      );
-    });
+
+    $$(".auth-tab").forEach(
+      tab => {
+        tab.classList.remove(
+          "active"
+        );
+      }
+    );
+
+
+    updateInitialProfileIcon();
   }
 
 
@@ -697,23 +718,32 @@
       return;
     }
 
+
+    const profile =
+      getProfile();
+
+
     selectedLetter =
-      getProfile().letter;
+      profile.letter;
 
     selectedLetterColor =
-      getProfile().letterColor;
+      profile.letterColor;
 
     selectedBackground =
-      getProfile().background;
+      profile.background;
+
 
     renderLetterGrid();
     renderLetterColors();
     renderBackgroundColors();
+
     updateAvatarPreview();
+
 
     profileModal.classList.remove(
       "hidden"
     );
+
 
     profileModal.setAttribute(
       "aria-hidden",
@@ -731,9 +761,11 @@
       return;
     }
 
+
     profileModal.classList.add(
       "hidden"
     );
+
 
     profileModal.setAttribute(
       "aria-hidden",
@@ -751,11 +783,13 @@
       return;
     }
 
+
     letterGrid.innerHTML =
       letters
         .map(letter => {
           const selected =
             letter === selectedLetter;
+
 
           return `
             <button
@@ -773,6 +807,7 @@
         })
         .join("");
 
+
     $$(".letter-option", letterGrid)
       .forEach(button => {
         button.addEventListener(
@@ -782,6 +817,7 @@
               button.dataset.letter ||
               DEFAULT_PROFILE.letter;
 
+
             $$(".letter-option", letterGrid)
               .forEach(item => {
                 item.classList.toggle(
@@ -789,6 +825,7 @@
                   item === button
                 );
               });
+
 
             updateAvatarPreview();
           }
@@ -806,12 +843,14 @@
       return;
     }
 
+
     letterColors.innerHTML =
       letterColorOptions
         .map(color => {
           const selected =
             color.toLowerCase() ===
             selectedLetterColor.toLowerCase();
+
 
           return `
             <button
@@ -829,6 +868,7 @@
         })
         .join("");
 
+
     $$(".color-option", letterColors)
       .forEach(button => {
         button.addEventListener(
@@ -838,6 +878,7 @@
               button.dataset.color ||
               DEFAULT_PROFILE.letterColor;
 
+
             $$(".color-option", letterColors)
               .forEach(item => {
                 item.classList.toggle(
@@ -845,6 +886,7 @@
                   item === button
                 );
               });
+
 
             updateAvatarPreview();
           }
@@ -862,6 +904,7 @@
       return;
     }
 
+
     backgroundColors.innerHTML =
       backgroundOptions
         .map((gradient, index) => {
@@ -871,6 +914,7 @@
           const selected =
             background ===
             selectedBackground;
+
 
           return `
             <button
@@ -888,6 +932,7 @@
         })
         .join("");
 
+
     $$(".gradient-option", backgroundColors)
       .forEach(button => {
         button.addEventListener(
@@ -895,7 +940,8 @@
           () => {
             selectedBackground =
               button.dataset.background ||
-              "linear-gradient(135deg, #8b3dff, #c54dff)";
+              DEFAULT_PROFILE.background;
+
 
             $$(".gradient-option", backgroundColors)
               .forEach(item => {
@@ -904,6 +950,7 @@
                   item === button
                 );
               });
+
 
             updateAvatarPreview();
           }
@@ -917,20 +964,20 @@
   ========================== */
 
   function updateAvatarPreview() {
-    const avatar =
-      largeAvatarPreview;
-
-    if (!avatar) {
+    if (!largeAvatarPreview) {
       return;
     }
 
-    avatar.textContent =
+
+    largeAvatarPreview.textContent =
       selectedLetter;
 
-    avatar.style.color =
+
+    largeAvatarPreview.style.color =
       selectedLetterColor;
 
-    avatar.style.background =
+
+    largeAvatarPreview.style.background =
       selectedBackground;
   }
 
@@ -943,9 +990,17 @@
     const user =
       getUser();
 
+
     if (!user.email) {
+      setMessage(
+        registerMessage,
+        "Your account could not be found.",
+        "error"
+      );
+
       return;
     }
+
 
     user.letter =
       selectedLetter;
@@ -956,12 +1011,17 @@
     user.background =
       selectedBackground;
 
-    user.avatar =
-      user.avatar || "";
 
     if (!saveUser(user)) {
+      setMessage(
+        registerMessage,
+        "Could not save your profile.",
+        "error"
+      );
+
       return;
     }
+
 
     writeStorage(
       STORAGE.letter,
@@ -978,11 +1038,14 @@
       selectedBackground
     );
 
+    writeStorage(
+      STORAGE.loggedIn,
+      "true"
+    );
+
+
     closeProfileModal();
 
-    /*
-     * Account is ready.
-     */
 
     window.location.href =
       "home.html";
@@ -990,22 +1053,26 @@
 
 
   /* =========================
-     INITIAL PROFILE PREVIEW
+     INITIAL PROFILE ICON
   ========================== */
 
   function updateInitialProfileIcon() {
-    const profile =
-      getProfile();
-
     if (!profileSetupIcon) {
       return;
     }
 
+
+    const profile =
+      getProfile();
+
+
     profileSetupIcon.textContent =
       profile.letter;
 
+
     profileSetupIcon.style.color =
       profile.letterColor;
+
 
     profileSetupIcon.style.background =
       profile.background;
@@ -1013,85 +1080,24 @@
 
 
   /* =========================
-     SUPABASE PLACEHOLDER CHECK
+     KEYBOARD
   ========================== */
 
-  function getBackendConfig() {
-    return {
-      url:
-        SUPABASE_CONFIG.url
-          .trim(),
-
-      publishableKey:
-        SUPABASE_CONFIG.publishableKey
-          .trim()
-    };
-  }
-
-  function isBackendConfigured() {
-    const config =
-      getBackendConfig();
-
-    return Boolean(
-      config.url &&
-      config.publishableKey
+  function setupKeyboard() {
+    document.addEventListener(
+      "keydown",
+      event => {
+        if (
+          event.key === "Escape" &&
+          profileModal &&
+          !profileModal.classList.contains(
+            "hidden"
+          )
+        ) {
+          closeProfileModal();
+        }
+      }
     );
-  }
-
-
-  /*
-   * This function intentionally does not connect yet.
-   *
-   * When we begin Supabase integration, this is the
-   * exact place where the real client initialization
-   * will be added.
-   */
-
-  function prepareBackendConnection() {
-    if (!isBackendConfigured()) {
-      return;
-    }
-
-    /*
-     * Supabase connection will be added here.
-     *
-     * No new library is loaded automatically.
-     */
-  }
-
-
-  /* =========================
-     LOGGED-IN REDIRECT
-  ========================== */
-
-  function checkExistingSession() {
-    const loggedIn =
-      readStorage(
-        STORAGE.loggedIn,
-        "false"
-      );
-
-    if (
-      loggedIn !== "true"
-    ) {
-      return;
-    }
-
-    const user =
-      getUser();
-
-    if (
-      user.email &&
-      user.password
-    ) {
-      /*
-       * Keep the user on the login page only
-       * if the page was intentionally opened.
-       *
-       * We do not redirect automatically here,
-       * so the user can still see the login screen.
-       */
-    }
   }
 
 
@@ -1105,16 +1111,78 @@
       handleLogin
     );
 
+
     registerForm?.addEventListener(
       "submit",
       handleRegister
     );
+
 
     openProfileSetup?.addEventListener(
       "click",
       openProfileModal
     );
 
+
     profileModalClose?.addEventListener(
       "click",
-      close
+      closeProfileModal
+    );
+
+
+    closeProfileSetup?.addEventListener(
+      "click",
+      closeProfileModal
+    );
+
+
+    saveProfileSetup?.addEventListener(
+      "click",
+      saveProfile
+    );
+  }
+
+
+  /* =========================
+     INITIALIZATION
+  ========================== */
+
+  function init() {
+    setupTabs();
+
+    setupEvents();
+
+    setupKeyboard();
+
+    updateInitialProfileIcon();
+
+
+    /*
+     * The login page intentionally does
+     * not redirect an existing session
+     * automatically. This allows the user
+     * to open the login page normally.
+     */
+  }
+
+
+  /* =========================
+     START
+  ========================== */
+
+  if (
+    document.readyState ===
+    "loading"
+  ) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      init,
+      {
+        once: true
+      }
+    );
+  } else {
+    init();
+  }
+
+})();
