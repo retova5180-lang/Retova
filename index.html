@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>ΛRS — Login</title>
+
+  <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+  <main class="auth-page">
+
+    <section class="auth-card">
+
+      <div class="brand">
+        ΛRS
+      </div>
+
+      <p class="tagline">
+        Share. Create. Connect.
+      </p>
+
+      <div class="auth-tabs">
+
+        <button
+          type="button"
+          class="auth-tab active"
+          data-auth-tab="login"
+        >
+          Login
+        </button>
+
+        <button
+          type="button"
+          class="auth-tab"
+          data-auth-tab="register"
+        >
+          Create Account
+        </button>
+
+      </div>
+
+      <!-- =========================
+           LOGIN
+      ========================== -->
+
+      <form
+        id="loginForm"
+        class="auth-form active"
+        novalidate
+      >
+
+        <div class="field">
+
+          <label for="loginEmail">
+            Email
+          </label>
+
+          <input
+            id="loginEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Enter your email"
+            required
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label for="loginPassword">
+            Password
+          </label>
+
+          <input
+            id="loginPassword"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            required
+          >
+
+        </div>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          Login
+        </button>
+
+        <div
+          id="loginMessage"
+          class="form-message"
+          aria-live="polite"
+        ></div>
+
+      </form>
+
+
+      <!-- =========================
+           CREATE ACCOUNT
+      ========================== -->
+
+      <form
+        id="registerForm"
+        class="auth-form"
+        novalidate
+      >
+
+        <div class="field">
+
+          <label for="registerDisplayName">
+            Display Name
+          </label>
+
+          <input
+            id="registerDisplayName"
+            name="displayName"
+            type="text"
+            autocomplete="name"
+            maxlength="40"
+            placeholder="Your display name"
+            required
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label for="registerUsername">
+            Username
+          </label>
+
+          <div class="username-input">
+
+            <span>
+              @
+            </span>
+
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              autocomplete="username"
+              maxlength="20"
+              placeholder="username"
+              required
+            >
+
+          </div>
+
+        </div>
+
+        <div class="field">
+
+          <label for="registerEmail">
+            Email
+          </label>
+
+          <input
+            id="registerEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Enter your email"
+            required
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label for="registerPassword">
+            Password
+          </label>
+
+          <input
+            id="registerPassword"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            placeholder="At least 8 characters"
+            required
+          >
+
+        </div>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          Create Account
+        </button>
+
+        <div
+          id="registerMessage"
+          class="form-message"
+          aria-live="polite"
+        ></div>
+
+      </form>
+
+
+      <!-- =========================
+           PROFILE SETUP
+      ========================== -->
+
+      <section
+        id="profileSetup"
+        class="profile-setup hidden"
+      >
+
+        <div class="profile-setup-icon">
+          R
+        </div>
+
+        <h2>
+          Set up your profile
+        </h2>
+
+        <p>
+          Choose how your ΛRS profile starts.
+        </p>
+
+        <button
+          type="button"
+          id="openProfileSetup"
+          class="secondary-button"
+        >
+          Customize Profile
+        </button>
+
+      </section>
+
+
+      <!-- =========================
+           PROFILE MODAL
+      ========================== -->
+
+      <div
+        id="profileModal"
+        class="profile-modal hidden"
+        aria-hidden="true"
+      >
+
+        <div
+          class="profile-modal-backdrop"
+          id="closeProfileSetup"
+        ></div>
+
+        <section
+          class="profile-modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile setup"
+        >
+
+          <button
+            type="button"
+            class="modal-close"
+            id="profileModalClose"
+            aria-label="Close"
+          >
+            ×
+          </button>
+
+          <div class="modal-avatar-wrap">
+
+            <div
+              id="largeAvatarPreview"
+              class="large-avatar-preview"
+            >
+              R
+            </div>
+
+          </div>
+
+          <h2>
+            Customize your profile
+          </h2>
+
+          <p>
+            Choose your letter and colors.
+          </p>
+
+
+          <!-- LETTER -->
+
+          <div class="setup-group">
+
+            <h3>
+              Profile Letter
+            </h3>
+
+            <div
+              id="letterGrid"
+              class="letter-grid"
+            ></div>
+
+          </div>
+
+
+          <!-- LETTER COLOR -->
+
+          <div class="setup-group">
+
+            <h3>
+              Letter Color
+            </h3>
+
+            <div
+              id="letterColors"
+              class="color-grid"
+            ></div>
+
+          </div>
+
+
+          <!-- BACKGROUND -->
+
+          <div class="setup-group">
+
+            <h3>
+              Background
+            </h3>
+
+            <div
+              id="backgroundColors"
+              class="gradient-grid"
+            ></div>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="saveProfileSetup"
+            class="primary-button"
+          >
+            Save Profile
+          </button>
+
+        </section>
+
+      </div>
+
+
+      <!-- =========================
+           FUTURE SUPABASE AREA
+      ========================== -->
+
+      <div
+        id="backendStatus"
+        class="backend-status"
+      >
+        <span class="status-dot"></span>
+        ΛRS
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!--
+    ==================================================
+    SUPABASE CONNECTION PLACE
+    ==================================================
+
+    عندما نبدأ الربط الحقيقي لاحقًا:
+
+    1. نضيف Supabase هنا.
+    2. نضع Project URL في auth.js.
+    3. نضع Publishable/Anon Key في auth.js.
+    4. بعدها ننقل Login/Create Account من
+       localStorage إلى Supabase Auth.
+
+    لا يوجد أي مفتاح حاليًا هنا.
+    ==================================================
+  -->
+
+  <script src="auth.js" defer></script>
+
+</body>
+</html>
