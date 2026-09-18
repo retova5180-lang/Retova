@@ -5,24 +5,20 @@
   const STORY_KEY = "ars_local_stories";
   const STATE_KEY = "ars_home_state";
 
-  const $ = (selector, root = document) => {
-    return root.querySelector(selector);
-  };
+  const $ = (selector) => document.querySelector(selector);
 
   const feed = $("#feed");
-  const storiesEl = $("#stories");
-
-  const postDetail = $("#postDetail");
-  const detailPostBody = $("#detailPostBody");
-  const detailReplies = $("#detailReplies");
+  const stories = $("#stories");
+  const detail = $("#postDetail");
+  const detailBody = $("#detailPostBody");
+  const replies = $("#detailReplies");
   const replyForm = $("#replyForm");
   const replyInput = $("#replyInput");
   const replyCount = $("#replyCount");
-  const replyAvatar = $("#replyAvatar");
 
   let activePostId = null;
 
-  const state = {
+  const app = {
     posts: [],
     stories: [],
     liked: new Set(),
@@ -30,195 +26,214 @@
     saved: new Set()
   };
 
-  const demoStories = [
+  const demos = [
     {
-      id: "demo-story-you",
-      name: "You",
-      letter: "R",
-      gradient: ["#8b3dff", "#c54dff"],
-      mine: true,
-      text: "Add your first story."
-    },
-    {
-      id: "demo-story-lina",
-      name: "Lina",
-      letter: "L",
-      gradient: ["#8b3dff", "#c54dff"],
-      text: "Sunset always hits different 💜",
-      image:
-        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=85"
-    },
-    {
-      id: "demo-story-noah",
-      name: "Noah",
-      letter: "N",
-      gradient: ["#252b38", "#5b6578"],
-      text: "Focused on the journey."
-    },
-    {
-      id: "demo-story-sara",
-      name: "Sara",
-      letter: "S",
-      gradient: ["#8b3dff", "#ee4cff"],
-      text: "Weekend mood ✨",
-      image:
-        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=85"
-    },
-    {
-      id: "demo-story-wheel",
-      name: "Wheel",
-      wheel: true,
-      text: "Spin the wheel."
-    },
-    {
-      id: "demo-story-apple",
-      name: "Apple",
-      letter: "",
-      gradient: ["#09090b", "#44444c"],
-      verified: true,
-      text: "Apple updates."
-    },
-    {
-      id: "demo-story-ferrari",
-      name: "Ferrari",
-      letter: "F",
-      gradient: ["#f01825", "#721018"],
-      verified: true,
-      text: "Racing weekend."
-    },
-    {
-      id: "demo-story-bmw",
-      name: "BMW",
-      letter: "M",
-      gradient: ["#111111", "#4a4a52"],
-      verified: true,
-      text: "Driven by progress."
-    }
-  ];
-
-  const demoPosts = [
-    {
-      id: "demo-lina",
-      name: "Lina",
-      username: "lina.ae",
-      letter: "L",
-      gradient: ["#8b3dff", "#c54dff"],
-      verified: true,
-      time: "12m",
-      text: "Sunset always hits different 💜 #sunset #mood",
-      image:
-        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
-      likes: 2400,
-      comments: 186,
-      reposts: 312,
-      views: 48000,
-      replies: [
-        {
-          name: "Noah",
-          letter: "N",
-          gradient: ["#252b38", "#5b6578"],
-          text: "This is beautiful 💜",
-          likes: 24
-        },
-        {
-          name: "Sara",
-          letter: "S",
-          gradient: ["#8b3dff", "#ee4cff"],
-          text: "The colors are perfect.",
-          likes: 11
-        }
-      ]
-    },
-    {
-      id: "demo-apple",
+      id: "demo-1",
       name: "Apple",
       username: "apple",
-      letter: "",
-      gradient: ["#0a0a0c", "#3b3b43"],
+      letter: "A",
+      gradient: ["#202020", "#666666"],
       verified: true,
-      time: "28m",
+      time: "12m",
       text:
-        "Apple Intelligence expands to more languages later this year.",
-      image:
-        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
+        "A cleaner way to create, share and discover what matters to you.",
+      images: [],
+      videos: [],
       likes: 28400,
-      comments: 1800,
-      reposts: 3900,
+      comments: 1843,
+      reposts: 3902,
       views: 2400000,
       replies: [
         {
           name: "Lina",
           letter: "L",
-          gradient: ["#8b3dff", "#c54dff"],
-          text: "Huge update.",
-          likes: 19
+          gradient: ["#8B3DFF", "#C54DFF"],
+          text: "This looks amazing.",
+          likes: 24
+        },
+        {
+          name: "Noah",
+          letter: "N",
+          gradient: ["#2563EB", "#06B6D4"],
+          text: "Can't wait for this.",
+          likes: 8
         }
       ]
     },
     {
-      id: "demo-noah",
-      name: "Noah",
-      username: "noah.vibes",
-      letter: "N",
-      gradient: ["#17171c", "#51515a"],
-      verified: true,
-      time: "45m",
-      text: "Focused on the journey. #focus #life",
-      image:
-        "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=85",
-      likes: 910,
-      comments: 73,
-      reposts: 118,
-      views: 18400,
+      id: "demo-2",
+      name: "Lina",
+      username: "lina",
+      letter: "L",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      verified: false,
+      vip: true,
+      time: "28m",
+      text: "Finally finished my new workspace setup. ✨",
+      images: [],
+      videos: [],
+      likes: 4211,
+      comments: 291,
+      reposts: 88,
+      views: 119000,
       replies: [
         {
-          name: "Lina",
-          letter: "L",
-          gradient: ["#8b3dff", "#c54dff"],
-          text: "Keep going 🔥",
-          likes: 7
+          name: "Maya",
+          letter: "M",
+          gradient: ["#EC4899", "#F97316"],
+          text: "Love the purple setup!",
+          likes: 13
         }
       ]
     },
     {
-      id: "demo-repost",
-      name: "Sara",
-      username: "sara.vibes",
-      letter: "S",
-      gradient: ["#8b3dff", "#e34dff"],
+      id: "demo-3",
+      name: "Noah",
+      username: "noah",
+      letter: "N",
+      gradient: ["#2563EB", "#06B6D4"],
       verified: false,
-      time: "1h",
+      vip: false,
+      time: "43m",
       text:
-        "Reposted this because it deserved another look. #inspiration",
-      image:
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
+        "Morning thoughts. Keep moving even when nobody is watching.",
+      images: [],
+      videos: [],
+      likes: 831,
+      comments: 41,
+      reposts: 12,
+      views: 15200,
+      replies: [
+        {
+          name: "Omar",
+          letter: "O",
+          gradient: ["#334155", "#64748B"],
+          text: "Needed this today.",
+          likes: 11
+        }
+      ]
+    },
+    {
+      id: "demo-4",
+      name: "Sara",
+      username: "sara",
+      letter: "S",
+      gradient: ["#F43F5E", "#FB7185"],
+      verified: false,
+      vip: false,
+      time: "1h",
+      text: "Small wins still count. 🌙",
+      images: [],
+      videos: [],
       likes: 1260,
       comments: 74,
       reposts: 31,
       views: 22000,
-      repostOf: "demo-lina",
+      replies: []
+    },
+    {
+      id: "demo-5",
+      name: "Alex",
+      username: "alex",
+      letter: "Λ",
+      gradient: ["#8B3DFF", "#EC4899"],
+      verified: false,
+      vip: false,
+      time: "2h",
+      text:
+        "Reposted this because it deserved another look.",
+      images: [],
+      videos: [],
+      likes: 320,
+      comments: 18,
+      reposts: 19,
+      views: 6800,
+      repostOf: "demo-1",
       replies: []
     }
   ];
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(
-      /[&<>"']/g,
-      (character) => {
-        const map = {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;"
-        };
+  const demoStories = [
+    {
+      id: "s1",
+      name: "You",
+      letter: "R",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      mine: true,
+      seen: false,
+      text: "Your first story can start here."
+    },
+    {
+      id: "s2",
+      name: "Lina",
+      letter: "L",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      seen: false,
+      text: "Late night setup ✨"
+    },
+    {
+      id: "s3",
+      name: "Noah",
+      letter: "N",
+      gradient: ["#2563EB", "#06B6D4"],
+      seen: false,
+      text: "Good morning!"
+    },
+    {
+      id: "s4",
+      name: "Sara",
+      letter: "S",
+      gradient: ["#F43F5E", "#FB7185"],
+      seen: true,
+      text: "Weekend mood."
+    },
+    {
+      id: "s5",
+      name: "Alex",
+      letter: "Λ",
+      gradient: ["#8B3DFF", "#EC4899"],
+      seen: false,
+      text: "New post is up."
+    },
+    {
+      id: "wheel-story",
+      name: "Wheel",
+      wheel: true,
+      text: "Spin the daily wheel."
+    }
+  ];
 
-        return map[character];
-      }
+  const demoReplies = [
+    {
+      name: "Emma",
+      letter: "E",
+      gradient: ["#8B3DFF", "#C54DFF"],
+      text: "Love this.",
+      likes: 7
+    },
+    {
+      name: "Omar",
+      letter: "O",
+      gradient: ["#334155", "#64748B"],
+      text: "Exactly what I needed today.",
+      likes: 11
+    }
+  ];
+
+  function esc(value) {
+    return String(value ?? "").replace(
+      /[&<>'"]/g,
+      (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#039;",
+        '"': "&quot;"
+      }[character])
     );
   }
 
-  function formatNumber(value) {
+  function fmt(value) {
     const number = Number(value) || 0;
 
     if (number >= 1000000) {
@@ -232,56 +247,79 @@
     return String(number);
   }
 
-  function readStorage(key, fallback) {
+  function read(key, fallback) {
     try {
       const value = localStorage.getItem(key);
-
-      if (!value) {
-        return fallback;
-      }
-
-      return JSON.parse(value);
+      return value ? JSON.parse(value) : fallback;
     } catch {
       return fallback;
     }
   }
 
-  function writeStorage(key, value) {
+  function write(key, value) {
     try {
-      localStorage.setItem(
-        key,
-        JSON.stringify(value)
-      );
-    } catch {
-      return;
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error("ΛRS storage error:", error);
     }
   }
 
-  function getUser() {
+  function profile() {
     try {
-      return (
-        JSON.parse(
-          localStorage.getItem("ars_user")
-        ) || {}
-      );
+      return JSON.parse(localStorage.getItem("ars_user")) || {};
     } catch {
       return {};
     }
   }
 
-  function getMyAvatar() {
-    const user = getUser();
+  function userAvatar() {
+    const user = profile();
 
     return {
-      name: user.displayName || "You",
-      username: user.username || "you",
       letter: user.letter || "R",
       avatar: user.avatar || "",
-      letterColor:
-        user.letterColor || "#8b3dff",
-      background:
-        user.background || "#c54dff"
+      gradient: [
+        user.letterColor || "#8B3DFF",
+        user.background || "#C54DFF"
+      ],
+      name: user.displayName || user.name || "You",
+      username: user.username || "you"
     };
+  }
+
+  function load() {
+    const savedState = read(STATE_KEY, {});
+
+    app.liked = new Set(savedState.liked || []);
+    app.reposted = new Set(savedState.reposted || []);
+    app.saved = new Set(savedState.saved || []);
+
+    const localPosts = read(POST_KEY, [])
+      .filter(Boolean)
+      .map(normalizePost);
+
+    app.posts = [...localPosts, ...demos].map(normalizePost);
+
+    const localStories = read(STORY_KEY, [])
+      .filter(
+        (story) =>
+          !story.expiresAt ||
+          Number(story.expiresAt) > Date.now()
+      )
+      .map((story) => ({
+        ...story,
+        mine: true
+      }));
+
+    app.stories = [...localStories, ...demoStories];
+  }
+
+  function saveState() {
+    write(STATE_KEY, {
+      liked: [...app.liked],
+      reposted: [...app.reposted],
+      saved: [...app.saved]
+    });
   }
 
   function normalizePost(post) {
@@ -291,256 +329,109 @@
       comments: Number(post.comments) || 0,
       reposts: Number(post.reposts) || 0,
       views: Number(post.views) || 0,
+
+      images: Array.isArray(post.images)
+        ? post.images
+        : post.image
+          ? [post.image]
+          : [],
+
+      videos: Array.isArray(post.videos)
+        ? post.videos
+        : post.video
+          ? [post.video]
+          : [],
+
       replies: Array.isArray(post.replies)
         ? post.replies
         : []
     };
   }
 
-  function loadState() {
-    const savedState =
-      readStorage(
-        STATE_KEY,
-        {}
-      );
-
-    state.liked = new Set(
-      Array.isArray(savedState.liked)
-        ? savedState.liked
-        : []
-    );
-
-    state.reposted = new Set(
-      Array.isArray(savedState.reposted)
-        ? savedState.reposted
-        : []
-    );
-
-    state.saved = new Set(
-      Array.isArray(savedState.saved)
-        ? savedState.saved
-        : []
-    );
-
-    const localPosts =
-      readStorage(
-        POST_KEY,
-        []
-      )
-        .filter(Boolean)
-        .map(normalizePost);
-
-    state.posts = [
-      ...localPosts,
-      ...demoPosts
-    ].map(normalizePost);
-
-    const now = Date.now();
-
-    const localStories =
-      readStorage(
-        STORY_KEY,
-        []
-      ).filter(
-        (story) =>
-          !story.expiresAt ||
-          Number(story.expiresAt) > now
-      );
-
-    state.stories = [
-      ...localStories,
-      ...demoStories
-    ];
-  }
-
-  function saveState() {
-    writeStorage(
-      STATE_KEY,
-      {
-        liked: [...state.liked],
-        reposted: [...state.reposted],
-        saved: [...state.saved]
-      }
-    );
-  }
-
-  function saveLocalPost(post) {
-    if (
-      !String(post.id).startsWith("post-")
-    ) {
-      return;
-    }
-
-    const posts =
-      readStorage(
-        POST_KEY,
-        []
-      );
-
-    const index =
-      posts.findIndex(
-        (item) =>
-          String(item.id) ===
-          String(post.id)
-      );
-
-    if (index >= 0) {
-      posts[index] = post;
-    } else {
-      posts.unshift(post);
-    }
-
-    writeStorage(
-      POST_KEY,
-      posts
-    );
-  }
-
-  function avatarHTML(person, reply = false) {
+  function avatarHTML(person, small = false) {
     const gradient =
-      Array.isArray(person.gradient)
-        ? person.gradient
-        : ["#8b3dff", "#c54dff"];
+      person.gradient || ["#8B3DFF", "#C54DFF"];
 
-    const className =
-      reply
-        ? "reply-avatar"
-        : "post-avatar";
+    const className = small
+      ? "reply-avatar"
+      : "post-avatar";
 
-    if (person.avatar) {
-      return `
-        <div
-          class="${className}"
-          style="background:linear-gradient(135deg,${escapeHTML(
-            gradient[0]
-          )},${escapeHTML(gradient[1])})"
-        >
-          <img
-            src="${escapeHTML(person.avatar)}"
-            alt=""
-          >
-        </div>
-      `;
-    }
+    const avatar = person.avatar || "";
 
     return `
       <div
         class="${className}"
-        style="background:linear-gradient(135deg,${escapeHTML(
+        style="background:linear-gradient(135deg,${esc(
           gradient[0]
-        )},${escapeHTML(gradient[1])})"
+        )},${esc(gradient[1])})"
       >
-        ${escapeHTML(
-          person.letter ||
-          person.name?.[0] ||
-          "Λ"
-        )}
+        ${
+          avatar
+            ? `<img src="${esc(avatar)}" alt="">`
+            : esc(
+                person.letter ||
+                person.name?.[0] ||
+                "Λ"
+              )
+        }
       </div>
     `;
   }
 
   function textHTML(text) {
-    return escapeHTML(text).replace(
+    return esc(text).replace(
       /(^|\s)(#[a-zA-Z0-9_]+)/g,
-      "$1<span class=\"hashtag\">$2</span>"
+      '$1<span class="hashtag">$2</span>'
     );
   }
 
   function mediaHTML(post) {
-    const images = [];
+    const images = post.images || [];
+    const videos = post.videos || [];
 
-    if (post.image) {
-      images.push({
-        type: "image",
-        data: post.image
-      });
-    }
-
-    if (Array.isArray(post.images)) {
-      post.images.forEach(
-        (image) => {
-          if (image) {
-            images.push({
-              type: "image",
-              data: image
-            });
-          }
-        }
-      );
-    }
-
-    if (post.video) {
-      images.push({
-        type: "video",
-        data: post.video
-      });
-    }
-
-    if (Array.isArray(post.videos)) {
-      post.videos.forEach(
-        (video) => {
-          if (video) {
-            images.push({
-              type: "video",
-              data: video
-            });
-          }
-        }
-      );
-    }
-
-    const uniqueMedia =
-      images.filter(
-        (item, index, array) =>
-          array.findIndex(
-            (other) =>
-              other.data === item.data
-          ) === index
-      );
-
-    return uniqueMedia
-      .map((media) => {
-        if (media.type === "video") {
-          return `
-            <video
-              class="post-video"
-              controls
-              playsinline
-              preload="metadata"
-              src="${escapeHTML(media.data)}"
-            ></video>
-          `;
-        }
-
-        return `
+    const imageMarkup = images
+      .map(
+        (image) => `
           <div class="post-image">
             <img
-              src="${escapeHTML(media.data)}"
+              src="${esc(image)}"
               alt="Post media"
               loading="lazy"
             >
           </div>
-        `;
-      })
+        `
+      )
       .join("");
+
+    const videoMarkup = videos
+      .map(
+        (video) => `
+          <video
+            class="post-video"
+            controls
+            playsinline
+            preload="metadata"
+            src="${esc(video)}"
+          ></video>
+        `
+      )
+      .join("");
+
+    return imageMarkup + videoMarkup;
   }
 
-  function postHTML(post, detail = false) {
-    const liked =
-      state.liked.has(post.id);
-
-    const reposted =
-      state.reposted.has(post.id);
-
-    const saved =
-      state.saved.has(post.id);
+  function postHTML(post, detailMode = false) {
+    const liked = app.liked.has(post.id);
+    const reposted = app.reposted.has(post.id);
+    const saved = app.saved.has(post.id);
 
     return `
       <article
-        class="post ${detail ? "detail-post" : "clickable"}"
-        data-post-id="${escapeHTML(post.id)}"
+        class="post ${
+          detailMode ? "detail-post" : "clickable"
+        }"
+        data-id="${esc(post.id)}"
       >
-
         <div class="post-header">
 
           <div class="post-user">
@@ -549,8 +440,7 @@
             <div class="post-info">
 
               <div class="post-name">
-
-                ${escapeHTML(post.name)}
+                ${esc(post.name)}
 
                 ${
                   post.verified
@@ -571,19 +461,14 @@
                     `
                     : ""
                 }
-
               </div>
 
               <div class="post-username">
-                @${escapeHTML(
-                  post.username || "user"
-                )}
+                @${esc(post.username || "user")}
               </div>
 
               <div class="post-time">
-                ${escapeHTML(
-                  post.time || "now"
-                )}
+                ${esc(post.time || "now")}
               </div>
 
             </div>
@@ -618,21 +503,10 @@
         ${mediaHTML(post)}
 
         <div class="post-stats">
-          <span>
-            ${formatNumber(post.likes)} likes
-          </span>
-
-          <span>
-            ${formatNumber(post.comments)} replies
-          </span>
-
-          <span>
-            ${formatNumber(post.reposts)} reposts
-          </span>
-
-          <span>
-            ${formatNumber(post.views)} views
-          </span>
+          <span>${fmt(post.likes)} likes</span>
+          <span>${fmt(post.comments)} replies</span>
+          <span>${fmt(post.reposts)} reposts</span>
+          <span>${fmt(post.views)} views</span>
         </div>
 
         <div class="post-actions">
@@ -641,42 +515,45 @@
 
             <button
               class="action ${liked ? "liked" : ""}"
-              type="button"
               data-action="like"
+              type="button"
             >
               <i data-lucide="heart"></i>
-              <span>
-                ${formatNumber(post.likes)}
+              <span class="count">
+                ${fmt(post.likes)}
               </span>
             </button>
 
             <button
               class="action"
-              type="button"
               data-action="reply"
+              type="button"
             >
               <i data-lucide="message-circle"></i>
-              <span>
-                ${formatNumber(post.comments)}
+              <span class="count">
+                ${fmt(post.comments)}
               </span>
             </button>
 
             <button
-              class="action ${reposted ? "reposted" : ""}"
-              type="button"
+              class="action ${
+                reposted ? "active" : ""
+              }"
               data-action="repost"
+              type="button"
             >
               <i data-lucide="repeat-2"></i>
-              <span>
-                ${formatNumber(post.reposts)}
+              <span class="count">
+                ${fmt(post.reposts)}
               </span>
             </button>
 
             <button
-              class="action ${saved ? "saved" : ""}"
-              type="button"
+              class="action ${
+                saved ? "active" : ""
+              }"
               data-action="save"
-              aria-label="Save"
+              type="button"
             >
               <i data-lucide="bookmark"></i>
             </button>
@@ -685,144 +562,114 @@
 
           <div class="action-views">
             <i data-lucide="eye"></i>
-            ${formatNumber(post.views)}
+            ${fmt(post.views)}
           </div>
 
         </div>
-
       </article>
     `;
   }
 
   function renderStories() {
-    if (!storiesEl) {
-      return;
-    }
+    if (!stories) return;
 
-    storiesEl.innerHTML =
-      state.stories
-        .map((story) => {
-          if (story.wheel) {
-            return `
-              <button
-                class="story story-wheel"
-                type="button"
-                data-wheel-story
-              >
-                <div class="story-ring">
-                  <div class="story-avatar"></div>
-                </div>
-
-                <div class="story-name">
-                  Wheel
-                </div>
-              </button>
-            `;
-          }
-
-          const gradient =
-            Array.isArray(story.gradient)
-              ? story.gradient
-              : ["#8b3dff", "#c54dff"];
-
+    stories.innerHTML = app.stories
+      .map((story) => {
+        if (story.wheel) {
           return `
             <button
-              class="story ${
-                story.seen
-                  ? "seen"
-                  : ""
-              } ${
-                story.mine
-                  ? "mine"
-                  : ""
-              }"
+              class="story story-wheel"
               type="button"
-              data-story-id="${escapeHTML(
-                story.id
-              )}"
+              data-wheel-story
+              aria-label="Open Wheel"
             >
-
               <div class="story-ring">
-
-                <div
-                  class="story-avatar"
-                  style="background:linear-gradient(135deg,${escapeHTML(
-                    gradient[0]
-                  )},${escapeHTML(
-                    gradient[1]
-                  )})"
-                >
-
-                  ${
-                    story.avatar
-                      ? `
-                        <img
-                          src="${escapeHTML(
-                            story.avatar
-                          )}"
-                          alt=""
-                        >
-                      `
-                      : escapeHTML(
-                          story.letter ||
-                          story.name?.[0] ||
-                          "Λ"
-                        )
-                  }
-
+                <div class="story-avatar wheel-story-avatar">
+                  <span>ΛRS</span>
                 </div>
-
               </div>
-
-              ${
-                story.mine
-                  ? `
-                    <span class="story-plus">
-                      +
-                    </span>
-                  `
-                  : ""
-              }
 
               <div class="story-name">
-                ${escapeHTML(
-                  story.name
-                )}
+                Wheel
               </div>
-
             </button>
           `;
-        })
-        .join("");
+        }
+
+        const gradient =
+          story.gradient ||
+          ["#8B3DFF", "#C54DFF"];
+
+        const avatar = story.avatar || "";
+
+        return `
+          <button
+            class="story ${
+              story.seen ? "seen" : ""
+            } ${story.mine ? "mine" : ""}"
+            data-story-id="${esc(story.id)}"
+            type="button"
+            aria-label="Open ${esc(
+              story.name
+            )} story"
+          >
+            <div class="story-ring">
+
+              <div
+                class="story-avatar"
+                style="background:linear-gradient(135deg,${esc(
+                  gradient[0]
+                )},${esc(gradient[1])})"
+              >
+                ${
+                  avatar
+                    ? `<img src="${esc(
+                        avatar
+                      )}" alt="">`
+                    : esc(
+                        story.letter ||
+                        story.name?.[0] ||
+                        "Λ"
+                      )
+                }
+              </div>
+
+            </div>
+
+            ${
+              story.mine
+                ? '<span class="story-plus">+</span>'
+                : ""
+            }
+
+            <div class="story-name">
+              ${esc(story.name)}
+            </div>
+          </button>
+        `;
+      })
+      .join("");
 
     refreshIcons();
   }
 
   function renderPosts() {
-    if (!feed) {
-      return;
-    }
+    if (!feed) return;
 
-    if (!state.posts.length) {
+    if (!app.posts.length) {
       feed.innerHTML = `
         <div class="empty-state">
           <strong>No posts yet</strong>
-          <span>
-            Create the first post.
-          </span>
+          <span>Create the first post.</span>
         </div>
       `;
 
       return;
     }
 
-    feed.innerHTML =
-      state.posts
-        .map(
-          (post) =>
-            postHTML(post)
-        )
-        .join("");
+    feed.innerHTML = app.posts
+      .map((post) => postHTML(post))
+      .join("");
 
     refreshIcons();
   }
@@ -837,108 +684,205 @@
     }
   }
 
-  function renderReply(reply) {
-    return `
-      <div class="reply">
+  function openStory(id) {
+    const story = app.stories.find(
+      (item) =>
+        String(item.id) === String(id)
+    );
 
-        ${avatarHTML(
-          reply,
-          true
-        )}
+    if (!story) return;
 
-        <div class="reply-body">
+    story.seen = true;
+    renderStories();
 
-          <div class="reply-name">
-            ${escapeHTML(
-              reply.name || "User"
-            )}
-          </div>
+    const viewer = $("#storyViewer");
+    const viewerName = $("#storyViewerName");
+    const viewerAvatar = $(
+      "#storyViewerAvatar"
+    );
+    const viewerImage = $(
+      "#storyViewerImage"
+    );
+    const viewerVideo = $(
+      "#storyViewerVideo"
+    );
+    const viewerText = $(
+      "#storyViewerText"
+    );
 
-          <div class="reply-text">
-            ${escapeHTML(
-              reply.text || ""
-            )}
-          </div>
+    if (
+      !viewer ||
+      !viewerName ||
+      !viewerAvatar ||
+      !viewerImage ||
+      !viewerText
+    ) {
+      return;
+    }
 
-          <div class="reply-likes">
-            ${formatNumber(
-              reply.likes
-            )} likes
-          </div>
+    viewerName.textContent =
+      story.name || "Story";
 
-        </div>
+    viewerAvatar.textContent =
+      story.letter ||
+      story.name?.[0] ||
+      "Λ";
 
-      </div>
-    `;
-  }
+    viewerAvatar.style.background =
+      `linear-gradient(135deg,${
+        story.gradient?.[0] ||
+        "#8B3DFF"
+      },${
+        story.gradient?.[1] ||
+        "#C54DFF"
+      })`;
 
-  function openPost(postId) {
-    const post =
-      state.posts.find(
-        (item) =>
-          String(item.id) ===
-          String(postId)
+    const image =
+      story.images?.[0] ||
+      story.image ||
+      "";
+
+    const video =
+      story.videos?.[0] ||
+      story.video ||
+      "";
+
+    viewerImage.style.backgroundImage =
+      image
+        ? `url("${String(image).replace(
+            /"/g,
+            '\\"'
+          )}")`
+        : "none";
+
+    if (viewerVideo) {
+      viewerVideo.pause();
+      viewerVideo.removeAttribute("src");
+      viewerVideo.load();
+      viewerVideo.classList.add(
+        "hidden"
       );
 
-    if (!post || !postDetail) {
+      if (video) {
+        viewerVideo.src = video;
+        viewerVideo.classList.remove(
+          "hidden"
+        );
+
+        viewerImage.style.backgroundImage =
+          "none";
+
+        viewerVideo.load();
+
+        viewerVideo.play().catch(
+          () => {}
+        );
+      }
+    }
+
+    viewerText.textContent =
+      story.text || "";
+
+    viewer.classList.remove("hidden");
+
+    viewer.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+  }
+
+  function closeStory() {
+    const viewer = $("#storyViewer");
+    const video = $(
+      "#storyViewerVideo"
+    );
+
+    if (video) {
+      video.pause();
+    }
+
+    viewer?.classList.add("hidden");
+
+    viewer?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+  }
+
+  function getReplies(post) {
+    return post.replies?.length
+      ? post.replies
+      : demoReplies.map((reply) => ({
+          ...reply
+        }));
+  }
+
+  function openPostDetail(id) {
+    const post = app.posts.find(
+      (item) =>
+        String(item.id) === String(id)
+    );
+
+    if (
+      !post ||
+      !detail ||
+      !detailBody ||
+      !replies ||
+      !replyCount
+    ) {
       return;
     }
 
     activePostId = post.id;
 
-    postDetail.classList.remove(
+    detailBody.innerHTML =
+      postHTML(post, true);
+
+    const list = getReplies(post);
+
+    replyCount.textContent =
+      String(list.length);
+
+    replies.innerHTML = list
+      .map(
+        (reply) => `
+          <div class="reply">
+            ${avatarHTML(reply, true)}
+
+            <div class="reply-main">
+              <div class="reply-name">
+                ${esc(reply.name)}
+              </div>
+
+              <div class="reply-text">
+                ${textHTML(reply.text)}
+              </div>
+
+              <div class="reply-like">
+                ♥ ${fmt(reply.likes || 0)}
+              </div>
+            </div>
+          </div>
+        `
+      )
+      .join("");
+
+    detail.classList.remove(
       "hidden"
     );
 
-    postDetail.setAttribute(
+    detail.setAttribute(
       "aria-hidden",
       "false"
     );
 
-    if (detailPostBody) {
-      detailPostBody.innerHTML =
-        postHTML(
-          post,
-          true
-        );
-    }
-
-    if (detailReplies) {
-      detailReplies.innerHTML =
-        post.replies.length
-          ? post.replies
-              .map(renderReply)
-              .join("")
-          : `
-            <div class="empty-state">
-              <span>
-                No replies yet.
-              </span>
-            </div>
-          `;
-    }
-
-    if (replyCount) {
-      replyCount.textContent =
-        String(
-          post.replies.length
-        );
-    }
-
-    updateReplyAvatar();
     refreshIcons();
   }
 
-  function closePost() {
-    if (!postDetail) {
-      return;
-    }
+  function closeDetail() {
+    detail?.classList.add("hidden");
 
-    postDetail.classList.add(
-      "hidden"
-    );
-
-    postDetail.setAttribute(
+    detail?.setAttribute(
       "aria-hidden",
       "true"
     );
@@ -946,23 +890,77 @@
     activePostId = null;
   }
 
-  function openStory(storyId) {
-    const story =
-      state.stories.find(
+  function persistPost(post) {
+    const localPosts =
+      read(POST_KEY, []);
+
+    const index =
+      localPosts.findIndex(
         (item) =>
           String(item.id) ===
-          String(storyId)
+          String(post.id)
       );
 
-    if (!story) {
+    if (index >= 0) {
+      localPosts[index] = post;
+    } else if (
+      String(post.id).startsWith(
+        "local-"
+      )
+    ) {
+      localPosts.unshift(post);
+    } else {
       return;
     }
 
-    story.seen = true;
+    write(
+      POST_KEY,
+      localPosts
+    );
+  }
 
-    renderStories();
+  function completeChallenge(id) {
+    if (
+      window.ARSWheel &&
+      typeof window.ARSWheel
+        .completeChallenge ===
+        "function"
+    ) {
+      window.ARSWheel.completeChallenge(
+        id
+      );
+    }
+  }
 
-    const viewer =
-      $("#storyViewer");
+  function toggleAction(id, action) {
+    const post = app.posts.find(
+      (item) =>
+        String(item.id) === String(id)
+    );
 
-    const vi 
+    if (!post) return;
+
+    if (action === "like") {
+      if (app.liked.has(post.id)) {
+        app.liked.delete(post.id);
+
+        post.likes = Math.max(
+          0,
+          post.likes - 1
+        );
+      } else {
+        app.liked.add(post.id);
+
+        post.likes += 1;
+
+        completeChallenge(
+          "like"
+        );
+      }
+    }
+
+    if (action === "repost") {
+      if (
+        app.reposted.has(post.id)
+      ) {
+  
