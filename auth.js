@@ -1186,3 +1186,189 @@
   }
 
 })();
+/* =========================================
+   ARS PROFILE OPTIONS ADD-ON
+   Adds only missing options.
+   Does not replace existing code.
+   ========================================= */
+
+(function () {
+  const newLetterColors = [
+    "#f5f5f5",
+    "#d9d9df",
+    "#9ca3af",
+    "#111111",
+    "#000000",
+    "#ff3b30",
+    "#ff5f75",
+    "#ff7a59",
+    "#ff9f0a",
+    "#ffd166",
+    "#ffe66d",
+    "#53d79a",
+    "#22c55e",
+    "#00c896",
+    "#7de2ff",
+    "#38bdf8",
+    "#3b82f6",
+    "#6366f1",
+    "#8b5cf6",
+    "#a855f7",
+    "#d946ef",
+    "#ff7ac8",
+    "#ec4899",
+    "#f43f5e"
+  ];
+
+  const newBackgrounds = [
+    ["#000000", "#222222"],
+    ["#1d4ed8", "#38bdf8"],
+    ["#0f766e", "#22c55e"],
+    ["#15803d", "#84cc16"],
+    ["#ca8a04", "#f59e0b"],
+    ["#ea580c", "#f43f5e"],
+    ["#be123c", "#fb7185"],
+    ["#9d174d", "#f472b6"],
+    ["#7e22ce", "#e879f9"],
+    ["#4338ca", "#818cf8"],
+    ["#0369a1", "#67e8f9"],
+    ["#0f172a", "#334155"]
+  ];
+
+  function addMissingLetterColors() {
+    const container =
+      document.getElementById("letterColors");
+
+    if (!container) return;
+
+    const existingColors = new Set();
+
+    container
+      .querySelectorAll(".color-option")
+      .forEach((button) => {
+        const color =
+          button.style.backgroundColor ||
+          button.style.background;
+
+        if (color) {
+          existingColors.add(
+            color.toLowerCase()
+          );
+        }
+      });
+
+    newLetterColors.forEach((color) => {
+      if (
+        existingColors.has(
+          color.toLowerCase()
+        )
+      ) {
+        return;
+      }
+
+      const button =
+        document.createElement("button");
+
+      button.type = "button";
+      button.className = "color-option";
+      button.style.background = color;
+      button.setAttribute(
+        "aria-label",
+        `Letter color ${color}`
+      );
+
+      container.appendChild(button);
+
+      existingColors.add(
+        color.toLowerCase()
+      );
+    });
+  }
+
+  function addMissingBackgrounds() {
+    const container =
+      document.getElementById(
+        "backgroundColors"
+      );
+
+    if (!container) return;
+
+    const existingBackgrounds = new Set();
+
+    container
+      .querySelectorAll(".gradient-option")
+      .forEach((button) => {
+        const background =
+          button.style.background;
+
+        if (background) {
+          existingBackgrounds.add(
+            background.toLowerCase()
+          );
+        }
+      });
+
+    newBackgrounds.forEach(
+      ([first, second]) => {
+        const gradient =
+          `linear-gradient(135deg, ${first}, ${second})`;
+
+        if (
+          existingBackgrounds.has(
+            gradient.toLowerCase()
+          )
+        ) {
+          return;
+        }
+
+        const button =
+          document.createElement("button");
+
+        button.type = "button";
+        button.className =
+          "gradient-option";
+
+        button.style.background =
+          gradient;
+
+        button.setAttribute(
+          "aria-label",
+          "Background gradient"
+        );
+
+        container.appendChild(button);
+
+        existingBackgrounds.add(
+          gradient.toLowerCase()
+        );
+      }
+    );
+  }
+
+  function changeButtonToNext() {
+    const button =
+      document.getElementById(
+        "saveProfileSetup"
+      );
+
+    if (button) {
+      button.textContent = "Next";
+    }
+  }
+
+  function applyChanges() {
+    changeButtonToNext();
+    addMissingLetterColors();
+    addMissingBackgrounds();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      applyChanges,
+      { once: true }
+    );
+  } else {
+    applyChanges();
+  }
+})();
