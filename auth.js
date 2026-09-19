@@ -123,7 +123,6 @@
   ========================== */
 
   const letterColorOptions = [
-    /* Existing */
     "#ffffff",
     "#f4c2ff",
     "#d8a6ff",
@@ -137,7 +136,6 @@
     "#ffd166",
     "#f5f5f5",
 
-    /* New */
     "#d9d9df",
     "#9ca3af",
     "#111111",
@@ -166,7 +164,6 @@
   ========================== */
 
   const backgroundOptions = [
-    /* Existing */
     ["#8b3dff", "#c54dff"],
     ["#6d28d9", "#a855f7"],
     ["#4c1d95", "#8b5cf6"],
@@ -178,7 +175,6 @@
     ["#18181d", "#5d5d68"],
     ["#312e81", "#7c3aed"],
 
-    /* New */
     ["#000000", "#222222"],
     ["#1d4ed8", "#38bdf8"],
     ["#0f766e", "#22c55e"],
@@ -485,10 +481,6 @@
         ?.value || "";
 
 
-    /* -------------------------
-       VALIDATION
-    ------------------------- */
-
     if (displayName.length < 2) {
       setMessage(
         registerMessage,
@@ -532,10 +524,6 @@
       return;
     }
 
-
-    /* -------------------------
-       PROFILE
-    ------------------------- */
 
     const existingUser =
       getUser();
@@ -894,15 +882,6 @@
     }
 
 
-    /*
-     * Important:
-     * We render from letterColorOptions
-     * directly. No extra DOM buttons are
-     * created elsewhere, so the new colors
-     * cannot disappear when this function
-     * refreshes the grid.
-     */
-
     letterColors.innerHTML =
       letterColorOptions
         .map(color => {
@@ -1193,4 +1172,37 @@
 
     profileModalClose?.addEventListener(
       "click",
-      closeProfileMo    
+      closeProfileModal
+    );
+
+
+    closeProfileSetup?.addEventListener(
+      "click",
+      closeProfileModal
+    );
+
+
+    saveProfileSetup?.addEventListener(
+      "click",
+      saveProfile
+    );
+
+
+    profileNextButton?.addEventListener(
+      "click",
+      handleProfileNext
+    );
+  }
+
+
+  /* =========================
+     INIT
+  ========================== */
+
+  function init() {
+    setupTabs();
+    setupEvents();
+    setupKeyboard();
+    updateInitialProfileIcon();
+    }
+ 
