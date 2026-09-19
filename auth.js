@@ -1206,3 +1206,6 @@
     updateInitialProfileIcon();
     }
  
+  init();
+
+})();
