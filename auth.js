@@ -103,7 +103,7 @@
 
 
   /* =========================
-     PROFILE OPTIONS
+     PROFILE LETTERS
   ========================== */
 
   const letters = [
@@ -118,14 +118,12 @@
   ];
 
 
-  /*
-   * Existing colors are preserved.
-   * New colors are added to the same
-   * original system so selection,
-   * preview and saving all work normally.
-   */
+  /* =========================
+     LETTER COLORS
+  ========================== */
 
   const letterColorOptions = [
+    /* Existing */
     "#ffffff",
     "#f4c2ff",
     "#d8a6ff",
@@ -139,8 +137,7 @@
     "#ffd166",
     "#f5f5f5",
 
-    /* NEW COLORS */
-
+    /* New */
     "#d9d9df",
     "#9ca3af",
     "#111111",
@@ -164,13 +161,12 @@
   ];
 
 
-  /*
-   * Existing backgrounds are preserved.
-   * New gradients are added to the same
-   * original array.
-   */
+  /* =========================
+     BACKGROUND OPTIONS
+  ========================== */
 
   const backgroundOptions = [
+    /* Existing */
     ["#8b3dff", "#c54dff"],
     ["#6d28d9", "#a855f7"],
     ["#4c1d95", "#8b5cf6"],
@@ -182,8 +178,7 @@
     ["#18181d", "#5d5d68"],
     ["#312e81", "#7c3aed"],
 
-    /* NEW BACKGROUNDS */
-
+    /* New */
     ["#000000", "#222222"],
     ["#1d4ed8", "#38bdf8"],
     ["#0f766e", "#22c55e"],
@@ -637,7 +632,6 @@
       return;
     }
 
-
     const email =
       $("#loginEmail")
         ?.value
@@ -788,7 +782,9 @@
 
 
     renderLetterGrid();
+
     renderLetterColors();
+
     renderBackgroundColors();
 
     updateAvatarPreview();
@@ -898,6 +894,15 @@
     }
 
 
+    /*
+     * Important:
+     * We render from letterColorOptions
+     * directly. No extra DOM buttons are
+     * created elsewhere, so the new colors
+     * cannot disappear when this function
+     * refreshes the grid.
+     */
+
     letterColors.innerHTML =
       letterColorOptions
         .map(color => {
@@ -916,7 +921,7 @@
               }"
               data-color="${escapeHTML(color)}"
               style="background:${escapeHTML(color)}"
-              aria-label="Letter color"
+              aria-label="Letter color ${escapeHTML(color)}"
             ></button>
           `;
         })
@@ -1098,15 +1103,6 @@
     );
 
 
-    /*
-     * Save Profile inside the
-     * customization window only saves
-     * the profile and closes the window.
-     *
-     * The separate Next button outside
-     * the window continues to Home.
-     */
-
     closeProfileModal();
 
     updateInitialProfileIcon();
@@ -1141,15 +1137,10 @@
 
 
   /* =========================
-     NEXT BUTTON
+     NEXT
   ========================== */
 
   function handleProfileNext() {
-    /*
-     * Next is intentionally separate
-     * from the profile customization modal.
-     */
-
     window.location.href =
       "home.html";
   }
@@ -1194,5 +1185,12 @@
     );
 
 
-    /*
-    
+    openProfileSetup?.addEventListener(
+      "click",
+      openProfileModal
+    );
+
+
+    profileModalClose?.addEventListener(
+      "click",
+      closeProfileMo    
