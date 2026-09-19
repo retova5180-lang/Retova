@@ -19,7 +19,7 @@
 
 
   /* =========================
-     STORAGE KEYS
+     STORAGE
   ========================== */
 
   const STORAGE = {
@@ -44,199 +44,23 @@
 
 
   /* =========================
-     SELECTORS
+     HELPERS
   ========================== */
 
-  const $ = (
-    selector,
-    root = document
-  ) => {
-    return root.querySelector(selector);
-  };
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
+
+  const $$ = (selector, root = document) =>
+    [...root.querySelectorAll(selector)];
 
 
-  const $$ = (
-    selector,
-    root = document
-  ) => {
-    return [
-      ...root.querySelectorAll(selector)
-    ];
-  };
-
-
-  /* =========================
-     ELEMENTS
-  ========================== */
-
-  const loginForm =
-    $("#loginForm");
-
-  const registerForm =
-    $("#registerForm");
-
-  const loginMessage =
-    $("#loginMessage");
-
-  const registerMessage =
-    $("#registerMessage");
-
-  const profileSetup =
-    $("#profileSetup");
-
-  const openProfileSetup =
-    $("#openProfileSetup");
-
-  const profileModal =
-    $("#profileModal");
-
-  const profileModalClose =
-    $("#profileModalClose");
-
-  const closeProfileSetup =
-    $("#closeProfileSetup");
-
-  const largeAvatarPreview =
-    $("#largeAvatarPreview");
-
-  const letterGrid =
-    $("#letterGrid");
-
-  const letterColors =
-    $("#letterColors");
-
-  const backgroundColors =
-    $("#backgroundColors");
-
-  const saveProfileSetup =
-    $("#saveProfileSetup");
-
-  const profileSetupIcon =
-    $(".profile-setup-icon");
-
-  const profileNextButton =
-    $("#profileNextButton");
-
-
-  /* =========================
-     PROFILE LETTERS
-  ========================== */
-
-  const letters = [
-    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    ..."0123456789",
-    "★",
-    "✦",
-    "♥",
-    "◆",
-    "●",
-    "Λ"
-  ];
-
-
-  /* =========================
-     LETTER COLORS
-  ========================== */
-
-  const letterColorOptions = [
-    "#ffffff",
-    "#f4c2ff",
-    "#d8a6ff",
-    "#bd75ff",
-    "#9f55ff",
-    "#8b3dff",
-    "#ff7ac8",
-    "#ff5f86",
-    "#7de2ff",
-    "#53d79a",
-    "#ffd166",
-    "#f5f5f5",
-
-    "#d9d9df",
-    "#9ca3af",
-    "#111111",
-    "#000000",
-    "#ff3b30",
-    "#ff5f75",
-    "#ff7a59",
-    "#ff9f0a",
-    "#ffe66d",
-    "#22c55e",
-    "#00c896",
-    "#38bdf8",
-    "#3b82f6",
-    "#6366f1",
-    "#8b5cf6",
-    "#a855f7",
-    "#c54dff",
-    "#d946ef",
-    "#ec4899",
-    "#f43f5e"
-  ];
-
-
-  /* =========================
-     BACKGROUND OPTIONS
-  ========================== */
-
-  const backgroundOptions = [
-    ["#8b3dff", "#c54dff"],
-    ["#6d28d9", "#a855f7"],
-    ["#4c1d95", "#8b5cf6"],
-    ["#7c3aed", "#ec4899"],
-    ["#9333ea", "#f43f5e"],
-    ["#c026d3", "#7c3aed"],
-    ["#581c87", "#be185d"],
-    ["#111111", "#44444c"],
-    ["#18181d", "#5d5d68"],
-    ["#312e81", "#7c3aed"],
-
-    ["#000000", "#222222"],
-    ["#1d4ed8", "#38bdf8"],
-    ["#0f766e", "#22c55e"],
-    ["#15803d", "#84cc16"],
-    ["#ca8a04", "#f59e0b"],
-    ["#ea580c", "#f43f5e"],
-    ["#be123c", "#fb7185"],
-    ["#9d174d", "#f472b6"],
-    ["#7e22ce", "#e879f9"],
-    ["#4338ca", "#818cf8"],
-    ["#0369a1", "#67e8f9"],
-    ["#0f172a", "#334155"]
-  ];
-
-
-  /* =========================
-     CURRENT SELECTION
-  ========================== */
-
-  let selectedLetter =
-    DEFAULT_PROFILE.letter;
-
-  let selectedLetterColor =
-    DEFAULT_PROFILE.letterColor;
-
-  let selectedBackground =
-    DEFAULT_PROFILE.background;
-
-
-  /* =========================
-     STORAGE HELPERS
-  ========================== */
-
-  function readStorage(
-    key,
-    fallback = null
-  ) {
+  function readStorage(key, fallback = null) {
     try {
-      const value =
-        localStorage.getItem(key);
+      const value = localStorage.getItem(key);
 
-      if (value === null) {
-        return fallback;
-      }
-
-      return value;
+      return value === null
+        ? fallback
+        : value;
     } catch (error) {
       console.error(
         "ΛRS storage read error:",
@@ -248,10 +72,7 @@
   }
 
 
-  function readJSON(
-    key,
-    fallback = null
-  ) {
+  function readJSON(key, fallback = null) {
     try {
       const value =
         localStorage.getItem(key);
@@ -263,7 +84,7 @@
       return JSON.parse(value);
     } catch (error) {
       console.error(
-        "ΛRS JSON storage read error:",
+        "ΛRS JSON storage error:",
         error
       );
 
@@ -272,10 +93,7 @@
   }
 
 
-  function writeStorage(
-    key,
-    value
-  ) {
+  function writeStorage(key, value) {
     try {
       localStorage.setItem(
         key,
@@ -293,10 +111,6 @@
     }
   }
 
-
-  /* =========================
-     ESCAPE HTML
-  ========================== */
 
   function escapeHTML(value) {
     return String(value ?? "")
@@ -317,10 +131,6 @@
   }
 
 
-  /* =========================
-     VALIDATION
-  ========================== */
-
   function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       .test(email);
@@ -332,10 +142,6 @@
       .test(username);
   }
 
-
-  /* =========================
-     MESSAGES
-  ========================== */
 
   function setMessage(
     element,
@@ -359,6 +165,129 @@
 
 
   /* =========================
+     ELEMENTS
+  ========================== */
+
+  const loginForm =
+    $("#loginForm");
+
+  const registerForm =
+    $("#registerForm");
+
+  const loginMessage =
+    $("#loginMessage");
+
+  const registerMessage =
+    $("#registerMessage");
+
+  const profileSetup =
+    $("#profileSetup");
+
+  const profileModal =
+    $("#profileModal");
+
+  const largeAvatarPreview =
+    $("#largeAvatarPreview");
+
+  const letterGrid =
+    $("#letterGrid");
+
+  const letterColors =
+    $("#letterColors");
+
+  const backgroundColors =
+    $("#backgroundColors");
+
+
+  /* =========================
+     PROFILE OPTIONS
+  ========================== */
+
+  const letters = [
+    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    ..."0123456789",
+    "★",
+    "✦",
+    "♥",
+    "◆",
+    "●",
+    "Λ"
+  ];
+
+
+  const letterColorOptions = [
+    "#ffffff",
+    "#f4c2ff",
+    "#d8a6ff",
+    "#bd75ff",
+    "#9f55ff",
+    "#8b3dff",
+    "#ff7ac8",
+    "#ff5f86",
+    "#7de2ff",
+    "#53d79a",
+    "#ffd166",
+    "#f5f5f5",
+    "#d9d9df",
+    "#9ca3af",
+    "#111111",
+    "#000000",
+    "#ff3b30",
+    "#ff5f75",
+    "#ff7a59",
+    "#ff9f0a",
+    "#ffe66d",
+    "#22c55e",
+    "#00c896",
+    "#38bdf8",
+    "#3b82f6",
+    "#6366f1",
+    "#8b5cf6",
+    "#a855f7",
+    "#c54dff",
+    "#d946ef",
+    "#ec4899",
+    "#f43f5e"
+  ];
+
+
+  const backgroundOptions = [
+    ["#8b3dff", "#c54dff"],
+    ["#6d28d9", "#a855f7"],
+    ["#4c1d95", "#8b5cf6"],
+    ["#7c3aed", "#ec4899"],
+    ["#9333ea", "#f43f5e"],
+    ["#c026d3", "#7c3aed"],
+    ["#581c87", "#be185d"],
+    ["#111111", "#44444c"],
+    ["#18181d", "#5d5d68"],
+    ["#312e81", "#7c3aed"],
+    ["#000000", "#222222"],
+    ["#1d4ed8", "#38bdf8"],
+    ["#0f766e", "#22c55e"],
+    ["#15803d", "#84cc16"],
+    ["#ca8a04", "#f59e0b"],
+    ["#ea580c", "#f43f5e"],
+    ["#be123c", "#fb7185"],
+    ["#9d174d", "#f472b6"],
+    ["#7e22ce", "#e879f9"],
+    ["#4338ca", "#818cf8"],
+    ["#0369a1", "#67e8f9"],
+    ["#0f172a", "#334155"]
+  ];
+
+
+  let selectedLetter =
+    DEFAULT_PROFILE.letter;
+
+  let selectedLetterColor =
+    DEFAULT_PROFILE.letterColor;
+
+  let selectedBackground =
+    DEFAULT_PROFILE.background;
+
+
+  /* =========================
      USER
   ========================== */
 
@@ -379,10 +308,6 @@
     );
   }
 
-
-  /* =========================
-     PROFILE
-  ========================== */
 
   function getProfile() {
     const user =
@@ -414,53 +339,57 @@
 
 
   /* =========================
-     AUTH TABS
+     TABS
   ========================== */
 
   function setupTabs() {
-    const tabs =
-      $$(".auth-tab");
+    $$(".auth-tab")
+      .forEach(tab => {
 
-    tabs.forEach(tab => {
-      tab.addEventListener(
-        "click",
-        () => {
-          const target =
-            tab.dataset.authTab;
+        tab.addEventListener(
+          "click",
+          () => {
 
-          tabs.forEach(item => {
-            item.classList.toggle(
-              "active",
-              item === tab
+            const target =
+              tab.dataset.authTab;
+
+            $$(".auth-tab")
+              .forEach(item => {
+
+                item.classList.toggle(
+                  "active",
+                  item === tab
+                );
+
+              });
+
+            if (loginForm) {
+              loginForm.classList.toggle(
+                "active",
+                target === "login"
+              );
+            }
+
+            if (registerForm) {
+              registerForm.classList.toggle(
+                "active",
+                target === "register"
+              );
+            }
+
+            setMessage(
+              loginMessage,
+              ""
             );
-          });
 
-          if (loginForm) {
-            loginForm.classList.toggle(
-              "active",
-              target === "login"
+            setMessage(
+              registerMessage,
+              ""
             );
           }
+        );
 
-          if (registerForm) {
-            registerForm.classList.toggle(
-              "active",
-              target === "register"
-            );
-          }
-
-          setMessage(
-            loginMessage,
-            ""
-          );
-
-          setMessage(
-            registerMessage,
-            ""
-          );
-        }
-      );
-    });
+      });
   }
 
 
@@ -469,6 +398,7 @@
   ========================== */
 
   async function handleRegister(event) {
+
     event.preventDefault();
 
     if (!registerForm) {
@@ -476,6 +406,7 @@
     }
 
     if (!supabaseClient) {
+
       setMessage(
         registerMessage,
         "Authentication service is not available.",
@@ -485,10 +416,12 @@
       return;
     }
 
+
     const displayName =
       $("#registerDisplayName")
         ?.value
         .trim() || "";
+
 
     const username =
       $("#registerUsername")
@@ -496,18 +429,23 @@
         .trim()
         .toLowerCase() || "";
 
+
     const email =
       $("#registerEmail")
         ?.value
         .trim()
         .toLowerCase() || "";
 
+
     const password =
       $("#registerPassword")
         ?.value || "";
 
 
+    /* VALIDATION */
+
     if (displayName.length < 2) {
+
       setMessage(
         registerMessage,
         "Please enter a valid display name.",
@@ -519,6 +457,7 @@
 
 
     if (!validateUsername(username)) {
+
       setMessage(
         registerMessage,
         "Username must be 3–20 characters and use only letters, numbers, _ or .",
@@ -530,6 +469,7 @@
 
 
     if (!validateEmail(email)) {
+
       setMessage(
         registerMessage,
         "Please enter a valid email.",
@@ -541,6 +481,7 @@
 
 
     if (password.length < 8) {
+
       setMessage(
         registerMessage,
         "Password must contain at least 8 characters.",
@@ -559,23 +500,29 @@
 
 
     try {
+
       const {
         data,
         error
       } =
         await supabaseClient.auth.signUp({
+
           email,
           password,
+
           options: {
             data: {
               username,
-              display_name: displayName
+              display_name:
+                displayName
             }
           }
+
         });
 
 
       if (error) {
+
         console.error(
           "ΛRS Supabase registration error:",
           error
@@ -593,6 +540,7 @@
 
 
       if (!data?.user) {
+
         setMessage(
           registerMessage,
           "Could not create your account.",
@@ -603,14 +551,15 @@
       }
 
 
-      const existingUser =
+      const oldUser =
         getUser();
 
-      const existingProfile =
+      const profile =
         getProfile();
 
 
       const user = {
+
         id:
           data.user.id,
 
@@ -621,39 +570,29 @@
         email,
 
         letter:
-          existingProfile.letter,
+          profile.letter,
 
         letterColor:
-          existingProfile.letterColor,
+          profile.letterColor,
 
         background:
-          existingProfile.background,
+          profile.background,
 
         avatar:
-          existingUser.avatar || "",
+          oldUser.avatar || "",
 
         createdAt:
-          existingUser.createdAt ||
+          oldUser.createdAt ||
           Date.now()
+
       };
 
 
       /*
-        IMPORTANT:
-        Password is intentionally NOT stored
-        in localStorage anymore.
+        DO NOT STORE PASSWORD
       */
 
-      if (!saveUser(user)) {
-        setMessage(
-          registerMessage,
-          "Account created, but profile data could not be saved on this device.",
-          "error"
-        );
-
-        return;
-      }
-
+      saveUser(user);
 
       writeStorage(
         STORAGE.letter,
@@ -671,7 +610,12 @@
       );
 
 
+      /*
+        SESSION EXISTS
+      */
+
       if (data.session) {
+
         writeStorage(
           STORAGE.loggedIn,
           "true"
@@ -690,9 +634,7 @@
 
 
       /*
-        Email confirmation is enabled.
-        Supabase created the account but has
-        not created an active browser session yet.
+        EMAIL CONFIRMATION
       */
 
       writeStorage(
@@ -707,6 +649,7 @@
       );
 
     } catch (error) {
+
       console.error(
         "ΛRS registration exception:",
         error
@@ -714,10 +657,13 @@
 
       setMessage(
         registerMessage,
-        "Something went wrong while creating your account.",
+        error?.message ||
+          "Something went wrong while creating your account.",
         "error"
       );
+
     }
+
   }
 
 
@@ -726,6 +672,7 @@
   ========================== */
 
   async function handleLogin(event) {
+
     event.preventDefault();
 
     if (!loginForm) {
@@ -733,6 +680,7 @@
     }
 
     if (!supabaseClient) {
+
       setMessage(
         loginMessage,
         "Authentication service is not available.",
@@ -742,11 +690,13 @@
       return;
     }
 
+
     const email =
       $("#loginEmail")
         ?.value
         .trim()
         .toLowerCase() || "";
+
 
     const password =
       $("#loginPassword")
@@ -754,6 +704,7 @@
 
 
     if (!validateEmail(email)) {
+
       setMessage(
         loginMessage,
         "Please enter a valid email.",
@@ -765,6 +716,7 @@
 
 
     if (!password) {
+
       setMessage(
         loginMessage,
         "Please enter your password.",
@@ -783,17 +735,21 @@
 
 
     try {
+
       const {
         data,
         error
       } =
         await supabaseClient.auth.signInWithPassword({
+
           email,
           password
+
         });
 
 
       if (error) {
+
         console.error(
           "ΛRS Supabase login error:",
           error
@@ -811,6 +767,7 @@
 
 
       if (!data?.user) {
+
         setMessage(
           loginMessage,
           "Login could not be completed.",
@@ -826,11 +783,11 @@
 
 
       /*
-        Get the user's profile from public.users
-        when available.
+        LOAD PROFILE
       */
 
       try {
+
         const {
           data: profile,
           error: profileError
@@ -840,7 +797,10 @@
             .select(
               "id, username, display_name, email, bio, avatar, cover, verified, plan, streak, xp"
             )
-            .eq("id", data.user.id)
+            .eq(
+              "id",
+              data.user.id
+            )
             .maybeSingle();
 
 
@@ -848,8 +808,11 @@
           !profileError &&
           profile
         ) {
+
           localUser = {
+
             ...localUser,
+
             id:
               profile.id,
 
@@ -902,14 +865,18 @@
               profile.xp ??
               localUser.xp ??
               0
+
           };
+
         }
 
       } catch (profileError) {
+
         console.warn(
           "ΛRS profile fetch warning:",
           profileError
         );
+
       }
 
 
@@ -922,8 +889,10 @@
 
 
       if (!localUser.createdAt) {
+
         localUser.createdAt =
           Date.now();
+
       }
 
 
@@ -966,6 +935,7 @@
         "home.html";
 
     } catch (error) {
+
       console.error(
         "ΛRS login exception:",
         error
@@ -973,10 +943,13 @@
 
       setMessage(
         loginMessage,
-        "Something went wrong while logging in.",
+        error?.message ||
+          "Something went wrong while logging in.",
         "error"
       );
+
     }
+
   }
 
 
@@ -985,10 +958,10 @@
   ========================== */
 
   function showProfileSetup() {
+
     if (!profileSetup) {
       return;
     }
-
 
     profileSetup.classList.remove(
       "hidden"
@@ -1009,24 +982,27 @@
     }
 
 
-    $$(".auth-tab").forEach(
-      tab => {
+    $$(".auth-tab")
+      .forEach(tab => {
+
         tab.classList.remove(
           "active"
         );
-      }
-    );
+
+      });
 
 
     updateInitialProfileIcon();
+
   }
 
 
   /* =========================
-     OPEN PROFILE MODAL
+     OPEN MODAL
   ========================== */
 
   function openProfileModal() {
+
     if (!profileModal) {
       return;
     }
@@ -1059,19 +1035,20 @@
       "hidden"
     );
 
-
     profileModal.setAttribute(
       "aria-hidden",
       "false"
     );
+
   }
 
 
   /* =========================
-     CLOSE PROFILE MODAL
+     CLOSE MODAL
   ========================== */
 
   function closeProfileModal() {
+
     if (!profileModal) {
       return;
     }
@@ -1081,19 +1058,20 @@
       "hidden"
     );
 
-
     profileModal.setAttribute(
       "aria-hidden",
       "true"
     );
+
   }
 
 
   /* =========================
-     LETTER GRID
+     LETTERS
   ========================== */
 
   function renderLetterGrid() {
+
     if (!letterGrid) {
       return;
     }
@@ -1102,9 +1080,10 @@
     letterGrid.innerHTML =
       letters
         .map(letter => {
-          const selected =
-            letter === selectedLetter;
 
+          const selected =
+            letter ===
+            selectedLetter;
 
           return `
             <button
@@ -1114,20 +1093,25 @@
                   ? "selected"
                   : ""
               }"
-              data-letter="${escapeHTML(letter)}"
+              data-letter="${escapeHTML(
+                letter
+              )}"
             >
               ${escapeHTML(letter)}
             </button>
           `;
+
         })
         .join("");
 
 
     $$(".letter-option", letterGrid)
       .forEach(button => {
+
         button.addEventListener(
           "click",
           () => {
+
             selectedLetter =
               button.dataset.letter ||
               DEFAULT_PROFILE.letter;
@@ -1135,17 +1119,22 @@
 
             $$(".letter-option", letterGrid)
               .forEach(item => {
+
                 item.classList.toggle(
                   "selected",
                   item === button
                 );
+
               });
 
 
             updateAvatarPreview();
+
           }
         );
+
       });
+
   }
 
 
@@ -1154,6 +1143,7 @@
   ========================== */
 
   function renderLetterColors() {
+
     if (!letterColors) {
       return;
     }
@@ -1162,6 +1152,7 @@
     letterColors.innerHTML =
       letterColorOptions
         .map(color => {
+
           const selected =
             color.toLowerCase() ===
             selectedLetterColor.toLowerCase();
@@ -1175,7 +1166,84 @@
                   ? "selected"
                   : ""
               }"
-              data-color="${escapeHTML(color)}"
-              style="background:${escapeHTML(color)}"
-              aria-label="Letter color ${escapeHTML(color)}"
-          
+              data-color="${escapeHTML(
+                color
+              )}"
+              style="background:${escapeHTML(
+                color
+              )}"
+              aria-label="Letter color ${escapeHTML(
+                color
+              )}"
+            ></button>
+          `;
+
+        })
+        .join("");
+
+
+    $$(".color-option", letterColors)
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            selectedLetterColor =
+              button.dataset.color ||
+              DEFAULT_PROFILE.letterColor;
+
+
+            $$(".color-option", letterColors)
+              .forEach(item => {
+
+                item.classList.toggle(
+                  "selected",
+                  item === button
+                );
+
+              });
+
+
+            updateAvatarPreview();
+
+          }
+        );
+
+      });
+
+  }
+
+
+  /* =========================
+     BACKGROUNDS
+  ========================== */
+
+  function renderBackgroundColors() {
+
+    if (!backgroundColors) {
+      return;
+    }
+
+
+    backgroundColors.innerHTML =
+      backgroundOptions
+        .map(pair => {
+
+          const gradient =
+            "linear-gradient(135deg, " +
+            pair[0] +
+            ", " +
+            pair[1] +
+            ")";
+
+
+          const selected =
+            gradient ===
+            selectedBackground;
+
+
+          return `
+            <button
+              type="button"
+     
