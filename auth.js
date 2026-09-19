@@ -1372,3 +1372,25 @@
     applyChanges();
   }
 })();
+/* =========================================
+   ARS PROFILE NEXT BUTTON
+   Keeps Save Profile unchanged
+   ========================================= */
+
+(function () {
+  const profileNextButton =
+    document.getElementById(
+      "profileNextButton"
+    );
+
+  if (!profileNextButton) {
+    return;
+  }
+
+  profileNextButton.addEventListener(
+    "click",
+    function () {
+      window.location.href = "home.html";
+    }
+  );
+})();
