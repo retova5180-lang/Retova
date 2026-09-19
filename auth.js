@@ -1209,3 +1209,12 @@
   init();
 
 })();
+const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
