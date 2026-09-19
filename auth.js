@@ -1,6 +1,22 @@
 (() => {
   "use strict";
 
+  /* =========================
+     SUPABASE
+  ========================== */
+
+  const SUPABASE_URL =
+    "https://bfqsqgfyyewnfxekirfv.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+
+  const supabaseClient =
+    window.supabase?.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
 
   /* =========================
      STORAGE KEYS
@@ -452,10 +468,20 @@
      CREATE ACCOUNT
   ========================== */
 
-  function handleRegister(event) {
+  async function handleRegister(event) {
     event.preventDefault();
 
     if (!registerForm) {
+      return;
+    }
+
+    if (!supabaseClient) {
+      setMessage(
+        registerMessage,
+        "Authentication service is not available.",
+        "error"
+      );
+
       return;
     }
 
@@ -525,87 +551,173 @@
     }
 
 
-    const existingUser =
-      getUser();
-
-    const existingProfile =
-      getProfile();
-
-
-    const user = {
-      id:
-        existingUser.id ||
-        `local-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}`,
-
-      displayName,
-
-      username,
-
-      email,
-
-      password,
-
-      letter:
-        existingProfile.letter,
-
-      letterColor:
-        existingProfile.letterColor,
-
-      background:
-        existingProfile.background,
-
-      avatar:
-        existingUser.avatar ||
-        "",
-
-      createdAt:
-        existingUser.createdAt ||
-        Date.now()
-    };
-
-
-    if (!saveUser(user)) {
-      setMessage(
-        registerMessage,
-        "Could not save your account on this device.",
-        "error"
-      );
-
-      return;
-    }
-
-
-    writeStorage(
-      STORAGE.letter,
-      user.letter
-    );
-
-    writeStorage(
-      STORAGE.letterColor,
-      user.letterColor
-    );
-
-    writeStorage(
-      STORAGE.background,
-      user.background
-    );
-
-    writeStorage(
-      STORAGE.loggedIn,
-      "true"
-    );
-
-
     setMessage(
       registerMessage,
-      "Account created. Customize your profile.",
+      "Creating your account...",
       "success"
     );
 
 
-    showProfileSetup();
+    try {
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username,
+              display_name: displayName
+            }
+          }
+        });
+
+
+      if (error) {
+        console.error(
+          "ΛRS Supabase registration error:",
+          error
+        );
+
+        setMessage(
+          registerMessage,
+          error.message ||
+            "Could not create your account.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (!data?.user) {
+        setMessage(
+          registerMessage,
+          "Could not create your account.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const existingUser =
+        getUser();
+
+      const existingProfile =
+        getProfile();
+
+
+      const user = {
+        id:
+          data.user.id,
+
+        displayName,
+
+        username,
+
+        email,
+
+        letter:
+          existingProfile.letter,
+
+        letterColor:
+          existingProfile.letterColor,
+
+        background:
+          existingProfile.background,
+
+        avatar:
+          existingUser.avatar || "",
+
+        createdAt:
+          existingUser.createdAt ||
+          Date.now()
+      };
+
+
+      /*
+        IMPORTANT:
+        Password is intentionally NOT stored
+        in localStorage anymore.
+      */
+
+      if (!saveUser(user)) {
+        setMessage(
+          registerMessage,
+          "Account created, but profile data could not be saved on this device.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      writeStorage(
+        STORAGE.letter,
+        user.letter
+      );
+
+      writeStorage(
+        STORAGE.letterColor,
+        user.letterColor
+      );
+
+      writeStorage(
+        STORAGE.background,
+        user.background
+      );
+
+
+      if (data.session) {
+        writeStorage(
+          STORAGE.loggedIn,
+          "true"
+        );
+
+        setMessage(
+          registerMessage,
+          "Account created. Customize your profile.",
+          "success"
+        );
+
+        showProfileSetup();
+
+        return;
+      }
+
+
+      /*
+        Email confirmation is enabled.
+        Supabase created the account but has
+        not created an active browser session yet.
+      */
+
+      writeStorage(
+        STORAGE.loggedIn,
+        "false"
+      );
+
+      setMessage(
+        registerMessage,
+        "Account created. Please check your email to confirm your account.",
+        "success"
+      );
+
+    } catch (error) {
+      console.error(
+        "ΛRS registration exception:",
+        error
+      );
+
+      setMessage(
+        registerMessage,
+        "Something went wrong while creating your account.",
+        "error"
+      );
+    }
   }
 
 
@@ -613,10 +725,20 @@
      LOGIN
   ========================== */
 
-  function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
 
     if (!loginForm) {
+      return;
+    }
+
+    if (!supabaseClient) {
+      setMessage(
+        loginMessage,
+        "Authentication service is not available.",
+        "error"
+      );
+
       return;
     }
 
@@ -653,53 +775,208 @@
     }
 
 
-    const user =
-      getUser();
-
-
-    if (
-      !user.email ||
-      !user.password
-    ) {
-      setMessage(
-        loginMessage,
-        "No local account was found on this device.",
-        "error"
-      );
-
-      return;
-    }
-
-
-    if (
-      user.email !== email ||
-      user.password !== password
-    ) {
-      setMessage(
-        loginMessage,
-        "Email or password is incorrect.",
-        "error"
-      );
-
-      return;
-    }
-
-
-    writeStorage(
-      STORAGE.loggedIn,
-      "true"
-    );
-
-
     setMessage(
       loginMessage,
-      "Login successful.",
+      "Logging in...",
       "success"
     );
 
 
-    window.location.href =
-      "home.html";
+    try {
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+
+      if (error) {
+        console.error(
+          "ΛRS Supabase login error:",
+          error
+        );
+
+        setMessage(
+          loginMessage,
+          error.message ||
+            "Email or password is incorrect.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (!data?.user) {
+        setMessage(
+          loginMessage,
+          "Login could not be completed.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      let localUser =
+        getUser();
+
+
+      /*
+        Get the user's profile from public.users
+        when available.
+      */
+
+      try {
+        const {
+          data: profile,
+          error: profileError
+        } =
+          await supabaseClient
+            .from("users")
+            .select(
+              "id, username, display_name, email, bio, avatar, cover, verified, plan, streak, xp"
+            )
+            .eq("id", data.user.id)
+            .maybeSingle();
+
+
+        if (
+          !profileError &&
+          profile
+        ) {
+          localUser = {
+            ...localUser,
+            id:
+              profile.id,
+
+            username:
+              profile.username ||
+              localUser.username ||
+              "",
+
+            displayName:
+              profile.display_name ||
+              localUser.displayName ||
+              "",
+
+            email:
+              profile.email ||
+              data.user.email ||
+              email,
+
+            bio:
+              profile.bio ||
+              localUser.bio ||
+              "",
+
+            avatar:
+              profile.avatar ||
+              localUser.avatar ||
+              "",
+
+            cover:
+              profile.cover ||
+              localUser.cover ||
+              "",
+
+            verified:
+              profile.verified ??
+              localUser.verified ??
+              false,
+
+            plan:
+              profile.plan ||
+              localUser.plan ||
+              "free",
+
+            streak:
+              profile.streak ??
+              localUser.streak ??
+              0,
+
+            xp:
+              profile.xp ??
+              localUser.xp ??
+              0
+          };
+        }
+
+      } catch (profileError) {
+        console.warn(
+          "ΛRS profile fetch warning:",
+          profileError
+        );
+      }
+
+
+      localUser.id =
+        data.user.id;
+
+      localUser.email =
+        data.user.email ||
+        email;
+
+
+      if (!localUser.createdAt) {
+        localUser.createdAt =
+          Date.now();
+      }
+
+
+      saveUser(localUser);
+
+
+      const profile =
+        getProfile();
+
+
+      writeStorage(
+        STORAGE.letter,
+        profile.letter
+      );
+
+      writeStorage(
+        STORAGE.letterColor,
+        profile.letterColor
+      );
+
+      writeStorage(
+        STORAGE.background,
+        profile.background
+      );
+
+      writeStorage(
+        STORAGE.loggedIn,
+        "true"
+      );
+
+
+      setMessage(
+        loginMessage,
+        "Login successful.",
+        "success"
+      );
+
+
+      window.location.href =
+        "home.html";
+
+    } catch (error) {
+      console.error(
+        "ΛRS login exception:",
+        error
+      );
+
+      setMessage(
+        loginMessage,
+        "Something went wrong while logging in.",
+        "error"
+      );
+    }
   }
 
 
@@ -901,320 +1178,4 @@
               data-color="${escapeHTML(color)}"
               style="background:${escapeHTML(color)}"
               aria-label="Letter color ${escapeHTML(color)}"
-            ></button>
-          `;
-        })
-        .join("");
-
-
-    $$(".color-option", letterColors)
-      .forEach(button => {
-        button.addEventListener(
-          "click",
-          () => {
-            selectedLetterColor =
-              button.dataset.color ||
-              DEFAULT_PROFILE.letterColor;
-
-
-            $$(".color-option", letterColors)
-              .forEach(item => {
-                item.classList.toggle(
-                  "selected",
-                  item === button
-                );
-              });
-
-
-            updateAvatarPreview();
-          }
-        );
-      });
-  }
-
-
-  /* =========================
-     BACKGROUND COLORS
-  ========================== */
-
-  function renderBackgroundColors() {
-    if (!backgroundColors) {
-      return;
-    }
-
-
-    backgroundColors.innerHTML =
-      backgroundOptions
-        .map((gradient, index) => {
-          const background =
-            `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`;
-
-          const selected =
-            background ===
-            selectedBackground;
-
-
-          return `
-            <button
-              type="button"
-              class="gradient-option ${
-                selected
-                  ? "selected"
-                  : ""
-              }"
-              data-background="${escapeHTML(background)}"
-              style="background:${background}"
-              aria-label="Background option ${index + 1}"
-            ></button>
-          `;
-        })
-        .join("");
-
-
-    $$(".gradient-option", backgroundColors)
-      .forEach(button => {
-        button.addEventListener(
-          "click",
-          () => {
-            selectedBackground =
-              button.dataset.background ||
-              DEFAULT_PROFILE.background;
-
-
-            $$(".gradient-option", backgroundColors)
-              .forEach(item => {
-                item.classList.toggle(
-                  "selected",
-                  item === button
-                );
-              });
-
-
-            updateAvatarPreview();
-          }
-        );
-      });
-  }
-
-
-  /* =========================
-     AVATAR PREVIEW
-  ========================== */
-
-  function updateAvatarPreview() {
-    if (!largeAvatarPreview) {
-      return;
-    }
-
-
-    largeAvatarPreview.textContent =
-      selectedLetter;
-
-
-    largeAvatarPreview.style.color =
-      selectedLetterColor;
-
-
-    largeAvatarPreview.style.background =
-      selectedBackground;
-  }
-
-
-  /* =========================
-     SAVE PROFILE
-  ========================== */
-
-  function saveProfile() {
-    const user =
-      getUser();
-
-
-    if (!user.email) {
-      setMessage(
-        registerMessage,
-        "Your account could not be found.",
-        "error"
-      );
-
-      return;
-    }
-
-
-    user.letter =
-      selectedLetter;
-
-    user.letterColor =
-      selectedLetterColor;
-
-    user.background =
-      selectedBackground;
-
-
-    if (!saveUser(user)) {
-      setMessage(
-        registerMessage,
-        "Could not save your profile.",
-        "error"
-      );
-
-      return;
-    }
-
-
-    writeStorage(
-      STORAGE.letter,
-      selectedLetter
-    );
-
-    writeStorage(
-      STORAGE.letterColor,
-      selectedLetterColor
-    );
-
-    writeStorage(
-      STORAGE.background,
-      selectedBackground
-    );
-
-    writeStorage(
-      STORAGE.loggedIn,
-      "true"
-    );
-
-
-    closeProfileModal();
-
-    updateInitialProfileIcon();
-  }
-
-
-  /* =========================
-     INITIAL PROFILE ICON
-  ========================== */
-
-  function updateInitialProfileIcon() {
-    if (!profileSetupIcon) {
-      return;
-    }
-
-
-    const profile =
-      getProfile();
-
-
-    profileSetupIcon.textContent =
-      profile.letter;
-
-
-    profileSetupIcon.style.color =
-      profile.letterColor;
-
-
-    profileSetupIcon.style.background =
-      profile.background;
-  }
-
-
-  /* =========================
-     NEXT
-  ========================== */
-
-  function handleProfileNext() {
-    window.location.href =
-      "home.html";
-  }
-
-
-  /* =========================
-     KEYBOARD
-  ========================== */
-
-  function setupKeyboard() {
-    document.addEventListener(
-      "keydown",
-      event => {
-        if (
-          event.key === "Escape" &&
-          profileModal &&
-          !profileModal.classList.contains(
-            "hidden"
-          )
-        ) {
-          closeProfileModal();
-        }
-      }
-    );
-  }
-
-
-  /* =========================
-     EVENTS
-  ========================== */
-
-  function setupEvents() {
-    loginForm?.addEventListener(
-      "submit",
-      handleLogin
-    );
-
-
-    registerForm?.addEventListener(
-      "submit",
-      handleRegister
-    );
-
-
-    openProfileSetup?.addEventListener(
-      "click",
-      openProfileModal
-    );
-
-
-    profileModalClose?.addEventListener(
-      "click",
-      closeProfileModal
-    );
-
-
-    closeProfileSetup?.addEventListener(
-      "click",
-      closeProfileModal
-    );
-
-
-    saveProfileSetup?.addEventListener(
-      "click",
-      saveProfile
-    );
-
-
-    profileNextButton?.addEventListener(
-      "click",
-      handleProfileNext
-    );
-  }
-
-
-  /* =========================
-     INIT
-  ========================== */
-
-  function init() {
-    setupTabs();
-    setupEvents();
-    setupKeyboard();
-    updateInitialProfileIcon();
-    }
- 
-  init();
-
-})();
-const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+          
