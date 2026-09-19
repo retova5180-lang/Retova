@@ -1246,4 +1246,241 @@
           return `
             <button
               type="button"
-     
+               class="gradient-option ${
+                selected
+                  ? "selected"
+                  : ""
+              }"
+              data-background="${escapeHTML(
+                gradient
+              )}"
+              style="background:${escapeHTML(
+                gradient
+              )}"
+              aria-label="Background gradient"
+            ></button>
+          `;
+
+        })
+        .join("");
+
+
+    $$(".gradient-option", backgroundColors)
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            selectedBackground =
+              button.dataset.background ||
+              DEFAULT_PROFILE.background;
+
+
+            $$(".gradient-option", backgroundColors)
+              .forEach(item => {
+
+                item.classList.toggle(
+                  "selected",
+                  item === button
+                );
+
+              });
+
+
+            updateAvatarPreview();
+
+          }
+        );
+
+      });
+
+  }
+
+
+  /* =========================
+     AVATAR
+  ========================== */
+
+  function updateAvatarPreview() {
+
+    const targets = [
+      largeAvatarPreview,
+      $(".profile-setup-icon")
+    ].filter(Boolean);
+
+
+    targets.forEach(target => {
+
+      target.textContent =
+        selectedLetter;
+
+      target.style.color =
+        selectedLetterColor;
+
+      target.style.background =
+        selectedBackground;
+
+    });
+
+  }
+
+
+  function updateInitialProfileIcon() {
+
+    const profile =
+      getProfile();
+
+
+    selectedLetter =
+      profile.letter;
+
+    selectedLetterColor =
+      profile.letterColor;
+
+    selectedBackground =
+      profile.background;
+
+
+    updateAvatarPreview();
+
+  }
+
+
+  /* =========================
+     SAVE PROFILE
+  ========================== */
+
+  function saveProfile() {
+
+    const user =
+      getUser();
+
+
+    const updatedUser = {
+
+      ...user,
+
+      letter:
+        selectedLetter,
+
+      letterColor:
+        selectedLetterColor,
+
+      background:
+        selectedBackground
+
+    };
+
+
+    saveUser(
+      updatedUser
+    );
+
+
+    writeStorage(
+      STORAGE.letter,
+      selectedLetter
+    );
+
+    writeStorage(
+      STORAGE.letterColor,
+      selectedLetterColor
+    );
+
+    writeStorage(
+      STORAGE.background,
+      selectedBackground
+    );
+
+
+    updateAvatarPreview();
+
+    closeProfileModal();
+
+  }
+
+
+  /* =========================
+     EVENTS
+  ========================== */
+
+  function setupEvents() {
+
+    loginForm?.addEventListener(
+      "submit",
+      handleLogin
+    );
+
+
+    registerForm?.addEventListener(
+      "submit",
+      handleRegister
+    );
+
+
+    $("#openProfileSetup")
+      ?.addEventListener(
+        "click",
+        openProfileModal
+      );
+
+
+    $("#profileModalClose")
+      ?.addEventListener(
+        "click",
+        closeProfileModal
+      );
+
+
+    $("#closeProfileSetup")
+      ?.addEventListener(
+        "click",
+        closeProfileModal
+      );
+
+
+    $("#saveProfileSetup")
+      ?.addEventListener(
+        "click",
+        saveProfile
+      );
+
+
+    $("#profileNextButton")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          writeStorage(
+            STORAGE.loggedIn,
+            "true"
+          );
+
+          window.location.href =
+            "home.html";
+
+        }
+      );
+
+  }
+
+
+  /* =========================
+     INIT
+  ========================== */
+
+  function init() {
+
+    setupTabs();
+
+    setupEvents();
+
+    updateInitialProfileIcon();
+
+  }
+
+
+  init();
+
+})();    
