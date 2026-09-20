@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ΛRS — Home</title>
+
+  <link rel="stylesheet" href="home.css">
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- =========================
+         TOP BAR
+    ========================== -->
+
+    <header class="topbar">
+
+      <button
+        class="profile-button"
+        id="profileButton"
+        aria-label="Profile"
+      >
+        <span id="topAvatar">R</span>
+      </button>
+
+      <div class="logo">
+        ΛRS
+      </div>
+
+      <button
+        class="wheel-button"
+        id="wheelButton"
+        aria-label="Wheel"
+      >
+        ✦
+      </button>
+
+    </header>
+
+
+    <!-- =========================
+         STORIES
+    ========================== -->
+
+    <section class="stories-section">
+
+      <div
+        class="stories"
+        id="stories"
+      ></div>
+
+    </section>
+
+
+    <!-- =========================
+         FEED
+    ========================== -->
+
+    <main
+      class="feed"
+      id="feed"
+    ></main>
+
+
+    <!-- =========================
+         CREATE POST
+    ========================== -->
+
+    <button
+      class="create-post"
+      id="createPost"
+      aria-label="Create post"
+    >
+      +
+    </button>
+
+
+    <!-- =========================
+         BOTTOM NAV
+    ========================== -->
+
+    <nav class="bottom-nav">
+
+      <button
+        class="nav-button active"
+        data-page="home"
+      >
+        <span>⌂</span>
+        <small>Home</small>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="search"
+      >
+        <span>⌕</span>
+        <small>Search</small>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="streak"
+      >
+        <span>🔥</span>
+        <small>Streak</small>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="notifications"
+      >
+        <span class="notification-icon">
+          ♡
+          <i></i>
+        </span>
+        <small>Notifications</small>
+      </button>
+
+    </nav>
+
+  </div>
+
+
+  <!-- =========================
+       SEARCH
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="searchPanel"
+  >
+
+    <div class="panel">
+
+      <button
+        class="close"
+        data-close="searchPanel"
+      >
+        ×
+      </button>
+
+      <h2>Search</h2>
+
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search people, posts or hashtags..."
+      >
+
+      <div
+        class="search-results"
+        id="searchResults"
+      >
+        <p class="muted">
+          Search ARS
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       NOTIFICATIONS
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="notificationsPanel"
+  >
+
+    <div class="panel">
+
+      <button
+        class="close"
+        data-close="notificationsPanel"
+      >
+        ×
+      </button>
+
+      <h2>Notifications</h2>
+
+      <div class="notification-list">
+
+        <div class="notification">
+          <div class="mini-avatar">L</div>
+          <div>
+            <strong>Lina liked your post</strong>
+            <span>12 minutes ago</span>
+          </div>
+        </div>
+
+        <div class="notification">
+          <div class="mini-avatar">N</div>
+          <div>
+            <strong>Noah reposted your post</strong>
+            <span>28 minutes ago</span>
+          </div>
+        </div>
+
+        <div class="notification">
+          <div class="mini-avatar">S</div>
+          <div>
+            <strong>Sara started a Streak with you</strong>
+            <span>1 hour ago</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       STREAK
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="streakPanel"
+  >
+
+    <div class="panel streak-panel">
+
+      <button
+        class="close"
+        data-close="streakPanel"
+      >
+        ×
+      </button>
+
+      <div class="big-fire">
+        🔥
+      </div>
+
+      <h2>Your Streaks</h2>
+
+      <p class="muted">
+        Keep interacting with people every day.
+      </p>
+
+      <div class="streak-card">
+
+        <div class="streak-person">
+          <div class="mini-avatar">L</div>
+
+          <div>
+            <strong>Lina</strong>
+            <span>@lina</span>
+          </div>
+        </div>
+
+        <div class="streak-number">
+          🔥 7
+        </div>
+
+      </div>
+
+      <div class="streak-info">
+
+        <strong>
+          How it works
+        </strong>
+
+        <p>
+          Keep interacting every day.
+          After 4 consecutive days,
+          your Streak starts at 4 and
+          continues growing with each day.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       WHEEL
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="wheelPanel"
+  >
+
+    <div class="panel wheel-panel">
+
+      <button
+        class="close"
+        data-close="wheelPanel"
+      >
+        ×
+      </button>
+
+      <div class="wheel-title">
+        ✦
+      </div>
+
+      <h2>
+        Wheel Challenges
+      </h2>
+
+      <p class="muted">
+        Spin and get today's challenge.
+      </p>
+
+      <div
+        class="wheel"
+        id="wheel"
+      >
+        <span>✦</span>
+      </div>
+
+      <div class="wheel-info">
+
+        <span id="spinCounter">
+          2 spins left
+        </span>
+
+        <span
+          class="plan"
+          id="plan"
+        >
+          FREE
+        </span>
+
+      </div>
+
+      <button
+        class="primary"
+        id="spinButton"
+      >
+        Spin Wheel
+      </button>
+
+      <p class="tiny">
+        Premium gets unlimited Wheel spins.
+      </p>
+
+      <div
+        class="challenge-result"
+        id="challengeResult"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       PROFILE
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="profilePanel"
+  >
+
+    <div class="panel profile-panel">
+
+      <button
+        class="close"
+        data-close="profilePanel"
+      >
+        ×
+      </button>
+
+      <div
+        class="profile-avatar"
+        id="profileAvatar"
+      >
+        R
+      </div>
+
+      <h2 id="profileName">
+        Your Name
+      </h2>
+
+      <p id="profileUsername">
+        @username
+      </p>
+
+      <div class="profile-stats">
+
+        <div>
+          <strong>0</strong>
+          <span>Posts</span>
+        </div>
+
+        <div>
+          <strong>0</strong>
+          <span>Followers</span>
+        </div>
+
+        <div>
+          <strong id="profileStreak">
+            0
+          </strong>
+          <span>Streak</span>
+        </div>
+
+      </div>
+
+      <button
+        class="secondary"
+        id="premiumButton"
+      >
+        Premium
+      </button>
+
+      <p class="tiny">
+        Free accounts use a profile letter.
+        Premium unlocks profile photos.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       PREMIUM
+  ========================== -->
+
+  <div
+    class="overlay hidden"
+    id="premiumPanel"
+  >
+
+    <div class="panel">
+
+      <button
+        class="close"
+        data-close="premiumPanel"
+      >
+        ×
+      </button>
+
+      <div class="premium-icon">
+        ◆
+      </div>
+
+      <h2>
+        ΛRS Premium
+      </h2>
+
+      <p class="muted">
+        Unlock Premium features.
+      </p>
+
+      <div class="premium-feature">
+        <span>✦</span>
+        Unlimited Wheel spins
+      </div>
+
+      <div class="premium-feature">
+        <span>●</span>
+        Profile photo
+      </div>
+
+      <div class="premium-feature">
+        <span>✓</span>
+        Verification badge
+      </div>
+
+      <div class="premium-feature">
+        <span>◆</span>
+        Future Premium benefits
+      </div>
+
+      <button
+        class="primary"
+        id="subscribeButton"
+      >
+        $20 Premium
+      </button>
+
+      <p class="tiny">
+        Payment will be connected later.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       TOAST
+  ========================== -->
+
+  <div
+    class="toast"
+    id="toast"
+  ></div>
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script
+    src="home.js"
+    defer
+  ></script>
+
+</body>
+    </html>
