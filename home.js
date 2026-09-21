@@ -1,1093 +1,1417 @@
 (() => {
   "use strict";
 
+
   /* =========================
      SUPABASE
-  ========================= */
+  ========================== */
 
-  const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
+  const SUPABASE_URL =
+    "https://bfqsqgfyyewnfxekirfv.supabase.co";
 
-  const SUPABASE_KEY =
-    "sb_publishable_7H3rW2lFh8x2vJm7L8m6Qw9N5s3Y2xZ1";
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
-  let supabaseClient = null;
 
-  if (window.supabase) {
-    supabaseClient = window.supabase.createClient(
+  const supabaseClient =
+    window.supabase?.createClient(
       SUPABASE_URL,
-      SUPABASE_KEY
-    );
-  }
+      SUPABASE_PUBLISHABLE_KEY
+    ) || null;
 
 
   /* =========================
-     LOCAL DATA
-  ========================= */
+     STORAGE
+  ========================== */
 
-  const USER_KEY = "ars_user";
-  const LOGGED_IN_KEY = "ars_logged_in";
+  const USER_KEY =
+    "ars_user";
 
-  const LETTER_KEY = "ars_letter";
-  const LETTER_COLOR_KEY = "ars_letter_color";
-  const BACKGROUND_KEY = "ars_background";
+  const LOGGED_IN_KEY =
+    "ars_logged_in";
 
-  const WHEEL_KEY = "ars_wheel_spins_week";
-  const STREAK_DONE_KEY = "ars_streak_done_today";
-  const STREAK_COUNT_KEY = "ars_streak_count";
+  const LETTER_KEY =
+    "ars_letter";
+
+  const PLAN_KEY =
+    "ars_plan";
+
+  const WHEEL_KEY =
+    "ars_wheel_week";
+
+  const STREAK_DAYS_KEY =
+    "ars_streak_interaction_days";
+
+  const POSTS_KEY =
+    "ars_home_posts_v3";
 
 
   let currentUser = null;
-  let currentPlan = "free";
 
+  let currentPlan =
+    "free";
 
-  /* =========================
-     MOCK STORIES
-  ========================= */
+  let menuOpen = null;
 
-  const stories = [
-    {
-      name: "Your Story",
-      letter: "+",
-      own: true
-    },
-    {
-      name: "Alex",
-      letter: "A"
-    },
-    {
-      name: "Mia",
-      letter: "M"
-    },
-    {
-      name: "Ryan",
-      letter: "R"
-    },
-    {
-      name: "Luna",
-      letter: "L"
-    },
-    {
-      name: "Noah",
-      letter: "N"
-    }
-  ];
-
-
-  /* =========================
-     POSTS
-  ========================= */
-
-  let posts = [
-    {
-      id: 1,
-      name: "Alex Carter",
-      username: "alex",
-      letter: "A",
-      text: "Small steps every day can turn into something huge. ✨",
-      likes: 128,
-      comments: 18,
-      reposts: 7,
-      views: 1420,
-      liked: false,
-      reposted: false,
-      bookmarked: false
-    },
-
-    {
-      id: 2,
-      name: "Mia",
-      username: "mia",
-      letter: "M",
-      text: "What's one thing you're looking forward to this week? 💜",
-      likes: 94,
-      comments: 24,
-      reposts: 5,
-      views: 981,
-      liked: false,
-      reposted: false,
-      bookmarked: false
-    },
-
-    {
-      id: 3,
-      name: "Ryan",
-      username: "ryan",
-      letter: "R",
-      text: "Create something. Share something. Connect with someone.",
-      likes: 73,
-      comments: 12,
-      reposts: 4,
-      views: 714,
-      liked: false,
-      reposted: false,
-      bookmarked: false
-    }
-  ];
-
-
-  /* =========================
-     WHEEL CONTENT
-  ========================= */
-
-  const wheelItems = [
-    {
-      type: "CHALLENGE",
-      title: "Take a 15-minute walk",
-      description: "Go outside and take a relaxing 15-minute walk.",
-      reward: "+50 XP"
-    },
-
-    {
-      type: "REWARD",
-      title: "XP Reward",
-      description: "You received a bonus for spinning the wheel.",
-      reward: "+100 XP"
-    },
-
-    {
-      type: "QUESTION",
-      title: "Question of the Day",
-      description: "What is one small thing that made you smile today?",
-      reward: "+25 XP"
-    },
-
-    {
-      type: "BONUS",
-      title: "Bonus Challenge",
-      description: "Post a Story showing something you enjoyed today.",
-      reward: "+75 XP"
-    },
-
-    {
-      type: "CHALLENGE",
-      title: "Read for 10 minutes",
-      description: "Take some quiet time and read something interesting.",
-      reward: "+50 XP"
-    },
-
-    {
-      type: "REWARD",
-      title: "Lucky Reward",
-      description: "You found a lucky wheel reward.",
-      reward: "+150 XP"
-    }
-  ];
-
-
-  /* =========================
-     SEARCH CONTENT
-  ========================= */
-
-  const trendingHashtags = [
-    {
-      tag: "#ARS",
-      posts: "12.4K posts"
-    },
-
-    {
-      tag: "#Weekend",
-      posts: "8.7K posts"
-    },
-
-    {
-      tag: "#Create",
-      posts: "6.2K posts"
-    },
-
-    {
-      tag: "#Photography",
-      posts: "5.9K posts"
-    },
-
-    {
-      tag: "#DailyChallenge",
-      posts: "4.8K posts"
-    }
-  ];
-
-
-  const suggestedPeople = [
-    {
-      name: "Alex Carter",
-      username: "@alex",
-      letter: "A"
-    },
-
-    {
-      name: "Mia",
-      username: "@mia",
-      letter: "M"
-    },
-
-    {
-      name: "Ryan",
-      username: "@ryan",
-      letter: "R"
-    },
-
-    {
-      name: "Luna",
-      username: "@luna",
-      letter: "L"
-    }
-  ];
-
-
-  const trendingTopics = [
-    {
-      category: "Trending",
-      title: "Weekend plans",
-      posts: "24.5K posts"
-    },
-
-    {
-      category: "Trending",
-      title: "Daily challenges",
-      posts: "18.2K posts"
-    },
-
-    {
-      category: "Trending",
-      title: "Photography",
-      posts: "15.7K posts"
-    },
-
-    {
-      category: "Trending",
-      title: "Creative ideas",
-      posts: "11.3K posts"
-    }
-  ];
+  let wheelRotation = 0;
 
 
   /* =========================
      HELPERS
-  ========================= */
+  ========================== */
 
-  function $(id) {
-    return document.getElementById(id);
+  const $ = id =>
+    document.getElementById(id);
+
+
+  function escapeHTML(value){
+
+    return String(value ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+
   }
 
 
-  function escapeHTML(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  function toast(message){
 
+    const el = $("toast");
 
-  function showToast(message) {
-    const toast = $("toast");
+    if(!el) return;
 
-    if (!toast) return;
+    el.textContent =
+      message;
 
-    toast.textContent = message;
-    toast.classList.add("show");
+    el.classList.add("show");
 
-    clearTimeout(window.__arsToastTimer);
-
-    window.__arsToastTimer = setTimeout(() => {
-      toast.classList.remove("show");
-    }, 2200);
-  }
-
-
-  function getLocalUser() {
-    try {
-      return JSON.parse(localStorage.getItem(USER_KEY) || "null");
-    } catch {
-      return null;
-    }
-  }
-
-
-  function getInitial() {
-    const letter =
-      localStorage.getItem(LETTER_KEY) ||
-      currentUser?.display_name?.charAt(0) ||
-      currentUser?.username?.charAt(0) ||
-      "A";
-
-    return String(letter).charAt(0).toUpperCase();
-  }
-
-
-  /* =========================
-     AUTH
-  ========================= */
-
-  async function checkAuth() {
-
-    if (!supabaseClient) {
-      currentUser = getLocalUser();
-
-      if (!currentUser) {
-        window.location.href = "index.html";
-        return false;
-      }
-
-      currentPlan = currentUser.plan || "free";
-      return true;
-    }
-
-
-    const {
-      data: { session },
-      error
-    } = await supabaseClient.auth.getSession();
-
-
-    if (error || !session) {
-
-      const fallbackUser = getLocalUser();
-
-      if (!fallbackUser) {
-        window.location.href = "index.html";
-        return false;
-      }
-
-      currentUser = fallbackUser;
-      currentPlan = fallbackUser.plan || "free";
-
-      return true;
-    }
-
-
-    currentUser = {
-      id: session.user.id,
-      email: session.user.email,
-      username:
-        session.user.user_metadata?.username ||
-        getLocalUser()?.username ||
-        "",
-      display_name:
-        session.user.user_metadata?.display_name ||
-        getLocalUser()?.display_name ||
-        ""
-    };
-
-
-    try {
-      const { data } = await supabaseClient
-        .from("users")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (data) {
-        currentUser = {
-          ...currentUser,
-          ...data
-        };
-
-        currentPlan = data.plan || "free";
-      }
-    } catch {
-      currentPlan = currentUser.plan || "free";
-    }
-
-
-    localStorage.setItem(
-      USER_KEY,
-      JSON.stringify(currentUser)
+    clearTimeout(
+      window.__arsToastTimer
     );
 
-    localStorage.setItem(LOGGED_IN_KEY, "true");
+    window.__arsToastTimer =
+      setTimeout(
+        () =>
+          el.classList.remove("show"),
+        2200
+      );
 
-    return true;
   }
 
 
-  /* =========================
-     AVATAR
-  ========================= */
+  function readJSON(
+    key,
+    fallback
+  ){
 
-  function updateAvatars() {
+    try{
 
-    const initial = getInitial();
+      return JSON.parse(
+        localStorage.getItem(key) ||
+        JSON.stringify(fallback)
+      );
 
-    const topAvatar = $("topAvatar");
-    const createAvatar = $("createPostAvatar");
-    const profileAvatar = $("profileAvatarLarge");
+    }catch{
 
-    if (topAvatar) {
-      topAvatar.textContent = initial;
+      return fallback;
+
     }
 
-    if (createAvatar) {
-      createAvatar.textContent = initial;
-    }
-
-    if (profileAvatar) {
-      profileAvatar.textContent = initial;
-    }
   }
 
 
-  /* =========================
-     PROFILE
-  ========================= */
+  function writeJSON(
+    key,
+    value
+  ){
 
-  function renderProfile() {
+    localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
 
-    const name =
-      currentUser?.display_name ||
-      currentUser?.username ||
-      "User";
-
-    const username =
-      currentUser?.username ||
-      "username";
-
-    if ($("profileDisplayName")) {
-      $("profileDisplayName").textContent = name;
-    }
-
-    if ($("profileUsername")) {
-      $("profileUsername").textContent =
-        username.startsWith("@")
-          ? username
-          : "@" + username;
-    }
-
-    if ($("profilePosts")) {
-      $("profilePosts").textContent = posts.length;
-    }
-
-    if ($("profileFollowers")) {
-      $("profileFollowers").textContent =
-        currentUser?.followers || 0;
-    }
-
-    if ($("profileLikes")) {
-      $("profileLikes").textContent =
-        posts.reduce((sum, post) => sum + post.likes, 0);
-    }
   }
 
 
   /* =========================
      STORIES
-  ========================= */
+  ========================== */
 
-  function renderStories() {
+  const stories = [
 
-    const container = $("stories");
+    {
+      name:"You",
+      letter:"A",
+      own:true
+    },
 
-    if (!container) return;
+    {
+      name:"Lina",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"
+    },
 
-    container.innerHTML = stories.map(story => {
+    {
+      name:"Noah",
+      image:
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80"
+    },
 
-      const displayLetter = story.own
-        ? "+"
-        : story.letter;
+    {
+      name:"Sara",
+      image:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80"
+    },
+
+    {
+      name:"Wheel",
+      wheel:true
+    },
+
+    {
+      name:"Apple",
+      brand:"",
+      verified:true
+    },
+
+    {
+      name:"Ferrari",
+      brand:"🐎",
+      verified:true
+    },
+
+    {
+      name:"BMW",
+      brand:"M",
+      verified:true
+    }
+
+  ];
+
+
+  /* =========================
+     POSTS
+  ========================== */
+
+  const seedPosts = [
+
+    {
+      id:1,
+
+      name:"Lina",
+
+      username:"lina.ae",
+
+      verified:true,
+
+      letter:"L",
+
+      avatar:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80",
+
+      time:"12m",
+
+      text:
+        "Sunset always hits different 💜",
+
+      image:
+        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=88",
+
+      likes:2400,
+
+      comments:186,
+
+      reposts:312,
+
+      views:48000,
+
+      liked:false,
+
+      reposted:false,
+
+      bookmarked:false
+
+    },
+
+
+    {
+      id:2,
+
+      name:"Apple",
+
+      username:"apple",
+
+      verified:true,
+
+      letter:"",
+
+      brand:true,
+
+      time:"28m",
+
+      text:
+        "Apple Intelligence expands to more languages later this year.",
+
+      image:
+        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=88",
+
+      likes:28400,
+
+      comments:1800,
+
+      reposts:3900,
+
+      views:2400000,
+
+      liked:false,
+
+      reposted:false,
+
+      bookmarked:false
+
+    },
+
+
+    {
+      id:3,
+
+      name:"Noah",
+
+      username:"noah.vibes",
+
+      verified:true,
+
+      letter:"N",
+
+      avatar:
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80",
+
+      time:"45m",
+
+      text:
+        "Focused on the journey. #focus #life",
+
+      image:
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=88",
+
+      likes:1290,
+
+      comments:88,
+
+      reposts:117,
+
+      views:18400,
+
+      liked:false,
+
+      reposted:false,
+
+      bookmarked:false
+
+    }
+
+  ];
+
+
+  let posts =
+    getPosts();
+
+
+  function getPosts(){
+
+    const saved =
+      readJSON(
+        POSTS_KEY,
+        null
+      );
+
+    if(
+      Array.isArray(saved) &&
+      saved.length
+    ){
+
+      return saved;
+
+    }
+
+    return structuredClone(
+      seedPosts
+    );
+
+  }
+
+
+  function savePosts(){
+
+    writeJSON(
+      POSTS_KEY,
+      posts
+    );
+
+  }
+
+
+  /* =========================
+     WHEEL CONTENT
+  ========================== */
+
+  const wheelItems = [
+
+    {
+      type:"CHALLENGE",
+
+      title:"Post a Story",
+
+      description:
+        "Share one thing you enjoyed today.",
+
+      reward:"+50 XP"
+    },
+
+
+    {
+      type:"REWARD",
+
+      title:"Lucky XP",
+
+      description:
+        "A bonus reward has been unlocked.",
+
+      reward:"+100 XP"
+    },
+
+
+    {
+      type:"QUESTION",
+
+      title:"Question of the Day",
+
+      description:
+        "What is one thing you want to achieve this week?",
+
+      reward:"+25 XP"
+    },
+
+
+    {
+      type:"BONUS",
+
+      title:"Support Someone",
+
+      description:
+        "Like and comment on three posts you genuinely enjoy.",
+
+      reward:"+75 XP"
+    },
+
+
+    {
+      type:"REWARD",
+
+      title:"Purple Bonus",
+
+      description:
+        "You found a rare wheel reward.",
+
+      reward:"+150 XP"
+    },
+
+
+    {
+      type:"CHALLENGE",
+
+      title:"Create Something",
+
+      description:
+        "Make a post and share an idea with ARS.",
+
+      reward:"+80 XP"
+    }
+
+  ];
+
+
+  /* =========================
+     SEARCH DATA
+  ========================== */
+
+  const hashtags = [
+
+    [
+      "#ARS",
+      "12.4K posts"
+    ],
+
+    [
+      "#Weekend",
+      "8.7K posts"
+    ],
+
+    [
+      "#Create",
+      "6.2K posts"
+    ],
+
+    [
+      "#Photography",
+      "5.9K posts"
+    ],
+
+    [
+      "#DailyChallenge",
+      "4.8K posts"
+    ]
+
+  ];
+
+
+  const people = [
+
+    [
+      "Alex Carter",
+      "@alex",
+      "A"
+    ],
+
+    [
+      "Mia",
+      "@mia",
+      "M"
+    ],
+
+    [
+      "Ryan",
+      "@ryan",
+      "R"
+    ],
+
+    [
+      "Luna",
+      "@luna",
+      "L"
+    ]
+
+  ];
+
+
+  const topics = [
+
+    [
+      "Trending",
+      "Weekend plans",
+      "24.5K posts"
+    ],
+
+    [
+      "Trending",
+      "Daily challenges",
+      "18.2K posts"
+    ],
+
+    [
+      "Trending",
+      "Photography",
+      "15.7K posts"
+    ],
+
+    [
+      "Trending",
+      "Creative ideas",
+      "11.3K posts"
+    ]
+
+  ];
+
+
+  /* =========================
+     USER
+  ========================== */
+
+  function getInitial(){
+
+    return (
+
+      localStorage.getItem(
+        LETTER_KEY
+      ) ||
+
+      currentUser?.display_name?.[0] ||
+
+      currentUser?.username?.[0] ||
+
+      "A"
+
+    ).toUpperCase();
+
+  }
+
+
+  /* =========================
+     AUTH
+  ========================== */
+
+  async function checkAuth(){
+
+    const local =
+      readJSON(
+        USER_KEY,
+        null
+      );
+
+
+    const sessionResult =
+      await supabaseClient
+        ?.auth
+        .getSession()
+        .catch(
+          () => null
+        );
+
+
+    const session =
+      sessionResult
+        ?.data
+        ?.session;
+
+
+    if(session){
+
+      currentUser = {
+
+        id:
+          session.user.id,
+
+        email:
+          session.user.email || "",
+
+        username:
+          session.user.user_metadata?.username ||
+          local?.username ||
+          "",
+
+        display_name:
+          session.user.user_metadata?.display_name ||
+          local?.display_name ||
+          ""
+
+      };
+
+
+      try{
+
+        const {
+          data
+        } =
+          await supabaseClient
+            .from("users")
+            .select("*")
+            .eq(
+              "id",
+              session.user.id
+            )
+            .maybeSingle();
+
+
+        if(data){
+
+          currentUser = {
+
+            ...currentUser,
+
+            ...data
+
+          };
+
+        }
+
+      }catch{}
+
+
+      currentPlan =
+        currentUser.plan ||
+        local?.plan ||
+        localStorage.getItem(
+          PLAN_KEY
+        ) ||
+        "free";
+
+
+      writeJSON(
+        USER_KEY,
+        currentUser
+      );
+
+
+      localStorage.setItem(
+        LOGGED_IN_KEY,
+        "true"
+      );
+
+
+      return true;
+
+    }
+
+
+    if(local){
+
+      currentUser =
+        local;
+
+      currentPlan =
+        local.plan ||
+        localStorage.getItem(
+          PLAN_KEY
+        ) ||
+        "free";
+
+      return true;
+
+    }
+
+
+    window.location.href =
+      "index.html";
+
+    return false;
+
+  }
+
+
+  /* =========================
+     AVATAR
+  ========================== */
+
+  function avatarHTML(post){
+
+    if(post.avatar){
 
       return `
-        <div class="story">
-          <div class="story-avatar">
-            <div class="story-avatar-inner">
-              ${escapeHTML(displayLetter)}
-            </div>
-          </div>
-
-          <div class="story-name">
-            ${escapeHTML(story.name)}
-          </div>
-        </div>
+        <img
+          src="${escapeHTML(post.avatar)}"
+          alt=""
+        >
       `;
 
-    }).join("");
+    }
+
+    return escapeHTML(
+      post.letter || "A"
+    );
+
+  }
+
+
+  /* =========================
+     STORIES RENDER
+  ========================== */
+
+  function renderStories(){
+
+    const el =
+      $("stories");
+
+    if(!el) return;
+
+
+    el.innerHTML =
+      stories.map(
+        (s,i) => {
+
+          let inner = "";
+
+
+          if(s.image){
+
+            inner = `
+              <img
+                src="${escapeHTML(s.image)}"
+                alt=""
+              >
+            `;
+
+          }
+
+          else if(s.wheel){
+
+            inner = `
+              <span class="wheel-mini-icon">
+                ✣
+              </span>
+            `;
+
+          }
+
+          else if(s.brand){
+
+            inner = `
+              <span class="story-letter">
+                ${escapeHTML(s.brand)}
+              </span>
+            `;
+
+          }
+
+          else{
+
+            inner = `
+              <span class="story-letter">
+                ${escapeHTML(s.letter)}
+              </span>
+            `;
+
+          }
+
+
+          return `
+            <button
+              class="story"
+              data-story="${i}"
+            >
+
+              <div
+                class="story-ring ${
+                  s.wheel
+                    ? "no-ring"
+                    : ""
+                }"
+              >
+
+                <div class="story-inner">
+
+                  ${inner}
+
+                  ${
+                    s.own
+                      ? `
+                        <span class="story-plus">
+                          +
+                        </span>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+              </div>
+
+
+              <div class="story-name">
+                ${escapeHTML(s.name)}
+              </div>
+
+            </button>
+          `;
+
+        }
+      ).join("");
+
+  }
+
+
+  /* =========================
+     FORMAT COUNTS
+  ========================== */
+
+  function formatCount(n){
+
+    if(n >= 1000000){
+
+      return (
+        n / 1000000
+      ).toFixed(
+        n % 1000000
+          ? 1
+          : 0
+      ) + "M";
+
+    }
+
+
+    if(n >= 1000){
+
+      return (
+        n / 1000
+      ).toFixed(
+        n % 1000
+          ? 1
+          : 0
+      ) + "K";
+
+    }
+
+
+    return String(n);
+
+  }
+
+
+  /* =========================
+     RENDER POSTS
+  ========================== */
+
+  function renderPosts(){
+
+    const feed =
+      $("feed");
+
+    if(!feed) return;
+
+
+    feed.innerHTML =
+      posts.map(
+        post => {
+
+          const liked =
+            post.liked
+              ? "liked"
+              : "";
+
+          const reposted =
+            post.reposted
+              ? "reposted"
+              : "";
+
+          const bookmarked =
+            post.bookmarked
+              ? "bookmarked"
+              : "";
+
+
+          const name =
+            escapeHTML(
+              post.name
+            );
+
+
+          return `
+
+            <article
+              class="post-card"
+              data-post-id="${post.id}"
+            >
+
+              <div class="post-head">
+
+                <div class="post-avatar">
+
+                  <div class="post-avatar-inner">
+
+                    ${avatarHTML(post)}
+
+                  </div>
+
+                </div>
+
+
+                <div class="post-user">
+
+                  <div class="post-user-line">
+
+                    <strong>
+                      ${name}
+                    </strong>
+
+                    ${
+                      post.verified
+                        ? `
+                          <span class="verified">
+                            ✓
+                          </span>
+                        `
+                        : ""
+                    }
+
+                  </div>
+
+
+                  <span class="post-meta">
+
+                    @${escapeHTML(post.username)}
+                    ·
+                    ${escapeHTML(post.time)}
+
+                  </span>
+
+                </div>
+
+
+                <button
+                  class="more-button"
+                  data-more="${post.id}"
+                  aria-label="More options"
+                >
+                  •••
+                </button>
+
+              </div>
+
+
+              <div class="post-text">
+
+                ${
+                  escapeHTML(post.text)
+                    .replace(
+                      /(#[A-Za-z0-9_]+)/g,
+                      '<span class="tag">$1</span>'
+                    )
+                }
+
+              </div>
+
+
+              ${
+                post.image
+                  ? `
+                    <img
+                      class="post-image"
+                      src="${escapeHTML(post.image)}"
+                      alt="Post image"
+                      loading="lazy"
+                    >
+                  `
+                  : ""
+              }
+
+
+              <div class="post-actions">
+
+                <button
+                  class="post-action ${liked}"
+                  data-action="like"
+                  data-id="${post.id}"
+                >
+
+                  <span class="ico">
+                    ${
+                      post.liked
+                        ? "♥"
+                        : "♡"
+                    }
+                  </span>
+
+                  <span>
+                    ${formatCount(post.likes)}
+                  </span>
+
+                </button>
+
+
+                <button
+                  class="post-action"
+                  data-action="comment"
+                  data-id="${post.id}"
+                >
+
+                  <span class="ico">
+                    ◯
+                  </span>
+
+                  <span>
+                    ${formatCount(post.comments)}
+                  </span>
+
+                </button>
+
+
+                <button
+                  class="post-action ${reposted}"
+                  data-action="repost"
+                  data-id="${post.id}"
+                >
+
+                  <span class="ico">
+                    ↗
+                  </span>
+
+                  <span>
+                    ${formatCount(post.reposts)}
+                  </span>
+
+                </button>
+
+
+                <button
+                  class="post-action ${bookmarked}"
+                  data-action="bookmark"
+                  data-id="${post.id}"
+                >
+
+                  <span class="ico">
+
+                    ${
+                      post.bookmarked
+                        ? "▣"
+                        : "♧"
+                    }
+
+                  </span>
+
+                </button>
+
+
+                <span class="post-action views">
+
+                  <span class="ico">
+                    ◉
+                  </span>
+
+                  <span>
+                    ${formatCount(post.views)}
+                  </span>
+
+                </span>
+
+              </div>
+
+            </article>
+
+          `;
+
+        }
+      ).join("");
+
   }
 
 
   /* =========================
      POST MENU
-  ========================= */
+  ========================== */
 
-  function closeAllPostMenus() {
+  function closePostMenu(){
+
     document
-      .querySelectorAll(".post-menu")
-      .forEach(menu => menu.remove());
+      .querySelectorAll(
+        ".post-menu"
+      )
+      .forEach(
+        x => x.remove()
+      );
+
+
+    $("postMenuBackdrop")
+      ?.classList.remove(
+        "show"
+      );
+
+
+    menuOpen = null;
+
   }
 
 
-  function createPostMenu(post) {
+  function openPostMenu(
+    postId
+  ){
 
-    closeAllPostMenus();
-
-    const card = document.querySelector(
-      `.post-card[data-post-id="${post.id}"]`
-    );
-
-    if (!card) return;
+    closePostMenu();
 
 
-    const menu = document.createElement("div");
+    const card =
+      document.querySelector(
+        `.post-card[data-post-id="${postId}"]`
+      );
 
-    menu.className = "post-menu";
+
+    const post =
+      posts.find(
+        p => p.id === postId
+      );
+
+
+    if(!card || !post)
+      return;
+
+
+    const menu =
+      document.createElement(
+        "div"
+      );
+
+
+    menu.className =
+      "post-menu";
+
 
     menu.innerHTML = `
-      <button data-menu-action="repost">
-        <span>↻</span>
-        <span>Repost</span>
+
+      <button data-menu="repost">
+
+        <span>
+          ↗
+        </span>
+
+        Repost
+
       </button>
 
-      <button data-menu-action="bookmark">
-        <span>🔖</span>
-        <span>Bookmark</span>
+
+      <button data-menu="bookmark">
+
+        <span>
+          ♧
+        </span>
+
+        Bookmark
+
       </button>
 
-      <button data-menu-action="share">
-        <span>↗</span>
-        <span>Share</span>
+
+      <button data-menu="share">
+
+        <span>
+          ↗
+        </span>
+
+        Share
+
       </button>
 
-      <button data-menu-action="copy">
-        <span>▣</span>
-        <span>Copy Link</span>
+
+      <button data-menu="copy">
+
+        <span>
+          ▣
+        </span>
+
+        Copy link
+
       </button>
 
-      <button data-menu-action="report" class="danger">
-        <span>⚑</span>
-        <span>Report</span>
+
+      <button
+        data-menu="report"
+        class="danger"
+      >
+
+        <span>
+          ⚑
+        </span>
+
+        Report post
+
       </button>
 
-      <button data-menu-action="block" class="danger">
-        <span>⊘</span>
-        <span>Block User</span>
+
+      <button data-menu="hide">
+
+        <span>
+          ◌
+        </span>
+
+        Hide post
+
       </button>
 
-      <button data-menu-action="hide">
-        <span>◌</span>
-        <span>Hide Post</span>
-      </button>
     `;
 
 
-    menu.addEventListener("click", event => {
+    menu.addEventListener(
+      "click",
+      e => {
 
-      const button =
-        event.target.closest("[data-menu-action]");
-
-      if (!button) return;
-
-      const action = button.dataset.menuAction;
-
-      handlePostMenuAction(action, post);
-
-      menu.remove();
-    });
+        const b =
+          e.target.closest(
+            "[data-menu]"
+          );
 
 
-    card.appendChild(menu);
+        if(!b)
+          return;
+
+
+        handlePostAction(
+          b.dataset.menu,
+          post
+        );
+
+
+        closePostMenu();
+
+      }
+    );
+
+
+    card.appendChild(
+      menu
+    );
+
+
+    $("postMenuBackdrop")
+      ?.classList.add(
+        "show"
+      );
+
+
+    menuOpen =
+      postId;
+
   }
 
 
-  async function handlePostMenuAction(action, post) {
+  /* =========================
+     POST MENU ACTIONS
+  ========================== */
 
-    if (action === "repost") {
+  async function handlePostAction(
+    action,
+    post
+  ){
 
-      post.reposted = !post.reposted;
+    if(
+      action === "repost"
+    ){
 
-      if (post.reposted) {
-        post.reposts++;
-      } else {
-        post.reposts = Math.max(0, post.reposts - 1);
-      }
+      post.reposted =
+        !post.reposted;
+
+      post.reposts =
+        Math.max(
+          0,
+          post.reposts +
+          (
+            post.reposted
+              ? 1
+              : -1
+          )
+        );
+
+
+      savePosts();
 
       renderPosts();
 
-      showToast(
+      toast(
         post.reposted
-          ? "Post reposted"
+          ? "Reposted"
           : "Repost removed"
       );
 
       return;
+
     }
 
 
-    if (action === "bookmark") {
+    if(
+      action === "bookmark"
+    ){
 
-      post.bookmarked = !post.bookmarked;
+      post.bookmarked =
+        !post.bookmarked;
+
+      savePosts();
 
       renderPosts();
 
-      showToast(
+      toast(
         post.bookmarked
-          ? "Saved to bookmarks"
-          : "Removed from bookmarks"
+          ? "Saved"
+          : "Removed from saved"
       );
 
       return;
+
     }
 
 
-    if (action === "share") {
+    if(
+      action === "share"
+    ){
 
-      if (navigator.share) {
+      if(
+        navigator.share
+      ){
 
-        try {
+        try{
+
           await navigator.share({
-            title: "ARS",
-            text: post.text
+
+            title:"ARS",
+
+            text:post.text,
+
+            url:
+              location.href +
+              "?post=" +
+              post.id
+
           });
-        } catch {
-          // User cancelled share.
-        }
 
-      } else {
+        }catch{}
 
-        showToast("Share options opened");
+      }
+
+      else{
+
+        toast(
+          "Share is ready on this device"
+        );
 
       }
 
       return;
+
     }
 
 
-    if (action === "copy") {
+    if(
+      action === "copy"
+    ){
 
-      const link =
-        window.location.origin +
-        window.location.pathname +
+      const url =
+        location.origin +
+        location.pathname +
         "?post=" +
         post.id;
 
-      try {
 
-        await navigator.clipboard.writeText(link);
+      try{
 
-        showToast("Post link copied");
+        await navigator.clipboard
+          .writeText(url);
 
-      } catch {
-
-        showToast("Copy link unavailable");
-
-      }
-
-      return;
-    }
-
-
-    if (action === "report") {
-      showToast("Report option selected");
-      return;
-    }
-
-
-    if (action === "block") {
-      showToast("Block option selected");
-      return;
-    }
-
-
-    if (action === "hide") {
-
-      const index =
-        posts.findIndex(item => item.id === post.id);
-
-      if (index !== -1) {
-        posts.splice(index, 1);
-      }
-
-      renderPosts();
-
-      showToast("Post hidden");
-
-      return;
-    }
-  }
-
-
-  /* =========================
-     POSTS
-  ========================= */
-
-  function renderPosts() {
-
-    const feed = $("feed");
-
-    if (!feed) return;
-
-
-    feed.innerHTML = posts.map(post => {
-
-      const likeClass =
-        post.liked ? "liked" : "";
-
-      const repostClass =
-        post.reposted ? "reposted" : "";
-
-      const bookmarkClass =
-        post.bookmarked ? "bookmarked" : "";
-
-
-      return `
-        <article class="post-card" data-post-id="${post.id}">
-
-          <div class="post-header">
-
-            <div class="avatar-circle">
-              ${escapeHTML(post.letter)}
-            </div>
-
-            <div class="post-user-info">
-              <strong>${escapeHTML(post.name)}</strong>
-              <span>@${escapeHTML(post.username)}</span>
-            </div>
-
-            <button
-              class="more-button"
-              data-more-post="${post.id}"
-              aria-label="More options"
-            >
-              ⋯
-            </button>
-
-          </div>
-
-
-          <div class="post-text">
-            ${escapeHTML(post.text)}
-          </div>
-
-
-          <div class="post-actions">
-
-            <button
-              class="post-action ${likeClass}"
-              data-action="like"
-              data-post="${post.id}"
-            >
-              <span class="action-icon">
-                ${post.liked ? "♥" : "♡"}
-              </span>
-
-              <span class="action-count">
-                ${post.likes}
-              </span>
-            </button>
-
-
-            <button
-              class="post-action"
-              data-action="comment"
-              data-post="${post.id}"
-            >
-              <span class="action-icon">◌</span>
-
-              <span class="action-count">
-                ${post.comments}
-              </span>
-            </button>
-
-
-            <button
-              class="post-action ${repostClass}"
-              data-action="repost"
-              data-post="${post.id}"
-            >
-              <span class="action-icon">↻</span>
-
-              <span class="action-count">
-                ${post.reposts}
-              </span>
-            </button>
-
-
-            <button
-              class="post-action ${bookmarkClass}"
-              data-action="bookmark"
-              data-post="${post.id}"
-            >
-              <span class="action-icon">
-                ${post.bookmarked ? "🔖" : "♧"}
-              </span>
-            </button>
-
-
-            <button
-              class="post-action"
-              data-action="share"
-              data-post="${post.id}"
-            >
-              <span class="action-icon">↗</span>
-            </button>
-
-
-            <span class="post-action">
-              <span class="action-icon">◉</span>
-
-              <span class="action-count">
-                ${post.views}
-              </span>
-            </span>
-
-          </div>
-
-        </article>
-      `;
-
-    }).join("");
-  }
-
-
-  /* =========================
-     POST ACTIONS
-  ========================= */
-
-  function setupPostActions() {
-
-    const feed = $("feed");
-
-    if (!feed) return;
-
-
-    feed.addEventListener("click", async event => {
-
-      const moreButton =
-        event.target.closest("[data-more-post]");
-
-      if (moreButton) {
-
-        event.stopPropagation();
-
-        const postId =
-          Number(moreButton.dataset.morePost);
-
-        const post =
-          posts.find(item => item.id === postId);
-
-        if (post) {
-          createPostMenu(post);
-        }
-
-        return;
-      }
-
-
-      const actionButton =
-        event.target.closest("[data-action]");
-
-      if (!actionButton) return;
-
-
-      const action =
-        actionButton.dataset.action;
-
-      const postId =
-        Number(actionButton.dataset.post);
-
-      const post =
-        posts.find(item => item.id === postId);
-
-      if (!post) return;
-
-
-      if (action === "like") {
-
-        post.liked = !post.liked;
-
-        if (post.liked) {
-          post.likes++;
-        } else {
-          post.likes = Math.max(0, post.likes - 1);
-        }
-
-        renderPosts();
-
-        return;
-      }
-
-
-      if (action === "comment") {
-
-        showToast("Comments opened");
-
-        return;
-      }
-
-
-      if (action === "repost") {
-
-        post.reposted = !post.reposted;
-
-        if (post.reposted) {
-          post.reposts++;
-        } else {
-          post.reposts =
-            Math.max(0, post.reposts - 1);
-        }
-
-        renderPosts();
-
-        return;
-      }
-
-
-      if (action === "bookmark") {
-
-        post.bookmarked = !post.bookmarked;
-
-        renderPosts();
-
-        showToast(
-          post.bookmarked
-            ? "Saved to bookmarks"
-            : "Removed from bookmarks"
+        toast(
+          "Link copied"
         );
 
-        return;
       }
 
+      catch{
 
-      if (action === "share") {
-
-        if (navigator.share) {
-
-          try {
-
-            await navigator.share({
-              title: "ARS",
-              text: post.text
-            });
-
-          } catch {
-            // Cancelled.
-          }
-
-        } else {
-
-          showToast("Share options opened");
-
-        }
+        toast(
+          "Copy is unavailable in this browser"
+        );
 
       }
 
-    });
-  }
+      return;
 
-
-  /* =========================
-     SEARCH
-  ========================= */
-
-  function renderSearchHome() {
-
-    const hashtags = $("trendingHashtags");
-    const people = $("suggestedPeople");
-    const topics = $("trendingTopics");
-
-    if (hashtags) {
-
-      hashtags.innerHTML =
-        trendingHashtags.map((item, index) => `
-          <div class="trend-item">
-
-            <div class="trend-left">
-
-              <span class="trend-number">
-                ${index + 1}
-              </span>
-
-              <div>
-                <strong>${escapeHTML(item.tag)}</strong>
-
-                <small>
-                  ${escapeHTML(item.posts)}
-                </small>
-              </div>
-
-            </div>
-
-            <span>›</span>
-
-          </div>
-        `).join("");
     }
 
 
-    if (people) {
+    if(
+      action === "report"
+    ){
 
-      people.innerHTML =
-        suggestedPeople.map(person => `
-          <div class="suggested-person">
+      toast(
+        "Report option selected"
+      );
 
-            <div class="suggested-person-top">
+      return;
 
-              <div class="avatar-circle">
-                ${escapeHTML(person.letter)}
-              </div>
-
-              <div>
-                <strong>
-                  ${escapeHTML(person.name)}
-                </strong>
-
-                <small>
-                  ${escapeHTML(person.username)}
-                </small>
-              </div>
-
-            </div>
-
-            <button class="follow-suggested">
-              Follow
-            </button>
-
-          </div>
-        `).join("");
     }
 
 
-    if (topics) {
+    if(
+      action === "hide"
+    ){
 
-      topics.innerHTML =
-        trendingTopics.map(topic => `
-          <div class="topic-item">
+      posts =
+        posts.filter(
+          p =>
+            p.id !== post.id
+        );
 
-            <small>
-              ${escapeHTML(topic.category)}
-            </small>
-
-            <strong>
-              ${escapeHTML(topic.title)}
-            </strong>
-
-            <span>
-              ${escapeHTML(topic.posts)}
-            </span>
-
-          </div>
-        `).join("");
-    }
-  }
-
-
-  function performSearch(query) {
-
-    const resultsContainer =
-      $("liveSearchResults");
-
-    const results =
-      $("searchResults");
-
-    const homeContent =
-      $("searchHomeContent");
-
-    const clearButton =
-      $("clearSearch");
-
-
-    const cleanQuery =
-      query.trim().toLowerCase();
-
-
-    if (!cleanQuery) {
-
-      if (resultsContainer) {
-        resultsContainer.cl
+      
