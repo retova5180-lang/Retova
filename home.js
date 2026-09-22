@@ -1013,3 +1013,1096 @@
                                     <div class="post-meta">
                                         ${esc(person[1])}
                              
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        `
+                    )
+                    .join("");
+
+            }
+
+        }
+
+
+        if (foundPosts.length) {
+
+            html += `
+                <div class="search-title">
+                    Posts
+                </div>
+            `;
+
+            html += foundPosts
+                .map(
+                    (post) => `
+
+                        <div
+                            class="search-post"
+                            data-search-post="${post.id}"
+                        >
+
+                            <div class="search-post-top">
+
+                                <div class="avatar">
+                                    ${esc(
+                                        post.letter ||
+                                        post.name[0]
+                                    )}
+                                </div>
+
+                                <div>
+
+                                    <b>
+                                        ${esc(post.name)}
+                                    </b>
+
+                                    <div class="post-meta">
+                                        ${esc(post.handle)}
+                                        ·
+                                        ${esc(post.time)}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <p>
+                                ${esc(post.text)}
+                            </p>
+
+                        </div>
+
+                    `
+                )
+                .join("");
+
+        }
+
+
+        if (
+            !foundPeople.length &&
+            !foundPosts.length
+        ) {
+
+            html += `
+                <div class="empty-search">
+                    <div class="empty-icon">
+                        ⌕
+                    </div>
+
+                    <h3>
+                        No results
+                    </h3>
+
+                    <p>
+                        Try another search.
+                    </p>
+                </div>
+            `;
+
+        }
+
+
+        results.innerHTML = html;
+
+    }
+
+
+    /* =========================
+       WHEEL
+    ========================= */
+
+    const wheelItems = [
+
+        {
+            type: "CHALLENGE",
+            text: "Post something that makes you smile today.",
+            reward: "+50 XP"
+        },
+
+        {
+            type: "REWARD",
+            text: "You earned a surprise ARS reward.",
+            reward: "+100 XP"
+        },
+
+        {
+            type: "QUESTION",
+            text: "What is one goal you want to achieve this week?",
+            reward: "+25 XP"
+        },
+
+        {
+            type: "BONUS",
+            text: "Bonus spin reward unlocked.",
+            reward: "+1 Bonus"
+        },
+
+        {
+            type: "REWARD",
+            text: "You discovered a hidden reward.",
+            reward: "+75 XP"
+        },
+
+        {
+            type: "CHALLENGE",
+            text: "Like and comment on a post you genuinely enjoy.",
+            reward: "+40 XP"
+        },
+
+        {
+            type: "QUESTION",
+            text: "What is something new you learned recently?",
+            reward: "+30 XP"
+        },
+
+        {
+            type: "BONUS",
+            text: "Lucky bonus! Extra XP added.",
+            reward: "+150 XP"
+        }
+
+    ];
+
+
+    function getWeekKey() {
+
+        const now =
+            new Date();
+
+        const start =
+            new Date(
+                now.getFullYear(),
+                0,
+                1
+            );
+
+        const diff =
+            Math.floor(
+                (
+                    now - start
+                ) /
+                86400000
+            );
+
+        const week =
+            Math.ceil(
+                (
+                    diff +
+                    start.getDay() +
+                    1
+                ) /
+                7
+            );
+
+        return (
+            now.getFullYear() +
+            "-" +
+            week
+        );
+
+    }
+
+
+    function getWheelSpins() {
+
+        const saved =
+            JSON.parse(
+                localStorage.getItem(
+                    WHEEL_KEY
+                ) || "null"
+            );
+
+        if (
+            !saved ||
+            saved.week !== getWeekKey()
+        ) {
+
+            return {
+                week: getWeekKey(),
+                used: 0
+            };
+
+        }
+
+        return saved;
+
+    }
+
+
+    function saveWheelSpins(data) {
+
+        localStorage.setItem(
+            WHEEL_KEY,
+            JSON.stringify(data)
+        );
+
+    }
+
+
+    function updateWheelUI() {
+
+        const counter =
+            $("spinCounter");
+
+        const planLabel =
+            $("planLabel");
+
+        const button =
+            $("spinButton");
+
+        if (!counter) return;
+
+
+        const data =
+            getWheelSpins();
+
+
+        if (
+            plan === "premium"
+        ) {
+
+            counter.textContent =
+                "∞";
+
+            if (planLabel) {
+                planLabel.textContent =
+                    "Premium";
+            }
+
+            if (button) {
+                button.disabled =
+                    false;
+            }
+
+        }
+
+        else {
+
+            const remaining =
+                Math.max(
+                    0,
+                    2 - data.used
+                );
+
+            counter.textContent =
+                String(remaining);
+
+            if (planLabel) {
+                planLabel.textContent =
+                    "Free";
+            }
+
+            if (button) {
+                button.disabled =
+                    remaining <= 0;
+            }
+
+        }
+
+    }
+
+
+    function spinWheel() {
+
+        const wheel =
+            $("wheel");
+
+        const result =
+            $("challengeResult");
+
+        if (!wheel || !result)
+            return;
+
+
+        const data =
+            getWheelSpins();
+
+
+        if (
+            plan !== "premium" &&
+            data.used >= 2
+        ) {
+
+            result.innerHTML = `
+                <strong>
+                    No free spins left
+                </strong>
+
+                <span>
+                    Free members get 2 wheel tries every week.
+                    Upgrade to Premium for unlimited spins.
+                </span>
+            `;
+
+            return;
+
+        }
+
+
+        if (
+            plan !== "premium"
+        ) {
+
+            data.used++;
+
+            saveWheelSpins(data);
+
+        }
+
+
+        const index =
+            Math.floor(
+                Math.random() *
+                wheelItems.length
+            );
+
+
+        const selected =
+            wheelItems[index];
+
+
+        wheelRotation +=
+            1440 +
+            Math.floor(
+                Math.random() *
+                360
+            ) +
+            (
+                index *
+                45
+            );
+
+
+        wheel.style.transform =
+            `rotate(${wheelRotation}deg)`;
+
+
+        result.innerHTML = `
+            <div class="result-type">
+                ${esc(selected.type)}
+            </div>
+
+            <strong>
+                ${esc(selected.text)}
+            </strong>
+
+            <span>
+                ${esc(selected.reward)}
+            </span>
+        `;
+
+
+        updateWheelUI();
+
+    }
+
+
+    /* =========================
+       STREAK
+    ========================= */
+
+    function getStreakState() {
+
+        return JSON.parse(
+            localStorage.getItem(
+                STREAK_KEY
+            ) || "null"
+        ) || {
+            count: 0,
+            lastDay: "",
+            doneToday: false
+        };
+
+    }
+
+
+    function dayKey(date = new Date()) {
+
+        return [
+            date.getFullYear(),
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0"),
+            String(
+                date.getDate()
+            ).padStart(2, "0")
+        ].join("-");
+
+    }
+
+
+    function updateStreakUI() {
+
+        const fire =
+            $("streakFire");
+
+        const number =
+            $("streakNumber");
+
+        const text =
+            $("streakText");
+
+        const button =
+            $("streakDone");
+
+        if (!fire) return;
+
+
+        const state =
+            getStreakState();
+
+        const today =
+            dayKey();
+
+
+        const active =
+            state.lastDay === today &&
+            state.doneToday;
+
+
+        fire.classList.toggle(
+            "active",
+            active
+        );
+
+        fire.classList.toggle(
+            "inactive",
+            !active
+        );
+
+
+        if (number) {
+
+            number.textContent =
+                String(
+                    state.count || 0
+                );
+
+        }
+
+
+        if (text) {
+
+            text.textContent =
+                active
+                    ? "Your streak is active today 🔥 Keep going tomorrow."
+                    : "Complete today's interaction to keep your streak active.";
+
+        }
+
+
+        if (button) {
+
+            button.textContent =
+                active
+                    ? "Completed today ✓"
+                    : "Complete today";
+
+            button.disabled =
+                active;
+
+        }
+
+
+        renderWeekDots();
+
+    }
+
+
+    function renderWeekDots() {
+
+        const container =
+            $("weekDots");
+
+        if (!container) return;
+
+
+        const state =
+            getStreakState();
+
+
+        const today =
+            new Date();
+
+
+        const html = [];
+
+
+        for (
+            let i = 6;
+            i >= 0;
+            i--
+        ) {
+
+            const date =
+                new Date(today);
+
+            date.setDate(
+                today.getDate() - i
+            );
+
+
+            const key =
+                dayKey(date);
+
+
+            const active =
+                key === state.lastDay &&
+                state.doneToday;
+
+
+            html.push(`
+                <span
+                    class="week-dot ${
+                        active
+                            ? "active"
+                            : ""
+                    }"
+                ></span>
+            `);
+
+        }
+
+
+        container.innerHTML =
+            html.join("");
+
+    }
+
+
+    function completeStreak() {
+
+        const state =
+            getStreakState();
+
+        const today =
+            dayKey();
+
+
+        if (
+            state.lastDay === today &&
+            state.doneToday
+        ) {
+
+            return;
+
+        }
+
+
+        const yesterday =
+            new Date();
+
+        yesterday.setDate(
+            yesterday.getDate() - 1
+        );
+
+
+        const yesterdayKey =
+            dayKey(yesterday);
+
+
+        if (
+            state.lastDay === yesterdayKey
+        ) {
+
+            state.count =
+                (state.count || 0) + 1;
+
+        }
+
+        else {
+
+            state.count = 1;
+
+        }
+
+
+        state.lastDay =
+            today;
+
+        state.doneToday =
+            true;
+
+
+        localStorage.setItem(
+            STREAK_KEY,
+            JSON.stringify(state)
+        );
+
+
+        updateStreakUI();
+
+        showToast(
+            "🔥 Streak updated!"
+        );
+
+    }
+
+
+    /* =========================
+       POST ACTIONS
+    ========================= */
+
+    function findPost(id) {
+
+        return posts.find(
+            (post) =>
+                String(post.id) ===
+                String(id)
+        );
+
+    }
+
+
+    function handlePostAction(
+        action,
+        id
+    ) {
+
+        const post =
+            findPost(id);
+
+        if (!post) return;
+
+
+        if (action === "like") {
+
+            post.liked =
+                !post.liked;
+
+            post.likes +=
+                post.liked
+                    ? 1
+                    : -1;
+
+            showToast(
+                post.liked
+                    ? "Liked ❤️"
+                    : "Like removed"
+            );
+
+        }
+
+
+        else if (
+            action === "comment"
+        ) {
+
+            showToast(
+                "Comments are coming soon."
+            );
+
+        }
+
+
+        else if (
+            action === "repost"
+        ) {
+
+            post.reposted =
+                !post.reposted;
+
+            post.reposts +=
+                post.reposted
+                    ? 1
+                    : -1;
+
+            showToast(
+                post.reposted
+                    ? "Reposted 🔄"
+                    : "Repost removed"
+            );
+
+        }
+
+
+        savePosts();
+
+        renderPosts();
+
+    }
+
+
+    /* =========================
+       THREE DOT MENU
+    ========================= */
+
+    function closePostMenu() {
+
+        document
+            .querySelectorAll(
+                ".post-menu"
+            )
+            .forEach(
+                (menu) => {
+                    menu.remove();
+                }
+            );
+
+        const backdrop =
+            $("postMenuBackdrop");
+
+        if (backdrop) {
+
+            backdrop.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+    function openPostMenu(
+        button,
+        postId
+    ) {
+
+        closePostMenu();
+
+
+        const menu =
+            document.createElement(
+                "div"
+            );
+
+        menu.className =
+            "post-menu";
+
+
+        menu.innerHTML = `
+
+            <button data-menu-action="repost">
+                <span>↻</span>
+                Repost
+            </button>
+
+            <button data-menu-action="bookmark">
+                <span>🔖</span>
+                Bookmark
+            </button>
+
+            <button data-menu-action="share">
+                <span>↗</span>
+                Share
+            </button>
+
+            <button data-menu-action="copy">
+                <span>⧉</span>
+                Copy Link
+            </button>
+
+            <button data-menu-action="report">
+                <span>⚑</span>
+                Report
+            </button>
+
+            <button
+                data-menu-action="hide"
+                class="danger"
+            >
+                <span>⌫</span>
+                Hide Post
+            </button>
+
+        `;
+
+
+        document.body.appendChild(
+            menu
+        );
+
+
+        const rect =
+            button.getBoundingClientRect();
+
+
+        menu.style.position =
+            "fixed";
+
+        menu.style.top =
+            (
+                rect.bottom +
+                8
+            ) + "px";
+
+        menu.style.right =
+            Math.max(
+                12,
+                window.innerWidth -
+                rect.right
+            ) + "px";
+
+
+        requestAnimationFrame(
+            () => {
+                menu.classList.add(
+                    "show"
+                );
+            }
+        );
+
+
+        menu.addEventListener(
+            "click",
+            async (event) => {
+
+                const item =
+                    event.target.closest(
+                        "[data-menu-action]"
+                    );
+
+                if (!item) return;
+
+
+                const action =
+                    item.dataset.menuAction;
+
+
+                closePostMenu();
+
+
+                if (
+                    action === "repost"
+                ) {
+
+                    handlePostAction(
+                        "repost",
+                        postId
+                    );
+
+                }
+
+
+                else if (
+                    action === "bookmark"
+                ) {
+
+                    const key =
+                        `ars_bookmark_${postId}`;
+
+                    const saved =
+                        localStorage.getItem(
+                            key
+                        ) === "true";
+
+                    localStorage.setItem(
+                        key,
+                        String(!saved)
+                    );
+
+                    showToast(
+                        !saved
+                            ? "Saved 🔖"
+                            : "Removed from bookmarks"
+                    );
+
+                }
+
+
+                else if (
+                    action === "share"
+                ) {
+
+                    if (
+                        navigator.share
+                    ) {
+
+                        try {
+
+                            await navigator.share({
+                                title: "ARS",
+                                text: post.text,
+                                url: window.location.href
+                            });
+
+                        }
+
+                        catch (error) {}
+
+                    }
+
+                    else {
+
+                        showToast(
+                            "Share link copied"
+                        );
+
+                    }
+
+                }
+
+
+                else if (
+                    action === "copy"
+                ) {
+
+                    try {
+
+                        await navigator.clipboard.writeText(
+                            window.location.href
+                        );
+
+                        showToast(
+                            "Link copied"
+                        );
+
+                    }
+
+                    catch (error) {
+
+                        showToast(
+                            "Copy is not available"
+                        );
+
+                    }
+
+                }
+
+
+                else if (
+                    action === "report"
+                ) {
+
+                    showToast(
+                        "Post reported"
+                    );
+
+                }
+
+
+                else if (
+                    action === "hide"
+                ) {
+
+                    posts =
+                        posts.filter(
+                            (post) =>
+                                String(post.id) !==
+                                String(postId)
+                        );
+
+                    savePosts();
+
+                    renderPosts();
+
+                    showToast(
+                        "Post hidden"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       PROFILE
+    ========================= */
+
+    function renderProfile() {
+
+        const name =
+            currentUser?.display_name ||
+            currentUser?.user_metadata?.display_name ||
+            currentUser?.username ||
+            "ARS User";
+
+
+        const username =
+            currentUser?.username ||
+            currentUser?.user_metadata?.username ||
+            "user";
+
+
+        const letter =
+            String(name)
+                .trim()
+                .charAt(0)
+                .toUpperCase() ||
+            "A";
+
+
+        const topLetter =
+            $("topAvatarLetter");
+
+        const profileAvatar =
+            $("profileAvatar");
+
+        const profileName =
+            $("profileName");
+
+        const profileHandle =
+            $("profileHandle");
+
+
+        if (topLetter)
+            topLetter.textContent =
+                letter;
+
+        if (profileAvatar)
+            profileAvatar.textContent =
+                letter;
+
+        if (profileName)
+            profileName.textContent =
+                name;
+
+        if (profileHandle)
+            profileHandle.textContent =
+                "@" + username;
+
+    }
+
+
+    /* =========================
+       CREATE POST
+    ========================= */
+
+    function createPost() {
+
+        showToast(
+            "Create Post is ready for the next step."
+        );
+
+    }
+
+
+    /* =========================
+       AUTH
+    ========================= */
+
+    async function checkAuth() {
+
+        if (!supabaseClient) {
+
+            renderStories();
+            renderPosts();
+            renderProfile();
+            updateWheelUI();
+            updateStreakUI();
+            return;
+
+        }
+
+
+        try {
+
+            const {
+                data
+            } =
+                await supabaseClient.auth.getSession();
+
+
+            if (
+                !data?.session
+            ) {
+
+    
