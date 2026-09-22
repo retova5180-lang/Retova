@@ -1,764 +1,568 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#050507">
-  <title>ARS</title>
-  <link rel="stylesheet" href="home.css">
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <title>ARS</title>
+
+    <link rel="stylesheet" href="home.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 
-  <div class="app-shell">
+<div class="app">
 
-    <!-- =========================
-         TOP BAR
-    ========================== -->
-
+    <!-- TOP BAR -->
     <header class="topbar">
 
-      <button
-        class="top-avatar"
-        id="profileButton"
-        aria-label="Open profile"
-      >
-        <span id="topAvatar">A</span>
-        <i></i>
-      </button>
+        <button
+            class="avatar top-avatar"
+            id="profileButton"
+            aria-label="Profile"
+        >
+            <span id="topAvatarLetter">A</span>
+            <i></i>
+        </button>
 
-      <div class="brand">
-        ΛRS
-      </div>
+        <div class="brand">ΛRS</div>
 
-      <button
-        class="wheel-mini"
-        id="wheelButton"
-        aria-label="Open wheel"
-      >
-        <span class="wheel-mini-icon">✣</span>
-      </button>
+        <button
+            class="wheel-mini"
+            id="wheelButton"
+            aria-label="Wheel"
+        >
+            <span class="wheel-lines"></span>
+            <b>✦</b>
+        </button>
 
     </header>
 
 
-    <!-- =========================
-         HOME
-    ========================== -->
+    <!-- HOME -->
+    <main id="homePage" class="page active">
 
-    <main
-      id="homePage"
-      class="home-page"
-    >
+        <!-- STORIES -->
+        <section class="stories-wrap">
+            <div id="stories" class="stories"></div>
+        </section>
 
-      <!-- STORIES -->
-
-      <section class="stories-wrap">
-
-        <div
-          class="stories"
-          id="stories"
-        ></div>
-
-      </section>
-
-
-      <!-- FEED -->
-
-      <section
-        class="feed"
-        id="feed"
-      ></section>
+        <!-- FEED -->
+        <section id="feed" class="feed"></section>
 
     </main>
 
 
-    <!-- =========================
-         SEARCH PAGE
-    ========================== -->
+    <!-- SEARCH -->
+    <section id="searchPage" class="page overlay-page">
 
-    <section
-      class="search-page"
-      id="searchPage"
-      aria-hidden="true"
-    >
+        <div class="search-head">
 
-      <div class="search-header">
+            <button
+                class="back-btn"
+                data-close-page
+            >
+                ‹
+            </button>
+
+            <div class="search-box">
+
+                <span>⌕</span>
+
+                <input
+                    id="searchInput"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Search ARS"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="searchHome"
+            class="search-content"
+        ></div>
+
+        <div
+            id="searchResults"
+            class="search-results"
+        ></div>
+
+    </section>
+
+
+    <!-- STREAK -->
+    <section id="streakPage" class="page overlay-page">
+
+        <div class="panel-head">
+
+            <h2>Streak</h2>
+
+            <button
+                class="close-btn"
+                data-close-page
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="streak-hero">
+
+            <div
+                id="streakFire"
+                class="big-fire"
+            >
+                ♨
+            </div>
+
+            <div>
+
+                <strong id="streakNumber">
+                    0
+                </strong>
+
+                <span>
+                    day streak
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <p id="streakText">
+            Complete today's interaction to keep your streak active.
+        </p>
+
+
+        <div
+            class="week-dots"
+            id="weekDots"
+        ></div>
+
 
         <button
-          class="round-back"
-          id="searchBackButton"
-          aria-label="Back"
+            class="primary-btn"
+            id="streakDone"
         >
-          ‹
+            Complete today
         </button>
 
-        <div class="search-field">
-
-          <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <circle
-              cx="11"
-              cy="11"
-              r="6.8"
-            ></circle>
-
-            <path d="m16 16 5 5"></path>
-          </svg>
-
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Search ARS"
-            autocomplete="off"
-          >
-
-          <button
-            id="clearSearch"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </div>
-
-      </div>
+    </section>
 
 
-      <div class="search-body">
+    <!-- NOTIFICATIONS -->
+    <section
+        id="notificationsPage"
+        class="page overlay-page"
+    >
 
-        <!-- SEARCH HOME -->
-
-        <div id="searchHomeContent">
-
-          <!-- TRENDING HASHTAGS -->
-
-          <section class="search-section">
-
-            <div class="section-title">
-
-              <h2>
-                Trending hashtags
-              </h2>
-
-              <button>
-                See all
-              </button>
-
-            </div>
-
-            <div
-              id="trendingHashtags"
-              class="trend-list"
-            ></div>
-
-          </section>
-
-
-          <!-- SUGGESTED PEOPLE -->
-
-          <section class="search-section">
-
-            <div class="section-title">
-
-              <h2>
-                Suggested people
-              </h2>
-
-              <button>
-                See all
-              </button>
-
-            </div>
-
-            <div
-              id="suggestedPeople"
-              class="people-row"
-            ></div>
-
-          </section>
-
-
-          <!-- TRENDING TOPICS -->
-
-          <section class="search-section">
-
-            <div class="section-title">
-
-              <h2>
-                Trending topics
-              </h2>
-
-              <span>
-                Today
-              </span>
-
-            </div>
-
-            <div
-              id="trendingTopics"
-              class="topic-list"
-            ></div>
-
-          </section>
-
-        </div>
-
-
-        <!-- LIVE SEARCH -->
-
-        <section
-          class="live-results"
-          id="liveSearchResults"
-        >
-
-          <div class="section-title">
+        <div class="panel-head">
 
             <h2>
-              Search results
+                Notifications
             </h2>
 
-          </div>
+            <button
+                class="close-btn"
+                data-close-page
+            >
+                ×
+            </button>
 
-          <div
-            id="searchResults"
-          ></div>
+        </div>
 
-        </section>
 
-      </div>
+        <div class="notification-list">
+
+            <div class="notification">
+
+                <div class="notif-avatar purple">
+                    L
+                </div>
+
+                <p>
+                    <b>Lina</b>
+                    liked your post
+                    <small>2m</small>
+                </p>
+
+            </div>
+
+
+            <div class="notification">
+
+                <div class="notif-avatar">
+                    A
+                </div>
+
+                <p>
+                    <b>Apple</b>
+                    followed you
+                    <small>18m</small>
+                </p>
+
+            </div>
+
+
+            <div class="notification">
+
+                <div class="notif-avatar purple">
+                    N
+                </div>
+
+                <p>
+                    <b>Noah</b>
+                    reposted your post
+                    <small>42m</small>
+                </p>
+
+            </div>
+
+        </div>
 
     </section>
 
 
-    <!-- =========================
-         STREAK
-    ========================== -->
-
+    <!-- MESSAGES -->
     <section
-      class="sheet"
-      id="streakPanel"
-      aria-hidden="true"
+        id="messagesPage"
+        class="page overlay-page"
     >
 
-      <div class="sheet-head">
+        <div class="panel-head">
 
-        <button class="sheet-close">
-          ×
-        </button>
+            <h2>
+                Messages
+            </h2>
 
-        <h2>
-          Streak
-        </h2>
-
-        <span></span>
-
-      </div>
-
-
-      <div class="streak-hero">
-
-        <div
-          class="big-fire"
-          id="streakFire"
-        >
-          ♨
-        </div>
-
-
-        <div class="streak-count">
-
-          <strong id="streakNumber">
-            0
-          </strong>
-
-          <span>
-            day streak
-          </span>
+            <button
+                class="close-btn"
+                data-close-page
+            >
+                ×
+            </button>
 
         </div>
 
 
-        <div
-          class="streak-status"
-          id="streakStatus"
-        >
-          Keep it going
-        </div>
+        <div class="chat">
 
+            <div class="notif-avatar purple">
+                L
+            </div>
 
-        <p id="streakDescription">
-          Complete today's activity to keep your streak active.
-        </p>
+            <div>
+                <b>Lina</b>
+                <p>
+                    See you on ARS ✨
+                </p>
+            </div>
 
-
-        <div class="progress">
-
-          <span
-            id="streakProgressBar"
-          ></span>
+            <small>
+                12m
+            </small>
 
         </div>
 
 
-        <button
-          class="primary"
-          id="completeStreakButton"
-        >
-          Complete today
-        </button>
+        <div class="chat">
 
-      </div>
+            <div class="notif-avatar">
+                N
+            </div>
+
+            <div>
+                <b>Noah</b>
+                <p>
+                    That challenge was crazy.
+                </p>
+            </div>
+
+            <small>
+                1h
+            </small>
+
+        </div>
 
     </section>
 
 
-    <!-- =========================
-         NOTIFICATIONS
-    ========================== -->
-
+    <!-- PROFILE -->
     <section
-      class="sheet"
-      id="notificationsPanel"
-      aria-hidden="true"
+        id="profilePage"
+        class="page overlay-page"
     >
 
-      <div class="sheet-head">
+        <div class="panel-head">
 
-        <button class="sheet-close">
-          ×
-        </button>
+            <h2>
+                Profile
+            </h2>
 
-        <h2>
-          Notifications
-        </h2>
+            <button
+                class="close-btn"
+                data-close-page
+            >
+                ×
+            </button>
 
-        <span></span>
-
-      </div>
-
-
-      <div
-        class="notification-list"
-        id="notificationList"
-      ></div>
-
-    </section>
-
-
-    <!-- =========================
-         PROFILE
-    ========================== -->
-
-    <section
-      class="sheet"
-      id="profilePanel"
-      aria-hidden="true"
-    >
-
-      <div class="sheet-head">
-
-        <button class="sheet-close">
-          ×
-        </button>
-
-        <h2>
-          Profile
-        </h2>
-
-        <span></span>
-
-      </div>
-
-
-      <div class="profile-card">
-
-        <div
-          class="profile-avatar"
-          id="profileAvatarLarge"
-        >
-          A
         </div>
 
 
-        <h2 id="profileDisplayName">
-          User
-        </h2>
+        <div class="profile-hero">
 
+            <div
+                id="profileAvatar"
+                class="profile-avatar"
+            >
+                A
+            </div>
 
-        <p id="profileUsername">
-          @username
-        </p>
+            <h2 id="profileName">
+                ARS User
+            </h2>
+
+            <p id="profileHandle">
+                @user
+            </p>
+
+        </div>
 
 
         <div class="profile-stats">
 
-          <div>
-            <b id="profilePosts">
-              0
-            </b>
+            <div>
+                <b>0</b>
+                <span>Posts</span>
+            </div>
 
-            <small>
-              Posts
-            </small>
-          </div>
+            <div>
+                <b>0</b>
+                <span>Followers</span>
+            </div>
 
-
-          <div>
-            <b id="profileFollowers">
-              0
-            </b>
-
-            <small>
-              Followers
-            </small>
-          </div>
-
-
-          <div>
-            <b id="profileLikes">
-              0
-            </b>
-
-            <small>
-              Likes
-            </small>
-          </div>
+            <div>
+                <b>0</b>
+                <span>Following</span>
+            </div>
 
         </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         WHEEL
-    ========================== -->
-
-    <section
-      class="sheet wheel-sheet"
-      id="wheelPanel"
-      aria-hidden="true"
-    >
-
-      <div class="sheet-head">
-
-        <button class="sheet-close">
-          ×
-        </button>
-
-        <h2>
-          ARS Wheel
-        </h2>
-
-        <span></span>
-
-      </div>
-
-
-      <div class="wheel-copy">
-
-        <p>
-          Spin for a question, challenge, reward or bonus.
-        </p>
-
-        <strong>
-
-          <b id="spinCounter">
-            2
-          </b>
-
-          <span id="spinCounterText">
-            free spins this week
-          </span>
-
-        </strong>
-
-      </div>
-
-
-      <div class="wheel-stage">
-
-        <div class="pointer"></div>
-
-
-        <div
-          class="wheel"
-          id="challengeWheel"
-        >
-
-          <div class="wheel-label l1">
-            CHALLENGE
-          </div>
-
-          <div class="wheel-label l2">
-            REWARD
-          </div>
-
-          <div class="wheel-label l3">
-            QUESTION
-          </div>
-
-          <div class="wheel-label l4">
-            BONUS
-          </div>
-
-          <div class="wheel-label l5">
-            REWARD
-          </div>
-
-          <div class="wheel-label l6">
-            CHALLENGE
-          </div>
-
-
-          <div class="wheel-center">
-            ARS
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <button
-        class="spin-button"
-        id="spinButton"
-      >
-        SPIN
-      </button>
-
-
-      <div
-        class="challenge-result hidden"
-        id="challengeResult"
-      >
-
-        <span id="resultType">
-          CHALLENGE
-        </span>
-
-        <h3 id="resultTitle">
-          Your result
-        </h3>
-
-        <p id="resultDescription"></p>
-
-        <b id="resultReward"></b>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         PREMIUM
-    ========================== -->
-
-    <section
-      class="sheet premium-sheet"
-      id="premiumPanel"
-      aria-hidden="true"
-    >
-
-      <div class="sheet-head">
-
-        <button class="sheet-close">
-          ×
-        </button>
-
-        <h2>
-          ARS Premium
-        </h2>
-
-        <span></span>
-
-      </div>
-
-
-      <div class="premium-card">
-
-        <div class="premium-symbol">
-          ✦
-        </div>
-
-        <h1>
-          ARS Premium
-        </h1>
-
-        <strong>
-          $20
-        </strong>
-
-        <p>
-          Unlimited wheel spins, verified profile
-          and premium features.
-        </p>
-
-
-        <ul>
-
-          <li>
-            Unlimited Wheel
-          </li>
-
-          <li>
-            Verified badge
-          </li>
-
-          <li>
-            Premium profile
-          </li>
-
-          <li>
-            Future premium benefits
-          </li>
-
-        </ul>
 
 
         <button
-          class="primary"
-          id="subscribeButton"
+            class="secondary-btn"
+            id="logoutBtn"
         >
-          Get Premium
+            Log out
         </button>
-
-      </div>
 
     </section>
 
 
-    <!-- =========================
-         FLOATING CREATE
-    ========================== -->
-
-    <button
-      class="floating-create"
-      id="createPost"
-      aria-label="Create post"
+    <!-- WHEEL -->
+    <section
+        id="wheelPage"
+        class="page overlay-page wheel-page"
     >
-      +
+
+        <div class="panel-head">
+
+            <h2>
+                Daily Wheel
+            </h2>
+
+            <button
+                class="close-btn"
+                data-close-page
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <p class="wheel-sub">
+            Questions · Challenges · Rewards
+        </p>
+
+
+        <div class="wheel-stage">
+
+            <div class="pointer"></div>
+
+            <div
+                id="wheel"
+                class="real-wheel"
+            >
+
+                <div class="slice s1">
+                    CHALLENGE
+                </div>
+
+                <div class="slice s2">
+                    REWARD
+                </div>
+
+                <div class="slice s3">
+                    QUESTION
+                </div>
+
+                <div class="slice s4">
+                    BONUS
+                </div>
+
+                <div class="slice s5">
+                    REWARD
+                </div>
+
+                <div class="slice s6">
+                    CHALLENGE
+                </div>
+
+                <div class="slice s7">
+                    QUESTION
+                </div>
+
+                <div class="slice s8">
+                    BONUS
+                </div>
+
+                <div class="wheel-center">
+                    ARS
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="wheel-meta">
+
+            <span id="spinCounter">
+                2
+            </span>
+
+            free tries this week ·
+
+            <b id="planLabel">
+                Free
+            </b>
+
+        </div>
+
+
+        <button
+            class="primary-btn"
+            id="spinButton"
+        >
+            SPIN THE WHEEL
+        </button>
+
+
+        <div
+            id="challengeResult"
+            class="result-card"
+        >
+            Spin to discover something.
+        </div>
+
+    </section>
+
+
+    <!-- CREATE POST -->
+    <button
+        id="createPost"
+        class="floating-plus"
+        aria-label="Create post"
+    >
+        +
     </button>
 
 
-    <!-- =========================
-         BOTTOM NAVIGATION
-    ========================== -->
-
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
 
-      <button
-        class="nav-button active"
-        data-page="home"
-      >
-
-        <span class="nav-icon">
-          ⌂
-        </span>
-
-        <small>
-          Home
-        </small>
-
-      </button>
-
-
-      <button
-        class="nav-button"
-        data-page="search"
-      >
-
-        <span class="nav-icon">
-          ⌕
-        </span>
-
-        <small>
-          Search
-        </small>
-
-      </button>
-
-
-      <button
-        class="nav-button"
-        data-page="streak"
-      >
-
-        <span
-          class="nav-icon nav-fire inactive"
-          id="navStreakFire"
+        <button
+            class="nav-item active"
+            data-page="homePage"
         >
-          ♨
-        </span>
-
-        <small>
-          Streak
-        </small>
-
-      </button>
+            <span>⌂</span>
+            <small>Home</small>
+        </button>
 
 
-      <button
-        class="nav-button"
-        data-page="notifications"
-      >
-
-        <span class="nav-icon bell">
-          ♧
-        </span>
-
-        <small>
-          Notifications
-        </small>
-
-        <i class="nav-dot"></i>
-
-      </button>
+        <button
+            class="nav-item"
+            data-page="searchPage"
+        >
+            <span>⌕</span>
+            <small>Search</small>
+        </button>
 
 
-      <button
-        class="nav-button"
-        data-page="profile"
-      >
+        <button
+            class="nav-item"
+            data-page="streakPage"
+        >
+            <span>♨</span>
+            <small>Trending</small>
+        </button>
 
-        <span class="nav-icon">
-          ◯
-        </span>
 
-        <small>
-          Profile
-        </small>
+        <button
+            class="nav-item"
+            data-page="notificationsPage"
+        >
+            <span>
+                ♧
+                <i class="dot"></i>
+            </span>
 
-      </button>
+            <small>
+                Notifications
+            </small>
+        </button>
+
+
+        <button
+            class="nav-item"
+            data-page="messagesPage"
+        >
+            <span>□</span>
+            <small>Messages</small>
+        </button>
 
     </nav>
 
-
-    <!-- MENU BACKDROP -->
-
-    <div
-      class="post-menu-backdrop"
-      id="postMenuBackdrop"
-    ></div>
+</div>
 
 
-    <!-- TOAST -->
-
-    <div
-      class="toast"
-      id="toast"
-    ></div>
-
-  </div>
+<!-- TOAST -->
+<div
+    id="toast"
+    class="toast"
+></div>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- MENU BACKDROP -->
+<div
+    id="postMenuBackdrop"
+    class="backdrop"
+></div>
 
-  <script src="home.js"></script>
+
+<script src="home.js"></script>
 
 </body>
-              </html>
+                  </html>
