@@ -1,1417 +1,1015 @@
 (() => {
-  "use strict";
 
+    "use strict";
 
-  /* =========================
-     SUPABASE
-  ========================== */
 
-  const SUPABASE_URL =
-    "https://bfqsqgfyyewnfxekirfv.supabase.co";
+    /* =========================
+       SUPABASE
+    ========================= */
 
-  const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+    const SUPABASE_URL =
+        "https://bfqsqgfyyewnfxekirfv.supabase.co";
 
 
-  const supabaseClient =
-    window.supabase?.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    ) || null;
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
 
-  /* =========================
-     STORAGE
-  ========================== */
+    const supabaseClient =
+        window.supabase?.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        ) || null;
 
-  const USER_KEY =
-    "ars_user";
 
-  const LOGGED_IN_KEY =
-    "ars_logged_in";
+    /* =========================
+       HELPERS
+    ========================= */
 
-  const LETTER_KEY =
-    "ars_letter";
+    const $ = (id) =>
+        document.getElementById(id);
 
-  const PLAN_KEY =
-    "ars_plan";
 
-  const WHEEL_KEY =
-    "ars_wheel_week";
+    const USER_KEY =
+        "ars_user";
 
-  const STREAK_DAYS_KEY =
-    "ars_streak_interaction_days";
 
-  const POSTS_KEY =
-    "ars_home_posts_v3";
+    const LOGGED_IN_KEY =
+        "ars_logged_in";
 
 
-  let currentUser = null;
+    const PLAN_KEY =
+        "ars_plan";
 
-  let currentPlan =
-    "free";
 
-  let menuOpen = null;
+    const WHEEL_KEY =
+        "ars_wheel_week";
 
-  let wheelRotation = 0;
 
+    const STREAK_KEY =
+        "ars_streak_state";
 
-  /* =========================
-     HELPERS
-  ========================== */
 
-  const $ = id =>
-    document.getElementById(id);
+    const POSTS_KEY =
+        "ars_home_posts_v5";
 
 
-  function escapeHTML(value){
-
-    return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
-
-  }
-
-
-  function toast(message){
-
-    const el = $("toast");
-
-    if(!el) return;
-
-    el.textContent =
-      message;
-
-    el.classList.add("show");
-
-    clearTimeout(
-      window.__arsToastTimer
-    );
-
-    window.__arsToastTimer =
-      setTimeout(
-        () =>
-          el.classList.remove("show"),
-        2200
-      );
-
-  }
-
-
-  function readJSON(
-    key,
-    fallback
-  ){
-
-    try{
-
-      return JSON.parse(
-        localStorage.getItem(key) ||
-        JSON.stringify(fallback)
-      );
-
-    }catch{
-
-      return fallback;
-
-    }
-
-  }
-
-
-  function writeJSON(
-    key,
-    value
-  ){
-
-    localStorage.setItem(
-      key,
-      JSON.stringify(value)
-    );
-
-  }
-
-
-  /* =========================
-     STORIES
-  ========================== */
-
-  const stories = [
-
-    {
-      name:"You",
-      letter:"A",
-      own:true
-    },
-
-    {
-      name:"Lina",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"
-    },
-
-    {
-      name:"Noah",
-      image:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80"
-    },
-
-    {
-      name:"Sara",
-      image:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80"
-    },
-
-    {
-      name:"Wheel",
-      wheel:true
-    },
-
-    {
-      name:"Apple",
-      brand:"",
-      verified:true
-    },
-
-    {
-      name:"Ferrari",
-      brand:"🐎",
-      verified:true
-    },
-
-    {
-      name:"BMW",
-      brand:"M",
-      verified:true
-    }
-
-  ];
-
-
-  /* =========================
-     POSTS
-  ========================== */
-
-  const seedPosts = [
-
-    {
-      id:1,
-
-      name:"Lina",
-
-      username:"lina.ae",
-
-      verified:true,
-
-      letter:"L",
-
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80",
-
-      time:"12m",
-
-      text:
-        "Sunset always hits different 💜",
-
-      image:
-        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=88",
-
-      likes:2400,
-
-      comments:186,
-
-      reposts:312,
-
-      views:48000,
-
-      liked:false,
-
-      reposted:false,
-
-      bookmarked:false
-
-    },
-
-
-    {
-      id:2,
-
-      name:"Apple",
-
-      username:"apple",
-
-      verified:true,
-
-      letter:"",
-
-      brand:true,
-
-      time:"28m",
-
-      text:
-        "Apple Intelligence expands to more languages later this year.",
-
-      image:
-        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=88",
-
-      likes:28400,
-
-      comments:1800,
-
-      reposts:3900,
-
-      views:2400000,
-
-      liked:false,
-
-      reposted:false,
-
-      bookmarked:false
-
-    },
-
-
-    {
-      id:3,
-
-      name:"Noah",
-
-      username:"noah.vibes",
-
-      verified:true,
-
-      letter:"N",
-
-      avatar:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80",
-
-      time:"45m",
-
-      text:
-        "Focused on the journey. #focus #life",
-
-      image:
-        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=88",
-
-      likes:1290,
-
-      comments:88,
-
-      reposts:117,
-
-      views:18400,
-
-      liked:false,
-
-      reposted:false,
-
-      bookmarked:false
-
-    }
-
-  ];
-
-
-  let posts =
-    getPosts();
-
-
-  function getPosts(){
-
-    const saved =
-      readJSON(
-        POSTS_KEY,
-        null
-      );
-
-    if(
-      Array.isArray(saved) &&
-      saved.length
-    ){
-
-      return saved;
-
-    }
-
-    return structuredClone(
-      seedPosts
-    );
-
-  }
-
-
-  function savePosts(){
-
-    writeJSON(
-      POSTS_KEY,
-      posts
-    );
-
-  }
-
-
-  /* =========================
-     WHEEL CONTENT
-  ========================== */
-
-  const wheelItems = [
-
-    {
-      type:"CHALLENGE",
-
-      title:"Post a Story",
-
-      description:
-        "Share one thing you enjoyed today.",
-
-      reward:"+50 XP"
-    },
-
-
-    {
-      type:"REWARD",
-
-      title:"Lucky XP",
-
-      description:
-        "A bonus reward has been unlocked.",
-
-      reward:"+100 XP"
-    },
-
-
-    {
-      type:"QUESTION",
-
-      title:"Question of the Day",
-
-      description:
-        "What is one thing you want to achieve this week?",
-
-      reward:"+25 XP"
-    },
-
-
-    {
-      type:"BONUS",
-
-      title:"Support Someone",
-
-      description:
-        "Like and comment on three posts you genuinely enjoy.",
-
-      reward:"+75 XP"
-    },
-
-
-    {
-      type:"REWARD",
-
-      title:"Purple Bonus",
-
-      description:
-        "You found a rare wheel reward.",
-
-      reward:"+150 XP"
-    },
-
-
-    {
-      type:"CHALLENGE",
-
-      title:"Create Something",
-
-      description:
-        "Make a post and share an idea with ARS.",
-
-      reward:"+80 XP"
-    }
-
-  ];
-
-
-  /* =========================
-     SEARCH DATA
-  ========================== */
-
-  const hashtags = [
-
-    [
-      "#ARS",
-      "12.4K posts"
-    ],
-
-    [
-      "#Weekend",
-      "8.7K posts"
-    ],
-
-    [
-      "#Create",
-      "6.2K posts"
-    ],
-
-    [
-      "#Photography",
-      "5.9K posts"
-    ],
-
-    [
-      "#DailyChallenge",
-      "4.8K posts"
-    ]
-
-  ];
-
-
-  const people = [
-
-    [
-      "Alex Carter",
-      "@alex",
-      "A"
-    ],
-
-    [
-      "Mia",
-      "@mia",
-      "M"
-    ],
-
-    [
-      "Ryan",
-      "@ryan",
-      "R"
-    ],
-
-    [
-      "Luna",
-      "@luna",
-      "L"
-    ]
-
-  ];
-
-
-  const topics = [
-
-    [
-      "Trending",
-      "Weekend plans",
-      "24.5K posts"
-    ],
-
-    [
-      "Trending",
-      "Daily challenges",
-      "18.2K posts"
-    ],
-
-    [
-      "Trending",
-      "Photography",
-      "15.7K posts"
-    ],
-
-    [
-      "Trending",
-      "Creative ideas",
-      "11.3K posts"
-    ]
-
-  ];
-
-
-  /* =========================
-     USER
-  ========================== */
-
-  function getInitial(){
-
-    return (
-
-      localStorage.getItem(
-        LETTER_KEY
-      ) ||
-
-      currentUser?.display_name?.[0] ||
-
-      currentUser?.username?.[0] ||
-
-      "A"
-
-    ).toUpperCase();
-
-  }
-
-
-  /* =========================
-     AUTH
-  ========================== */
-
-  async function checkAuth(){
-
-    const local =
-      readJSON(
-        USER_KEY,
-        null
-      );
-
-
-    const sessionResult =
-      await supabaseClient
-        ?.auth
-        .getSession()
-        .catch(
-          () => null
+    let currentUser =
+        JSON.parse(
+            localStorage.getItem(USER_KEY) || "null"
         );
 
 
-    const session =
-      sessionResult
-        ?.data
-        ?.session;
+    let plan =
+        localStorage.getItem(PLAN_KEY) || "free";
 
 
-    if(session){
-
-      currentUser = {
-
-        id:
-          session.user.id,
-
-        email:
-          session.user.email || "",
-
-        username:
-          session.user.user_metadata?.username ||
-          local?.username ||
-          "",
-
-        display_name:
-          session.user.user_metadata?.display_name ||
-          local?.display_name ||
-          ""
-
-      };
+    let wheelRotation = 0;
 
 
-      try{
+    /* =========================
+       IMAGE DATA
+    ========================= */
 
-        const {
-          data
-        } =
-          await supabaseClient
-            .from("users")
-            .select("*")
-            .eq(
-              "id",
-              session.user.id
-            )
-            .maybeSingle();
+    const img = {
+
+        sunset:
+            "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=1200&q=85",
+
+        apple:
+            "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
+
+        noah:
+            "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=900&q=85",
+
+        lina:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=85",
+
+        sara:
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=85"
+
+    };
 
 
-        if(data){
+    /* =========================
+       STORIES
+    ========================= */
 
-          currentUser = {
+    const stories = [
 
-            ...currentUser,
+        {
+            id: "you",
+            name: "You",
+            letter: true
+        },
 
-            ...data
+        {
+            id: "lina",
+            name: "Lina",
+            src: img.lina
+        },
 
-          };
+        {
+            id: "noah",
+            name: "Noah",
+            src: img.noah
+        },
+
+        {
+            id: "sara",
+            name: "Sara",
+            src: img.sara
+        },
+
+        {
+            id: "wheel",
+            name: "Wheel",
+            wheel: true
+        },
+
+        {
+            id: "apple",
+            name: "Apple",
+            letter: "",
+            verified: true
+        },
+
+        {
+            id: "ferrari",
+            name: "Ferrari",
+            letter: "🐎",
+            verified: true
+        },
+
+        {
+            id: "bmw",
+            name: "BMW",
+            letter: "M",
+            verified: true
+        }
+
+    ];
+
+
+    /* =========================
+       DEMO POSTS
+    ========================= */
+
+    const defaultPosts = [
+
+        {
+            id: 1,
+
+            name: "Lina",
+
+            handle: "@lina.ae",
+
+            time: "12m",
+
+            letter: "L",
+
+            verified: true,
+
+            text:
+                "Sunset always hits different 💜",
+
+            image:
+                img.sunset,
+
+            likes: 2400,
+
+            comments: 186,
+
+            reposts: 312,
+
+            views: 48000
+
+        },
+
+
+        {
+            id: 2,
+
+            name: "Apple",
+
+            handle: "@apple",
+
+            time: "28m",
+
+            letter: "",
+
+            verified: true,
+
+            text:
+                "Apple Intelligence expands to more languages later this year.",
+
+            image:
+                img.apple,
+
+            likes: 28400,
+
+            comments: 1800,
+
+            reposts: 3900,
+
+            views: 2400000
+
+        },
+
+
+        {
+            id: 3,
+
+            name: "Noah",
+
+            handle: "@noah.vibes",
+
+            time: "45m",
+
+            letter: "N",
+
+            verified: true,
+
+            text:
+                "Focused on the journey. #focus #life",
+
+            image:
+                img.noah,
+
+            likes: 8200,
+
+            comments: 421,
+
+            reposts: 780,
+
+            views: 120000
 
         }
 
-      }catch{}
+    ];
 
 
-      currentPlan =
-        currentUser.plan ||
-        local?.plan ||
-        localStorage.getItem(
-          PLAN_KEY
-        ) ||
-        "free";
+    let posts =
+        JSON.parse(
+            localStorage.getItem(POSTS_KEY) || "null"
+        ) || defaultPosts;
 
 
-      writeJSON(
-        USER_KEY,
-        currentUser
-      );
+    /* =========================
+       UTILS
+    ========================= */
 
+    function esc(value) {
 
-      localStorage.setItem(
-        LOGGED_IN_KEY,
-        "true"
-      );
-
-
-      return true;
-
-    }
-
-
-    if(local){
-
-      currentUser =
-        local;
-
-      currentPlan =
-        local.plan ||
-        localStorage.getItem(
-          PLAN_KEY
-        ) ||
-        "free";
-
-      return true;
+        return String(
+            value ?? ""
+        ).replace(
+            /[&<>"']/g,
+            (char) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[char])
+        );
 
     }
 
 
-    window.location.href =
-      "index.html";
+    function count(number) {
 
-    return false;
+        if (number >= 1000000) {
 
-  }
+            return (
+                number / 1000000
+            ).toFixed(
+                number % 1000000
+                    ? 1
+                    : 0
+            ) + "M";
+
+        }
 
 
-  /* =========================
-     AVATAR
-  ========================== */
+        if (number >= 1000) {
 
-  function avatarHTML(post){
+            return (
+                number / 1000
+            ).toFixed(
+                number % 1000
+                    ? 1
+                    : 0
+            ) + "K";
 
-    if(post.avatar){
+        }
 
-      return `
-        <img
-          src="${escapeHTML(post.avatar)}"
-          alt=""
-        >
-      `;
+
+        return String(number);
 
     }
 
-    return escapeHTML(
-      post.letter || "A"
-    );
 
-  }
+    function showToast(message) {
 
-
-  /* =========================
-     STORIES RENDER
-  ========================== */
-
-  function renderStories(){
-
-    const el =
-      $("stories");
-
-    if(!el) return;
+        const element =
+            $("toast");
 
 
-    el.innerHTML =
-      stories.map(
-        (s,i) => {
-
-          let inner = "";
+        if (!element) return;
 
 
-          if(s.image){
+        element.textContent =
+            message;
 
-            inner = `
-              <img
-                src="${escapeHTML(s.image)}"
-                alt=""
-              >
+
+        element.classList.add(
+            "show"
+        );
+
+
+        clearTimeout(
+            window.__arsToast
+        );
+
+
+        window.__arsToast =
+            setTimeout(() => {
+
+                element.classList.remove(
+                    "show"
+                );
+
+            }, 2200);
+
+    }
+
+
+    function savePosts() {
+
+        localStorage.setItem(
+            POSTS_KEY,
+            JSON.stringify(posts)
+        );
+
+    }
+
+
+    /* =========================
+       STORIES
+    ========================= */
+
+    function renderStories() {
+
+        const container =
+            $("stories");
+
+
+        if (!container) return;
+
+
+        container.innerHTML =
+            stories.map(
+                (story) => {
+
+                    let content;
+
+
+                    if (story.src) {
+
+                        content =
+                            `<img
+                                src="${story.src}"
+                                alt=""
+                            >`;
+
+                    }
+
+                    else if (story.wheel) {
+
+                        content =
+                            `<span class="story-letter">
+                                ✦
+                            </span>`;
+
+                    }
+
+                    else if (story.letter) {
+
+                        content =
+                            `<span class="story-letter">
+                                ${esc(story.letter)}
+                            </span>`;
+
+                    }
+
+                    else {
+
+                        content =
+                            `<span class="story-letter">
+                                A
+                            </span>`;
+
+                    }
+
+
+                    return `
+                        <div
+                            class="story ${
+                                story.id === "you"
+                                    ? "you"
+                                    : ""
+                            }"
+                            data-story="${story.id}"
+                        >
+
+                            <div class="story-ring">
+
+                                ${content}
+
+                            </div>
+
+                            <span class="story-name">
+                                ${esc(story.name)}
+                            </span>
+
+                        </div>
+                    `;
+
+                }
+            ).join("");
+
+    }
+
+
+    /* =========================
+       AVATAR
+    ========================= */
+
+    function avatar(post) {
+
+        if (
+            post.name === "Lina"
+        ) {
+
+            return `
+                <img
+                    class="post-avatar"
+                    src="${img.lina}"
+                    alt=""
+                >
             `;
 
-          }
-
-          else if(s.wheel){
-
-            inner = `
-              <span class="wheel-mini-icon">
-                ✣
-              </span>
-            `;
-
-          }
-
-          else if(s.brand){
-
-            inner = `
-              <span class="story-letter">
-                ${escapeHTML(s.brand)}
-              </span>
-            `;
-
-          }
-
-          else{
-
-            inner = `
-              <span class="story-letter">
-                ${escapeHTML(s.letter)}
-              </span>
-            `;
-
-          }
+        }
 
 
-          return `
-            <button
-              class="story"
-              data-story="${i}"
+        return `
+            <div
+                class="post-avatar post-letter"
             >
+                ${esc(
+                    post.letter ||
+                    post.name[0]
+                )}
+            </div>
+        `;
 
-              <div
-                class="story-ring ${
-                  s.wheel
-                    ? "no-ring"
-                    : ""
-                }"
-              >
+    }
 
-                <div class="story-inner">
 
-                  ${inner}
+    /* =========================
+       POSTS
+    ========================= */
 
-                  ${
-                    s.own
-                      ? `
-                        <span class="story-plus">
-                          +
+    function renderPosts() {
+
+        const feed =
+            $("feed");
+
+
+        if (!feed) return;
+
+
+        feed.innerHTML =
+            posts.map(
+                (post) => `
+
+                <article
+                    class="post-card"
+                    data-post-id="${post.id}"
+                >
+
+                    <div class="post-head">
+
+                        ${avatar(post)}
+
+                        <div class="post-info">
+
+                            <div class="post-name">
+
+                                ${esc(post.name)}
+
+                                ${
+                                    post.verified
+                                        ? `<span class="verified">✓</span>`
+                                        : ""
+                                }
+
+                            </div>
+
+                            <div class="post-meta">
+
+                                ${esc(post.handle)}
+                                ·
+                                ${esc(post.time)}
+
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            class="more"
+                            data-more="${post.id}"
+                            aria-label="More"
+                        >
+                            •••
+                        </button>
+
+                    </div>
+
+
+                    <div class="post-text">
+
+                        ${esc(post.text).replace(
+                            /(#\w+)/g,
+                            '<span class="tag">$1</span>'
+                        )}
+
+                    </div>
+
+
+                    ${
+                        post.image
+                            ? `
+                                <img
+                                    class="post-image"
+                                    src="${post.image}"
+                                    alt=""
+                                    loading="lazy"
+                                >
+                            `
+                            : ""
+                    }
+
+
+                    <div class="post-actions">
+
+                        <button
+                            class="post-action like ${
+                                post.liked
+                                    ? "active"
+                                    : ""
+                            }"
+                            data-action="like"
+                            data-id="${post.id}"
+                        >
+
+                            <span class="ico">
+                                ♥
+                            </span>
+
+                            <span>
+                                ${count(post.likes)}
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="post-action"
+                            data-action="comment"
+                            data-id="${post.id}"
+                        >
+
+                            <span class="ico">
+                                ♡
+                            </span>
+
+                            <span>
+                                ${count(post.comments)}
+                            </span>
+
+                        </button>
+
+
+                        <button
+                            class="post-action ${
+                                post.reposted
+                                    ? "reposted"
+                                    : ""
+                            }"
+                            data-action="repost"
+                            data-id="${post.id}"
+                        >
+
+                            <span class="ico">
+                                ⇄
+                            </span>
+
+                            <span>
+                                ${count(post.reposts)}
+                            </span>
+
+                        </button>
+
+
+                        <span
+                            class="post-action views"
+                        >
+
+                            <span class="ico">
+                                ◉
+                            </span>
+
+                            <span>
+                                ${count(post.views)}
+                            </span>
+
                         </span>
-                      `
-                      : ""
-                  }
 
-                </div>
+                    </div>
 
-              </div>
+                </article>
 
-
-              <div class="story-name">
-                ${escapeHTML(s.name)}
-              </div>
-
-            </button>
-          `;
-
-        }
-      ).join("");
-
-  }
-
-
-  /* =========================
-     FORMAT COUNTS
-  ========================== */
-
-  function formatCount(n){
-
-    if(n >= 1000000){
-
-      return (
-        n / 1000000
-      ).toFixed(
-        n % 1000000
-          ? 1
-          : 0
-      ) + "M";
+            `
+            ).join("");
 
     }
 
 
-    if(n >= 1000){
+    /* =========================
+       PAGE NAVIGATION
+    ========================= */
 
-      return (
-        n / 1000
-      ).toFixed(
-        n % 1000
-          ? 1
-          : 0
-      ) + "K";
+    function openPage(pageId) {
 
-    }
+        document
+            .querySelectorAll(".page")
+            .forEach(
+                (page) => {
 
+                    page.classList.remove(
+                        "active"
+                    );
 
-    return String(n);
-
-  }
-
-
-  /* =========================
-     RENDER POSTS
-  ========================== */
-
-  function renderPosts(){
-
-    const feed =
-      $("feed");
-
-    if(!feed) return;
-
-
-    feed.innerHTML =
-      posts.map(
-        post => {
-
-          const liked =
-            post.liked
-              ? "liked"
-              : "";
-
-          const reposted =
-            post.reposted
-              ? "reposted"
-              : "";
-
-          const bookmarked =
-            post.bookmarked
-              ? "bookmarked"
-              : "";
-
-
-          const name =
-            escapeHTML(
-              post.name
+                }
             );
 
 
-          return `
-
-            <article
-              class="post-card"
-              data-post-id="${post.id}"
-            >
-
-              <div class="post-head">
-
-                <div class="post-avatar">
-
-                  <div class="post-avatar-inner">
-
-                    ${avatarHTML(post)}
-
-                  </div>
-
-                </div>
+        const page =
+            $(pageId);
 
 
-                <div class="post-user">
-
-                  <div class="post-user-line">
-
-                    <strong>
-                      ${name}
-                    </strong>
-
-                    ${
-                      post.verified
-                        ? `
-                          <span class="verified">
-                            ✓
-                          </span>
-                        `
-                        : ""
-                    }
-
-                  </div>
+        if (!page) return;
 
 
-                  <span class="post-meta">
-
-                    @${escapeHTML(post.username)}
-                    ·
-                    ${escapeHTML(post.time)}
-
-                  </span>
-
-                </div>
+        page.classList.add(
+            "active"
+        );
 
 
-                <button
-                  class="more-button"
-                  data-more="${post.id}"
-                  aria-label="More options"
-                >
-                  •••
-                </button>
+        document
+            .querySelectorAll(".nav-item")
+            .forEach(
+                (item) => {
 
-              </div>
+                    item.classList.toggle(
+                        "active",
+                        item.dataset.page === pageId
+                    );
 
-
-              <div class="post-text">
-
-                ${
-                  escapeHTML(post.text)
-                    .replace(
-                      /(#[A-Za-z0-9_]+)/g,
-                      '<span class="tag">$1</span>'
-                    )
                 }
-
-              </div>
-
-
-              ${
-                post.image
-                  ? `
-                    <img
-                      class="post-image"
-                      src="${escapeHTML(post.image)}"
-                      alt="Post image"
-                      loading="lazy"
-                    >
-                  `
-                  : ""
-              }
+            );
 
 
-              <div class="post-actions">
-
-                <button
-                  class="post-action ${liked}"
-                  data-action="like"
-                  data-id="${post.id}"
-                >
-
-                  <span class="ico">
-                    ${
-                      post.liked
-                        ? "♥"
-                        : "♡"
-                    }
-                  </span>
-
-                  <span>
-                    ${formatCount(post.likes)}
-                  </span>
-
-                </button>
+        const plus =
+            $("createPost");
 
 
-                <button
-                  class="post-action"
-                  data-action="comment"
-                  data-id="${post.id}"
-                >
+        if (plus) {
 
-                  <span class="ico">
-                    ◯
-                  </span>
-
-                  <span>
-                    ${formatCount(post.comments)}
-                  </span>
-
-                </button>
-
-
-                <button
-                  class="post-action ${reposted}"
-                  data-action="repost"
-                  data-id="${post.id}"
-                >
-
-                  <span class="ico">
-                    ↗
-                  </span>
-
-                  <span>
-                    ${formatCount(post.reposts)}
-                  </span>
-
-                </button>
-
-
-                <button
-                  class="post-action ${bookmarked}"
-                  data-action="bookmark"
-                  data-id="${post.id}"
-                >
-
-                  <span class="ico">
-
-                    ${
-                      post.bookmarked
-                        ? "▣"
-                        : "♧"
-                    }
-
-                  </span>
-
-                </button>
-
-
-                <span class="post-action views">
-
-                  <span class="ico">
-                    ◉
-                  </span>
-
-                  <span>
-                    ${formatCount(post.views)}
-                  </span>
-
-                </span>
-
-              </div>
-
-            </article>
-
-          `;
+            plus.style.display =
+                pageId === "homePage"
+                    ? "block"
+                    : "none";
 
         }
-      ).join("");
 
-  }
 
+        if (
+            pageId === "searchPage"
+        ) {
 
-  /* =========================
-     POST MENU
-  ========================== */
+            renderSearchHome();
 
-  function closePostMenu(){
-
-    document
-      .querySelectorAll(
-        ".post-menu"
-      )
-      .forEach(
-        x => x.remove()
-      );
-
-
-    $("postMenuBackdrop")
-      ?.classList.remove(
-        "show"
-      );
-
-
-    menuOpen = null;
-
-  }
-
-
-  function openPostMenu(
-    postId
-  ){
-
-    closePostMenu();
-
-
-    const card =
-      document.querySelector(
-        `.post-card[data-post-id="${postId}"]`
-      );
-
-
-    const post =
-      posts.find(
-        p => p.id === postId
-      );
-
-
-    if(!card || !post)
-      return;
-
-
-    const menu =
-      document.createElement(
-        "div"
-      );
-
-
-    menu.className =
-      "post-menu";
-
-
-    menu.innerHTML = `
-
-      <button data-menu="repost">
-
-        <span>
-          ↗
-        </span>
-
-        Repost
-
-      </button>
-
-
-      <button data-menu="bookmark">
-
-        <span>
-          ♧
-        </span>
-
-        Bookmark
-
-      </button>
-
-
-      <button data-menu="share">
-
-        <span>
-          ↗
-        </span>
-
-        Share
-
-      </button>
-
-
-      <button data-menu="copy">
-
-        <span>
-          ▣
-        </span>
-
-        Copy link
-
-      </button>
-
-
-      <button
-        data-menu="report"
-        class="danger"
-      >
-
-        <span>
-          ⚑
-        </span>
-
-        Report post
-
-      </button>
-
-
-      <button data-menu="hide">
-
-        <span>
-          ◌
-        </span>
-
-        Hide post
-
-      </button>
-
-    `;
-
-
-    menu.addEventListener(
-      "click",
-      e => {
-
-        const b =
-          e.target.closest(
-            "[data-menu]"
-          );
-
-
-        if(!b)
-          return;
-
-
-        handlePostAction(
-          b.dataset.menu,
-          post
-        );
-
-
-        closePostMenu();
-
-      }
-    );
-
-
-    card.appendChild(
-      menu
-    );
-
-
-    $("postMenuBackdrop")
-      ?.classList.add(
-        "show"
-      );
-
-
-    menuOpen =
-      postId;
-
-  }
-
-
-  /* =========================
-     POST MENU ACTIONS
-  ========================== */
-
-  async function handlePostAction(
-    action,
-    post
-  ){
-
-    if(
-      action === "repost"
-    ){
-
-      post.reposted =
-        !post.reposted;
-
-      post.reposts =
-        Math.max(
-          0,
-          post.reposts +
-          (
-            post.reposted
-              ? 1
-              : -1
-          )
-        );
-
-
-      savePosts();
-
-      renderPosts();
-
-      toast(
-        post.reposted
-          ? "Reposted"
-          : "Repost removed"
-      );
-
-      return;
+        }
 
     }
 
 
-    if(
-      action === "bookmark"
-    ){
+    /* =========================
+       SEARCH
+    ========================= */
 
-      post.bookmarked =
-        !post.bookmarked;
+    function renderSearchHome() {
 
-      savePosts();
+        const home =
+            $("searchHome");
 
-      renderPosts();
 
-      toast(
-        post.bookmarked
-          ? "Saved"
-          : "Removed from saved"
-      );
+        if (!home) return;
 
-      return;
+
+        home.innerHTML = `
+
+            <div class="search-title">
+                Trending hashtags
+            </div>
+
+
+            <div class="chips">
+
+                ${
+                    [
+                        "#ARS",
+                        "#SaudiArabia",
+                        "#Tech",
+                        "#AI",
+                        "#Lifestyle",
+                        "#Football"
+                    ]
+                    .map(
+                        (tag) => `
+                            <button
+                                class="chip"
+                                data-query="${tag}"
+                            >
+                                ${tag}
+                            </button>
+                        `
+                    )
+                    .join("")
+                }
+
+            </div>
+
+
+            <div class="search-title">
+                Suggested people
+            </div>
+
+
+            <div class="search-person">
+
+                <img
+                    src="${img.lina}"
+                    alt=""
+                >
+
+                <div>
+
+                    <b>
+                        Lina
+                    </b>
+
+                    <div class="post-meta">
+                        @lina.ae · 1.2M followers
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="search-person">
+
+                <div class="avatar">
+                    A
+                </div>
+
+                <div>
+
+                    <b>
+                        Apple ✓
+                    </b>
+
+                    <div class="post-meta">
+                        @apple · 98M followers
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="search-person">
+
+                <div class="avatar">
+                    N
+                </div>
+
+                <div>
+
+                    <b>
+                        Noah
+                    </b>
+
+                    <div class="post-meta">
+                        @noah.vibes · 84K followers
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="search-title">
+                Trending topics
+            </div>
+
+
+            <div class="topic">
+
+                <b>
+                    ARS
+                </b>
+
+                <span>
+                    128K posts
+                </span>
+
+            </div>
+
+
+            <div class="topic">
+
+                <b>
+                    AI & Future
+                </b>
+
+                <span>
+                    86K posts
+                </span>
+
+            </div>
+
+
+            <div class="topic">
+
+                <b>
+                    Weekend
+                </b>
+
+                <span>
+                    54K posts
+                </span>
+
+            </div>
+
+        `;
 
     }
 
 
-    if(
-      action === "share"
-    ){
+    function runSearch(query) {
 
-      if(
-        navigator.share
-      ){
-
-        try{
-
-          await navigator.share({
-
-            title:"ARS",
-
-            text:post.text,
-
-            url:
-              location.href +
-              "?post=" +
-              post.id
-
-          });
-
-        }catch{}
-
-      }
-
-      else{
-
-        toast(
-          "Share is ready on this device"
-        );
-
-      }
-
-      return;
-
-    }
+        query =
+            query
+                .trim()
+                .toLowerCase();
 
 
-    if(
-      action === "copy"
-    ){
-
-      const url =
-        location.origin +
-        location.pathname +
-        "?post=" +
-        post.id;
+        const results =
+            $("searchResults");
 
 
-      try{
-
-        await navigator.clipboard
-          .writeText(url);
-
-        toast(
-          "Link copied"
-        );
-
-      }
-
-      catch{
-
-        toast(
-          "Copy is unavailable in this browser"
-        );
-
-      }
-
-      return;
-
-    }
+        const home =
+            $("searchHome");
 
 
-    if(
-      action === "report"
-    ){
-
-      toast(
-        "Report option selected"
-      );
-
-      return;
-
-    }
+        if (!results || !home) return;
 
 
-    if(
-      action === "hide"
-    ){
+        if (!query) {
 
-      posts =
-        posts.filter(
-          p =>
-            p.id !== post.id
-        );
+            home.style.display =
+                "block";
 
-      
+            results.innerHTML =
+                "";
+
+            return;
+
+        }
+
+
+        home.style.display =
+            "none";
+
+
+        const people = [
+
+            [
+                "Lina",
+                "@lina.ae",
+                img.lina
+            ],
+
+            [
+                "Noah",
+                "@noah.vibes",
+                ""
+            ],
+
+            [
+                "Apple",
+                "@apple",
+                ""
+            ]
+
+        ];
+
+
+        const foundPeople =
+            people.filter(
+                (person) =>
+
+                    (
+                        person[0] +
+                        " " +
+                        person[1]
+                    )
+                    .toLowerCase()
+                    .includes(query)
+            );
+
+
+        const foundPosts =
+            posts.filter(
+                (post) =>
+
+                    (
+                        post.text +
+                        " " +
+                        post.name +
+                        " " +
+                        post.handle
+                    )
+                    .toLowerCase()
+                    .includes(query)
+            );
+
+
+        let html = `
+
+            <div class="search-title">
+                Results
+            </div>
+
+        `;
+
+
+        if (foundPeople.length) {
+
+            html +=
+                foundPeople
+                    .map(
+                        (person) => `
+
+                            <div class="search-person">
+
+                                ${
+                                    person[2]
+                                        ? `
+                                            <img
+                                                src="${person[2]}"
+                                                alt=""
+                                            >
+                                        `
+                                        : `
+                                            <div class="avatar">
+                                                ${person[0][0]}
+                                            </div>
+                                        `
+                                }
+
+                                <div>
+
+                                    <b>
+                                        ${esc(person[0])}
+                                    </b>
+
+                                    <div class="post-meta">
+                                        ${esc(person[1])}
+                             
