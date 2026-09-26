@@ -1,13 +1,11 @@
 (() => {
 "use strict";
 
-
 const SUPABASE_URL =
 "https://bfqsqgfyyewnfxekirfv.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
 "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-
 
 const supabaseClient =
 window.supabase?.createClient(
@@ -35,6 +33,9 @@ const STREAK_KEY =
 const POSTS_KEY =
 "ars_home_posts_v5";
 
+const STORIES_KEY =
+"ars_stories";
+
 
 let currentUser =
 JSON.parse(
@@ -47,6 +48,8 @@ localStorage.getItem(PLAN_KEY) || "free";
 
 
 let wheelRotation = 0;
+
+let currentCommentPost = null;
 
 
 const img = {
@@ -139,7 +142,9 @@ const defaultPosts = [
   likes:2400,
   comments:186,
   reposts:312,
-  views:48000
+  views:48000,
+  liked:false,
+  reposted:false
  },
 
  {
@@ -154,7 +159,9 @@ const defaultPosts = [
   likes:28400,
   comments:1800,
   reposts:3900,
-  views:2400000
+  views:2400000,
+  liked:false,
+  reposted:false
  },
 
  {
@@ -169,7 +176,9 @@ const defaultPosts = [
   likes:8200,
   comments:421,
   reposts:780,
-  views:120000
+  views:120000,
+  liked:false,
+  reposted:false
  }
 
 ];
@@ -179,7 +188,6 @@ let posts =
 JSON.parse(
  localStorage.getItem(POSTS_KEY) || "null"
 ) || defaultPosts;
-
 
 
 function esc(v){
@@ -199,8 +207,9 @@ function esc(v){
 }
 
 
-
 function count(n){
+
+ n = Number(n) || 0;
 
  if(n >= 1e6){
 
@@ -227,7 +236,6 @@ function count(n){
 }
 
 
-
 function toast(message){
 
  const e = $("toast");
@@ -238,16 +246,15 @@ function toast(message){
 
  e.classList.add("show");
 
- clearTimeout(window.__t);
+ clearTimeout(window.__arsToastTimer);
 
- window.__t =
+ window.__arsToastTimer =
  setTimeout(
   () => e.classList.remove("show"),
   2200
  );
 
 }
-
 
 
 function savePosts(){
@@ -260,19 +267,16 @@ function savePosts(){
 }
 
 
-
 function renderStories(){
 
  const c = $("stories");
 
  if(!c) return;
 
-
  c.innerHTML =
  stories.map(s => {
 
   let content;
-
 
   if(s.src){
 
@@ -317,28 +321,27 @@ function renderStories(){
 
   }
 
-
   return `
-  <div
+  <button
     class="story ${s.id === "you" ? "you" : ""}"
-    data-story="${s.id}"
+    data-story="${esc(s.id)}"
+    type="button"
   >
 
-    <div class="story-ring">
+    <span class="story-ring">
       ${content}
-    </div>
+    </span>
 
     <span class="story-name">
       ${esc(s.name)}
     </span>
 
-  </div>
+  </button>
   `;
 
  }).join("");
 
 }
-
 
 
 function avatar(p){
@@ -371,12 +374,11 @@ function avatar(p){
 
  return `
  <div class="post-avatar post-letter">
-   ${esc(p.letter || p.name[0])}
+   ${esc(p.letter || p.name?.[0] || "A")}
  </div>
  `;
 
 }
-
 
 
 function renderPosts(){
@@ -385,13 +387,24 @@ function renderPosts(){
 
  if(!feed) return;
 
+ if(!posts.length){
+
+  feed.innerHTML = `
+   <div class="result-card">
+     No posts yet.
+   </div>
+  `;
+
+  return;
+
+ }
 
  feed.innerHTML =
  posts.map(p => `
 
  <article
    class="post-card"
-   data-post-id="${p.id}"
+   data-post-id="${esc(p.id)}"
  >
 
    <div class="post-head">
@@ -413,15 +426,16 @@ function renderPosts(){
        </div>
 
        <div class="post-meta">
-         ${esc(p.handle)} · ${esc(p.time)}
+         ${esc(p.handle || "@user")} · ${esc(p.time || "now")}
        </div>
 
      </div>
 
      <button
        class="more"
-       data-more="${p.id}"
+       data-more="${esc(p.id)}"
        aria-label="More"
+       type="button"
      >
        •••
      </button>
@@ -447,7 +461,7 @@ function renderPosts(){
     ? `
     <img
       class="post-image"
-      src="${p.image}"
+      src="${esc(p.image)}"
       alt=""
       loading="lazy"
     >
@@ -461,12 +475,11 @@ function renderPosts(){
      <button
        class="post-action like ${p.liked ? "active" : ""}"
        data-action="like"
-       data-id="${p.id}"
+       data-id="${esc(p.id)}"
+       type="button"
      >
 
-       <span class="ico">
-         ♥
-       </span>
+       <span class="ico">♥</span>
 
        <span>
          ${count(p.likes)}
@@ -478,12 +491,11 @@ function renderPosts(){
      <button
        class="post-action"
        data-action="comment"
-       data-id="${p.id}"
+       data-id="${esc(p.id)}"
+       type="button"
      >
 
-       <span class="ico">
-         ♡
-       </span>
+       <span class="ico">♡</span>
 
        <span>
          ${count(p.comments)}
@@ -495,12 +507,11 @@ function renderPosts(){
      <button
        class="post-action ${p.reposted ? "reposted" : ""}"
        data-action="repost"
-       data-id="${p.id}"
+       data-id="${esc(p.id)}"
+       type="button"
      >
 
-       <span class="ico">
-         ⇄
-       </span>
+       <span class="ico">⇄</span>
 
        <span>
          ${count(p.reposts)}
@@ -511,9 +522,7 @@ function renderPosts(){
 
      <span class="post-action views">
 
-       <span class="ico">
-         ◉
-       </span>
+       <span class="ico">◉</span>
 
        <span>
          ${count(p.views)}
@@ -530,7 +539,6 @@ function renderPosts(){
 }
 
 
-
 function openPage(id){
 
  document
@@ -543,6 +551,7 @@ function openPage(id){
  const p = $(id);
 
  if(!p) return;
+
 
  p.classList.add("active");
 
@@ -576,8 +585,21 @@ function openPage(id){
 
  }
 
-}
 
+ if(id === "streakPage"){
+
+  updateStreak();
+
+ }
+
+
+ if(id === "trendingPage"){
+
+  renderTrendingPage();
+
+ }
+
+}
 
 
 function renderSearchHome(){
@@ -592,7 +614,6 @@ function renderSearchHome(){
  <div class="search-title">
    Trending hashtags
  </div>
-
 
  <div class="chips">
 
@@ -611,6 +632,7 @@ function renderSearchHome(){
    <button
      class="chip"
      data-query="${t}"
+     type="button"
    >
      ${t}
    </button>
@@ -621,21 +643,17 @@ function renderSearchHome(){
 
  </div>
 
-
  <div class="search-title">
    Suggested people
  </div>
 
-
  <div class="search-person">
 
-   <img src="${img.lina}">
+   <img src="${img.lina}" alt="">
 
    <div>
 
-     <b>
-       Lina
-     </b>
+     <b>Lina</b>
 
      <div class="post-meta">
        @lina.ae · 1.2M followers
@@ -645,7 +663,6 @@ function renderSearchHome(){
 
  </div>
 
-
  <div class="search-person">
 
    <div class="avatar">
@@ -654,9 +671,7 @@ function renderSearchHome(){
 
    <div>
 
-     <b>
-       Apple ✓
-     </b>
+     <b>Apple ✓</b>
 
      <div class="post-meta">
        @apple · 98M followers
@@ -666,7 +681,6 @@ function renderSearchHome(){
 
  </div>
 
-
  <div class="search-person">
 
    <div class="avatar">
@@ -675,9 +689,7 @@ function renderSearchHome(){
 
    <div>
 
-     <b>
-       Noah
-     </b>
+     <b>Noah</b>
 
      <div class="post-meta">
        @noah.vibes · 84K followers
@@ -687,41 +699,71 @@ function renderSearchHome(){
 
  </div>
 
-
  <div class="search-title">
    Trending topics
  </div>
 
-
  <div class="topic">
-
-   <b>
-     ARS
-   </b>
-
-   <span>
-     128K posts
-   </span>
-
+   <b>ARS</b>
+   <span>128K posts</span>
  </div>
 
-
  <div class="topic">
-
-   <b>
-     Technology
-   </b>
-
-   <span>
-     94K posts
-   </span>
-
+   <b>Technology</b>
+   <span>94K posts</span>
  </div>
 
  `;
 
 }
 
+
+function renderTrendingPage(){
+
+ const page = $("trendingPage");
+
+ if(!page) return;
+
+ page.innerHTML = `
+   <div class="panel-head">
+     <h2>Trending</h2>
+     <button
+       class="close-btn"
+       data-close-page
+       aria-label="Close"
+     >×</button>
+   </div>
+
+   <div class="search-content">
+
+     <div class="search-title">
+       What's trending on ARS
+     </div>
+
+     <div class="topic">
+       <b>#ARS</b>
+       <span>128K posts</span>
+     </div>
+
+     <div class="topic">
+       <b>#Technology</b>
+       <span>94K posts</span>
+     </div>
+
+     <div class="topic">
+       <b>#AI</b>
+       <span>81K posts</span>
+     </div>
+
+     <div class="topic">
+       <b>#Lifestyle</b>
+       <span>65K posts</span>
+     </div>
+
+   </div>
+ `;
+
+}
 
 
 function search(q){
@@ -766,7 +808,7 @@ function search(q){
   <div class="search-person">
 
     <div class="avatar">
-      ${esc(p.letter || p.name[0])}
+      ${esc(p.letter || p.name?.[0] || "A")}
     </div>
 
     <div>
@@ -776,7 +818,7 @@ function search(q){
       </b>
 
       <div class="post-meta">
-        ${esc(p.handle)}
+        ${esc(p.handle || "")}
       </div>
 
       <p>
@@ -792,13 +834,9 @@ function search(q){
  `
  <div class="empty-search">
 
-   <h3>
-     No results
-   </h3>
+   <h3>No results</h3>
 
-   <p>
-     Try another search.
-   </p>
+   <p>Try another search.</p>
 
  </div>
  `;
@@ -806,6 +844,9 @@ function search(q){
 }
 
 
+/* =========================
+   WHEEL
+========================= */
 
 const wheelItems = [
 
@@ -860,7 +901,6 @@ const wheelItems = [
 ];
 
 
-
 function weekKey(){
 
  const d = new Date();
@@ -888,7 +928,6 @@ function weekKey(){
 }
 
 
-
 function wheelState(){
 
  const s =
@@ -905,7 +944,6 @@ function wheelState(){
   : s;
 
 }
-
 
 
 function updateWheel(){
@@ -951,7 +989,6 @@ function updateWheel(){
 }
 
 
-
 function spin(){
 
  const w = $("wheel");
@@ -970,13 +1007,8 @@ function spin(){
  ){
 
   r.innerHTML = `
-   <strong>
-     No free spins left
-   </strong>
-
-   <span>
-     Free members get 2 wheel tries every week.
-   </span>
+   <strong>No free spins left</strong>
+   <span>Free members get 2 wheel tries every week.</span>
   `;
 
   return;
@@ -1041,6 +1073,9 @@ function spin(){
 }
 
 
+/* =========================
+   STREAK
+========================= */
 
 function dayKey(d = new Date()){
 
@@ -1061,7 +1096,6 @@ function dayKey(d = new Date()){
 }
 
 
-
 function streakState(){
 
  return (
@@ -1075,7 +1109,6 @@ function streakState(){
  };
 
 }
-
 
 
 function updateStreak(){
@@ -1096,6 +1129,13 @@ function updateStreak(){
  const t = $("streakText");
 
  const b = $("streakDone");
+
+
+ if(!f || !n || !t || !b){
+
+  return;
+
+ }
 
 
  f.classList.toggle(
@@ -1134,10 +1174,12 @@ function updateStreak(){
 }
 
 
-
 function renderWeekDots(){
 
  const c = $("weekDots");
+
+ if(!c) return;
+
 
  const s = streakState();
 
@@ -1177,7 +1219,6 @@ function renderWeekDots(){
  .join("");
 
 }
-
 
 
 function completeStreak(){
@@ -1236,6 +1277,9 @@ function completeStreak(){
 }
 
 
+/* =========================
+   POSTS
+========================= */
 
 function findPost(id){
 
@@ -1245,7 +1289,6 @@ function findPost(id){
  );
 
 }
-
 
 
 function postAction(a,id){
@@ -1262,8 +1305,12 @@ function postAction(a,id){
   p.liked =
    !p.liked;
 
-  p.likes +=
-   p.liked ? 1 : -1;
+  p.likes =
+   Math.max(
+    0,
+    Number(p.likes || 0) +
+    (p.liked ? 1 : -1)
+   );
 
   toast(
    p.liked
@@ -1278,8 +1325,12 @@ function postAction(a,id){
   p.reposted =
    !p.reposted;
 
-  p.reposts +=
-   p.reposted ? 1 : -1;
+  p.reposts =
+   Math.max(
+    0,
+    Number(p.reposts || 0) +
+    (p.reposted ? 1 : -1)
+   );
 
   toast(
    p.reposted
@@ -1289,11 +1340,11 @@ function postAction(a,id){
 
  }
 
- else{
+ else if(a === "comment"){
 
-  toast(
-   "Comments are coming soon."
-  );
+  openComments(id);
+
+  return;
 
  }
 
@@ -1303,7 +1354,6 @@ function postAction(a,id){
  renderPosts();
 
 }
-
 
 
 function closeMenu(){
@@ -1321,7 +1371,6 @@ function closeMenu(){
 }
 
 
-
 function menu(btn,id){
 
  closeMenu();
@@ -1337,29 +1386,30 @@ function menu(btn,id){
 
  m.innerHTML = `
 
- <button data-a="repost">
+ <button data-a="repost" type="button">
    ↻ Repost
  </button>
 
- <button data-a="bookmark">
+ <button data-a="bookmark" type="button">
    🔖 Bookmark
  </button>
 
- <button data-a="share">
+ <button data-a="share" type="button">
    ↗ Share
  </button>
 
- <button data-a="copy">
+ <button data-a="copy" type="button">
    ⧉ Copy Link
  </button>
 
- <button data-a="report">
+ <button data-a="report" type="button">
    ⚑ Report
  </button>
 
  <button
    data-a="hide"
    class="danger"
+   type="button"
  >
    ⌫ Hide Post
  </button>
@@ -1493,9 +1543,21 @@ function menu(btn,id){
 
    else{
 
-    toast(
-     "Share link copied"
-    );
+    try{
+
+     await navigator.clipboard.writeText(
+      location.href
+     );
+
+     toast("Share link copied");
+
+    }
+
+    catch{
+
+     toast("Share is not available");
+
+    }
 
    }
 
@@ -1536,337 +1598,226 @@ function menu(btn,id){
 }
 
 
+/* =========================
+   COMMENTS
+========================= */
 
-function renderProfile(){
+function commentsKey(id){
 
- const n =
- currentUser?.display_name ||
- currentUser?.user_metadata?.display_name ||
- currentUser?.username ||
- "ARS User";
-
-
- const u =
- currentUser?.username ||
- currentUser?.user_metadata?.username ||
- "user";
-
-
- const l =
- (
-  n.trim()[0] ||
-  "A"
- ).toUpperCase();
-
-
- $("topAvatarLetter")
- .textContent = l;
-
-
- $("profileAvatar")
- .textContent = l;
-
-
- $("profileName")
- .textContent = n;
-
-
- $("profileHandle")
- .textContent =
- "@" + u;
+ return "ars_comments_" + id;
 
 }
 
 
-
-async function auth(){
-
- if(supabaseClient){
-
-  try{
-
-   const {
-    data
-   } =
-   await supabaseClient.auth.getSession();
-
-
-   if(data?.session){
-
-    const {
-     data:user
-    } =
-    await supabaseClient
-    .from("users")
-    .select("*")
-    .eq(
-     "id",
-     data.session.user.id
-    )
-    .maybeSingle();
-
-
-    if(user){
-
-     currentUser =
-     user;
-
-
-     localStorage.setItem(
-      USER_KEY,
-      JSON.stringify(user)
-     );
-
-
-     plan =
-     user.plan ||
-     plan;
-
-    }
-
-   }
-
-  }
-
-  catch(e){}
-
- }
-
-
- renderStories();
-
- renderPosts();
-
- renderProfile();
-
- updateWheel();
-
- updateStreak();
-
-}
-
-
-
-document.addEventListener(
- "click",
- e => {
-
-  const nav =
-  e.target.closest(
-   ".nav-item"
-  );
-
-
-  if(nav){
-
-   openPage(
-    nav.dataset.page
-   );
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "[data-close-page]"
-   )
-  ){
-
-   openPage(
-    "homePage"
-   );
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#profileButton"
-   )
-  ){
-
-   openPage(
-    "profilePage"
-   );
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#wheelButton"
-   )
-  ){
-
-   openPage(
-    "wheelPage"
-   );
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#createPost"
-   )
-  ){
-
-   toast(
-    "Create Post is ready for the next step."
-   );
-
-   return;
-
-  }
-
-
-  const like =
-  e.target.closest(
-   "[data-action]"
-  );
-
-
-  if(like){
-
-   postAction(
-    like.dataset.action,
-    like.dataset.id
-   );
-
-   return;
-
-  }
-
-
-  const more =
-  e.target.closest(
-   "[data-more]"
-  );
-
-
-  if(more){
-
-   menu(
-    more,
-    more.dataset.more
-   );
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#spinButton"
-   )
-  ){
-
-   spin();
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#streakDone"
-   )
-  ){
-
-   completeStreak();
-
-   return;
-
-  }
-
-
-  if(
-   e.target.closest(
-    "#logoutBtn"
-   )
-  ){
-
-   localStorage.removeItem(
-    USER_KEY
-   );
-
-
-   localStorage.removeItem(
-    "ars_logged_in"
-   );
-
-
-   if(supabaseClient){
-
-    supabaseClient.auth.signOut();
-
-   }
-
-
-   location.href =
-   "index.html";
-
-
-   return;
-
-  }
-
-
-  const chip =
-  e.target.closest(
-   "[data-query]"
-  );
-
-
-  if(chip){
-
-   const s =
-   $("searchInput");
-
-
-   s.value =
-   chip.dataset.query;
-
-
-   search(
-    s.value
-   );
-
-  }
-
- }
-);
-
-
-
-$("searchInput")
-?.addEventListener(
- "input",
- e =>
-  search(
-   e.target.value
+function getComments(id){
+
+ return (
+  JSON.parse(
+   localStorage.getItem(
+    commentsKey(id)
+   ) || "null"
   )
-);
+ ) || [];
+
+}
 
 
+function saveComments(id,data){
 
-$("postMenuBackdrop")
-?.addEventListener(
- "click",
- closeMenu
-);
+ localStorage.setItem(
+  commentsKey(id),
+  JSON.stringify(data)
+ );
+
+}
 
 
-auth();
+function renderComments(id){
 
-})();
+ const list =
+ $("commentsList");
+
+ if(!list) return;
+
+
+ const comments =
+ getComments(id);
+
+
+ if(!comments.length){
+
+  list.innerHTML = `
+   <div class="result-card">
+     No comments yet. Be the first.
+   </div>
+  `;
+
+  return;
+
+ }
+
+
+ list.innerHTML =
+ comments.map(
+  c =>
+  `
+  <div class="comment-item">
+
+    <div class="comment-author">
+      ${esc(c.name || "ARS User")}
+    </div>
+
+    <div class="comment-text">
+      ${esc(c.text)}
+    </div>
+
+  </div>
+  `
+ ).join("");
+
+}
+
+
+function openComments(id){
+
+ currentCommentPost =
+ String(id);
+
+
+ renderComments(
+  currentCommentPost
+ );
+
+
+ const modal =
+ $("commentsModal");
+
+
+ if(modal){
+
+  modal.classList.add("show");
+
+  modal.setAttribute(
+   "aria-hidden",
+   "false"
+  );
+
+ }
+
+
+}
+
+
+function closeComments(){
+
+ const modal =
+ $("commentsModal");
+
+
+ if(modal){
+
+  modal.classList.remove("show");
+
+  modal.setAttribute(
+   "aria-hidden",
+   "true"
+  );
+
+ }
+
+ currentCommentPost =
+ null;
+
+}
+
+
+function addComment(){
+
+ if(!currentCommentPost) return;
+
+
+ const input =
+ $("commentInput");
+
+
+ if(!input) return;
+
+
+ const text =
+ input.value.trim();
+
+
+ if(!text) return;
+
+
+ const list =
+ getComments(
+  currentCommentPost
+ );
+
+
+ list.push({
+
+  id:
+   Date.now(),
+
+  name:
+   currentUser?.display_name ||
+   currentUser?.username ||
+   "ARS User",
+
+  text,
+
+  created_at:
+   new Date().toISOString()
+
+ });
+
+
+ saveComments(
+  currentCommentPost,
+  list
+ );
+
+
+ const p =
+ findPost(
+  currentCommentPost
+ );
+
+
+ if(p){
+
+  p.comments =
+   Number(p.comments || 0) + 1;
+
+  savePosts();
+
+  renderPosts();
+
+ }
+
+
+ input.value = "";
+
+ renderComments(
+  currentCommentPost
+ );
+
+}
+
+
+/* =========================
+   CREATE POST
+========================= */
+
+function openCreatePost(){
+
+ const modal =
+ $("createPostModal");
+
+
+ if(!modal) return;
+
+
+ modal.
