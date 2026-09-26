@@ -57,6 +57,7 @@
     <button
       class="back-btn"
       data-close-page
+      aria-label="Back"
     >
       ‹
     </button>
@@ -98,12 +99,12 @@
     <button
       class="close-btn"
       data-close-page
+      aria-label="Close"
     >
       ×
     </button>
 
   </div>
-
 
   <div class="streak-hero">
 
@@ -116,29 +117,22 @@
 
     <div>
 
-      <strong id="streakNumber">
-        0
-      </strong>
+      <strong id="streakNumber">0</strong>
 
-      <span>
-        day streak
-      </span>
+      <span>day streak</span>
 
     </div>
 
   </div>
 
-
   <p id="streakText">
     Complete today's interaction to keep your streak active.
   </p>
-
 
   <div
     class="week-dots"
     id="weekDots"
   ></div>
-
 
   <button
     class="primary-btn"
@@ -157,19 +151,17 @@
 
   <div class="panel-head">
 
-    <h2>
-      Notifications
-    </h2>
+    <h2>Notifications</h2>
 
     <button
       class="close-btn"
       data-close-page
+      aria-label="Close"
     >
       ×
     </button>
 
   </div>
-
 
   <div class="notification-list">
 
@@ -187,7 +179,6 @@
 
     </div>
 
-
     <div class="notification">
 
       <div class="notif-avatar">
@@ -201,7 +192,6 @@
       </p>
 
     </div>
-
 
     <div class="notification">
 
@@ -229,19 +219,17 @@
 
   <div class="panel-head">
 
-    <h2>
-      Messages
-    </h2>
+    <h2>Messages</h2>
 
     <button
       class="close-btn"
       data-close-page
+      aria-label="Close"
     >
       ×
     </button>
 
   </div>
-
 
   <div class="chat">
 
@@ -251,9 +239,7 @@
 
     <div>
 
-      <b>
-        Lina
-      </b>
+      <b>Lina</b>
 
       <p>
         See you on ARS ✨
@@ -261,12 +247,9 @@
 
     </div>
 
-    <small>
-      12m
-    </small>
+    <small>12m</small>
 
   </div>
-
 
   <div class="chat">
 
@@ -276,9 +259,7 @@
 
     <div>
 
-      <b>
-        Noah
-      </b>
+      <b>Noah</b>
 
       <p>
         That challenge was crazy.
@@ -286,9 +267,7 @@
 
     </div>
 
-    <small>
-      1h
-    </small>
+    <small>1h</small>
 
   </div>
 
@@ -302,19 +281,17 @@
 
   <div class="panel-head">
 
-    <h2>
-      Profile
-    </h2>
+    <h2>Profile</h2>
 
     <button
       class="close-btn"
       data-close-page
+      aria-label="Close"
     >
       ×
     </button>
 
   </div>
-
 
   <div class="profile-hero">
 
@@ -335,7 +312,6 @@
 
   </div>
 
-
   <div class="profile-stats">
 
     <div>
@@ -355,7 +331,6 @@
 
   </div>
 
-
   <button
     class="secondary-btn"
     id="logoutBtn"
@@ -373,24 +348,21 @@
 
   <div class="panel-head">
 
-    <h2>
-      Daily Wheel
-    </h2>
+    <h2>Daily Wheel</h2>
 
     <button
       class="close-btn"
       data-close-page
+      aria-label="Close"
     >
       ×
     </button>
 
   </div>
 
-
   <p class="wheel-sub">
     Questions · Challenges · Rewards
   </p>
-
 
   <div class="wheel-stage">
 
@@ -401,37 +373,14 @@
       class="real-wheel"
     >
 
-      <div class="slice s1">
-        CHALLENGE
-      </div>
-
-      <div class="slice s2">
-        REWARD
-      </div>
-
-      <div class="slice s3">
-        QUESTION
-      </div>
-
-      <div class="slice s4">
-        BONUS
-      </div>
-
-      <div class="slice s5">
-        REWARD
-      </div>
-
-      <div class="slice s6">
-        CHALLENGE
-      </div>
-
-      <div class="slice s7">
-        QUESTION
-      </div>
-
-      <div class="slice s8">
-        BONUS
-      </div>
+      <div class="slice s1">CHALLENGE</div>
+      <div class="slice s2">REWARD</div>
+      <div class="slice s3">QUESTION</div>
+      <div class="slice s4">BONUS</div>
+      <div class="slice s5">REWARD</div>
+      <div class="slice s6">CHALLENGE</div>
+      <div class="slice s7">QUESTION</div>
+      <div class="slice s8">BONUS</div>
 
       <div class="wheel-center">
         ARS
@@ -441,21 +390,15 @@
 
   </div>
 
-
   <div class="wheel-meta">
 
-    <span id="spinCounter">
-      2
-    </span>
+    <span id="spinCounter">2</span>
 
     free tries this week ·
 
-    <b id="planLabel">
-      Free
-    </b>
+    <b id="planLabel">Free</b>
 
   </div>
-
 
   <button
     class="primary-btn"
@@ -464,12 +407,156 @@
     SPIN THE WHEEL
   </button>
 
-
   <div
     id="challengeResult"
     class="result-card"
   >
     Spin to discover something.
+  </div>
+
+  <!-- Streak is restored here without changing the
+       five-item bottom navigation from the reference. -->
+
+  <button
+    class="secondary-btn streak-open-btn"
+    id="openStreakFromWheel"
+  >
+    🔥 Open Streak
+  </button>
+
+</section>
+
+
+<!-- Story viewer -->
+
+<section
+  id="storyViewer"
+  class="story-viewer"
+  aria-hidden="true"
+>
+
+  <button
+    id="storyViewerClose"
+    class="story-viewer-close"
+    aria-label="Close story"
+  >
+    ×
+  </button>
+
+  <div class="story-viewer-progress">
+    <span></span>
+  </div>
+
+  <div
+    id="storyViewerContent"
+    class="story-viewer-content"
+  ></div>
+
+  <div
+    id="storyViewerName"
+    class="story-viewer-name"
+  ></div>
+
+</section>
+
+
+<!-- Create post -->
+
+<section
+  id="createPostModal"
+  class="modal"
+  aria-hidden="true"
+>
+
+  <div class="modal-card">
+
+    <div class="modal-head">
+
+      <h2>Create Post</h2>
+
+      <button
+        class="close-btn"
+        id="closeCreatePost"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <textarea
+      id="createPostText"
+      class="create-textarea"
+      maxlength="1000"
+      placeholder="What's happening?"
+    ></textarea>
+
+    <input
+      id="createPostImage"
+      class="create-input"
+      type="url"
+      placeholder="Image URL (optional)"
+    >
+
+    <button
+      id="publishPost"
+      class="primary-btn"
+    >
+      Publish
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- Comments -->
+
+<section
+  id="commentsModal"
+  class="modal"
+  aria-hidden="true"
+>
+
+  <div class="modal-card comments-card">
+
+    <div class="modal-head">
+
+      <h2>Comments</h2>
+
+      <button
+        class="close-btn"
+        id="closeComments"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <div
+      id="commentsList"
+      class="comments-list"
+    ></div>
+
+    <div class="comment-compose">
+
+      <input
+        id="commentInput"
+        type="text"
+        maxlength="500"
+        placeholder="Write a comment..."
+      >
+
+      <button
+        id="sendComment"
+        class="comment-send"
+      >
+        Send
+      </button>
+
+    </div>
+
   </div>
 
 </section>
@@ -494,18 +581,13 @@
     <span class="nav-icon">
 
       <svg viewBox="0 0 24 24">
-
         <path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 19.5z"/>
-
         <path d="M9 21v-6h6v6"/>
-
       </svg>
 
     </span>
 
-    <small>
-      Home
-    </small>
+    <small>Home</small>
 
   </button>
 
@@ -518,44 +600,31 @@
     <span class="nav-icon">
 
       <svg viewBox="0 0 24 24">
-
-        <circle
-          cx="11"
-          cy="11"
-          r="6.5"
-        />
-
+        <circle cx="11" cy="11" r="6.5"/>
         <path d="m16 16 5 5"/>
-
       </svg>
 
     </span>
 
-    <small>
-      Search
-    </small>
+    <small>Search</small>
 
   </button>
 
 
   <button
     class="nav-item"
-    data-page="streakPage"
+    data-page="trendingPage"
   >
 
     <span class="nav-icon">
 
       <svg viewBox="0 0 24 24">
-
         <path d="M12 22c4.2 0 7-2.6 7-6.5 0-2.9-1.7-5.1-4.2-6.9.2 2-1 3.1-2.3 3.7.4-3.5-1.2-6.6-4.3-9.3.2 4.2-3.2 6.5-6.5 10.3C5 18.4 8 22 12 22Z"/>
-
       </svg>
 
     </span>
 
-    <small>
-      Trending
-    </small>
+    <small>Trending</small>
 
   </button>
 
@@ -568,20 +637,15 @@
     <span class="nav-icon has-dot">
 
       <svg viewBox="0 0 24 24">
-
         <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-
         <path d="M10 21h4"/>
-
       </svg>
 
       <i class="dot"></i>
 
     </span>
 
-    <small>
-      Notifications
-    </small>
+    <small>Notifications</small>
 
   </button>
 
@@ -594,24 +658,13 @@
     <span class="nav-icon">
 
       <svg viewBox="0 0 24 24">
-
-        <rect
-          x="3"
-          y="5"
-          width="18"
-          height="14"
-          rx="2"
-        />
-
+        <rect x="3" y="5" width="18" height="14" rx="2"/>
         <path d="m4 7 8 6 8-6"/>
-
       </svg>
 
     </span>
 
-    <small>
-      Messages
-    </small>
+    <small>Messages</small>
 
   </button>
 
@@ -634,4 +687,4 @@
 <script src="home.js"></script>
 
 </body>
-</html>
+  </html>
