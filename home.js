@@ -1,1823 +1,1342 @@
 (() => {
-"use strict";
+  "use strict";
 
-const SUPABASE_URL =
-"https://bfqsqgfyyewnfxekirfv.supabase.co";
+  /* =========================================================
+     ARS HOME
+     - Home
+     - Stories
+     - Posts
+     - Like
+     - Comment
+     - Repost
+     - Bookmark
+     - Views
+     - Search
+     - Trending
+     - Notifications
+     - Messages
+     - Profile
+     - Wheel
+     - Streak
+     - Create Post
+     - ARSHome bridge
+  ========================================================= */
 
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
-const supabaseClient =
-window.supabase?.createClient(
- SUPABASE_URL,
- SUPABASE_PUBLISHABLE_KEY
-) || null;
+  /* =========================
+     SUPABASE
+  ========================== */
 
+  const SUPABASE_URL =
+    "https://bfqsqgfyyewnfxekirfv.supabase.co";
 
-const $ = id =>
-document.getElementById(id);
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
+  const supabaseClient =
+    window.supabase?.createClient?.(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    ) || null;
 
-const USER_KEY =
-"ars_user";
 
-const PLAN_KEY =
-"ars_plan";
+  /* =========================
+     HELPERS
+  ========================== */
 
-const WHEEL_KEY =
-"ars_wheel_week";
+  const $ = (id) =>
+    document.getElementById(id);
 
-const STREAK_KEY =
-"ars_streak_state";
 
-const POSTS_KEY =
-"ars_home_posts_v5";
+  function readJSON(key, fallback) {
 
-const STORIES_KEY =
-"ars_stories";
+    try {
 
+      const raw =
+        localStorage.getItem(key);
 
-let currentUser =
-JSON.parse(
- localStorage.getItem(USER_KEY) || "null"
-);
+      if (!raw) {
+        return fallback;
+      }
 
+      const value =
+        JSON.parse(raw);
 
-let plan =
-localStorage.getItem(PLAN_KEY) || "free";
+      return value ?? fallback;
 
+    } catch {
 
-let wheelRotation = 0;
+      return fallback;
 
-let currentCommentPost = null;
-
-
-const img = {
-
- sunset:
- "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=1200&q=85",
-
- apple:
- "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=85",
-
- noah:
- "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=900&q=85",
-
- lina:
- "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=85",
-
- sara:
- "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=85"
-
-};
-
-
-const stories = [
-
- {
-  id:"you",
-  name:"You",
-  letter:true
- },
-
- {
-  id:"lina",
-  name:"Lina",
-  src:img.lina
- },
-
- {
-  id:"noah",
-  name:"Noah",
-  src:img.noah
- },
-
- {
-  id:"sara",
-  name:"Sara",
-  src:img.sara
- },
-
- {
-  id:"wheel",
-  name:"Wheel",
-  wheel:true
- },
-
- {
-  id:"apple",
-  name:"Apple",
-  logo:"https://cdn.simpleicons.org/apple/FFFFFF",
-  verified:true
- },
-
- {
-  id:"ferrari",
-  name:"Ferrari",
-  logo:"https://cdn.simpleicons.org/ferrari/FFFFFF",
-  verified:true
- },
-
- {
-  id:"bmw",
-  name:"BMW",
-  logo:"https://cdn.simpleicons.org/bmw/FFFFFF",
-  verified:true
- }
-
-];
-
-
-const defaultPosts = [
-
- {
-  id:1,
-  name:"Lina",
-  handle:"@lina.ae",
-  time:"12m",
-  letter:"L",
-  verified:true,
-  text:"Sunset always hits different 💜",
-  image:img.sunset,
-  likes:2400,
-  comments:186,
-  reposts:312,
-  views:48000,
-  liked:false,
-  reposted:false
- },
-
- {
-  id:2,
-  name:"Apple",
-  handle:"@apple",
-  time:"28m",
-  letter:"",
-  verified:true,
-  text:"Apple Intelligence expands to more languages later this year.",
-  image:img.apple,
-  likes:28400,
-  comments:1800,
-  reposts:3900,
-  views:2400000,
-  liked:false,
-  reposted:false
- },
-
- {
-  id:3,
-  name:"Noah",
-  handle:"@noah.vibes",
-  time:"45m",
-  letter:"N",
-  verified:true,
-  text:"Focused on the journey. #focus #life",
-  image:img.noah,
-  likes:8200,
-  comments:421,
-  reposts:780,
-  views:120000,
-  liked:false,
-  reposted:false
- }
-
-];
-
-
-let posts =
-JSON.parse(
- localStorage.getItem(POSTS_KEY) || "null"
-) || defaultPosts;
-
-
-function esc(v){
-
- return String(v ?? "")
- .replace(
-  /[&<>"']/g,
-  c => ({
-   "&":"&amp;",
-   "<":"&lt;",
-   ">":"&gt;",
-   '"':"&quot;",
-   "'":"&#039;"
-  }[c])
- );
-
-}
-
-
-function count(n){
-
- n = Number(n) || 0;
-
- if(n >= 1e6){
-
-  return (
-   n % 1e6
-   ? (n / 1e6).toFixed(1)
-   : (n / 1e6).toFixed(0)
-  ) + "M";
-
- }
-
- if(n >= 1e3){
-
-  return (
-   n % 1e3
-   ? (n / 1e3).toFixed(1)
-   : (n / 1e3).toFixed(0)
-  ) + "K";
-
- }
-
- return String(n);
-
-}
-
-
-function toast(message){
-
- const e = $("toast");
-
- if(!e) return;
-
- e.textContent = message;
-
- e.classList.add("show");
-
- clearTimeout(window.__arsToastTimer);
-
- window.__arsToastTimer =
- setTimeout(
-  () => e.classList.remove("show"),
-  2200
- );
-
-}
-
-
-function savePosts(){
-
- localStorage.setItem(
-  POSTS_KEY,
-  JSON.stringify(posts)
- );
-
-}
-
-
-function renderStories(){
-
- const c = $("stories");
-
- if(!c) return;
-
- c.innerHTML =
- stories.map(s => {
-
-  let content;
-
-  if(s.src){
-
-   content =
-   `<img src="${s.src}" alt="">`;
+    }
 
   }
 
-  else if(s.logo){
 
-   content =
-   `
-   <span class="story-letter brand-story">
-     <img
-       src="${s.logo}"
-       alt="${esc(s.name)}"
-     >
-   </span>
-   `;
+  function esc(value) {
 
-  }
-
-  else if(s.wheel){
-
-   content =
-   `
-   <span class="story-letter">
-     ✦
-   </span>
-   `;
-
-  }
-
-  else{
-
-   content =
-   `
-   <span class="story-letter">
-     ${esc(s.letter || "A")}
-   </span>
-   `;
-
-  }
-
-  return `
-  <button
-    class="story ${s.id === "you" ? "you" : ""}"
-    data-story="${esc(s.id)}"
-    type="button"
-  >
-
-    <span class="story-ring">
-      ${content}
-    </span>
-
-    <span class="story-name">
-      ${esc(s.name)}
-    </span>
-
-  </button>
-  `;
-
- }).join("");
-
-}
-
-
-function avatar(p){
-
- if(p.name === "Lina"){
-
-  return `
-  <img
-    class="post-avatar"
-    src="${img.lina}"
-    alt=""
-  >
-  `;
-
- }
-
-
- if(p.name === "Apple"){
-
-  return `
-  <div
-    class="post-avatar post-letter apple-avatar"
-  >
-    
-  </div>
-  `;
-
- }
-
-
- return `
- <div class="post-avatar post-letter">
-   ${esc(p.letter || p.name?.[0] || "A")}
- </div>
- `;
-
-}
-
-
-function renderPosts(){
-
- const feed = $("feed");
-
- if(!feed) return;
-
- if(!posts.length){
-
-  feed.innerHTML = `
-   <div class="result-card">
-     No posts yet.
-   </div>
-  `;
-
-  return;
-
- }
-
- feed.innerHTML =
- posts.map(p => `
-
- <article
-   class="post-card"
-   data-post-id="${esc(p.id)}"
- >
-
-   <div class="post-head">
-
-     ${avatar(p)}
-
-     <div class="post-info">
-
-       <div class="post-name">
-
-         ${esc(p.name)}
-
-         ${
-          p.verified
-          ? '<span class="verified">✓</span>'
-          : ""
-         }
-
-       </div>
-
-       <div class="post-meta">
-         ${esc(p.handle || "@user")} · ${esc(p.time || "now")}
-       </div>
-
-     </div>
-
-     <button
-       class="more"
-       data-more="${esc(p.id)}"
-       aria-label="More"
-       type="button"
-     >
-       •••
-     </button>
-
-   </div>
-
-
-   <div class="post-text">
-
-     ${
-      esc(p.text)
+    return String(value ?? "")
       .replace(
-       /(#\w+)/g,
-       '<span class="tag">$1</span>'
-      )
-     }
+        /[&<>"']/g,
+        (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        })[char]
+      );
 
-   </div>
+  }
 
 
-   ${
-    p.image
-    ? `
-    <img
-      class="post-image"
-      src="${esc(p.image)}"
-      alt=""
-      loading="lazy"
-    >
-    `
-    : ""
-   }
+  function count(value) {
 
+    const number =
+      Number(value) || 0;
 
-   <div class="post-actions">
+    if (number >= 1000000) {
 
-     <button
-       class="post-action like ${p.liked ? "active" : ""}"
-       data-action="like"
-       data-id="${esc(p.id)}"
-       type="button"
-     >
+      return (
+        number % 1000000
+          ? (number / 1000000).toFixed(1)
+          : (number / 1000000).toFixed(0)
+      ) + "M";
 
-       <span class="ico">♥</span>
+    }
 
-       <span>
-         ${count(p.likes)}
-       </span>
 
-     </button>
+    if (number >= 1000) {
 
+      return (
+        number % 1000
+          ? (number / 1000).toFixed(1)
+          : (number / 1000).toFixed(0)
+      ) + "K";
 
-     <button
-       class="post-action"
-       data-action="comment"
-       data-id="${esc(p.id)}"
-       type="button"
-     >
+    }
 
-       <span class="ico">♡</span>
 
-       <span>
-         ${count(p.comments)}
-       </span>
+    return String(number);
 
-     </button>
+  }
 
 
-     <button
-       class="post-action ${p.reposted ? "reposted" : ""}"
-       data-action="repost"
-       data-id="${esc(p.id)}"
-       type="button"
-     >
+  function toast(message) {
 
-       <span class="ico">⇄</span>
+    const element =
+      $("toast");
 
-       <span>
-         ${count(p.reposts)}
-       </span>
+    if (!element) {
+      return;
+    }
 
-     </button>
+    element.textContent =
+      message;
 
+    element.classList.add("show");
 
-     <span class="post-action views">
+    clearTimeout(
+      window.__arsToastTimer
+    );
 
-       <span class="ico">◉</span>
+    window.__arsToastTimer =
+      setTimeout(
+        () => {
+          element.classList.remove("show");
+        },
+        2200
+      );
 
-       <span>
-         ${count(p.views)}
-       </span>
+  }
 
-     </span>
 
-   </div>
+  /* =========================
+     STORAGE KEYS
+  ========================== */
 
- </article>
+  const USER_KEY =
+    "ars_user";
 
- `).join("");
+  const PLAN_KEY =
+    "ars_plan";
 
-}
+  const WHEEL_KEY =
+    "ars_wheel_week";
 
+  const STREAK_KEY =
+    "ars_streak_state";
 
-function openPage(id){
+  const POSTS_KEY =
+    "ars_local_posts";
 
- document
- .querySelectorAll(".page")
- .forEach(
-  p => p.classList.remove("active")
- );
+  const STORIES_KEY =
+    "ars_local_stories";
 
+  const LEGACY_POSTS_KEY =
+    "ars_home_posts_v5";
 
- const p = $(id);
+  const LEGACY_STORIES_KEY =
+    "ars_stories";
 
- if(!p) return;
 
+  /* =========================
+     STATE
+  ========================== */
 
- p.classList.add("active");
+  let currentUser =
+    readJSON(
+      USER_KEY,
+      null
+    );
 
+  let plan =
+    localStorage.getItem(
+      PLAN_KEY
+    ) || "free";
 
- document
- .querySelectorAll(".nav-item")
- .forEach(
-  n =>
-   n.classList.toggle(
-    "active",
-    n.dataset.page === id
-   )
- );
 
+  let posts =
+    loadPosts();
 
- const plus = $("createPost");
 
- if(plus){
+  let stories =
+    loadStories();
 
-  plus.style.display =
-   id === "homePage"
-   ? "block"
-   : "none";
 
- }
+  let currentCommentPost =
+    null;
 
 
- if(id === "searchPage"){
+  let wheelRotation =
+    0;
 
-  renderSearchHome();
 
- }
+  let initialized =
+    false;
 
 
- if(id === "streakPage"){
+  /* =========================
+     POSTS
+  ========================== */
 
-  updateStreak();
+  function loadPosts() {
 
- }
+    let raw =
+      localStorage.getItem(
+        POSTS_KEY
+      );
 
 
- if(id === "trendingPage"){
+    if (
+      raw === null &&
+      localStorage.getItem(
+        LEGACY_POSTS_KEY
+      ) !== null
+    ) {
 
-  renderTrendingPage();
+      raw =
+        localStorage.getItem(
+          LEGACY_POSTS_KEY
+        );
 
- }
+    }
 
-}
 
+    const data =
+      (() => {
 
-function renderSearchHome(){
+        try {
 
- const h = $("searchHome");
+          return raw
+            ? JSON.parse(raw)
+            : [];
 
- if(!h) return;
+        } catch {
 
+          return [];
 
- h.innerHTML = `
+        }
 
- <div class="search-title">
-   Trending hashtags
- </div>
+      })();
 
- <div class="chips">
 
- ${
-  [
-   "#ARS",
-   "#SaudiArabia",
-   "#Tech",
-   "#AI",
-   "#Lifestyle",
-   "#Football"
-  ]
-  .map(
-   t =>
-   `
-   <button
-     class="chip"
-     data-query="${t}"
-     type="button"
-   >
-     ${t}
-   </button>
-   `
-  )
-  .join("")
- }
+    const list =
+      Array.isArray(data)
+        ? data.filter(Boolean)
+        : [];
 
- </div>
 
- <div class="search-title">
-   Suggested people
- </div>
+    if (
+      localStorage.getItem(
+        POSTS_KEY
+      ) === null &&
+      list.length
+    ) {
 
- <div class="search-person">
+      localStorage.setItem(
+        POSTS_KEY,
+        JSON.stringify(list)
+      );
 
-   <img src="${img.lina}" alt="">
+    }
 
-   <div>
 
-     <b>Lina</b>
+    return list;
 
-     <div class="post-meta">
-       @lina.ae · 1.2M followers
-     </div>
+  }
 
-   </div>
 
- </div>
+  function savePosts() {
 
- <div class="search-person">
+    localStorage.setItem(
+      POSTS_KEY,
+      JSON.stringify(posts)
+    );
 
-   <div class="avatar">
-     A
-   </div>
+  }
 
-   <div>
 
-     <b>Apple ✓</b>
+  function findPost(id) {
 
-     <div class="post-meta">
-       @apple · 98M followers
-     </div>
+    return posts.find(
+      (post) =>
+        String(post.id) ===
+        String(id)
+    );
 
-   </div>
+  }
 
- </div>
 
- <div class="search-person">
+  /* =========================
+     STORIES
+  ========================== */
 
-   <div class="avatar">
-     N
-   </div>
+  function normalizeStory(story) {
 
-   <div>
+    if (
+      !story ||
+      typeof story !== "object"
+    ) {
 
-     <b>Noah</b>
+      return null;
 
-     <div class="post-meta">
-       @noah.vibes · 84K followers
-     </div>
+    }
 
-   </div>
 
- </div>
+    const item = {
+      ...story
+    };
 
- <div class="search-title">
-   Trending topics
- </div>
 
- <div class="topic">
-   <b>ARS</b>
-   <span>128K posts</span>
- </div>
+    item.id =
+      String(
+        item.id ||
+        `story_${Date.now()}`
+      );
 
- <div class="topic">
-   <b>Technology</b>
-   <span>94K posts</span>
- </div>
 
- `;
+    item.name =
+      item.name ||
+      item.username ||
+      "You";
 
-}
 
+    return item;
 
-function renderTrendingPage(){
+  }
 
- const page = $("trendingPage");
 
- if(!page) return;
+  function loadStories() {
 
- page.innerHTML = `
-   <div class="panel-head">
-     <h2>Trending</h2>
-     <button
-       class="close-btn"
-       data-close-page
-       aria-label="Close"
-     >×</button>
-   </div>
+    let raw =
+      localStorage.getItem(
+        STORIES_KEY
+      );
 
-   <div class="search-content">
 
-     <div class="search-title">
-       What's trending on ARS
-     </div>
+    if (
+      raw === null &&
+      localStorage.getItem(
+        LEGACY_STORIES_KEY
+      ) !== null
+    ) {
 
-     <div class="topic">
-       <b>#ARS</b>
-       <span>128K posts</span>
-     </div>
+      raw =
+        localStorage.getItem(
+          LEGACY_STORIES_KEY
+        );
 
-     <div class="topic">
-       <b>#Technology</b>
-       <span>94K posts</span>
-     </div>
+    }
 
-     <div class="topic">
-       <b>#AI</b>
-       <span>81K posts</span>
-     </div>
 
-     <div class="topic">
-       <b>#Lifestyle</b>
-       <span>65K posts</span>
-     </div>
+    let data = [];
 
-   </div>
- `;
+    try {
 
-}
+      data =
+        raw
+          ? JSON.parse(raw)
+          : [];
 
+    } catch {
 
-function search(q){
+      data = [];
 
- const r = $("searchResults");
+    }
 
- if(!r) return;
 
+    if (!Array.isArray(data)) {
+      data = [];
+    }
 
- const x =
- q.trim().toLowerCase();
 
+    const now =
+      Date.now();
 
- if(!x){
 
-  r.innerHTML = "";
+    const active =
+      data
+        .map(normalizeStory)
+        .filter(Boolean)
+        .filter((story) => {
 
-  return;
+          const expiry =
+            Date.parse(
+              story.expires_at ||
+              story.expiresAt ||
+              story.expires ||
+              ""
+            );
 
- }
 
+          if (!expiry) {
+            return true;
+          }
 
- const found =
- posts.filter(
-  p =>
-   (
-    p.name +
-    " " +
-    p.handle +
-    " " +
-    p.text
-   )
-   .toLowerCase()
-   .includes(x)
- );
 
+          return expiry > now;
 
- r.innerHTML =
- found.map(
-  p =>
-  `
-  <div class="search-person">
+        });
 
-    <div class="avatar">
-      ${esc(p.letter || p.name?.[0] || "A")}
-    </div>
 
-    <div>
+    localStorage.setItem(
+      STORIES_KEY,
+      JSON.stringify(active)
+    );
 
-      <b>
-        ${esc(p.name)}
-      </b>
 
-      <div class="post-meta">
-        ${esc(p.handle || "")}
+    return active;
+
+  }
+
+
+  /* =========================
+     LUCIDE
+  ========================== */
+
+  function refreshLucide() {
+
+    if (
+      window.lucide &&
+      typeof window.lucide.createIcons ===
+        "function"
+    ) {
+
+      window.lucide.createIcons({
+        attrs:{
+          "stroke-width":1.9
+        }
+      });
+
+    }
+
+  }
+
+
+  /* =========================
+     PROFILE
+  ========================== */
+
+  function renderProfile() {
+
+    const user =
+      currentUser || {};
+
+
+    const name =
+      user.display_name ||
+      user.username ||
+      "ARS User";
+
+
+    const handle =
+      user.username
+        ? `@${user.username}`
+        : "@user";
+
+
+    const letter =
+      localStorage.getItem(
+        "ars_letter"
+      ) ||
+      name.charAt(0) ||
+      "A";
+
+
+    if ($("topAvatarLetter")) {
+
+      $("topAvatarLetter").textContent =
+        letter;
+
+    }
+
+
+    if ($("profileAvatar")) {
+
+      $("profileAvatar").textContent =
+        letter;
+
+    }
+
+
+    if ($("profileName")) {
+
+      $("profileName").textContent =
+        name;
+
+    }
+
+
+    if ($("profileHandle")) {
+
+      $("profileHandle").textContent =
+        handle;
+
+    }
+
+
+    if ($("profilePostsCount")) {
+
+      $("profilePostsCount").textContent =
+        String(
+          posts.filter(
+            (post) =>
+              post.handle === handle
+          ).length
+        );
+
+    }
+
+  }
+
+
+  /* =========================
+     STORIES RENDER
+  ========================== */
+
+  function renderStories() {
+
+    const container =
+      $("stories");
+
+
+    if (!container) {
+      return;
+    }
+
+
+    const ordered =
+      [...stories].sort(
+        (a,b) => {
+
+          const aYou =
+            a.id === "you" ||
+            a.you;
+
+          const bYou =
+            b.id === "you" ||
+            b.you;
+
+
+          if (aYou && !bYou) {
+            return -1;
+          }
+
+          if (!aYou && bYou) {
+            return 1;
+          }
+
+          return 0;
+
+        }
+      );
+
+
+    container.innerHTML =
+      ordered.map(
+        (story) => {
+
+          const isYou =
+            story.id === "you" ||
+            story.you;
+
+
+          const source =
+            story.src ||
+            story.image ||
+            story.media;
+
+
+          let content = "";
+
+
+          if (
+            source &&
+            !story.video
+          ) {
+
+            content = `
+              <img
+                src="${esc(source)}"
+                alt="${esc(story.name)}"
+              >
+            `;
+
+          }
+
+
+          else if (
+            story.video
+          ) {
+
+            content = `
+              <span class="story-letter">
+                <i data-lucide="play"></i>
+              </span>
+            `;
+
+          }
+
+
+          else if (
+            story.logo
+          ) {
+
+            content = `
+              <span class="story-letter brand-story">
+                <img
+                  src="${esc(story.logo)}"
+                  alt="${esc(story.name)}"
+                >
+              </span>
+            `;
+
+          }
+
+
+          else if (
+            story.wheel
+          ) {
+
+            content = `
+              <span class="story-letter">
+                <i data-lucide="circle-dot"></i>
+              </span>
+            `;
+
+          }
+
+
+          else {
+
+            content = `
+              <span class="story-letter">
+                ${esc(
+                  story.letter ||
+                  story.name?.charAt(0) ||
+                  "A"
+                )}
+              </span>
+            `;
+
+          }
+
+
+          return `
+            <button
+              class="story ${isYou ? "you" : ""}"
+              data-story="${esc(story.id)}"
+              type="button"
+            >
+
+              <span class="story-ring">
+                ${content}
+              </span>
+
+              <span class="story-name">
+                ${esc(story.name)}
+              </span>
+
+            </button>
+          `;
+
+        }
+      ).join("");
+
+
+    refreshLucide();
+
+  }
+
+
+  /* =========================
+     POST AVATAR
+  ========================== */
+
+  function postAvatar(post) {
+
+    if (post.avatar) {
+
+      return `
+        <img
+          class="post-avatar"
+          src="${esc(post.avatar)}"
+          alt=""
+        >
+      `;
+
+    }
+
+
+    if (post.imageAvatar) {
+
+      return `
+        <img
+          class="post-avatar"
+          src="${esc(post.imageAvatar)}"
+          alt=""
+        >
+      `;
+
+    }
+
+
+    if (
+      post.name === "Apple"
+    ) {
+
+      return `
+        <div
+          class="post-avatar post-letter apple-avatar"
+        >
+          <img
+            src="https://cdn.simpleicons.org/apple/FFFFFF"
+            alt="Apple"
+          >
+        </div>
+      `;
+
+    }
+
+
+    return `
+      <div
+        class="post-avatar post-letter"
+      >
+        ${esc(
+          post.letter ||
+          post.name?.charAt(0) ||
+          "A"
+        )}
       </div>
-
-      <p>
-        ${esc(p.text)}
-      </p>
-
-    </div>
-
-  </div>
-  `
- ).join("")
- ||
- `
- <div class="empty-search">
-
-   <h3>No results</h3>
-
-   <p>Try another search.</p>
-
- </div>
- `;
-
-}
-
-
-/* =========================
-   WHEEL
-========================= */
-
-const wheelItems = [
-
- [
-  "CHALLENGE",
-  "Post something that makes you smile today.",
-  "+50 XP"
- ],
-
- [
-  "REWARD",
-  "You earned a surprise ARS reward.",
-  "+100 XP"
- ],
-
- [
-  "QUESTION",
-  "What is one goal you want to achieve this week?",
-  "+25 XP"
- ],
-
- [
-  "BONUS",
-  "Bonus spin reward unlocked.",
-  "+1 Bonus"
- ],
-
- [
-  "REWARD",
-  "You discovered a hidden reward.",
-  "+75 XP"
- ],
-
- [
-  "CHALLENGE",
-  "Like and comment on a post you genuinely enjoy.",
-  "+40 XP"
- ],
-
- [
-  "QUESTION",
-  "What is something new you learned recently?",
-  "+30 XP"
- ],
-
- [
-  "BONUS",
-  "Lucky bonus! Extra XP added.",
-  "+150 XP"
- ]
-
-];
-
-
-function weekKey(){
-
- const d = new Date();
-
- const s =
- new Date(
-  d.getFullYear(),
-  0,
-  1
- );
-
- const n =
- Math.floor(
-  (d - s) / 86400000
- );
-
- return (
-  d.getFullYear() +
-  "-" +
-  Math.ceil(
-   (n + s.getDay() + 1) / 7
-  )
- );
-
-}
-
-
-function wheelState(){
-
- const s =
- JSON.parse(
-  localStorage.getItem(WHEEL_KEY) || "null"
- );
-
-
- return !s || s.week !== weekKey()
-  ? {
-     week:weekKey(),
-     used:0
-    }
-  : s;
-
-}
-
-
-function updateWheel(){
-
- const d = wheelState();
-
- const c = $("spinCounter");
-
- const b = $("spinButton");
-
- const l = $("planLabel");
-
-
- if(!c) return;
-
-
- if(plan === "premium"){
-
-  c.textContent = "∞";
-
-  l.textContent = "Premium";
-
-  b.disabled = false;
-
- }
-
- else{
-
-  const n =
-  Math.max(
-   0,
-   2 - d.used
-  );
-
-  c.textContent = n;
-
-  l.textContent = "Free";
-
-  b.disabled = n === 0;
-
- }
-
-}
-
-
-function spin(){
-
- const w = $("wheel");
-
- const r = $("challengeResult");
-
- if(!w || !r) return;
-
-
- const d = wheelState();
-
-
- if(
-  plan !== "premium" &&
-  d.used >= 2
- ){
-
-  r.innerHTML = `
-   <strong>No free spins left</strong>
-   <span>Free members get 2 wheel tries every week.</span>
-  `;
-
-  return;
-
- }
-
-
- if(plan !== "premium"){
-
-  d.used++;
-
-  localStorage.setItem(
-   WHEEL_KEY,
-   JSON.stringify(d)
-  );
-
- }
-
-
- const i =
- Math.floor(
-  Math.random() *
-  wheelItems.length
- );
-
-
- const v =
- wheelItems[i];
-
-
- wheelRotation +=
- 1440 +
- Math.floor(
-  Math.random() * 360
- ) +
- i * 45;
-
-
- w.style.transform =
- `rotate(${wheelRotation}deg)`;
-
-
- r.innerHTML = `
-
- <div class="result-type">
-   ${esc(v[0])}
- </div>
-
- <strong>
-   ${esc(v[1])}
- </strong>
-
- <span>
-   ${esc(v[2])}
- </span>
-
- `;
-
-
- updateWheel();
-
-}
-
-
-/* =========================
-   STREAK
-========================= */
-
-function dayKey(d = new Date()){
-
- return [
-
-  d.getFullYear(),
-
-  String(
-   d.getMonth() + 1
-  ).padStart(2,"0"),
-
-  String(
-   d.getDate()
-  ).padStart(2,"0")
-
- ].join("-");
-
-}
-
-
-function streakState(){
-
- return (
-  JSON.parse(
-   localStorage.getItem(STREAK_KEY) || "null"
-  )
- ) || {
-  count:0,
-  lastDay:"",
-  doneToday:false
- };
-
-}
-
-
-function updateStreak(){
-
- const s = streakState();
-
- const today = dayKey();
-
- const active =
- s.lastDay === today &&
- s.doneToday;
-
-
- const f = $("streakFire");
-
- const n = $("streakNumber");
-
- const t = $("streakText");
-
- const b = $("streakDone");
-
-
- if(!f || !n || !t || !b){
-
-  return;
-
- }
-
-
- f.classList.toggle(
-  "active",
-  active
- );
-
- f.classList.toggle(
-  "inactive",
-  !active
- );
-
-
- n.textContent =
- s.count || 0;
-
-
- t.textContent =
- active
- ? "Your streak is active today 🔥 Keep going tomorrow."
- : "Complete today's interaction to keep your streak active.";
-
-
- b.textContent =
- active
- ? "Completed today ✓"
- : "Complete today";
-
-
- b.disabled =
- active;
-
-
- renderWeekDots();
-
-}
-
-
-function renderWeekDots(){
-
- const c = $("weekDots");
-
- if(!c) return;
-
-
- const s = streakState();
-
- const today = new Date();
-
-
- c.innerHTML =
- Array
- .from(
-  {length:7},
-  (_,j) => {
-
-   const d =
-   new Date(today);
-
-   d.setDate(
-    today.getDate() -
-    (6 - j)
-   );
-
-
-   return `
-
-   <span
-     class="week-dot ${
-       dayKey(d) === s.lastDay &&
-       s.doneToday
-       ? "active"
-       : ""
-     }"
-   ></span>
-
-   `;
+    `;
 
   }
- )
- .join("");
 
-}
 
+  /* =========================
+     POST MEDIA
+  ========================== */
 
-function completeStreak(){
+  function postMedia(post) {
 
- const s =
- streakState();
+    let source =
+      post.image ||
+      post.video ||
+      "";
 
- const today =
- dayKey();
 
+    let type =
+      post.video
+        ? "video"
+        : "image";
 
- if(
-  s.lastDay === today &&
-  s.doneToday
- ){
 
-  return;
+    if (
+      !source &&
+      Array.isArray(post.media) &&
+      post.media.length
+    ) {
 
- }
+      const media =
+        post.media[0];
 
 
- const y =
- new Date();
+      if (
+        typeof media === "string"
+      ) {
 
- y.setDate(
-  y.getDate() - 1
- );
+        source = media;
 
+      } else {
 
- s.count =
- s.lastDay === dayKey(y)
- ? (s.count || 0) + 1
- : 1;
+        source =
+          media.url ||
+          media.src ||
+          "";
 
 
- s.lastDay =
- today;
+        type =
+          media.type === "video"
+            ? "video"
+            : "image";
 
+      }
 
- s.doneToday =
- true;
+    }
 
 
- localStorage.setItem(
-  STREAK_KEY,
-  JSON.stringify(s)
- );
+    if (!source) {
+      return "";
+    }
 
 
- updateStreak();
+    if (type === "video") {
 
- toast(
-  "🔥 Streak updated!"
- );
+      return `
+        <video
+          class="post-image"
+          controls
+          playsinline
+          preload="metadata"
+          src="${esc(source)}"
+        ></video>
+      `;
 
-}
+    }
 
 
-/* =========================
-   POSTS
-========================= */
+    return `
+      <img
+        class="post-image"
+        src="${esc(source)}"
+        alt=""
+        loading="lazy"
+      >
+    `;
 
-function findPost(id){
+  }
 
- return posts.find(
-  p =>
-   String(p.id) === String(id)
- );
 
-}
+  /* =========================
+     POSTS RENDER
+  ========================== */
 
+  function renderPosts() {
 
-function postAction(a,id){
+    const feed =
+      $("feed");
 
- const p =
- findPost(id);
 
+    if (!feed) {
+      return;
+    }
 
- if(!p) return;
 
+    if (!posts.length) {
 
- if(a === "like"){
+      feed.innerHTML = `
+        <div class="result-card">
+          No posts yet.
+        </div>
+      `;
 
-  p.liked =
-   !p.liked;
+      return;
 
-  p.likes =
-   Math.max(
-    0,
-    Number(p.likes || 0) +
-    (p.liked ? 1 : -1)
-   );
+    }
 
-  toast(
-   p.liked
-   ? "Liked ❤️"
-   : "Like removed"
-  );
 
- }
+    feed.innerHTML =
+      posts.map(
+        (post) => {
 
- else if(a === "repost"){
+          const liked =
+            Boolean(
+              post.liked
+            );
 
-  p.reposted =
-   !p.reposted;
 
-  p.reposts =
-   Math.max(
-    0,
-    Number(p.reposts || 0) +
-    (p.reposted ? 1 : -1)
-   );
+          const reposted =
+            Boolean(
+              post.reposted
+            );
 
-  toast(
-   p.reposted
-   ? "Reposted 🔄"
-   : "Repost removed"
-  );
 
- }
+          const bookmarked =
+            localStorage.getItem(
+              `ars_bookmark_${post.id}`
+            ) === "true";
 
- else if(a === "comment"){
 
-  openComments(id);
+          const text =
+            esc(
+              post.text || ""
+            ).replace(
+              /(#\w+)/g,
+              '<span class="tag">$1</span>'
+            );
 
-  return;
 
- }
+          return `
+            <article
+              class="post-card"
+              data-post-id="${esc(post.id)}"
+            >
 
+              <div class="post-head">
 
- savePosts();
+                ${postAvatar(post)}
 
- renderPosts();
+                <div class="post-info">
 
-}
+                  <div class="post-name">
 
+                    ${esc(
+                      post.name ||
+                      "ARS User"
+                    )}
 
-function closeMenu(){
+                    ${
+                      post.verified
+                        ? '<span class="verified">✓</span>'
+                        : ""
+                    }
 
- document
- .querySelectorAll(".post-menu")
- .forEach(
-  x => x.remove()
- );
+                  </div>
 
+                  <div class="post-meta">
 
- $("postMenuBackdrop")
- ?.classList.remove("show");
+                    ${esc(
+                      post.handle ||
+                      "@user"
+                    )}
 
-}
+                    ·
 
+                    ${esc(
+                      post.time ||
+                      "now"
+                    )}
 
-function menu(btn,id){
+                  </div>
 
- closeMenu();
+                </div>
 
 
- const m =
- document.createElement("div");
+                <button
+                  class="more"
+                  data-more="${esc(post.id)}"
+                  type="button"
+                  aria-label="More"
+                >
+                  <i data-lucide="more-horizontal"></i>
+                </button>
 
+              </div>
 
- m.className =
- "post-menu";
 
+              ${
+                text
+                  ? `
+                    <div class="post-text">
+                      ${text}
+                    </div>
+                  `
+                  : ""
+              }
 
- m.innerHTML = `
 
- <button data-a="repost" type="button">
-   ↻ Repost
- </button>
+              ${postMedia(post)}
 
- <button data-a="bookmark" type="button">
-   🔖 Bookmark
- </button>
 
- <button data-a="share" type="button">
-   ↗ Share
- </button>
+              <div class="post-actions">
 
- <button data-a="copy" type="button">
-   ⧉ Copy Link
- </button>
+                <button
+                  class="post-action like ${
+                    liked
+                      ? "active"
+                      : ""
+                  }"
+                  data-action="like"
+                  data-id="${esc(post.id)}"
+                  type="button"
+                  aria-label="Like"
+                >
 
- <button data-a="report" type="button">
-   ⚑ Report
- </button>
+                  <i data-lucide="heart"></i>
 
- <button
-   data-a="hide"
-   class="danger"
-   type="button"
- >
-   ⌫ Hide Post
- </button>
+                  <span>
+                    ${count(post.likes)}
+                  </span>
 
- `;
+                </button>
 
 
- document.body.appendChild(m);
+                <button
+                  class="post-action"
+                  data-action="comment"
+                  data-id="${esc(post.id)}"
+                  type="button"
+                  aria-label="Comments"
+                >
 
+                  <i data-lucide="message-circle"></i>
 
- const q =
- btn.getBoundingClientRect();
+                  <span>
+                    ${count(post.comments)}
+                  </span>
 
+                </button>
 
- m.style.top =
- q.bottom + 8 + "px";
 
+                <button
+                  class="post-action ${
+                    reposted
+                      ? "reposted"
+                      : ""
+                  }"
+                  data-action="repost"
+                  data-id="${esc(post.id)}"
+                  type="button"
+                  aria-label="Repost"
+                >
 
- m.style.right =
- Math.max(
-  12,
-  innerWidth - q.right
- ) + "px";
+                  <i data-lucide="repeat-2"></i>
 
+                  <span>
+                    ${count(post.reposts)}
+                  </span>
 
- $("postMenuBackdrop")
- ?.classList.add("show");
+                </button>
 
 
- m.onclick =
- async e => {
+                <button
+                  class="post-action ${
+                    bookmarked
+                      ? "bookmarked"
+                      : ""
+                  }"
+                  data-action="bookmark"
+                  data-id="${esc(post.id)}"
+                  type="button"
+                  aria-label="Bookmark"
+                >
 
-  const item =
-  e.target.closest("[data-a]");
+                  <i data-lucide="bookmark"></i>
 
+                </button>
 
-  if(!item) return;
 
+                <span
+                  class="post-action views"
+                  aria-label="Views"
+                >
 
-  const a =
-  item.dataset.a;
+                  <i data-lucide="eye"></i>
 
+                  <span>
+                    ${count(post.views)}
+                  </span>
 
-  closeMenu();
+                </span>
 
+              </div>
 
-  if(a === "repost"){
+            </article>
+          `;
 
-   postAction(
-    "repost",
+        }
+      ).join("");
+
+
+    refreshLucide();
+
+    renderProfile();
+
+  }
+
+
+  /* =========================
+     POST ACTIONS
+  ========================== */
+
+  function postAction(
+    action,
     id
-   );
+  ) {
 
-  }
-
-
-  else if(a === "bookmark"){
-
-   const k =
-   "ars_bookmark_" + id;
+    const post =
+      findPost(id);
 
 
-   const s =
-   localStorage.getItem(k)
-   === "true";
+    if (!post) {
+      return;
+    }
 
 
-   localStorage.setItem(
-    k,
-    String(!s)
-   );
+    if (
+      action === "like"
+    ) {
+
+      post.liked =
+        !post.liked;
 
 
-   toast(
-    !s
-    ? "Saved 🔖"
-    : "Removed from bookmarks"
-   );
-
-  }
-
-
-  else if(a === "copy"){
-
-   try{
-
-    await navigator.clipboard.writeText(
-     location.href
-    );
-
-    toast(
-     "Link copied"
-    );
-
-   }
-
-   catch{
-
-    toast(
-     "Copy is not available"
-    );
-
-   }
-
-  }
+      post.likes =
+        Math.max(
+          0,
+          Number(post.likes || 0) +
+          (
+            post.liked
+              ? 1
+              : -1
+          )
+        );
 
 
-  else if(a === "share"){
+      savePosts();
 
-   if(navigator.share){
+      renderPosts();
 
-    try{
+      toast(
+        post.liked
+          ? "Liked"
+          : "Like removed"
+      );
 
-     await navigator.share({
-
-      title:"ARS",
-
-      text:
-       findPost(id)?.text || "",
-
-      url:
-       location.href
-
-     });
+      return;
 
     }
 
-    catch{}
 
-   }
+    if (
+      action === "repost"
+    ) {
 
-   else{
+      post.reposted =
+        !post.reposted;
 
-    try{
 
-     await navigator.clipboard.writeText(
-      location.href
-     );
+      post.reposts =
+        Math.max(
+          0,
+          Number(post.reposts || 0) +
+          (
+            post.reposted
+              ? 1
+              : -1
+          )
+        );
 
-     toast("Share link copied");
+
+      savePosts();
+
+      renderPosts();
+
+      toast(
+        post.reposted
+          ? "Reposted"
+          : "Repost removed"
+      );
+
+      return;
 
     }
 
-    catch{
 
-     toast("Share is not available");
+    if (
+      action === "bookmark"
+    ) {
+
+      const key =
+        `ars_bookmark_${id}`;
+
+
+      const next =
+        localStorage.getItem(
+          key
+        ) !== "true";
+
+
+      localStorage.setItem(
+        key,
+        String(next)
+      );
+
+
+      renderPosts();
+
+
+      toast(
+        next
+          ? "Saved"
+          : "Removed from bookmarks"
+      );
+
+      return;
 
     }
 
-   }
+
+    if (
+      action === "comment"
+    ) {
+
+      openComments(id);
+
+    }
 
   }
 
 
-  else if(a === "report"){
+  /* =========================
+     POST MENU
+  ========================== */
 
-   toast(
-    "Post reported"
-   );
+  function closeMenu() {
 
-  }
-
-
-  else if(a === "hide"){
-
-   posts =
-   posts.filter(
-    p =>
-     String(p.id) !==
-     String(id)
-   );
+    document
+      .querySelectorAll(
+        ".post-menu"
+      )
+      .forEach(
+        (menu) =>
+          menu.remove()
+      );
 
 
-   savePosts();
-
-   renderPosts();
-
-   toast(
-    "Post hidden"
-   );
+    $("postMenuBackdrop")
+      ?.classList
+      .remove("show");
 
   }
 
- };
 
-}
+  function openPostMenu(
+    button,
+    id
+  ) {
 
+    closeMenu();
 
-/* =========================
-   COMMENTS
-========================= */
 
-function commentsKey(id){
+    const menu =
+      document.createElement(
+        "div"
+      );
 
- return "ars_comments_" + id;
 
-}
+    menu.className =
+      "post-menu";
 
 
-function getComments(id){
+    menu.innerHTML = `
+      <button
+        type="button"
+        data-menu-action="repost"
+      >
+        <i data-lucide="repeat-2"></i>
+        Repost
+      </button>
 
- return (
-  JSON.parse(
-   localStorage.getItem(
-    commentsKey(id)
-   ) || "null"
-  )
- ) || [];
+      <button
+        type="button"
+        data-menu-action="bookmark"
+      >
+        <i data-lucide="bookmark"></i>
+        Bookmark
+      </button>
 
-}
+      <button
+        type="button"
+        data-menu-action="share"
+      >
+        <i data-lucide="share-2"></i>
+        Share
+      </button>
 
+      <button
+        type="button"
+        data-menu-action="copy"
+      >
+        <i data-lucide="copy"></i>
+        Copy Link
+      </button>
 
-function saveComments(id,data){
+      <button
+        type="button"
+        data-menu-action="report"
+      >
+        <i data-lucide="flag"></i>
+        Report
+      </button>
 
- localStorage.setItem(
-  commentsKey(id),
-  JSON.stringify(data)
- );
+      <button
+        type="button"
+        class="danger"
+        data-menu-action="hide"
+      >
+        <i data-lucide="eye-off"></i>
+        Hide Post
+      </button>
+    `;
 
-}
 
+    document.body.appendChild(
+      menu
+    );
 
-function renderComments(id){
 
- const list =
- $("commentsList");
+    const rect =
+      button.getBoundingClientRect();
 
- if(!list) return;
 
+    menu.style.top =
+      `${rect.bottom + 8}px`;
 
- const comments =
- getComments(id);
 
+    menu.style.right =
+      `${Math.max(
+        12,
+        window.innerWidth -
+        rect.right
+      )}px`;
 
- if(!comments.length){
 
-  list.innerHTML = `
-   <div class="result-card">
-     No comments yet. Be the first.
-   </div>
-  `;
+    $("postMenuBackdrop")
+      ?.classList
+      .add("show");
 
-  return;
 
- }
+    refreshLucide();
 
 
- list.innerHTML =
- comments.map(
-  c =>
-  `
-  <div class="comment-item">
-
-    <div class="comment-author">
-      ${esc(c.name || "ARS User")}
-    </div>
-
-    <div class="comment-text">
-      ${esc(c.text)}
-    </div>
-
-  </div>
-  `
- ).join("");
-
-}
-
-
-function openComments(id){
-
- currentCommentPost =
- String(id);
-
-
- renderComments(
-  currentCommentPost
- );
-
-
- const modal =
- $("commentsModal");
-
-
- if(modal){
-
-  modal.classList.add("show");
-
-  modal.setAttribute(
-   "aria-hidden",
-   "false"
-  );
-
- }
-
-
-}
-
-
-function closeComments(){
-
- const modal =
- $("commentsModal");
-
-
- if(modal){
-
-  modal.classList.remove("show");
-
-  modal.setAttribute(
-   "aria-hidden",
-   "true"
-  );
-
- }
-
- currentCommentPost =
- null;
-
-}
-
-
-function addComment(){
-
- if(!currentCommentPost) return;
-
-
- const input =
- $("commentInput");
-
-
- if(!input) return;
-
-
- const text =
- input.value.trim();
-
-
- if(!text) return;
-
-
- const list =
- getComments(
-  currentCommentPost
- );
-
-
- list.push({
-
-  id:
-   Date.now(),
-
-  name:
-   currentUser?.display_name ||
-   currentUser?.username ||
-   "ARS User",
-
-  text,
-
-  created_at:
-   new Date().toISOString()
-
- });
-
-
- saveComments(
-  currentCommentPost,
-  list
- );
-
-
- const p =
- findPost(
-  currentCommentPost
- );
-
-
- if(p){
-
-  p.comments =
-   Number(p.comments || 0) + 1;
-
-  savePosts();
-
-  renderPosts();
-
- }
-
-
- input.value = "";
-
- renderComments(
-  currentCommentPost
- );
-
-}
-
-
-/* =========================
-   CREATE POST
-========================= */
-
-function openCreatePost(){
-
- const modal =
- $("createPostModal");
-
-
- if(!modal) return;
-
-
- modal.
+    menu.addEventListener(
+      "click",
+      async (event) => {
+
+        const item =
+          event.target.closest(
+            "[data-menu-action]"
+          
