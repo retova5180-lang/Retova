@@ -2,11 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ARS</title>
 
   <link rel="stylesheet" href="home.css">
@@ -16,869 +12,312 @@
 </head>
 
 <body>
-
   <div class="app">
 
-    <!-- =========================
-         TOP BAR
-    ========================== -->
-
     <header class="topbar">
-
-      <button
-        id="profileButton"
-        class="top-avatar avatar"
-        type="button"
-        aria-label="Profile"
-      >
-        <span id="topAvatarLetter">A</span>
-        <span class="online-dot"></span>
+      <button class="profile-button" id="profileButton" type="button" aria-label="Profile">
+        <span class="avatar avatar-top" id="topAvatar">
+          <span id="topAvatarLetter">R</span>
+        </span>
       </button>
 
       <div class="brand">ΛRS</div>
 
-      <button
-        id="wheelButton"
-        class="wheel-mini"
-        type="button"
-        aria-label="Wheel"
-      >
+      <button class="wheel-button" id="wheelButton" type="button" aria-label="Wheel">
         <i data-lucide="circle-dot"></i>
       </button>
-
     </header>
 
+    <main id="main">
 
-    <!-- =========================
-         HOME
-    ========================== -->
+      <section id="homePage" class="page active">
 
-    <main
-      id="homePage"
-      class="page active"
-    >
+        <div class="stories-wrap">
+          <div class="stories" id="stories"></div>
+        </div>
 
-      <!-- STORIES -->
-
-      <section class="stories-wrap">
-
-        <div
-          id="stories"
-          class="stories"
-        ></div>
+        <div class="feed" id="feed"></div>
 
       </section>
 
+      <section id="searchPage" class="page">
+        <div class="page-heading">
+          <h1>Search</h1>
+        </div>
 
-      <!-- FEED -->
+        <div class="search-box">
+          <i data-lucide="search"></i>
+          <input id="searchInput" type="search" placeholder="Search ARS">
+        </div>
 
-      <section
-        id="feed"
-        class="feed"
-      ></section>
+        <div id="searchHome" class="search-home">
+          <div class="empty-icon"><i data-lucide="search"></i></div>
+          <h2>Explore ARS</h2>
+          <p>Search people, posts and hashtags.</p>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+      </section>
+
+      <section id="trendingPage" class="page">
+        <div class="page-heading">
+          <h1>Trending</h1>
+        </div>
+
+        <div id="trendingList" class="trending-list"></div>
+      </section>
+
+      <section id="streakPage" class="page">
+        <div class="page-heading">
+          <h1>Streak</h1>
+        </div>
+
+        <div class="streak-card">
+          <div class="streak-fire" id="streakFire">
+            <i data-lucide="flame"></i>
+          </div>
+
+          <div class="streak-number" id="streakNumber">0</div>
+          <div class="streak-label" id="streakText">day streak</div>
+
+          <div class="week-dots" id="weekDots"></div>
+
+          <div class="streak-status" id="streakDone">
+            Keep your streak alive today.
+          </div>
+        </div>
+      </section>
+
+      <section id="notificationsPage" class="page">
+        <div class="page-heading">
+          <h1>Notifications</h1>
+        </div>
+        <div id="notificationsList" class="notifications-list"></div>
+      </section>
+
+      <section id="messagesPage" class="page">
+        <div class="page-heading">
+          <h1>Messages</h1>
+        </div>
+        <div class="messages-empty">
+          <div class="empty-icon"><i data-lucide="mail"></i></div>
+          <h2>No messages yet</h2>
+          <p>Your conversations will appear here.</p>
+        </div>
+      </section>
+
+      <section id="profilePage" class="page">
+        <div class="profile-card">
+          <div class="profile-cover"></div>
+
+          <div class="profile-main">
+            <div class="profile-avatar avatar" id="profileAvatar">R</div>
+
+            <div class="profile-info">
+              <h1 id="profileName">ARS User</h1>
+              <span id="profileHandle">@user</span>
+            </div>
+
+            <button id="profileEditButton" class="secondary-button" type="button">
+              Edit
+            </button>
+          </div>
+
+          <p id="profileBio" class="profile-bio"></p>
+
+          <div class="profile-stats">
+            <div><strong id="profilePosts">0</strong><span>Posts</span></div>
+            <div><strong id="profileFollowers">0</strong><span>Followers</span></div>
+            <div><strong id="profileFollowing">0</strong><span>Following</span></div>
+          </div>
+        </div>
+
+        <div id="profilePostsList" class="feed"></div>
+      </section>
+
+      <section id="wheelPage" class="page">
+        <div class="page-heading">
+          <h1>Wheel</h1>
+        </div>
+
+        <div class="wheel-card">
+          <div class="wheel" id="wheel">
+            <div class="wheel-center">
+              <i data-lucide="sparkles"></i>
+            </div>
+            <div class="wheel-line line-1"></div>
+            <div class="wheel-line line-2"></div>
+            <div class="wheel-line line-3"></div>
+            <div class="wheel-line line-4"></div>
+          </div>
+
+          <div class="spin-counter" id="spinCounter">0 spins</div>
+          <div class="plan-label" id="planLabel">Free</div>
+
+          <button id="spinButton" class="primary-button spin-button" type="button">
+            <i data-lucide="rotate-cw"></i>
+            Spin
+          </button>
+
+          <div id="challengeResult" class="challenge-result"></div>
+
+          <button id="openStreakFromWheel" class="text-button" type="button">
+            Open Streak
+          </button>
+        </div>
+      </section>
 
     </main>
 
-
-    <!-- =========================
-         SEARCH
-    ========================== -->
-
-    <section
-      id="searchPage"
-      class="page overlay-page"
-    >
-
-      <div class="search-head">
-
-        <button
-          class="back-btn"
-          type="button"
-          data-close-page
-          aria-label="Back"
-        >
-          <i data-lucide="arrow-left"></i>
-        </button>
-
-        <div class="search-box">
-
-          <i data-lucide="search"></i>
-
-          <input
-            id="searchInput"
-            type="search"
-            autocomplete="off"
-            placeholder="Search ARS"
-          >
-
-        </div>
-
-      </div>
-
-
-      <div
-        id="searchHome"
-        class="search-content"
-      ></div>
-
-
-      <div
-        id="searchResults"
-        class="search-results"
-      ></div>
-
-    </section>
-
-
-    <!-- =========================
-         TRENDING
-    ========================== -->
-
-    <section
-      id="trendingPage"
-      class="page overlay-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Trending</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-      <div class="search-content">
-
-        <div class="search-title">
-          What's trending on ARS
-        </div>
-
-        <div class="topic">
-          <b>#ARS</b>
-          <span>Trending</span>
-        </div>
-
-        <div class="topic">
-          <b>#Technology</b>
-          <span>Trending</span>
-        </div>
-
-        <div class="topic">
-          <b>#AI</b>
-          <span>Trending</span>
-        </div>
-
-        <div class="topic">
-          <b>#Lifestyle</b>
-          <span>Trending</span>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         STREAK
-    ========================== -->
-
-    <section
-      id="streakPage"
-      class="page overlay-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Streak</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-
-      <div class="streak-hero">
-
-        <div
-          id="streakFire"
-          class="big-fire"
-        >
-          <i data-lucide="flame"></i>
-        </div>
-
-        <div>
-
-          <strong id="streakNumber">
-            0
-          </strong>
-
-          <span>
-            day streak
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <p id="streakText">
-        Complete today's interaction to keep your streak active.
-      </p>
-
-
-      <div
-        id="weekDots"
-        class="week-dots"
-      ></div>
-
-
-      <button
-        id="streakDone"
-        class="primary-btn"
-        type="button"
-      >
-        Complete today
-      </button>
-
-    </section>
-
-
-    <!-- =========================
-         NOTIFICATIONS
-    ========================== -->
-
-    <section
-      id="notificationsPage"
-      class="page overlay-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Notifications</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-
-      <div class="notification-list">
-
-        <div class="notification">
-
-          <div class="notif-avatar">
-            L
-          </div>
-
-          <p>
-            <b>Lina</b>
-            liked your post
-            <small>2m</small>
-          </p>
-
-        </div>
-
-
-        <div class="notification">
-
-          <div class="notif-avatar">
-            A
-          </div>
-
-          <p>
-            <b>Apple</b>
-            followed you
-            <small>18m</small>
-          </p>
-
-        </div>
-
-
-        <div class="notification">
-
-          <div class="notif-avatar">
-            N
-          </div>
-
-          <p>
-            <b>Noah</b>
-            reposted your post
-            <small>42m</small>
-          </p>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         MESSAGES
-    ========================== -->
-
-    <section
-      id="messagesPage"
-      class="page overlay-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Messages</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-
-      <div class="chat">
-
-        <div class="notif-avatar">
-          L
-        </div>
-
-        <div>
-
-          <b>Lina</b>
-
-          <p>
-            See you on ARS
-          </p>
-
-        </div>
-
-        <small>
-          12m
-        </small>
-
-      </div>
-
-
-      <div class="chat">
-
-        <div class="notif-avatar">
-          N
-        </div>
-
-        <div>
-
-          <b>Noah</b>
-
-          <p>
-            That challenge was crazy.
-          </p>
-
-        </div>
-
-        <small>
-          1h
-        </small>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         PROFILE
-    ========================== -->
-
-    <section
-      id="profilePage"
-      class="page overlay-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Profile</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-
-      <div class="profile-hero">
-
-        <div
-          id="profileAvatar"
-          class="profile-avatar"
-        >
-          A
-        </div>
-
-        <h2 id="profileName">
-          ARS User
-        </h2>
-
-        <p id="profileHandle">
-          @user
-        </p>
-
-      </div>
-
-
-      <div class="profile-stats">
-
-        <div>
-          <b id="profilePostsCount">0</b>
-          <span>Posts</span>
-        </div>
-
-        <div>
-          <b>0</b>
-          <span>Followers</span>
-        </div>
-
-        <div>
-          <b>0</b>
-          <span>Following</span>
-        </div>
-
-      </div>
-
-
-      <button
-        id="logoutBtn"
-        class="secondary-btn"
-        type="button"
-      >
-        Log out
-      </button>
-
-    </section>
-
-
-    <!-- =========================
-         WHEEL
-    ========================== -->
-
-    <section
-      id="wheelPage"
-      class="page overlay-page wheel-page"
-    >
-
-      <div class="panel-head">
-
-        <h2>Daily Wheel</h2>
-
-        <button
-          class="close-btn"
-          type="button"
-          data-close-page
-          aria-label="Close"
-        >
-          <i data-lucide="x"></i>
-        </button>
-
-      </div>
-
-
-      <p class="wheel-sub">
-        Questions · Challenges · Rewards
-      </p>
-
-
-      <div class="wheel-stage">
-
-        <div class="pointer"></div>
-
-        <div
-          id="wheel"
-          class="real-wheel"
-        >
-
-          <div class="slice s1">
-            CHALLENGE
-          </div>
-
-          <div class="slice s2">
-            REWARD
-          </div>
-
-          <div class="slice s3">
-            QUESTION
-          </div>
-
-          <div class="slice s4">
-            BONUS
-          </div>
-
-          <div class="slice s5">
-            REWARD
-          </div>
-
-          <div class="slice s6">
-            CHALLENGE
-          </div>
-
-          <div class="slice s7">
-            QUESTION
-          </div>
-
-          <div class="slice s8">
-            BONUS
-          </div>
-
-          <div class="wheel-center">
-            ΛRS
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="wheel-meta">
-
-        <span id="spinCounter">
-          2
-        </span>
-
-        free tries this week ·
-
-        <b id="planLabel">
-          Free
-        </b>
-
-      </div>
-
-
-      <button
-        id="spinButton"
-        class="primary-btn"
-        type="button"
-      >
-        SPIN THE WHEEL
-      </button>
-
-
-      <div
-        id="challengeResult"
-        class="result-card"
-      >
-        Spin to discover something.
-      </div>
-
-
-      <button
-        id="openStreakFromWheel"
-        class="secondary-btn streak-open-btn"
-        type="button"
-      >
-        Open Streak
-      </button>
-
-    </section>
-
-
-    <!-- =========================
-         STORY VIEWER
-    ========================== -->
-
-    <section
-      id="storyViewer"
-      class="story-viewer"
-      aria-hidden="true"
-    >
-
-      <button
-        id="storyViewerClose"
-        class="story-viewer-close"
-        type="button"
-        aria-label="Close story"
-      >
-        <i data-lucide="x"></i>
-      </button>
-
-
-      <div class="story-viewer-progress">
-        <span></span>
-      </div>
-
-
-      <div
-        id="storyViewerContent"
-        class="story-viewer-content"
-      ></div>
-
-
-      <div
-        id="storyViewerName"
-        class="story-viewer-name"
-      ></div>
-
-    </section>
-
-
-    <!-- =========================
-         CREATE POST
-    ========================== -->
-
-    <section
-      id="createPostModal"
-      class="modal"
-      aria-hidden="true"
-    >
-
-      <div class="modal-card">
-
-        <div class="modal-head">
-
-          <h2>Create Post</h2>
-
-          <button
-            id="closeCreatePost"
-            class="close-btn"
-            type="button"
-            aria-label="Close"
-          >
-            <i data-lucide="x"></i>
-          </button>
-
-        </div>
-
-
-        <textarea
-          id="createPostText"
-          class="create-textarea"
-          maxlength="1000"
-          placeholder="What's happening?"
-        ></textarea>
-
-
-        <input
-          id="createPostImage"
-          class="create-input"
-          type="url"
-          placeholder="Image URL (optional)"
-        >
-
-
-        <button
-          id="publishPost"
-          class="primary-btn"
-          type="button"
-        >
-          Publish
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         COMMENTS
-    ========================== -->
-
-    <section
-      id="commentsModal"
-      class="modal"
-      aria-hidden="true"
-    >
-
-      <div class="modal-card comments-card">
-
-        <div class="modal-head">
-
-          <h2>Comments</h2>
-
-          <button
-            id="closeComments"
-            class="close-btn"
-            type="button"
-            aria-label="Close"
-          >
-            <i data-lucide="x"></i>
-          </button>
-
-        </div>
-
-
-        <div
-          id="commentsList"
-          class="comments-list"
-        ></div>
-
-
-        <div class="comment-compose">
-
-          <input
-            id="commentInput"
-            type="text"
-            maxlength="500"
-            placeholder="Write a comment..."
-          >
-
-          <button
-            id="sendComment"
-            class="comment-send"
-            type="button"
-          >
-            Send
-          </button>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         CREATE
-    ========================== -->
-
-    <button
-      id="createPost"
-      class="floating-plus"
-      type="button"
-      aria-label="Create post"
-    >
+    <button id="createPost" class="create-button" type="button" aria-label="Create">
       <i data-lucide="plus"></i>
     </button>
 
-
-    <!-- =========================
-         BOTTOM NAV
-    ========================== -->
-
     <nav class="bottom-nav">
-
-      <button
-        class="nav-item active"
-        type="button"
-        data-page="homePage"
-      >
-
-        <span class="nav-icon">
-          <i data-lucide="house"></i>
-        </span>
-
-        <small>Home</small>
-
+      <button class="nav-item active" data-page="homePage" type="button">
+        <i data-lucide="house"></i>
+        <span>Home</span>
       </button>
 
-
-      <button
-        class="nav-item"
-        type="button"
-        data-page="searchPage"
-      >
-
-        <span class="nav-icon">
-          <i data-lucide="search"></i>
-        </span>
-
-        <small>Search</small>
-
+      <button class="nav-item" data-page="searchPage" type="button">
+        <i data-lucide="search"></i>
+        <span>Search</span>
       </button>
 
-
-      <button
-        class="nav-item"
-        type="button"
-        data-page="trendingPage"
-      >
-
-        <span class="nav-icon">
-          <i data-lucide="flame"></i>
-        </span>
-
-        <small>Trending</small>
-
+      <button class="nav-item" data-page="trendingPage" type="button">
+        <i data-lucide="flame"></i>
+        <span>Trending</span>
       </button>
 
-
-      <button
-        class="nav-item"
-        type="button"
-        data-page="notificationsPage"
-      >
-
-        <span class="nav-icon has-dot">
-
-          <i data-lucide="bell"></i>
-
-          <span class="dot"></span>
-
-        </span>
-
-        <small>Notifications</small>
-
+      <button class="nav-item has-dot" data-page="notificationsPage" type="button">
+        <i data-lucide="bell"></i>
+        <span>Notifications</span>
       </button>
 
-
-      <button
-        class="nav-item"
-        type="button"
-        data-page="messagesPage"
-      >
-
-        <span class="nav-icon">
-          <i data-lucide="mail"></i>
-        </span>
-
-        <small>Messages</small>
-
+      <button class="nav-item" data-page="messagesPage" type="button">
+        <i data-lucide="mail"></i>
+        <span>Messages</span>
       </button>
-
     </nav>
 
   </div>
 
+  <!-- Story viewer -->
+  <div class="modal" id="storyViewer">
+    <div class="story-viewer-card">
+      <button class="modal-close" id="storyViewerClose" type="button">
+        <i data-lucide="x"></i>
+      </button>
 
-  <!-- =========================
-       GLOBAL UI
-  ========================== -->
+      <div class="story-progress">
+        <span></span>
+      </div>
 
-  <div
-    id="toast"
-    class="toast"
-    aria-live="polite"
-  ></div>
+      <div class="story-viewer-head">
+        <div class="avatar story-viewer-avatar" id="storyViewerAvatar"></div>
+        <div>
+          <strong id="storyViewerName"></strong>
+          <small id="storyViewerTime"></small>
+        </div>
+      </div>
 
+      <div class="story-viewer-content" id="storyViewerContent"></div>
+    </div>
+  </div>
 
-  <div
-    id="postMenuBackdrop"
-    class="backdrop"
-  ></div>
+  <!-- Create post -->
+  <div class="modal" id="createPostModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Create Post</h2>
+        <button class="modal-close" id="createPostClose" type="button">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
 
+      <textarea
+        id="createPostText"
+        class="create-textarea"
+        maxlength="5000"
+        placeholder="What's happening?"
+      ></textarea>
+
+      <input
+        id="createPostImage"
+        class="create-input"
+        type="url"
+        placeholder="Image URL (optional)"
+      >
+
+      <div class="modal-actions">
+        <button id="createStoryOpen" class="secondary-button" type="button">
+          <i data-lucide="circle-plus"></i>
+          Story
+        </button>
+
+        <button id="publishPost" class="primary-button" type="button">
+          Post
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create story -->
+  <div class="modal" id="createStoryModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Create Story</h2>
+        <button class="modal-close" id="createStoryClose" type="button">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <textarea
+        id="createStoryText"
+        class="create-textarea"
+        maxlength="1000"
+        placeholder="Write something for your story..."
+      ></textarea>
+
+      <input
+        id="createStoryImage"
+        class="create-input"
+        type="url"
+        placeholder="Image URL (optional)"
+      >
+
+      <div class="modal-actions">
+        <button id="publishStory" class="primary-button" type="button">
+          Add Story
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments -->
+  <div class="modal" id="commentsModal">
+    <div class="modal-card comments-card">
+      <div class="modal-header">
+        <h2>Comments</h2>
+        <button class="modal-close" id="commentsClose" type="button">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div id="commentsList" class="comments-list"></div>
+
+      <div class="comment-compose">
+        <input id="commentInput" class="create-input" type="text" maxlength="1000" placeholder="Write a comment...">
+        <button id="sendComment" class="comment-send" type="button">
+          <i data-lucide="send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="postMenuBackdrop"></div>
+  <div class="toast" id="toast"></div>
 
   <script src="home.js"></script>
-
 </body>
-          </html>
+        </html>
