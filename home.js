@@ -1,47 +1,40 @@
 const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
     }
-  );
+  }
+);
 
-const KEYS = {
-  user: "ars_user",
-  letter: "ars_letter",
-  letterColor: "ars_letter_color",
-  bg: "ars_background",
-  streak: "ars_streak_state",
-  wheel: "ars_wheel_week",
-  plan: "ars_plan"
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  user: null,
+  posts: [],
+  stories: [],
+  comments: new Map(),
+  searchQuery: "",
+  postImageData: null,
+  storyImageData: null,
+  currentStoryGroup: [],
+  currentStoryIndex: 0,
+  currentPostId: null,
+  wheelRotation: 0,
+  initialized: false,
+  loading: false
 };
 
-let currentUser = {};
-let posts = [];
-let stories = [];
-let currentPage = "homePage";
-let currentCommentPost = null;
-let currentStory = null;
-let wheelRotation = 0;
-let initialized = false;
-
-const $ = id =>
-  document.getElementById(id);
-
-const esc = value =>
+const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
-    char =>
+    (char) =>
       ({
         "&": "&amp;",
         "<": "&lt;",
@@ -51,8 +44,8 @@ const esc = value =>
       })[char]
   );
 
-const fmt = number => {
-  number = Number(number || 0);
+const formatCount = (value) => {
+  const number = Number(value || 0);
 
   if (number >= 1000000) {
     return `${(number / 1000000)
@@ -69,16 +62,22 @@ const fmt = number => {
   return String(number);
 };
 
-const timeAgo = iso => {
+const timeAgo = (value) => {
+  if (!value) {
+    return "";
+  }
+
   const seconds = Math.max(
     0,
-    (Date.now() -
-      new Date(iso).getTime()) /
-      1000
+    Math.floor(
+      (Date.now() -
+        new Date(value).getTime()) /
+        1000
+    )
   );
 
   if (seconds < 60) {
-    return `${Math.floor(seconds)}s`;
+    return `${seconds}s`;
   }
 
   if (seconds < 3600) {
@@ -92,19 +91,10 @@ const timeAgo = iso => {
   return `${Math.floor(seconds / 86400)}d`;
 };
 
-const extractHashtags = text =>
-  [
-    ...String(text || "").matchAll(
-      /(^|\s)#([A-Za-z0-9_]+)/g
-    )
-  ].map(match =>
-    match[2].toLowerCase()
-  );
-
 const refreshIcons = () =>
   window.lucide?.createIcons?.();
 
-function toast(message) {
+function showToast(message) {
   const element = $("toast");
 
   if (!element) {
@@ -112,137 +102,147 @@ function toast(message) {
   }
 
   element.textContent = message;
-
   element.classList.add("show");
 
   clearTimeout(
-    window.__arsToast
+    window.__arsToastTimer
   );
 
-  window.__arsToast =
-    setTimeout(
-      () =>
-        element.classList.remove(
-          "show"
-        ),
-      2200
-    );
+  window.__arsToastTimer = setTimeout(
+    () =>
+      element.classList.remove(
+        "show"
+      ),
+    2200
+  );
 }
 
-function getUser() {
-  return currentUser;
+function localProfileSettings() {
+  return {
+    letter: (
+      localStorage.getItem(
+        "ars_letter"
+      ) || "R"
+    )
+      .slice(0, 1)
+      .toUpperCase(),
+
+    letterColor:
+      localStorage.getItem(
+        "ars_letter_color"
+      ) || "#8d2cff"
+  };
 }
 
 function avatarMarkup(
   user = {},
-  cls = "avatar"
+  className = "avatar"
 ) {
-  if (user.avatar === "wheel") {
-    return `
-      <div class="${cls} wheel-avatar">
-        <i data-lucide="orbit"></i>
-      </div>
-    `;
-  }
+  const settings =
+    localProfileSettings();
+
+  const avatar =
+    typeof user.avatar === "string"
+      ? user.avatar
+      : "";
 
   const image =
-    typeof user.avatar === "string" &&
-    /^(https?:|data:image)/.test(
-      user.avatar
+    /^(https?:|data:image|blob:)/i.test(
+      avatar
     );
-
-  const letter =
-    String(
-      user.letter ||
-        localStorage.getItem(
-          KEYS.letter
-        ) ||
-        "R"
-    )
-      .slice(0, 1)
-      .toUpperCase();
-
-  const color =
-    user.letterColor ||
-    localStorage.getItem(
-      KEYS.letterColor
-    ) ||
-    "#8d2cff";
 
   if (image) {
     return `
-      <div class="${cls}">
+      <div class="${className}">
         <img
-          src="${esc(user.avatar)}"
+          src="${escapeHtml(
+            avatar
+          )}"
           alt=""
         >
       </div>
     `;
   }
 
+  const letter = String(
+    user.letter ||
+      settings.letter ||
+      user.display_name ||
+      "R"
+  )
+    .slice(0, 1)
+    .toUpperCase();
+
+  const color =
+    user.letterColor ||
+    user.letter_color ||
+    settings.letterColor;
+
   return `
     <div
-      class="${cls}"
-      style="--avatar:${esc(color)}"
+      class="${className}"
+      style="--avatar:${escapeHtml(
+        color
+      )}"
     >
-      <span>${esc(letter)}</span>
+      <span>
+        ${escapeHtml(letter)}
+      </span>
     </div>
   `;
 }
 
-function richText(text) {
-  const safe = esc(text);
+function normalizeUser(
+  user = {}
+) {
+  const settings =
+    localProfileSettings();
 
-  return safe.replace(
-    /(^|\s)(#[A-Za-z0-9_]+)/g,
-    '$1<button class="hashtag" data-hashtag="$2">$2</button>'
-  );
-}
-
-function normalizeProfile(profile) {
   return {
-    ...profile,
-
-    id: profile.id || "",
-
-    display_name:
-      profile.display_name ||
-      "You",
+    id: user.id || "",
 
     username:
-      profile.username ||
-      "you",
+      user.username || "you",
+
+    display_name:
+      user.display_name || "You",
+
+    email:
+      user.email || "",
+
+    bio:
+      user.bio || "",
 
     avatar:
-      profile.avatar ||
-      "",
+      user.avatar || "",
 
     verified:
-      Boolean(profile.verified),
+      Boolean(user.verified),
 
     plan:
-      profile.plan ||
-      "free",
+      user.plan || "free",
+
+    streak:
+      Number(user.streak || 0),
+
+    xp:
+      Number(user.xp || 0),
 
     letter:
-      localStorage.getItem(
-        KEYS.letter
-      ) ||
-      profile.letter ||
-      "R",
+      settings.letter,
 
     letterColor:
-      localStorage.getItem(
-        KEYS.letterColor
-      ) ||
-      profile.letter_color ||
-      "#8d2cff"
+      settings.letterColor
   };
 }
 
-function normalizePost(row) {
+function normalizePost(
+  row = {}
+) {
   const user =
-    row.users || {};
+    row.users ||
+    row.user ||
+    {};
 
   return {
     id: row.id,
@@ -250,57 +250,40 @@ function normalizePost(row) {
     user_id:
       row.user_id,
 
-    display_name:
-      user.display_name ||
-      "You",
-
-    username:
-      user.username ||
-      "you",
-
-    avatar:
-      user.avatar ||
-      "",
-
-    verified:
-      Boolean(user.verified),
-
-    text:
-      row.content ||
-      "",
+    content:
+      row.content || "",
 
     image:
-      row.image ||
-      "",
+      row.image || "",
 
     created_at:
       row.created_at,
 
-    likes:
+    likes_count:
       Number(
-        row.likes ??
-          row.likes_count ??
+        row.likes_count ||
+          row.likes ||
           0
       ),
 
-    comments:
+    comments_count:
       Number(
-        row.comments ??
-          row.comments_count ??
+        row.comments_count ||
+          row.comments ||
           0
       ),
 
-    reposts:
+    reposts_count:
       Number(
-        row.reposts ??
-          row.reposts_count ??
+        row.reposts_count ||
+          row.reposts ||
           0
       ),
 
-    views:
+    views_count:
       Number(
-        row.views ??
-          row.views_count ??
+        row.views_count ||
+          row.views ||
           0
       ),
 
@@ -313,110 +296,325 @@ function normalizePost(row) {
     bookmarked:
       Boolean(row.bookmarked),
 
-    comments_data:
-      row.comments_data || [],
-
-    hashtags:
-      extractHashtags(
-        row.content || ""
-      )
+    user:
+      normalizeUser(user)
   };
 }
 
-function normalizeStory(row) {
-  const user =
-    row.users || {};
-
+function normalizeStory(
+  row = {}
+) {
   return {
     id: row.id,
 
     user_id:
       row.user_id,
 
-    display_name:
-      user.display_name ||
-      "You",
-
-    username:
-      user.username ||
-      "you",
-
-    avatar:
-      user.avatar ||
-      "",
-
-    verified:
-      Boolean(user.verified),
-
     image:
-      row.image ||
-      "",
+      row.image || "",
 
     created_at:
       row.created_at,
 
     expires_at:
-      row.expires_at
+      row.expires_at,
+
+    viewers_count:
+      Number(
+        row.viewers_count || 0
+      ),
+
+    user:
+      normalizeUser(
+        row.users ||
+          row.user ||
+          {}
+      )
   };
 }
 
-async function loadData() {
+function hashtagsFromText(
+  text
+) {
+  return [
+    ...String(text || "").matchAll(
+      /(^|\s)#([A-Za-z0-9_]+)/g
+    )
+  ].map(
+    (match) =>
+      match[2].toLowerCase()
+  );
+}
+
+function renderRichText(
+  text
+) {
+  const safe =
+    escapeHtml(text);
+
+  return safe.replace(
+    /(^|\s)(#[A-Za-z0-9_]+)/g,
+    '$1<button type="button" class="hashtag" data-hashtag="$2">$2</button>'
+  );
+}
+
+async function requireSession() {
   const {
-    data: { session },
-    error: sessionError
+    data,
+    error
   } =
     await supabaseClient.auth.getSession();
 
   if (
-    sessionError ||
-    !session?.user
+    error ||
+    !data.session?.user
   ) {
     window.location.replace(
       "index.html"
     );
 
-    return false;
+    return null;
   }
 
-  const userId =
-    session.user.id;
+  return data.session.user;
+}
 
-  const [
-    profileResult,
-    postsResult,
-    storiesResult,
-    likesResult,
-    repostsResult,
-    bookmarksResult,
-    commentsResult,
-    allLikesResult,
-    allRepostsResult
-  ] = await Promise.all([
-    supabaseClient
+async function loadCurrentUser() {
+  const authUser =
+    await requireSession();
+
+  if (!authUser) {
+    return null;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
       .from("users")
-      .select(
-        "id,username,display_name,email,bio,avatar,cover,verified,plan,streak,xp"
-      )
-      .eq("id", userId)
-      .maybeSingle(),
+      .select("*")
+      .eq("id", authUser.id)
+      .maybeSingle();
 
-    supabaseClient
+  if (error) {
+    throw error;
+  }
+
+  const user =
+    normalizeUser(
+      data || {
+        id: authUser.id,
+
+        email:
+          authUser.email || "",
+
+        username:
+          authUser
+            .user_metadata
+            ?.username ||
+          "you",
+
+        display_name:
+          authUser
+            .user_metadata
+            ?.display_name ||
+          "You"
+      }
+    );
+
+  localStorage.setItem(
+    "ars_user",
+    JSON.stringify(user)
+  );
+
+  localStorage.setItem(
+    "ars_plan",
+    user.plan
+  );
+
+  return user;
+}
+
+async function loadPosts() {
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
       .from("posts")
-      .select(
-        "id,created_at,user_id,content,image,likes_count,comments_count,reposts_count,views_count,users:user_id(id,username,display_name,avatar,verified)"
-      )
+      .select(`
+        id,
+        created_at,
+        user_id,
+        content,
+        image,
+        likes_count,
+        comments_count,
+        reposts_count,
+        views_count,
+        users:user_id(
+          id,
+          username,
+          display_name,
+          avatar,
+          verified,
+          plan
+        )
+      `)
       .order(
         "created_at",
         {
           ascending: false
         }
-      ),
+      );
 
-    supabaseClient
-      .from("stories")
-      .select(
-        "id,created_at,user_id,image,viewers_count,expires_at,users:user_id(id,username,display_name,avatar,verified)"
+  if (error) {
+    throw error;
+  }
+
+  state.posts =
+    (data || []).map(
+      normalizePost
+    );
+
+  await hydratePostActions();
+}
+
+async function hydratePostActions() {
+  if (
+    !state.user?.id ||
+    !state.posts.length
+  ) {
+    return;
+  }
+
+  const ids =
+    state.posts.map(
+      (post) => post.id
+    );
+
+  const [
+    likes,
+    reposts,
+    bookmarks
+  ] =
+    await Promise.all([
+      supabaseClient
+        .from("likes")
+        .select("post_id")
+        .eq(
+          "user_id",
+          state.user.id
+        )
+        .in(
+          "post_id",
+          ids
+        ),
+
+      supabaseClient
+        .from("reposts")
+        .select("post_id")
+        .eq(
+          "user_id",
+          state.user.id
+        )
+        .in(
+          "post_id",
+          ids
+        ),
+
+      supabaseClient
+        .from("bookmarks")
+        .select("post_id")
+        .eq(
+          "user_id",
+          state.user.id
+        )
+        .in(
+          "post_id",
+          ids
+        )
+    ]);
+
+  if (likes.error) {
+    throw likes.error;
+  }
+
+  if (reposts.error) {
+    throw reposts.error;
+  }
+
+  if (bookmarks.error) {
+    throw bookmarks.error;
+  }
+
+  const liked =
+    new Set(
+      (likes.data || []).map(
+        (row) =>
+          String(row.post_id)
       )
+    );
+
+  const reposted =
+    new Set(
+      (reposts.data || []).map(
+        (row) =>
+          String(row.post_id)
+      )
+    );
+
+  const bookmarked =
+    new Set(
+      (bookmarks.data || []).map(
+        (row) =>
+          String(row.post_id)
+      )
+    );
+    state.posts.forEach(
+    (post) => {
+      post.liked =
+        liked.has(
+          String(post.id)
+        );
+
+      post.reposted =
+        reposted.has(
+          String(post.id)
+        );
+
+      post.bookmarked =
+        bookmarked.has(
+          String(post.id)
+        );
+    }
+  );
+}
+
+async function loadStories() {
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("stories")
+      .select(`
+        id,
+        created_at,
+        user_id,
+        image,
+        viewers_count,
+        expires_at,
+        users:user_id(
+          id,
+          username,
+          display_name,
+          avatar,
+          verified,
+          plan
+        )
+      `)
       .or(
         `expires_at.is.null,expires_at.gt.${new Date().toISOString()}`
       )
@@ -425,439 +623,224 @@ async function loadData() {
         {
           ascending: false
         }
-      ),
+      );
 
-    supabaseClient
-      .from("likes")
-      .select("post_id")
-      .eq(
-        "user_id",
-        userId
-      ),
-
-    supabaseClient
-      .from("reposts")
-      .select("post_id")
-      .eq(
-        "user_id",
-        userId
-      ),
-
-    supabaseClient
-      .from("bookmarks")
-      .select("post_id")
-      .eq(
-        "user_id",
-        userId
-      ),
-
-    supabaseClient
-      .from("comments")
-      .select(
-        "id,created_at,post_id,user_id,content,users:user_id(id,username,display_name,avatar,verified)"
-      )
-      .order(
-        "created_at",
-        {
-          ascending: true
-        }
-      ),
-
-    supabaseClient
-      .from("likes")
-      .select("post_id"),
-
-    supabaseClient
-      .from("reposts")
-      .select("post_id")
-  ]);
-
-  const firstError = [
-    profileResult,
-    postsResult,
-    storiesResult,
-    likesResult,
-    repostsResult,
-    bookmarksResult,
-    commentsResult
-  ].find(
-    result => result.error
-  );
-
-  if (firstError) {
-    console.error(
-      firstError.error
-    );
-
-    toast(
-      firstError.error.message ||
-        "Unable to load ARS data."
-    );
-
-    return false;
+  if (error) {
+    throw error;
   }
 
-  currentUser =
-    normalizeProfile(
-      profileResult.data || {
-        id: userId,
-        email:
-          session.user.email || "",
-        display_name:
-          session.user.user_metadata
-            ?.display_name ||
-          "You",
-        username:
-          session.user.user_metadata
-            ?.username ||
-          "you"
-      }
-    );
-
-  localStorage.setItem(
-    KEYS.user,
-    JSON.stringify(
-      currentUser
-    )
-  );
-
-  localStorage.setItem(
-    KEYS.plan,
-    currentUser.plan ||
-      "free"
-  );
-
-  const likedIds =
-    new Set(
-      (likesResult.data || [])
-        .map(row =>
-          String(row.post_id)
-        )
-    );
-
-  const repostedIds =
-    new Set(
-      (repostsResult.data || [])
-        .map(row =>
-          String(row.post_id)
-        )
-    );
-
-  const bookmarkedIds =
-    new Set(
-      (bookmarksResult.data || [])
-        .map(row =>
-          String(row.post_id)
-        )
-    );
-
-  const likeCounts =
-    new Map();
-
-  const repostCounts =
-    new Map();
-
-  (
-    allLikesResult.data ||
-    []
-  ).forEach(row => {
-    const key =
-      String(row.post_id);
-
-    likeCounts.set(
-      key,
-      (likeCounts.get(key) || 0) +
-        1
-    );
-  });
-
-  (
-    allRepostsResult.data ||
-    []
-  ).forEach(row => {
-    const key =
-      String(row.post_id);
-
-    repostCounts.set(
-      key,
-      (repostCounts.get(key) || 0) +
-        1
-    );
-  });
-
-  const commentsByPost =
-    new Map();
-
-  (
-    commentsResult.data ||
-    []
-  ).forEach(comment => {
-    const user =
-      comment.users || {};
-
-    const item = {
-      id: comment.id,
-
-      user_id:
-        comment.user_id,
-
-      display_name:
-        user.display_name ||
-        "User",
-
-      username:
-        user.username ||
-        "",
-
-      avatar:
-        user.avatar ||
-        "",
-
-      letter:
-        (
-          user.display_name ||
-          "U"
-        )
-          .slice(0, 1)
-          .toUpperCase(),
-
-      letter_color:
-        "#9b38ff",
-
-      text:
-        comment.content ||
-        "",
-
-      created_at:
-        comment.created_at
-    };
-
-    const key =
-      String(
-        comment.post_id
-      );
-
-    if (
-      !commentsByPost.has(key)
-    ) {
-      commentsByPost.set(
-        key,
-        []
-      );
-    }
-
-    commentsByPost
-      .get(key)
-      .push(item);
-  });
-
-  posts =
-    (
-      postsResult.data ||
-      []
-    ).map(row =>
-      normalizePost({
-        ...row,
-
-        likes:
-          likeCounts.get(
-            String(row.id)
-          ) ??
-          Number(
-            row.likes_count || 0
-          ),
-
-        comments:
-          commentsByPost.get(
-            String(row.id)
-          )?.length ??
-          Number(
-            row.comments_count || 0
-          ),
-
-        reposts:
-          repostCounts.get(
-            String(row.id)
-          ) ??
-          Number(
-            row.reposts_count || 0
-          ),
-
-        views:
-          Number(
-            row.views_count || 0
-          ),
-
-        liked:
-          likedIds.has(
-            String(row.id)
-          ),
-
-        reposted:
-          repostedIds.has(
-            String(row.id)
-          ),
-
-        bookmarked:
-          bookmarkedIds.has(
-            String(row.id)
-          ),
-
-        comments_data:
-          commentsByPost.get(
-            String(row.id)
-          ) || []
-      })
-    );
-
-  stories =
-    (
-      storiesResult.data ||
-      []
-    ).map(
+  state.stories =
+    (data || []).map(
       normalizeStory
     );
-
-  return true;
 }
 
-function renderTopAvatar() {
-  $("profileButton").innerHTML =
-    avatarMarkup(
-      getUser(),
-      "avatar"
+async function loadAll() {
+  state.loading = true;
+
+  try {
+    state.user =
+      await loadCurrentUser();
+
+    if (!state.user) {
+      return;
+    }
+
+    await Promise.all([
+      loadPosts(),
+      loadStories()
+    ]);
+
+    renderAll();
+    updateUserUI();
+
+  } catch (error) {
+    console.error(
+      "ARS load error:",
+      error
     );
+
+    showToast(
+      error.message ||
+        "Unable to load ARS."
+    );
+
+  } finally {
+    state.loading = false;
+  }
+}
+
+function updateUserUI() {
+  const avatar =
+    $("profileButton");
+
+  if (avatar) {
+    avatar.innerHTML =
+      avatarMarkup(
+        state.user,
+        "avatar"
+      );
+  }
+
+  const composeAvatar =
+    $("composeAvatar");
+
+  if (composeAvatar) {
+    composeAvatar.innerHTML =
+      avatarMarkup(
+        state.user,
+        "avatar"
+      );
+  }
 
   refreshIcons();
 }
 
 function renderStories() {
-  const me =
-    getUser();
+  const container =
+    $("stories");
 
-  const mine =
-    stories.filter(
-      story =>
-        String(
-          story.user_id
-        ) ===
-        String(me.id)
-    );
+  if (!container) {
+    return;
+  }
 
-  const people = [];
+  const groups =
+    new Map();
 
-  people.push({
-    story:
-      mine[0] || {
-        ...me,
-        id: me.id,
-        image: ""
-      },
-    mine: true
-  });
+  state.stories.forEach(
+    (story) => {
+      if (!story.user_id) {
+        return;
+      }
 
-  const seen =
-    new Set([
-      String(me.id)
-    ]);
-
-  stories.forEach(
-    story => {
       if (
-        !seen.has(
-          String(
-            story.user_id
-          )
+        !groups.has(
+          story.user_id
         )
       ) {
-        people.push({
-          story,
-          mine: false
-        });
-
-        seen.add(
-          String(
-            story.user_id
-          )
+        groups.set(
+          story.user_id,
+          []
         );
       }
+
+      groups
+        .get(story.user_id)
+        .push(story);
     }
   );
 
-  $("stories").innerHTML =
-    people
+  if (
+    state.user?.id &&
+    !groups.has(
+      state.user.id
+    )
+  ) {
+    groups.set(
+      state.user.id,
+      []
+    );
+  }
+
+  const entries =
+    [...groups.entries()];
+
+  entries.sort(
+    ([a], [b]) =>
+      a === state.user?.id
+        ? -1
+        : b === state.user?.id
+          ? 1
+          : 0
+  );
+
+  container.innerHTML =
+    entries
       .map(
-        ({
-          story,
-          mine
-        }) => `
-          <button
-            class="story-item"
-            data-story-group="${esc(
-              story.user_id
-            )}"
-          >
+        ([userId, stories]) => {
+          const user =
+            stories[0]?.user ||
+            (
+              userId ===
+              state.user?.id
+                ? state.user
+                : {}
+            );
 
-            ${avatarMarkup(
-              story,
-              "story-avatar"
-            )}
+          const own =
+            String(userId) ===
+            String(
+              state.user?.id
+            );
 
-            ${
-              mine
-                ? `
-                  <span class="story-plus">
-                    <i data-lucide="plus"></i>
-                  </span>
-                `
-                : ""
-            }
+          return `
+            <button
+              type="button"
+              class="story-item"
+              data-story-user="${escapeHtml(
+                userId
+              )}"
+            >
 
-            <span class="story-name">
-              ${esc(
-                mine
-                  ? "You"
-                  : story.display_name
+              ${avatarMarkup(
+                user,
+                "story-avatar"
               )}
-            </span>
 
-          </button>
-        `
+              ${
+                own
+                  ? `
+                    <span class="story-plus">
+                      <i data-lucide="plus"></i>
+                    </span>
+                  `
+                  : ""
+              }
+
+              <span class="story-name">
+                ${escapeHtml(
+                  own
+                    ? "You"
+                    : user.display_name ||
+                        user.username ||
+                        "User"
+                )}
+              </span>
+
+            </button>
+          `;
+        }
       )
       .join("");
 
   refreshIcons();
 }
 
-function postAvatar(post) {
-  return avatarMarkup(
-    post,
-    "post-avatar"
-  );
-}
-
-function postCardMarkup(post) {
+function postMarkup(post) {
   return `
     <article
       class="post-card"
-      data-post-id="${esc(
+      data-post-id="${escapeHtml(
         post.id
       )}"
     >
 
       <div class="post-head">
 
-        ${postAvatar(post)}
+        ${avatarMarkup(
+          post.user,
+          "post-avatar"
+        )}
 
         <div class="post-user">
 
           <strong>
-            ${esc(
-              post.display_name
+            ${escapeHtml(
+              post.user.display_name
             )}
 
             ${
-              post.verified
+              post.user.verified
                 ? `
                   <span class="verified">
                     <i data-lucide="badge-check"></i>
@@ -869,8 +852,8 @@ function postCardMarkup(post) {
           </strong>
 
           <span>
-            @${esc(
-              post.username
+            @${escapeHtml(
+              post.user.username
             )}
             ·
             ${timeAgo(
@@ -881,8 +864,9 @@ function postCardMarkup(post) {
         </div>
 
         <button
+          type="button"
           class="more"
-          data-menu="${esc(
+          data-post-menu="${escapeHtml(
             post.id
           )}"
         >
@@ -891,18 +875,24 @@ function postCardMarkup(post) {
 
       </div>
 
-      <div class="post-text">
-        ${richText(
-          post.text
-        )}
-      </div>
+      ${
+        post.content
+          ? `
+            <div class="post-text">
+              ${renderRichText(
+                post.content
+              )}
+            </div>
+          `
+          : ""
+      }
 
       ${
         post.image
           ? `
             <img
               class="post-image"
-              src="${esc(
+              src="${escapeHtml(
                 post.image
               )}"
               alt=""
@@ -915,65 +905,69 @@ function postCardMarkup(post) {
       <div class="actions">
 
         <button
+          type="button"
           class="${
             post.liked
               ? "liked"
               : ""
           }"
           data-action="like"
-          data-id="${esc(
+          data-id="${escapeHtml(
             post.id
           )}"
         >
           <i data-lucide="heart"></i>
           <span>
-            ${fmt(
-              post.likes
+            ${formatCount(
+              post.likes_count
             )}
           </span>
         </button>
 
         <button
+          type="button"
           data-action="comment"
-          data-id="${esc(
+          data-id="${escapeHtml(
             post.id
           )}"
         >
           <i data-lucide="message-circle"></i>
           <span>
-            ${fmt(
-              post.comments
+            ${formatCount(
+              post.comments_count
             )}
           </span>
         </button>
 
         <button
+          type="button"
           class="${
             post.reposted
               ? "reposted"
               : ""
           }"
           data-action="repost"
-          data-id="${esc(
+          data-id="${escapeHtml(
             post.id
           )}"
         >
           <i data-lucide="repeat-2"></i>
           <span>
-            ${fmt(
-              post.reposts
+            ${formatCount(
+              post.reposts_count
             )}
           </span>
         </button>
 
         <button
+          type="button"
           class="${
             post.bookmarked
               ? "bookmarked"
               : ""
           }"
           data-action="bookmark"
-          data-id="${esc(
+          data-id="${escapeHtml(
             post.id
           )}"
         >
@@ -981,16 +975,17 @@ function postCardMarkup(post) {
         </button>
 
         <button
+          type="button"
           class="views"
           data-action="view"
-          data-id="${esc(
+          data-id="${escapeHtml(
             post.id
           )}"
         >
           <i data-lucide="eye"></i>
           <span>
-            ${fmt(
-              post.views
+            ${formatCount(
+              post.views_count
             )}
           </span>
         </button>
@@ -1002,9 +997,13 @@ function postCardMarkup(post) {
 }
 
 function renderPosts(
-  list = posts,
+  list = state.posts,
   target = $("feed")
 ) {
+  if (!target) {
+    return;
+  }
+
   if (!list.length) {
     target.innerHTML = `
       <div class="empty-feed">
@@ -1019,77 +1018,981 @@ function renderPosts(
 
       </div>
     `;
-
-    refreshIcons();
-
-    return;
+  } else {
+    target.innerHTML =
+      list
+        .map(postMarkup)
+        .join("");
   }
-
-  target.innerHTML =
-    list
-      .map(
-        postCardMarkup
-      )
-      .join("");
 
   refreshIcons();
 }
 
-function findPost(id) {
-  return posts.find(
-    post =>
-      String(post.id) ===
-      String(id)
+function renderProfile() {
+  const target =
+    $("profileHero");
+
+  if (
+    !target ||
+    !state.user
+  ) {
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="profile-card">
+
+      ${avatarMarkup(
+        state.user,
+        "profile-avatar"
+      )}
+
+      <div>
+
+        <h1>
+          ${escapeHtml(
+            state.user.display_name
+          )}
+        </h1>
+
+        <p>
+          @${escapeHtml(
+            state.user.username
+          )}
+        </p>
+
+        ${
+          state.user.bio
+            ? `
+              <span>
+                ${escapeHtml(
+                  state.user.bio
+                )}
+              </span>
+            `
+            : ""
+        }
+
+      </div>
+
+    </div>
+  `;
+
+  renderPosts(
+    state.posts.filter(
+      (post) =>
+        String(
+          post.user_id
+        ) ===
+        String(
+          state.user.id
+        )
+    ),
+    $("profilePostsList")
   );
 }
 
-async function postAction(
-  action,
+function renderTrending() {
+  const target =
+    $("trendingList");
+
+  if (!target) {
+    return;
+  }
+
+  const counts =
+    new Map();
+
+  state.posts.forEach(
+    (post) => {
+      hashtagsFromText(
+        post.content
+      ).forEach(
+        (tag) => {
+          counts.set(
+            tag,
+            (counts.get(tag) ||
+              0) + 1
+          );
+        }
+      );
+    }
+  );
+
+  const rows =
+    [...counts.entries()]
+      .sort(
+        (a, b) =>
+          b[1] - a[1]
+      )
+      .slice(0, 20);
+
+  target.innerHTML =
+    rows.length
+      ? rows
+          .map(
+            ([tag, count]) => `
+              <button
+                type="button"
+                class="trend"
+                data-trending-tag="${escapeHtml(
+                  tag
+                )}"
+              >
+                <b>#</b>
+
+                <div>
+                  <strong>
+                    #${escapeHtml(
+                      tag
+                    )}
+                  </strong>
+
+                  <span>
+                    ${count} posts
+                  </span>
+                </div>
+
+                <i data-lucide="chevron-right"></i>
+              </button>
+            `
+          )
+          .join("")
+      : `
+        <div class="empty-state compact">
+
+          <i data-lucide="flame"></i>
+
+          <h2>No trends yet</h2>
+
+          <p>
+            Hashtags will appear here when people start posting.
+          </p>
+
+        </div>
+      `;
+
+  refreshIcons();
+}
+
+function performSearch(
+  query
+) {
+  const home =
+    $("searchHome");
+
+  const results =
+    $("searchResults");
+
+  if (
+    !home ||
+    !results
+  ) {
+    return;
+  }
+
+  const value =
+    String(
+      query || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (!value) {
+    home.style.display =
+      "grid";
+
+    results.innerHTML =
+      "";
+
+    return;
+  }
+
+  home.style.display =
+    "none";
+
+  const people =
+    state.posts
+      .map(
+        (post) =>
+          post.user
+      )
+      .filter(
+        (user, index, array) =>
+          array.findIndex(
+            (item) =>
+              item.id ===
+              user.id
+          ) === index
+      )
+      .filter(
+        (user) =>
+          `${user.display_name} ${user.username}`
+            .toLowerCase()
+            .includes(value)
+      );
+
+  const matchingPosts =
+    state.posts.filter(
+      (post) =>
+        `${post.content} ${post.user.display_name} ${post.user.username}`
+          .toLowerCase()
+          .includes(value)
+    );
+
+  const matchingTags =
+    state.posts.filter(
+      (post) =>
+        hashtagsFromText(
+          post.content
+        ).some(
+          (tag) =>
+            `#${tag}`.includes(
+              value
+            )
+        )
+    );
+
+  const html = [];
+
+  people
+    .slice(0, 10)
+    .forEach(
+      (user) => {
+        html.push(`
+          <button
+            type="button"
+            class="search-result"
+            data-search-user="${escapeHtml(
+              user.id
+            )}"
+          >
+
+            ${avatarMarkup(
+              user,
+              "search-avatar"
+            )}
+
+            <div>
+
+              <strong>
+                ${escapeHtml(
+                  user.display_name
+                )}
+              </strong>
+
+              <span>
+                @${escapeHtml(
+                  user.username
+                )}
+              </span>
+
+            </div>
+
+          </button>
+        `);
+      }
+    );
+
+  matchingPosts
+    .slice(0, 10)
+    .forEach(
+      (post) => {
+        html.push(`
+          <button
+            type="button"
+            class="search-result"
+            data-search-post="${escapeHtml(
+              post.id
+            )}"
+          >
+
+            ${avatarMarkup(
+              post.user,
+              "search-avatar"
+            )}
+
+            <div>
+
+              <strong>
+                ${escapeHtml(
+                  post.user.display_name
+                )}
+              </strong>
+
+              <p>
+                ${escapeHtml(
+                  post.content.slice(
+                    0,
+                    140
+                  )
+                )}
+              </p>
+
+            </div>
+
+          </button>
+        `);
+      }
+    );
+
+  matchingTags
+    .slice(0, 10)
+    .forEach(
+      (post) => {
+        hashtagsFromText(
+          post.content
+        )
+          .filter(
+            (tag) =>
+              `#${tag}`.includes(
+                value
+              )
+          )
+          .forEach(
+            (tag) => {
+              html.push(`
+                <button
+                  type="button"
+                  class="search-result"
+                  data-search-tag="${escapeHtml(
+                    tag
+                  )}"
+                >
+                  <div>
+
+                    <strong>
+                      #${escapeHtml(
+                        tag
+                      )}
+                    </strong>
+
+                    <span>
+                      Hashtag
+                    </span>
+
+                  </div>
+                </button>
+              `);
+            }
+          );
+      }
+    );
+
+  results.innerHTML =
+    html.join("") ||
+    `
+      <div class="empty-state">
+
+        <i data-lucide="search"></i>
+
+        <h2>No results</h2>
+
+        <p>
+          Try another search.
+        </p>
+
+      </div>
+    `;
+
+  refreshIcons();
+}
+
+function showPage(
+  pageId
+) {
+  document
+    .querySelectorAll(
+      ".page"
+    )
+    .forEach(
+      (page) =>
+        page.classList.toggle(
+          "active",
+          page.id ===
+            pageId
+        )
+    );
+
+  document
+    .querySelectorAll(
+      ".nav-item[data-page]"
+    )
+    .forEach(
+      (button) =>
+        button.classList.toggle(
+          "active",
+          button.dataset.page ===
+            pageId
+        )
+    );
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  if (
+    pageId ===
+    "trendingPage"
+  ) {
+    renderTrending();
+  }
+
+  if (
+    pageId ===
+    "profilePage"
+  ) {
+    renderProfile();
+  }
+
+  if (
+    pageId ===
+    "searchPage"
+  ) {
+    $("searchInput")
+      ?.focus();
+  }
+}
+
+function openModal(
   id
 ) {
-  const post =
-    findPost(id);
+  $(id)?.classList.add(
+    "open"
+  );
+}
+
+function closeModal(
+  id
+) {
+  $(id)?.classList.remove(
+    "open"
+  );
+}
+
+function resetPostComposer() {
+  state.postImageData =
+    null;
+
+  const text =
+    $("createPostText");
+
+  const input =
+    $("createPostImage");
+
+  const preview =
+    $("postImagePreview");
+
+  if (text) {
+    text.value = "";
+  }
+
+  if (input) {
+    input.value = "";
+  }
+
+  if (preview) {
+    preview.innerHTML =
+      "";
+  }
+}
+
+function openPostComposer() {
+  resetPostComposer();
+
+  if ($("composeAvatar")) {
+    $("composeAvatar")
+      .innerHTML =
+      avatarMarkup(
+        state.user,
+        "avatar"
+      );
+  }
+
+  openModal(
+    "createPostModal"
+  );
+
+  refreshIcons();
+
+  $("createPostText")
+    ?.focus();
+}
+
+function openStoryEditor() {
+  state.storyImageData =
+    null;
+
+  const input =
+    $("storyImage");
+
+  const text =
+    $("storyText");
+
+  const preview =
+    $("storyImagePreview");
+
+  const empty =
+    $("storyCanvasEmpty");
+
+  const textPreview =
+    $("storyTextPreview");
+
+  if (input) {
+    input.value = "";
+  }
+
+  if (text) {
+    text.value = "";
+  }
+
+  if (preview) {
+    preview.removeAttribute(
+      "src"
+    );
+
+    preview.style.display =
+      "none";
+  }
+
+  if (empty) {
+    empty.style.display =
+      "flex";
+  }
+
+  if (textPreview) {
+    textPreview.textContent =
+      "";
+  }
+
+  openModal(
+    "createStoryModal"
+  );
+}
+
+function readFileAsDataUrl(
+  file
+) {
+  return new Promise(
+    (resolve, reject) => {
+      const reader =
+        new FileReader();
+
+      reader.onload =
+        () =>
+          resolve(
+            reader.result
+          );
+
+      reader.onerror =
+        reject;
+
+      reader.readAsDataURL(
+        file
+      );
+    }
+  );
+}
+async function publishPost() {
+  const content =
+    $("createPostText")
+      ?.value.trim() || "";
 
   if (
-    !post ||
-    !currentUser.id
+    !content &&
+    !state.postImageData
   ) {
+    showToast(
+      "Write something or add an image."
+    );
+
     return;
   }
 
-  if (
-    action === "comment"
-  ) {
-    openComments(id);
-    return;
-  }
+  if (!state.user?.id) {
+    showToast(
+      "Please log in first."
+    );
 
-  if (
-    action === "view"
-  ) {
-    increasePostView(id);
     return;
   }
 
   try {
-    const table =
-      action === "like"
-        ? "likes"
-        : action === "repost"
-          ? "reposts"
-          : "bookmarks";
+    const image =
+      state.postImageData ||
+      null;
 
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("posts")
+        .insert({
+          user_id:
+            state.user.id,
+
+          content,
+
+          image
+        })
+        .select(`
+          id,
+          created_at,
+          user_id,
+          content,
+          image,
+          likes_count,
+          comments_count,
+          reposts_count,
+          views_count,
+          users:user_id(
+            id,
+            username,
+            display_name,
+            avatar,
+            verified,
+            plan
+          )
+        `)
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    state.posts.unshift(
+      normalizePost(data)
+    );
+
+    closeModal(
+      "createPostModal"
+    );
+
+    renderPosts();
+    renderTrending();
+
+    showToast(
+      "Post published."
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showToast(
+      error.message ||
+        "Unable to publish post."
+    );
+  }
+}
+
+function createStoryCanvas(
+  dataUrl,
+  text,
+  position,
+  textColor
+) {
+  return new Promise(
+    (resolve) => {
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+      canvas.width =
+        1080;
+
+      canvas.height =
+        1920;
+
+      const ctx =
+        canvas.getContext(
+          "2d"
+        );
+
+      const drawText =
+        () => {
+          if (text) {
+            ctx.fillStyle =
+              textColor ||
+              "#ffffff";
+
+            ctx.font =
+              "700 76px Inter, Arial, sans-serif";
+
+            ctx.textAlign =
+              "center";
+
+            ctx.textBaseline =
+              position ===
+              "top"
+                ? "top"
+                : position ===
+                    "bottom"
+                  ? "bottom"
+                  : "middle";
+
+            const y =
+              position ===
+              "top"
+                ? 120
+                : position ===
+                    "bottom"
+                  ? 1800
+                  : 960;
+
+            ctx.shadowColor =
+              "rgba(0,0,0,.7)";
+
+            ctx.shadowBlur =
+              16;
+
+            ctx.fillText(
+              text,
+              540,
+              y,
+              900
+            );
+          }
+
+          resolve(
+            canvas.toDataURL(
+              "image/jpeg",
+              0.9
+            )
+          );
+        };
+
+      ctx.fillStyle =
+        "#12091a";
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      if (dataUrl) {
+        const image =
+          new Image();
+
+        image.onload =
+          () => {
+            const scale =
+              Math.max(
+                canvas.width /
+                  image.width,
+
+                canvas.height /
+                  image.height
+              );
+
+            const width =
+              image.width *
+              scale;
+
+            const height =
+              image.height *
+              scale;
+
+            ctx.drawImage(
+              image,
+
+              (
+                canvas.width -
+                width
+              ) / 2,
+
+              (
+                canvas.height -
+                height
+              ) / 2,
+
+              width,
+              height
+            );
+
+            drawText();
+          };
+
+        image.src =
+          dataUrl;
+      } else {
+        drawText();
+      }
+    }
+  );
+}
+
+async function publishStory() {
+  if (!state.user?.id) {
+    showToast(
+      "Please log in first."
+    );
+
+    return;
+  }
+
+  const text =
+    $("storyText")
+      ?.value.trim() || "";
+
+  if (
+    !state.storyImageData &&
+    !text
+  ) {
+    showToast(
+      "Add a photo or text first."
+    );
+
+    return;
+  }
+
+  try {
+    const rendered =
+      await createStoryCanvas(
+        state.storyImageData,
+        text,
+        $("storyPosition")
+          ?.value ||
+          "center",
+        $("storyTextColor")
+          ?.value ||
+          "#ffffff"
+      );
+
+    const expires =
+      new Date(
+        Date.now() +
+          24 *
+            60 *
+            60 *
+            1000
+      ).toISOString();
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("stories")
+        .insert({
+          user_id:
+            state.user.id,
+
+          image:
+            rendered,
+
+          expires_at:
+            expires
+        })
+        .select(`
+          id,
+          created_at,
+          user_id,
+          image,
+          viewers_count,
+          expires_at,
+          users:user_id(
+            id,
+            username,
+            display_name,
+            avatar,
+            verified,
+            plan
+          )
+        `)
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    state.stories.unshift(
+      normalizeStory(data)
+    );
+
+    closeModal(
+      "createStoryModal"
+    );
+
+    renderStories();
+
+    showToast(
+      "Story published."
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showToast(
+      error.message ||
+        "Unable to publish story."
+    );
+  }
+}
+
+async function togglePostAction(
+  action,
+  postId
+) {
+  const post =
+    state.posts.find(
+      (item) =>
+        String(item.id) ===
+        String(postId)
+    );
+
+  if (
+    !post ||
+    !state.user?.id
+  ) {
+    return;
+  }
+
+  if (
+    action ===
+    "comment"
+  ) {
+    openComments(
+      postId
+    );
+
+    return;
+  }
+
+  if (
+    action ===
+    "view"
+  ) {
+    incrementViews(
+      post
+    );
+
+    return;
+  }
+
+  const table =
+    action === "like"
+      ? "likes"
+      : action === "repost"
+        ? "reposts"
+        : "bookmarks";
+
+  try {
     const existing =
       await supabaseClient
         .from(table)
         .select("id")
         .eq(
           "post_id",
-          id
+          postId
         )
         .eq(
           "user_id",
-          currentUser.id
+          state.user.id
         )
         .maybeSingle();
 
@@ -1098,7 +2001,9 @@ async function postAction(
     }
 
     if (existing.data) {
-      const result =
+      const {
+        error
+      } =
         await supabaseClient
           .from(table)
           .delete()
@@ -1107,1059 +2012,976 @@ async function postAction(
             existing.data.id
           );
 
-      if (result.error) {
-        throw result.error;
+      if (error) {
+        throw error;
       }
+
     } else {
-      const result =
+      const {
+        error
+      } =
         await supabaseClient
           .from(table)
           .insert({
-            post_id: id,
+            post_id:
+              postId,
+
             user_id:
-              currentUser.id
+              state.user.id
           });
 
-      if (result.error) {
-        throw result.error;
+      if (error) {
+        throw error;
       }
     }
 
-    await loadData();
+    await loadPosts();
 
     renderPosts();
-    renderProfilePosts();
     renderTrending();
 
   } catch (error) {
-    console.error(
-      error
-    );
+    console.error(error);
 
-    toast(
+    showToast(
       error.message ||
         "Action failed."
     );
   }
 }
 
-function renderProfile() {
+async function incrementViews(
+  post
+) {
+  if (
+    !post ||
+    !post.id
+  ) {
+    return;
+  }
+
+  post.views_count += 1;
+
+  renderPosts();
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("posts")
+      .update({
+        views_count:
+          post.views_count
+      })
+      .eq(
+        "id",
+        post.id
+      );
+
+  if (error) {
+    console.error(
+      "View update failed:",
+      error
+    );
+  }
+}
+
+async function openComments(
+  postId
+) {
+  state.currentPostId =
+    postId;
+
+  const list =
+    $("commentsList");
+
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = `
+    <div class="comments-empty">
+      Loading comments...
+    </div>
+  `;
+
+  openModal(
+    "commentsModal"
+  );
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("comments")
+      .select(`
+        id,
+        created_at,
+        post_id,
+        user_id,
+        content,
+        users:user_id(
+          id,
+          username,
+          display_name,
+          avatar,
+          verified
+        )
+      `)
+      .eq(
+        "post_id",
+        postId
+      )
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
+      );
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <div class="comments-empty">
+        Unable to load comments.
+      </div>
+    `;
+
+    return;
+  }
+
+  state.comments.set(
+    String(postId),
+    data || []
+  );
+
+  renderComments(
+    postId
+  );
+}
+
+function renderComments(
+  postId
+) {
+  const list =
+    $("commentsList");
+
+  if (!list) {
+    return;
+  }
+
+  const comments =
+    state.comments.get(
+      String(postId)
+    ) || [];
+
+  if (!comments.length) {
+    list.innerHTML = `
+      <div class="comments-empty">
+        No comments yet.
+      </div>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    comments
+      .map(
+        (comment) => {
+          const user =
+            normalizeUser(
+              comment.users ||
+                {}
+            );
+
+          return `
+            <article class="comment">
+
+              <strong>
+                ${escapeHtml(
+                  user.display_name
+                )}
+              </strong>
+
+              <span>
+                @${escapeHtml(
+                  user.username
+                )}
+                ·
+                ${timeAgo(
+                  comment.created_at
+                )}
+              </span>
+
+              <p>
+                ${escapeHtml(
+                  comment.content ||
+                    ""
+                )}
+              </p>
+
+            </article>
+          `;
+        }
+      )
+      .join("");
+}
+
+async function sendComment() {
+  const input =
+    $("commentInput");
+
+  const content =
+    input?.value.trim() ||
+    "";
+
+  if (
+    !content ||
+    !state.currentPostId ||
+    !state.user?.id
+  ) {
+    return;
+  }
+
+  try {
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("comments")
+        .insert({
+          post_id:
+            state.currentPostId,
+
+          user_id:
+            state.user.id,
+
+          content
+        });
+
+    if (error) {
+      throw error;
+    }
+
+    input.value = "";
+
+    await openComments(
+      state.currentPostId
+    );
+
+    await loadPosts();
+
+    renderPosts();
+
+  } catch (error) {
+    console.error(error);
+
+    showToast(
+      error.message ||
+        "Unable to send comment."
+    );
+  }
+}
+
+function openStoryGroup(
+  userId
+) {
+  const group =
+    state.stories.filter(
+      (story) =>
+        String(
+          story.user_id
+        ) ===
+        String(userId)
+    );
+
+  if (!group.length) {
+    openStoryEditor();
+
+    return;
+  }
+
+  state.currentStoryGroup =
+    group;
+
+  state.currentStoryIndex =
+    0;
+
+  renderStoryViewer();
+
+  openModal(
+    "storyViewer"
+  );
+
+  recordStoryView(
+    group[0]
+  );
+}
+
+function renderStoryViewer() {
+  const story =
+    state.currentStoryGroup[
+      state.currentStoryIndex
+    ];
+
+  if (!story) {
+    return;
+  }
+
+  const media =
+    $("storyViewerMedia");
+
+  const text =
+    $("storyViewerText");
+
   const user =
-    getUser();
+    $("storyViewerUser");
 
-  $("profileHero").innerHTML = `
-    <div class="profile-card">
+  if (media) {
+    media.innerHTML =
+      story.image
+        ? `
+          <img
+            src="${escapeHtml(
+              story.image
+            )}"
+            alt=""
+          >
+        `
+        : "";
+  }
 
+  if (text) {
+    text.textContent =
+      "";
+  }
+
+  if (user) {
+    user.innerHTML = `
       ${avatarMarkup(
-        user,
-        "profile-avatar"
+        story.user,
+        "viewer-avatar"
       )}
 
       <div>
 
-        <h1>
-          ${esc(
-            user.display_name
+        <strong>
+          ${escapeHtml(
+            story.user
+              .display_name
           )}
-        </h1>
-
-        <p>
-          @${esc(
-            user.username
-          )}
-        </p>
+        </strong>
 
         <span>
-          ${esc(
-            user.bio ||
-              "Welcome to ARS."
+          @${escapeHtml(
+            story.user
+              .username
           )}
         </span>
 
       </div>
+    `;
+  }
 
-    </div>
-  `;
-
-  renderProfilePosts();
-}
-
-function renderProfilePosts() {
-  const element =
-    $("profilePostsList");
-
-  if (!element) {
+  refreshIcons();
+    }
+async function recordStoryView(
+  story
+) {
+  if (
+    !story?.id ||
+    !state.user?.id ||
+    String(
+      story.user_id
+    ) ===
+      String(
+        state.user.id
+      )
+  ) {
     return;
   }
 
-  renderPosts(
-    posts.filter(
-      post =>
-        String(
-          post.user_id
-        ) ===
-        String(
-          getUser().id
-        )
-    ),
-    element
-  );
-}
-
-function extractTrendCounts() {
-  const counts = {};
-
-  posts.forEach(
-    post => {
-      (
-        post.hashtags ||
-        extractHashtags(
-          post.text
-        )
-      ).forEach(
-        tag => {
-          counts[tag] =
-            (counts[tag] ||
-              0) + 1;
-        }
-      );
-    }
-  );
-
-  return counts;
-}
-
-function renderTrending() {
-  const items =
-    Object.entries(
-      extractTrendCounts()
-    )
-      .sort(
-        (a, b) =>
-          b[1] - a[1]
+  const existing =
+    await supabaseClient
+      .from("story_views")
+      .select("id")
+      .eq(
+        "story_id",
+        story.id
       )
-      .slice(0, 10);
+      .eq(
+        "viewer_id",
+        state.user.id
+      )
+      .maybeSingle();
 
-  $("trendingList").innerHTML =
-    items.length
-      ? items
-          .map(
-            (
-              [tag, count],
-              index
-            ) => `
-              <button
-                class="trend"
-                data-trending-tag="${e
-                                     sc(tag)}"
+  if (
+    existing.error ||
+    existing.data
+  ) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("story_views")
+      .insert({
+        story_id:
+          story.id,
+
+        viewer_id:
+          state.user.id
+      });
+
+  if (!error) {
+    story.viewers_count +=
+      1;
+
+    await supabaseClient
+      .from("stories")
+      .update({
+        viewers_count:
+          story.viewers_count
+      })
+      .eq(
+        "id",
+        story.id
+      );
+  }
+}
+
+function nextStory() {
+  if (
+    state.currentStoryIndex >=
+    state.currentStoryGroup.length -
+      1
+  ) {
+    closeModal(
+      "storyViewer"
+    );
+
+    return;
+  }
+
+  state.currentStoryIndex +=
+    1;
+
+  const story =
+    state.currentStoryGroup[
+      state.currentStoryIndex
+    ];
+
+  renderStoryViewer();
+
+  recordStoryView(
+    story
+  );
+}
+
+function bindEvents() {
+  $("profileButton")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage(
+          "profilePage"
+        )
+    );
+
+  $("wheelButton")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage(
+          "wheelPage"
+        )
+    );
+
+  $("createPost")
+    ?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+  $("createPostClose")
+    ?.addEventListener(
+      "click",
+      () =>
+        closeModal(
+          "createPostModal"
+        )
+    );
+
+  $("publishPost")
+    ?.addEventListener(
+      "click",
+      publishPost
+    );
+
+  $("createStoryClose")
+    ?.addEventListener(
+      "click",
+      () =>
+        closeModal(
+          "createStoryModal"
+        )
+    );
+
+  $("publishStory")
+    ?.addEventListener(
+      "click",
+      publishStory
+    );
+
+  $("commentsClose")
+    ?.addEventListener(
+      "click",
+      () =>
+        closeModal(
+          "commentsModal"
+        )
+    );
+
+  $("sendComment")
+    ?.addEventListener(
+      "click",
+      sendComment
+    );
+
+  $("storyViewerClose")
+    ?.addEventListener(
+      "click",
+      () =>
+        closeModal(
+          "storyViewer"
+        )
+    );
+
+  $("storyViewerMedia")
+    ?.addEventListener(
+      "click",
+      nextStory
+    );
+
+  $("pickPostImage")
+    ?.addEventListener(
+      "click",
+      () =>
+        $("createPostImage")
+          ?.click()
+    );
+
+  $("pickStoryImage")
+    ?.addEventListener(
+      "click",
+      () =>
+        $("storyImage")
+          ?.click()
+    );
+
+  $("createPostImage")
+    ?.addEventListener(
+      "change",
+      async (event) => {
+        const file =
+          event.target
+            .files?.[0];
+
+        if (!file) {
+          return;
+        }
+
+        state.postImageData =
+          await readFileAsDataUrl(
+            file
+          );
+
+        $("postImagePreview")
+          .innerHTML = `
+            <div class="preview-wrap">
+
+              <img
+                src="${escapeHtml(
+                  state.postImageData
+                )}"
+                alt=""
               >
-                <span>#</span>
-                <div>
-                  <strong>#${esc(tag)}</strong>
-                  <span>${count} posts</span>
-                </div>
-                <i data-lucide="chevron-right"></i>
-              </button>
-            `;
-          })
-          .join("");
 
-        trendingList.innerHTML =
-          html ||
-          `
-            <div class="empty-state compact">
-              <i data-lucide="flame"></i>
-              <h2>No trends yet</h2>
-              <p>Hashtags will appear here when people start posting.</p>
             </div>
           `;
-
-        refreshIcons();
       }
+    );
 
-      function renderSearchResults(results) {
-        const container = $("searchResults");
-        if (!container) return;
+  $("storyImage")
+    ?.addEventListener(
+      "change",
+      async (event) => {
+        const file =
+          event.target
+            .files?.[0];
 
-        if (!results.length) {
-          container.innerHTML = `
-            <div class="empty-state compact">
-              <i data-lucide="search"></i>
-              <h2>No results</h2>
-              <p>Try another name, username, or hashtag.</p>
-            </div>
-          `;
-
-          refreshIcons();
+        if (!file) {
           return;
         }
 
-        container.innerHTML = results
-          .map(
-            (user) => `
-              <button
-                class="search-result"
-                type="button"
-                data-user-id="${esc(user.id)}"
-              >
-                <div class="avatar search-avatar">
-                  ${avatarMarkup(user, "avatar")}
-                </div>
-
-                <div>
-                  <strong>${esc(
-                    user.display_name || user.username || "User"
-                  )}</strong>
-
-                  <span>
-                    @${esc(user.username || "user")}
-                  </span>
-
-                  ${
-                    user.bio
-                      ? `<p>${esc(user.bio)}</p>`
-                      : ""
-                  }
-                </div>
-              </button>
-            `
-          )
-          .join("");
-
-        refreshIcons();
-      }
-
-      function renderPosts() {
-        const feed = $("feed");
-        if (!feed) return;
-
-        if (!state.posts.length) {
-          feed.innerHTML = `
-            <div class="empty-feed">
-              <i data-lucide="message-circle"></i>
-              <h2>No posts yet</h2>
-              <p>Be the first person to post on ARS.</p>
-            </div>
-          `;
-
-          refreshIcons();
-          return;
-        }
-
-        feed.innerHTML = state.posts
-          .map((post) => postMarkup(post))
-          .join("");
-
-        refreshIcons();
-      }
-
-      function renderStories() {
-        const container = $("stories");
-        if (!container) return;
-
-        const grouped = new Map();
-
-        for (const story of state.stories) {
-          if (!story.user_id) continue;
-
-          if (!grouped.has(story.user_id)) {
-            grouped.set(story.user_id, []);
-          }
-
-          grouped.get(story.user_id).push(story);
-        }
-
-        const users = [];
-
-        for (const [userId, stories] of grouped) {
-          const first = stories[0];
-
-          users.push({
-            id: userId,
-            user: first.user || {},
-            stories
-          });
-        }
-
-        if (
-          state.currentUser &&
-          !grouped.has(state.currentUser.id)
-        ) {
-          users.unshift({
-            id: state.currentUser.id,
-            user: state.currentUser,
-            stories: []
-          });
-        }
-
-        if (!users.length) {
-          container.innerHTML = "";
-          return;
-        }
-
-        container.innerHTML = users
-          .map(({ user, stories, id }) => {
-            const isOwn =
-              id === state.currentUser?.id;
-
-            return `
-              <button
-                class="story-item"
-                type="button"
-                data-story-user="${esc(id)}"
-              >
-                <div class="avatar story-avatar">
-                  ${avatarMarkup(
-                    user,
-                    "avatar"
-                  )}
-                </div>
-
-                ${
-                  isOwn
-                    ? `
-                      <span class="story-plus">
-                        <i data-lucide="plus"></i>
-                      </span>
-                    `
-                    : ""
-                }
-
-                <span class="story-name">
-                  ${esc(
-                    isOwn
-                      ? "You"
-                      : user.display_name ||
-                          user.username ||
-                          "User"
-                  )}
-                </span>
-              </button>
-            `;
-          })
-          .join("");
-
-        refreshIcons();
-      }
-
-      function renderAll() {
-        renderStories();
-        renderPosts();
-        renderTrending();
-
-        if (state.searchQuery) {
-          performSearch(state.searchQuery);
-        }
-      }
-
-      async function loadCurrentUser() {
-        const {
-          data: { user },
-          error
-        } = await supabaseClient.auth.getUser();
-
-        if (error) {
-          console.error(
-            "Unable to get current user:",
-            error
-          );
-          return null;
-        }
-
-        if (!user) return null;
-
-        const { data: profile, error: profileError } =
-          await supabaseClient
-            .from("users")
-            .select("*")
-            .eq("id", user.id)
-            .maybeSingle();
-
-        if (profileError) {
-          console.error(
-            "Unable to load profile:",
-            profileError
-          );
-        }
-
-        return (
-          profile || {
-            id: user.id,
-            email: user.email || "",
-            username:
-              user.user_metadata?.username || "",
-            display_name:
-              user.user_metadata?.display_name || ""
-          }
-        );
-      }
-
-      async function loadPosts() {
-        const { data, error } = await supabaseClient
-          .from("posts")
-          .select(`
-            *,
-            users:user_id (
-              id,
-              username,
-              display_name,
-              avatar,
-              verified,
-              plan
-            )
-          `)
-          .order("created_at", {
-            ascending: false
-          });
-
-        if (error) {
-          console.error(
-            "Unable to load posts:",
-            error
-          );
-          state.posts = [];
-          return;
-        }
-
-        state.posts = Array.isArray(data)
-          ? data.map(normalizePost)
-          : [];
-      }
-
-      async function loadStories() {
-        const { data, error } = await supabaseClient
-          .from("stories")
-          .select(`
-            *,
-            users:user_id (
-              id,
-              username,
-              display_name,
-              avatar,
-              verified,
-              plan
-            )
-          `)
-          .order("created_at", {
-            ascending: false
-          });
-
-        if (error) {
-          console.error(
-            "Unable to load stories:",
-            error
-          );
-          state.stories = [];
-          return;
-        }
-
-        state.stories = Array.isArray(data)
-          ? data
-          : [];
-      }
-
-      async function loadData() {
-        try {
-          setLoading(true);
-
-          state.currentUser =
-            await loadCurrentUser();
-
-          await Promise.all([
-            loadPosts(),
-            loadStories()
-          ]);
-
-          renderAll();
-          updateCurrentUserUI();
-        } catch (error) {
-          console.error(
-            "ARS Home load error:",
-            error
+        state.storyImageData =
+          await readFileAsDataUrl(
+            file
           );
 
-          showToast(
-            "Unable to load ARS right now."
-          );
-        } finally {
-          setLoading(false);
-        }
-      }
+        const preview =
+          $("storyImagePreview");
 
-      function updateCurrentUserUI() {
-        if (!state.currentUser) return;
-
-        const user = state.currentUser;
-
-        const topAvatar = $("topAvatar");
-
-        if (topAvatar) {
-          topAvatar.innerHTML =
-            avatarMarkup(user, "avatar");
-        }
-
-        const composeAvatar =
-          $("composeAvatar");
-
-        if (composeAvatar) {
-          composeAvatar.innerHTML =
-            avatarMarkup(user, "avatar");
-        }
-      }
-
-      function openPostComposer() {
-        const overlay = $("composeOverlay");
-        if (!overlay) return;
-
-        overlay.classList.add("open");
-
-        const input = $("postContent");
-
-        if (input) {
-          input.focus();
-        }
-      }
-
-      function closePostComposer() {
-        const overlay = $("composeOverlay");
-
-        if (!overlay) return;
-
-        overlay.classList.remove("open");
-      }
-
-      function openStoryEditor() {
-        const overlay = $("storyOverlay");
-
-        if (!overlay) return;
-
-        overlay.classList.add("open");
-
-        resetStoryEditor();
-      }
-
-      function closeStoryEditor() {
-        const overlay = $("storyOverlay");
-
-        if (!overlay) return;
-
-        overlay.classList.remove("open");
-      }
-
-      function resetStoryEditor() {
-        const input = $("storyImageInput");
-        const text = $("storyTextInput");
-        const preview = $("storyImagePreview");
-        const empty = $("storyCanvasEmpty");
-        const textPreview = $("storyTextPreview");
-
-        if (input) input.value = "";
-        if (text) text.value = "";
+        const empty =
+          $("storyCanvasEmpty");
 
         if (preview) {
-          preview.removeAttribute("src");
-          preview.style.display = "none";
+          preview.src =
+            state.storyImageData;
+
+          preview.style.display =
+            "block";
         }
 
         if (empty) {
-          empty.style.display = "flex";
-        }
-
-        if (textPreview) {
-          textPreview.textContent = "";
+          empty.style.display =
+            "none";
         }
       }
-
-      async function publishPost() {
-        if (!state.currentUser) {
-          showToast("Please log in first.");
-          return;
-        }
-
-        const input = $("postContent");
-
-        if (!input) return;
-
-        const content = input.value.trim();
-
-        if (!content) {
-          showToast("Write something first.");
-          return;
-        }
-
-        const imageUrl =
-          state.composeImageUrl || null;
-
-        const payload = {
-          user_id: state.currentUser.id,
-          content,
-          image: imageUrl
-        };
-
-        const { data, error } =
-          await supabaseClient
-            .from("posts")
-            .insert(payload)
-            .select(`
-              *,
-              users:user_id (
-                id,
-                username,
-                display_name,
-                avatar,
-                verified,
-                plan
-              )
-            `)
-            .single();
-
-        if (error) {
-          console.error(
-            "Post creation failed:",
-            error
-          );
-
-          showToast(
-            error.message ||
-              "Unable to publish post."
-          );
-
-          return;
-        }
-
-        state.posts.unshift(
-          normalizePost(data)
-        );
-
-        input.value = "";
-        state.composeImageUrl = null;
-
-        const preview = $("postImagePreview");
-
-        if (preview) {
-          preview.innerHTML = "";
-        }
-
-        closePostComposer();
-        renderPosts();
-        renderTrending();
-
-        showToast("Post published.");
-      }
-
-      async function publishStory() {
-        if (!state.currentUser) {
-          showToast("Please log in first.");
-          return;
-        }
-
-        const imageInput =
-          $("storyImageInput");
-
-        const textInput =
-          $("storyTextInput");
-
-        const file =
-          imageInput?.files?.[0];
-
-        const text =
-          textInput?.value?.trim() || "";
-
-        if (!file && !text) {
-          showToast(
-            "Add an image or text first."
-          );
-          return;
-        }
-
-        let imageUrl = null;
-
-        if (file) {
-          const extension =
-            file.name.split(".").pop() ||
-            "jpg";
-
-          const path =
-            `${state.currentUser.id}/${Date.now()}.${extension}`;
-
-          const upload =
-            await supabaseClient.storage
-              .from("stories")
-              .upload(path, file, {
-                upsert: false,
-                contentType: file.type
-              });
-
-          if (upload.error) {
-            console.error(
-              "Story upload failed:",
-              upload.error
-            );
-
-            showToast(
-              upload.error.message ||
-                "Unable to upload story."
-            );
-
-            return;
-          }
-
-          const {
-            data: publicData
-          } = supabaseClient.storage
-            .from("stories")
-            .getPublicUrl(path);
-
-          imageUrl =
-            publicData?.publicUrl || null;
-        }
-
-        const payload = {
-          user_id: state.currentUser.id,
-          image: imageUrl,
-          text
-        };
-
-        const { data, error } =
-          await supabaseClient
-            .from("stories")
-            .insert(payload)
-            .select(`
-              *,
-              users:user_id (
-                id,
-                username,
-                display_name,
-                avatar,
-                verified,
-                plan
-              )
-            `)
-            .single();
-
-        if (error) {
-          console.error(
-            "Story creation failed:",
-            error
-          );
-
-          showToast(
-            error.message ||
-              "Unable to publish story."
-          );
-
-          return;
-        }
-
-        state.stories.unshift(data);
-
-        closeStoryEditor();
-        renderStories();
-
-        showToast("Story published.");
-      }
-
-      function bindImagePreview() {
-        const input =
-          $("postImageInput");
-
-        if (!input) return;
-
-        input.addEventListener(
-          "change",
-          () => {
-            const file =
-              input.files?.[0];
-
-            const preview =
-              $("postImagePreview");
-
-            if (!preview) return;
-
-            preview.innerHTML = "";
-
-            if (!file) {
-              state.composeImageUrl = null;
-              return;
-            }
-
-            const reader =
-              new FileReader();
-
-            reader.onload = () => {
-              state.composeImageUrl =
-                reader.result;
-
-              preview.innerHTML = `
-                <div class="preview-wrap">
-                  <img
-                    src="${esc(reader.result)}"
-                    alt=""
-                  >
-
-                  <button
-                    type="button"
-                    class="remove-media"
-                    id="removePostImage"
-                  >
-                    <i data-lucide="x"></i>
-                  </button>
-                </div>
-              `;
-
-              refreshIcons();
-
-              $("removePostImage")
-                ?.addEventListener(
-                  "click",
-                  () => {
-                    input.value = "";
-                    state.composeImageUrl =
-                      null;
-
-                    preview.innerHTML = "";
-                  }
-                );
-            };
-
-            reader.readAsDataURL(file);
-          }
-        );
-      }
-
-      function bindStoryPreview() {
-        const input =
-          $("storyImageInput");
-
-        if (!input) return;
-
-        input.addEventListener(
-          "change",
-          () => {
-            const file =
-              input.files?.[0];
-
-            const preview =
-              $("storyImagePreview");
-
-            const empty =
-              $("storyCanvasEmpty");
-
-            if (!preview) return;
-
-            if (!file) {
-              preview.removeAttribute(
-                "src"
-              );
-
-              preview.style.display =
-                "none";
-
-              if (empty) {
-                empty.style.display =
-                  "flex";
-              }
-
-              return;
-            }
-
-            const reader =
-              new FileReader();
-
-            reader.onload = () => {
-              preview.src =
-                reader.result;
-
-              preview.style.display =
-                "block";
-
-              if (empty) {
-                empty.style.display =
-                  "none";
-              }
-            };
-
-            reader.readAsDataURL(file);
-          }
-        );
-
-        const textInput =
-          $("storyTextInput");
-
-        const textPreview =
+    );
+
+  $("storyText")
+    ?.addEventListener(
+      "input",
+      (event) => {
+        const preview =
           $("storyTextPreview");
 
-        if (
-          textInput &&
-          textPreview
-        ) {
-          textInput.addEventListener(
-            "input",
-            () => {
-              textPreview.textContent =
-                textInput.value;
-            }
-          );
+        if (preview) {
+          preview.textContent =
+            event.target.value;
         }
       }
+    );
 
-      function bindNavigation() {
-        document
-          .querySelectorAll(
-            ".nav-item[data-page]"
-          )
-          .forEach((button) => {
-            button.addEventListener(
-              "click",
-              () => {
-                const page =
-                  button.dataset.page;
+  $("storyPosition")
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const text =
+          $("storyTextPreview");
 
-                if (!page) return;
-
-                showPage(page);
-              }
-            );
-          });
-      }
-
-      function showPage(pageName) {
-        document
-          .querySelectorAll(".page")
-          .forEach((page) => {
-            page.classList.toggle(
-              "active",
-              page.id ===
-                `page-${pageName}`
-            );
-          });
-
-        document
-          .querySelectorAll(
-            ".nav-item[data-page]"
-          )
-          .forEach((button) => {
-            button.classList.toggle(
-              "active",
-              button.dataset.page ===
-                pageName
-            );
-          });
-
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
-
-        if (
-          pageName === "trending"
-        ) {
-          renderTrending();
+        if (!text) {
+          return;
         }
 
-        if (
-          pageName === "search"
-        ) {
-          $("searchInput")?.focus();
+        text.style.top =
+          event.target.value ===
+          "top"
+            ? "20%"
+            : event.target
+                  .value ===
+                "bottom"
+              ? "75%"
+              : "45%";
+      }
+    );
+
+  $("storyTextColor")
+    ?.addEventListener(
+      "input",
+      (event) => {
+        const text =
+          $("storyTextPreview");
+
+        if (text) {
+          text.style.color =
+            event.target.value;
         }
       }
+    );
 
-      function bindGlobalEvents() {
-        $("createPostButton")
-          ?.addEventListener(
-            "click",
-            openPostComposer
-          );
+  $("searchInput")
+    ?.addEventListener(
+      "input",
+      (event) => {
+        state.searchQuery =
+          event.target.value;
 
-        $("closeCompose")
-          ?.addEventListener(
-            "click",
-            closePostComposer
-          );
-
-        $("publishPost")
-          ?.addEventListener(
-            "click",
-            publishPost
-          );
-
-        $("postImageInput")
-          ?.addEventListener(
-            "change",
-            bindImagePreview
-          );
-
-        $("createStoryButton")
-          ?.addEventListener(
-            "click",
-            openStoryEditor
-          );
-
-        $("closeStory")
-          ?.addEventListener(
-            "click",
-            closeStoryEditor
-          );
-
-        $("publishStory")
-          ?.addEventListener(
-            "click",
-            publishStory
-          );
-
-        $("storyImageInput")
-          ?.addEventListener(
-            "change",
-            bindStoryPreview
-          );
-
-        $("wheelButton")
-          ?.addEventListener(
-            "click",
-            () => {
-              showPage("wheel");
-            }
-          );
-
-        $("searchInput")
-          ?.addEventListener(
-            "input",
-            (event) => {
-              state.searchQuery =
-                event.target.value
-                  .trim();
-
-              performSearch(
-                state.searchQuery
-              );
-            }
-          );
-
-        $("refreshFeed")
-          ?.addEventListener(
-            "click",
-            loadData
-          );
-
-        $("logoutButton")
-          ?.addEventListener(
-            "click",
-            async () => {
-              await supabaseClient.auth.signOut();
-
-              window.location.href =
-                "index.html";
-            }
-          );
-
-        document.addEventListener(
-          "click",
-          handleDocumentClick
+        performSearch(
+          state.searchQuery
         );
       }
+    );
 
-      function handleDocumentClick(
-        event
-      ) {
-        const storyButton =
-          event.target.
+  $("openStreakFromWheel")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage(
+          "streakPage"
+        )
+    );
+
+  $("spinButton")
+    ?.addEventListener(
+      "click",
+      spinWheel
+    );
+
+  document
+    .querySelectorAll(
+      ".nav-item[data-page]"
+    )
+    .forEach(
+      (button) =>
+        button.addEventListener(
+          "click",
+          () =>
+            showPage(
+              button.dataset.page
+            )
+        )
+    );
+
+  document.addEventListener(
+    "click",
+    handleDocumentClick
+  );
+}
+
+function handleDocumentClick(
+  event
+) {
+  const storyButton =
+    event.target.closest?.(
+      "[data-story-user]"
+    );
+
+  if (storyButton) {
+    event.preventDefault();
+
+    openStoryGroup(
+      storyButton.dataset
+        .storyUser
+    );
+
+    return;
+  }
+
+  const action =
+    event.target.closest?.(
+      "[data-action]"
+    );
+
+  if (action) {
+    event.preventDefault();
+
+    togglePostAction(
+      action.dataset.action,
+      action.dataset.id
+    );
+
+    return;
+  }
+
+  const hashtag =
+    event.target.closest?.(
+      "[data-hashtag]"
+    );
+
+  if (hashtag) {
+    event.preventDefault();
+
+    state.searchQuery =
+      `#${hashtag.dataset.hashtag}`;
+
+    showPage(
+      "searchPage"
+    );
+
+    if ($("searchInput")) {
+      $("searchInput").value =
+        state.searchQuery;
+    }
+
+    performSearch(
+      state.searchQuery
+    );
+
+    return;
+  }
+
+  const trend =
+    event.target.closest?.(
+      "[data-trending-tag]"
+    );
+
+  if (trend) {
+    state.searchQuery =
+      `#${trend.dataset.trendingTag}`;
+
+    showPage(
+      "searchPage"
+    );
+
+    if ($("searchInput")) {
+      $("searchInput").value =
+        state.searchQuery;
+    }
+
+    performSearch(
+      state.searchQuery
+    );
+  }
+}
+
+async function spinWheel() {
+  const wheel =
+    $("wheel");
+
+  if (!wheel) {
+    return;
+  }
+
+  state.wheelRotation +=
+    1440 +
+    Math.floor(
+      Math.random() *
+        360
+    );
+
+  wheel.style.transform =
+    `rotate(${state.wheelRotation}deg)`;
+
+  const challenges = [
+    "Post something today",
+    "Share a story",
+    "Like three posts",
+    "Use a hashtag",
+    "Leave a comment"
+  ];
+
+  const result =
+    challenges[
+      Math.floor(
+        Math.random() *
+          challenges.length
+      )
+    ];
+
+  setTimeout(
+    () => {
+      const target =
+        $("challengeResult");
+
+      if (target) {
+        target.textContent =
+          result;
+      }
+    },
+    1200
+  );
+}
+
+function renderStreak() {
+  const value =
+    Number(
+      state.user?.streak ||
+        0
+    );
+
+  if ($("streakNumber")) {
+    $("streakNumber")
+      .textContent =
+      value;
+  }
+
+  if ($("streakText")) {
+    $("streakText")
+      .textContent =
+      "day streak";
+  }
+
+  if ($("weekDots")) {
+    $("weekDots").innerHTML =
+      Array.from(
+        {
+          length: 7
+        },
+        (_, index) =>
+          `
+            <span>
+              ${
+                index <
+                Math.min(
+                  value,
+                  7
+                )
+                  ? "✓"
+                  : ""
+              }
+            </span>
+          `
+      ).join("");
+  }
+
+  if ($("streakDone")) {
+    $("streakDone")
+      .textContent =
+      value
+        ? "Keep your ARS streak going."
+        : "Start your streak by staying active.";
+  }
+}
+
+function renderWheel() {
+  if ($("spinCounter")) {
+    $("spinCounter")
+      .textContent =
+      "0 spins";
+  }
+
+  if ($("planLabel")) {
+    $("planLabel")
+      .textContent =
+      state.user?.plan ===
+      "premium"
+        ? "Premium"
+        : "Free";
+  }
+}
+
+function renderAll() {
+  renderStories();
+  renderPosts();
+  renderTrending();
+  renderStreak();
+  renderWheel();
+}
+
+async function init() {
+  if (state.initialized) {
+    return;
+  }
+
+  state.initialized =
+    true;
+
+  refreshIcons();
+
+  bindEvents();
+
+  await loadAll();
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  init
+);
+  
