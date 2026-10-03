@@ -1,10 +1,26 @@
+const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
 const KEYS = {
   user: "ars_user",
   letter: "ars_letter",
   letterColor: "ars_letter_color",
   bg: "ars_background",
-  posts: "ars_local_posts",
-  stories: "ars_local_stories",
   streak: "ars_streak_state",
   wheel: "ars_wheel_week",
   plan: "ars_plan"
@@ -17,8 +33,10 @@ let currentPage = "homePage";
 let currentCommentPost = null;
 let currentStory = null;
 let wheelRotation = 0;
+let initialized = false;
 
-const $ = id => document.getElementById(id);
+const $ = id =>
+  document.getElementById(id);
 
 const esc = value =>
   String(value ?? "").replace(
@@ -32,22 +50,6 @@ const esc = value =>
         "'": "&#39;"
       })[char]
   );
-
-const uid = prefix =>
-  `${prefix}_${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
-
-const read = (key, fallback) => {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const write = (key, value) =>
-  localStorage.setItem(key, JSON.stringify(value));
 
 const fmt = number => {
   number = Number(number || 0);
@@ -70,7 +72,9 @@ const fmt = number => {
 const timeAgo = iso => {
   const seconds = Math.max(
     0,
-    (Date.now() - new Date(iso).getTime()) / 1000
+    (Date.now() -
+      new Date(iso).getTime()) /
+      1000
   );
 
   if (seconds < 60) {
@@ -88,61 +92,51 @@ const timeAgo = iso => {
   return `${Math.floor(seconds / 86400)}d`;
 };
 
-const refreshIcons = () => {
+const extractHashtags = text =>
+  [
+    ...String(text || "").matchAll(
+      /(^|\s)#([A-Za-z0-9_]+)/g
+    )
+  ].map(match =>
+    match[2].toLowerCase()
+  );
+
+const refreshIcons = () =>
   window.lucide?.createIcons?.();
-};
 
 function toast(message) {
-  $("toast").textContent = message;
-  $("toast").classList.add("show");
+  const element = $("toast");
 
-  clearTimeout(toast.timer);
-
-  toast.timer = setTimeout(() => {
-    $("toast").classList.remove("show");
-  }, 2200);
-}
-
-function normalizeUser() {
-  currentUser = read(KEYS.user, {
-    id: "local-user",
-    display_name: "You",
-    username: "you",
-    verified: false
-  });
-
-  if (!currentUser.id) {
-    currentUser.id = "local-user";
+  if (!element) {
+    return;
   }
 
-  currentUser.display_name =
-    currentUser.display_name ||
-    currentUser.name ||
-    "You";
+  element.textContent = message;
 
-  currentUser.username =
-    currentUser.username ||
-    "you";
+  element.classList.add("show");
+
+  clearTimeout(
+    window.__arsToast
+  );
+
+  window.__arsToast =
+    setTimeout(
+      () =>
+        element.classList.remove(
+          "show"
+        ),
+      2200
+    );
 }
 
 function getUser() {
-  return {
-    ...currentUser,
-
-    letter:
-      localStorage.getItem(KEYS.letter) ||
-      currentUser.letter ||
-      "R",
-
-    letterColor:
-      localStorage.getItem(KEYS.letterColor) ||
-      currentUser.letterColor ||
-      "#8d2cff"
-  };
+  return currentUser;
 }
 
-function avatarMarkup(user = {}, cls = "avatar") {
-
+function avatarMarkup(
+  user = {},
+  cls = "avatar"
+) {
   if (user.avatar === "wheel") {
     return `
       <div class="${cls} wheel-avatar">
@@ -152,27 +146,36 @@ function avatarMarkup(user = {}, cls = "avatar") {
   }
 
   const image =
-    user.avatar &&
-    /^https?:|^data:image/.test(user.avatar);
+    typeof user.avatar === "string" &&
+    /^(https?:|data:image)/.test(
+      user.avatar
+    );
 
   const letter =
-    (
+    String(
       user.letter ||
-      localStorage.getItem(KEYS.letter) ||
-      "R"
+        localStorage.getItem(
+          KEYS.letter
+        ) ||
+        "R"
     )
       .slice(0, 1)
       .toUpperCase();
 
   const color =
     user.letterColor ||
-    localStorage.getItem(KEYS.letterColor) ||
+    localStorage.getItem(
+      KEYS.letterColor
+    ) ||
     "#8d2cff";
 
   if (image) {
     return `
       <div class="${cls}">
-        <img src="${esc(user.avatar)}" alt="">
+        <img
+          src="${esc(user.avatar)}"
+          alt=""
+        >
       </div>
     `;
   }
@@ -187,419 +190,535 @@ function avatarMarkup(user = {}, cls = "avatar") {
   `;
 }
 
-function extractHashtags(text = "") {
-  return [
-    ...text.matchAll(
-      /(^|\s)#([a-zA-Z0-9_]+)/g
-    )
-  ]
-    .map(match => match[2].toLowerCase())
-    .filter(
-      (value, index, array) =>
-        array.indexOf(value) === index
-    );
-}
+function richText(text) {
+  const safe = esc(text);
 
-function richText(text = "") {
-  return esc(text).replace(
-    /(^|\s)#([a-zA-Z0-9_]+)/g,
-    (match, space, tag) =>
-      `${space}<button
-        class="hashtag"
-        data-hashtag="${esc(tag)}"
-      >#${esc(tag)}</button>`
+  return safe.replace(
+    /(^|\s)(#[A-Za-z0-9_]+)/g,
+    '$1<button class="hashtag" data-hashtag="$2">$2</button>'
   );
 }
 
-function normalizePost(post) {
+function normalizeProfile(profile) {
   return {
-    ...post,
+    ...profile,
 
-    id: post.id || uid("post"),
-
-    user_id:
-      post.user_id ||
-      "local",
+    id: profile.id || "",
 
     display_name:
-      post.display_name ||
+      profile.display_name ||
       "You",
 
     username:
-      post.username ||
+      profile.username ||
       "you",
 
     avatar:
-      post.avatar ||
+      profile.avatar ||
       "",
-
-    letter:
-      post.letter ||
-      "R",
-
-    letterColor:
-      post.letterColor ||
-      "#8d2cff",
 
     verified:
-      Boolean(post.verified),
+      Boolean(profile.verified),
 
-    text:
-      post.text ||
-      "",
-
-    image:
-      post.image ||
-      "",
-
-    created_at:
-      post.created_at ||
-      new Date().toISOString(),
-
-    likes:
-      Number(post.likes || 0),
-
-    comments:
-      Number(post.comments || 0),
-
-    reposts:
-      Number(post.reposts || 0),
-
-    views:
-      Number(post.views || 0),
-
-    liked:
-      Boolean(post.liked),
-
-    reposted:
-      Boolean(post.reposted),
-
-    bookmarked:
-      Boolean(post.bookmarked),
-
-    comments_data:
-      Array.isArray(post.comments_data)
-        ? post.comments_data
-        : [],
-
-    hashtags:
-      Array.isArray(post.hashtags)
-        ? post.hashtags
-        : extractHashtags(post.text)
-  };
-}
-
-function normalizeStory(story) {
-  return {
-    ...story,
-
-    id:
-      story.id ||
-      uid("story"),
-
-    user_id:
-      story.user_id ||
-      "local",
-
-    display_name:
-      story.display_name ||
-      "You",
-
-    username:
-      story.username ||
-      "you",
-
-    avatar:
-      story.avatar ||
-      "",
+    plan:
+      profile.plan ||
+      "free",
 
     letter:
-      story.letter ||
+      localStorage.getItem(
+        KEYS.letter
+      ) ||
+      profile.letter ||
       "R",
 
     letterColor:
-      story.letterColor ||
-      "#8d2cff",
-
-    image:
-      story.image ||
-      "",
-
-    text:
-      story.text ||
-      "",
-
-    textColor:
-      story.textColor ||
-      "#fff",
-
-    textPosition:
-      story.textPosition ||
-      "center",
-
-    created_at:
-      story.created_at ||
-      new Date().toISOString()
+      localStorage.getItem(
+        KEYS.letterColor
+      ) ||
+      profile.letter_color ||
+      "#8d2cff"
   };
 }
 
-/*
- * Demo mode is intentionally opt-in.
- *
- * Open:
- * ?demo=1
- *
- * It only exists so the visual reference
- * can be inspected without inserting demo
- * data into the normal production state.
- */
+function normalizePost(row) {
+  const user =
+    row.users || {};
 
-function demoEnabled() {
-  return (
-    new URLSearchParams(
-      location.search
-    ).get("demo") === "1"
+  return {
+    id: row.id,
+
+    user_id:
+      row.user_id,
+
+    display_name:
+      user.display_name ||
+      "You",
+
+    username:
+      user.username ||
+      "you",
+
+    avatar:
+      user.avatar ||
+      "",
+
+    verified:
+      Boolean(user.verified),
+
+    text:
+      row.content ||
+      "",
+
+    image:
+      row.image ||
+      "",
+
+    created_at:
+      row.created_at,
+
+    likes:
+      Number(
+        row.likes ??
+          row.likes_count ??
+          0
+      ),
+
+    comments:
+      Number(
+        row.comments ??
+          row.comments_count ??
+          0
+      ),
+
+    reposts:
+      Number(
+        row.reposts ??
+          row.reposts_count ??
+          0
+      ),
+
+    views:
+      Number(
+        row.views ??
+          row.views_count ??
+          0
+      ),
+
+    liked:
+      Boolean(row.liked),
+
+    reposted:
+      Boolean(row.reposted),
+
+    bookmarked:
+      Boolean(row.bookmarked),
+
+    comments_data:
+      row.comments_data || [],
+
+    hashtags:
+      extractHashtags(
+        row.content || ""
+      )
+  };
+}
+
+function normalizeStory(row) {
+  const user =
+    row.users || {};
+
+  return {
+    id: row.id,
+
+    user_id:
+      row.user_id,
+
+    display_name:
+      user.display_name ||
+      "You",
+
+    username:
+      user.username ||
+      "you",
+
+    avatar:
+      user.avatar ||
+      "",
+
+    verified:
+      Boolean(user.verified),
+
+    image:
+      row.image ||
+      "",
+
+    created_at:
+      row.created_at,
+
+    expires_at:
+      row.expires_at
+  };
+}
+
+async function loadData() {
+  const {
+    data: { session },
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    sessionError ||
+    !session?.user
+  ) {
+    window.location.replace(
+      "index.html"
+    );
+
+    return false;
+  }
+
+  const userId =
+    session.user.id;
+
+  const [
+    profileResult,
+    postsResult,
+    storiesResult,
+    likesResult,
+    repostsResult,
+    bookmarksResult,
+    commentsResult,
+    allLikesResult,
+    allRepostsResult
+  ] = await Promise.all([
+    supabaseClient
+      .from("users")
+      .select(
+        "id,username,display_name,email,bio,avatar,cover,verified,plan,streak,xp"
+      )
+      .eq("id", userId)
+      .maybeSingle(),
+
+    supabaseClient
+      .from("posts")
+      .select(
+        "id,created_at,user_id,content,image,likes_count,comments_count,reposts_count,views_count,users:user_id(id,username,display_name,avatar,verified)"
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      ),
+
+    supabaseClient
+      .from("stories")
+      .select(
+        "id,created_at,user_id,image,viewers_count,expires_at,users:user_id(id,username,display_name,avatar,verified)"
+      )
+      .or(
+        `expires_at.is.null,expires_at.gt.${new Date().toISOString()}`
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      ),
+
+    supabaseClient
+      .from("likes")
+      .select("post_id")
+      .eq(
+        "user_id",
+        userId
+      ),
+
+    supabaseClient
+      .from("reposts")
+      .select("post_id")
+      .eq(
+        "user_id",
+        userId
+      ),
+
+    supabaseClient
+      .from("bookmarks")
+      .select("post_id")
+      .eq(
+        "user_id",
+        userId
+      ),
+
+    supabaseClient
+      .from("comments")
+      .select(
+        "id,created_at,post_id,user_id,content,users:user_id(id,username,display_name,avatar,verified)"
+      )
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
+      ),
+
+    supabaseClient
+      .from("likes")
+      .select("post_id"),
+
+    supabaseClient
+      .from("reposts")
+      .select("post_id")
+  ]);
+
+  const firstError = [
+    profileResult,
+    postsResult,
+    storiesResult,
+    likesResult,
+    repostsResult,
+    bookmarksResult,
+    commentsResult
+  ].find(
+    result => result.error
   );
-}
 
-const demoImages = [
-  "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1200&q=85",
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=85",
-  "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85"
-];
-
-function ensureDemo() {
-
-  if (!demoEnabled()) {
-    return;
-  }
-
-  if (
-    !localStorage.getItem(KEYS.posts) ||
-    !read(KEYS.posts, []).length
-  ) {
-
-    const demoPosts = [
-
-      {
-        id: "demo-lina",
-        user_id: "demo-lina",
-        display_name: "Lina",
-        username: "lina.ae",
-        letter: "L",
-        letterColor: "#9b38ff",
-        verified: true,
-        text:
-          "Sunset always hits different 💜",
-        image: demoImages[0],
-        likes: 2400,
-        comments: 186,
-        reposts: 312,
-        views: 48000,
-        created_at:
-          new Date(
-            Date.now() -
-            12 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "demo-apple",
-        user_id: "demo-apple",
-        display_name: "Apple",
-        username: "apple",
-        avatar:
-          "https://logo.clearbit.com/apple.com",
-        verified: true,
-        text:
-          "Apple Intelligence expands to more languages later this year.",
-        image: demoImages[1],
-        likes: 28400,
-        comments: 1800,
-        reposts: 3900,
-        views: 2400000,
-        created_at:
-          new Date(
-            Date.now() -
-            28 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "demo-noah",
-        user_id: "demo-noah",
-        display_name: "Noah",
-        username: "noah.vibes",
-        letter: "N",
-        letterColor: "#8d2cff",
-        verified: true,
-        text:
-          "Focused on the journey. #focus #life",
-        image: demoImages[2],
-        likes: 980,
-        comments: 72,
-        reposts: 44,
-        views: 12000,
-        created_at:
-          new Date(
-            Date.now() -
-            45 * 60000
-          ).toISOString()
-      }
-
-    ];
-
-    write(
-      KEYS.posts,
-      demoPosts.map(normalizePost)
+  if (firstError) {
+    console.error(
+      firstError.error
     );
-  }
 
-  if (
-    !localStorage.getItem(KEYS.stories) ||
-    !read(KEYS.stories, []).length
-  ) {
-
-    const demoStories = [
-
-      {
-        id: "s-lina",
-        user_id: "demo-lina",
-        display_name: "Lina",
-        username: "lina.ae",
-        letter: "L",
-        letterColor: "#9b38ff",
-        image: demoImages[0],
-        text: "Golden hour",
-        created_at:
-          new Date(
-            Date.now() -
-            20 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-noah",
-        user_id: "demo-noah",
-        display_name: "Noah",
-        username: "noah.vibes",
-        letter: "N",
-        letterColor: "#8d2cff",
-        image: demoImages[1],
-        text: "Focus",
-        created_at:
-          new Date(
-            Date.now() -
-            35 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-sara",
-        user_id: "demo-sara",
-        display_name: "Sara",
-        username: "sara",
-        letter: "S",
-        letterColor: "#a946ff",
-        image: demoImages[2],
-        text: "Today",
-        created_at:
-          new Date(
-            Date.now() -
-            50 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-wheel",
-        user_id: "demo-wheel",
-        display_name: "Wheel",
-        username: "ars.wheel",
-        avatar: "wheel",
-        image: demoImages[1],
-        text: "Your weekly challenge",
-        created_at:
-          new Date(
-            Date.now() -
-            60 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-apple",
-        user_id: "demo-apple",
-        display_name: "Apple",
-        username: "apple",
-        avatar:
-          "https://logo.clearbit.com/apple.com",
-        image: demoImages[1],
-        text: "Innovation",
-        created_at:
-          new Date(
-            Date.now() -
-            70 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-ferrari",
-        user_id: "demo-ferrari",
-        display_name: "Ferrari",
-        username: "ferrari",
-        avatar:
-          "https://logo.clearbit.com/ferrari.com",
-        image: demoImages[2],
-        text: "Drive",
-        created_at:
-          new Date(
-            Date.now() -
-            80 * 60000
-          ).toISOString()
-      },
-
-      {
-        id: "s-bmw",
-        user_id: "demo-bmw",
-        display_name: "BMW",
-        username: "bmw",
-        avatar:
-          "https://logo.clearbit.com/bmw.com",
-        image: demoImages[0],
-        text: "The road",
-        created_at:
-          new Date(
-            Date.now() -
-            90 * 60000
-          ).toISOString()
-      }
-
-    ];
-
-    write(
-      KEYS.stories,
-      demoStories.map(normalizeStory)
+    toast(
+      firstError.error.message ||
+        "Unable to load ARS data."
     );
+
+    return false;
   }
-}
 
-function loadData() {
-  posts = read(
-    KEYS.posts,
+  currentUser =
+    normalizeProfile(
+      profileResult.data || {
+        id: userId,
+        email:
+          session.user.email || "",
+        display_name:
+          session.user.user_metadata
+            ?.display_name ||
+          "You",
+        username:
+          session.user.user_metadata
+            ?.username ||
+          "you"
+      }
+    );
+
+  localStorage.setItem(
+    KEYS.user,
+    JSON.stringify(
+      currentUser
+    )
+  );
+
+  localStorage.setItem(
+    KEYS.plan,
+    currentUser.plan ||
+      "free"
+  );
+
+  const likedIds =
+    new Set(
+      (likesResult.data || [])
+        .map(row =>
+          String(row.post_id)
+        )
+    );
+
+  const repostedIds =
+    new Set(
+      (repostsResult.data || [])
+        .map(row =>
+          String(row.post_id)
+        )
+    );
+
+  const bookmarkedIds =
+    new Set(
+      (bookmarksResult.data || [])
+        .map(row =>
+          String(row.post_id)
+        )
+    );
+
+  const likeCounts =
+    new Map();
+
+  const repostCounts =
+    new Map();
+
+  (
+    allLikesResult.data ||
     []
-  ).map(normalizePost);
+  ).forEach(row => {
+    const key =
+      String(row.post_id);
 
-  stories = read(
-    KEYS.stories,
+    likeCounts.set(
+      key,
+      (likeCounts.get(key) || 0) +
+        1
+    );
+  });
+
+  (
+    allRepostsResult.data ||
     []
-  ).map(normalizeStory);
-}
+  ).forEach(row => {
+    const key =
+      String(row.post_id);
 
-function savePosts() {
-  write(KEYS.posts, posts);
-}
+    repostCounts.set(
+      key,
+      (repostCounts.get(key) || 0) +
+        1
+    );
+  });
 
-function saveStories() {
-  write(KEYS.stories, stories);
+  const commentsByPost =
+    new Map();
+
+  (
+    commentsResult.data ||
+    []
+  ).forEach(comment => {
+    const user =
+      comment.users || {};
+
+    const item = {
+      id: comment.id,
+
+      user_id:
+        comment.user_id,
+
+      display_name:
+        user.display_name ||
+        "User",
+
+      username:
+        user.username ||
+        "",
+
+      avatar:
+        user.avatar ||
+        "",
+
+      letter:
+        (
+          user.display_name ||
+          "U"
+        )
+          .slice(0, 1)
+          .toUpperCase(),
+
+      letter_color:
+        "#9b38ff",
+
+      text:
+        comment.content ||
+        "",
+
+      created_at:
+        comment.created_at
+    };
+
+    const key =
+      String(
+        comment.post_id
+      );
+
+    if (
+      !commentsByPost.has(key)
+    ) {
+      commentsByPost.set(
+        key,
+        []
+      );
+    }
+
+    commentsByPost
+      .get(key)
+      .push(item);
+  });
+
+  posts =
+    (
+      postsResult.data ||
+      []
+    ).map(row =>
+      normalizePost({
+        ...row,
+
+        likes:
+          likeCounts.get(
+            String(row.id)
+          ) ??
+          Number(
+            row.likes_count || 0
+          ),
+
+        comments:
+          commentsByPost.get(
+            String(row.id)
+          )?.length ??
+          Number(
+            row.comments_count || 0
+          ),
+
+        reposts:
+          repostCounts.get(
+            String(row.id)
+          ) ??
+          Number(
+            row.reposts_count || 0
+          ),
+
+        views:
+          Number(
+            row.views_count || 0
+          ),
+
+        liked:
+          likedIds.has(
+            String(row.id)
+          ),
+
+        reposted:
+          repostedIds.has(
+            String(row.id)
+          ),
+
+        bookmarked:
+          bookmarkedIds.has(
+            String(row.id)
+          ),
+
+        comments_data:
+          commentsByPost.get(
+            String(row.id)
+          ) || []
+      })
+    );
+
+  stories =
+    (
+      storiesResult.data ||
+      []
+    ).map(
+      normalizeStory
+    );
+
+  return true;
 }
 
 function renderTopAvatar() {
@@ -613,109 +732,98 @@ function renderTopAvatar() {
 }
 
 function renderStories() {
+  const me =
+    getUser();
 
-  const me = getUser();
-
-  const mine = stories.filter(
-    story =>
-      String(story.user_id) ===
-      String(me.id)
-  );
+  const mine =
+    stories.filter(
+      story =>
+        String(
+          story.user_id
+        ) ===
+        String(me.id)
+    );
 
   const people = [];
 
-  if (mine[0]) {
-
-    people.push({
-      story: mine[0],
-      mine: true
-    });
-
-  } else {
-
-    people.push({
-      story: {
+  people.push({
+    story:
+      mine[0] || {
         ...me,
-        id: "new",
-        image: "",
-        text: ""
+        id: me.id,
+        image: ""
       },
-      mine: true
-    });
-
-  }
-
-  const seen = new Set([
-    String(me.id)
-  ]);
-
-  stories.forEach(story => {
-
-    if (
-      !seen.has(
-        String(story.user_id)
-      )
-    ) {
-
-      people.push({
-        story,
-        mine: false
-      });
-
-      seen.add(
-        String(story.user_id)
-      );
-    }
-
+    mine: true
   });
+
+  const seen =
+    new Set([
+      String(me.id)
+    ]);
+
+  stories.forEach(
+    story => {
+      if (
+        !seen.has(
+          String(
+            story.user_id
+          )
+        )
+      ) {
+        people.push({
+          story,
+          mine: false
+        });
+
+        seen.add(
+          String(
+            story.user_id
+          )
+        );
+      }
+    }
+  );
 
   $("stories").innerHTML =
     people
-      .map(({ story, mine }) => {
-
-        const name =
+      .map(
+        ({
+          story,
           mine
-            ? "You"
-            : story.display_name;
-
-        const plus =
-          mine
-            ? `
-              <span class="story-plus">
-                <i data-lucide="plus"></i>
-              </span>
-            `
-            : "";
-
-        const verified =
-          !mine &&
-          story.verified
-            ? `
-              <span class="verified">
-                <i data-lucide="badge-check"></i>
-              </span>
-            `
-            : "";
-
-        return `
+        }) => `
           <button
             class="story-item"
-            data-story-group="${esc(story.user_id)}"
+            data-story-group="${esc(
+              story.user_id
+            )}"
           >
+
             ${avatarMarkup(
               story,
               "story-avatar"
             )}
 
-            ${plus}
+            ${
+              mine
+                ? `
+                  <span class="story-plus">
+                    <i data-lucide="plus"></i>
+                  </span>
+                `
+                : ""
+            }
 
             <span class="story-name">
-              ${esc(name)}
-              ${verified}
+              ${esc(
+                mine
+                  ? "You"
+                  : story.display_name
+              )}
             </span>
+
           </button>
-        `;
-      })
+        `
+      )
       .join("");
 
   refreshIcons();
@@ -723,26 +831,181 @@ function renderStories() {
 
 function postAvatar(post) {
   return avatarMarkup(
-    {
-      ...post,
-      letter:
-        post.letter ||
-        "R",
-      letterColor:
-        post.letterColor ||
-        "#8d2cff"
-    },
+    post,
     "post-avatar"
   );
+}
+
+function postCardMarkup(post) {
+  return `
+    <article
+      class="post-card"
+      data-post-id="${esc(
+        post.id
+      )}"
+    >
+
+      <div class="post-head">
+
+        ${postAvatar(post)}
+
+        <div class="post-user">
+
+          <strong>
+            ${esc(
+              post.display_name
+            )}
+
+            ${
+              post.verified
+                ? `
+                  <span class="verified">
+                    <i data-lucide="badge-check"></i>
+                  </span>
+                `
+                : ""
+            }
+
+          </strong>
+
+          <span>
+            @${esc(
+              post.username
+            )}
+            ·
+            ${timeAgo(
+              post.created_at
+            )}
+          </span>
+
+        </div>
+
+        <button
+          class="more"
+          data-menu="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="more-horizontal"></i>
+        </button>
+
+      </div>
+
+      <div class="post-text">
+        ${richText(
+          post.text
+        )}
+      </div>
+
+      ${
+        post.image
+          ? `
+            <img
+              class="post-image"
+              src="${esc(
+                post.image
+              )}"
+              alt=""
+              loading="lazy"
+            >
+          `
+          : ""
+      }
+
+      <div class="actions">
+
+        <button
+          class="${
+            post.liked
+              ? "liked"
+              : ""
+          }"
+          data-action="like"
+          data-id="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="heart"></i>
+          <span>
+            ${fmt(
+              post.likes
+            )}
+          </span>
+        </button>
+
+        <button
+          data-action="comment"
+          data-id="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="message-circle"></i>
+          <span>
+            ${fmt(
+              post.comments
+            )}
+          </span>
+        </button>
+
+        <button
+          class="${
+            post.reposted
+              ? "reposted"
+              : ""
+          }"
+          data-action="repost"
+          data-id="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="repeat-2"></i>
+          <span>
+            ${fmt(
+              post.reposts
+            )}
+          </span>
+        </button>
+
+        <button
+          class="${
+            post.bookmarked
+              ? "bookmarked"
+              : ""
+          }"
+          data-action="bookmark"
+          data-id="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="bookmark"></i>
+        </button>
+
+        <button
+          class="views"
+          data-action="view"
+          data-id="${esc(
+            post.id
+          )}"
+        >
+          <i data-lucide="eye"></i>
+          <span>
+            ${fmt(
+              post.views
+            )}
+          </span>
+        </button>
+
+      </div>
+
+    </article>
+  `;
 }
 
 function renderPosts(
   list = posts,
   target = $("feed")
 ) {
-
   if (!list.length) {
-
     target.innerHTML = `
       <div class="empty-feed">
 
@@ -764,118 +1027,9 @@ function renderPosts(
 
   target.innerHTML =
     list
-      .map(post => `
-
-        <article
-          class="post-card"
-          data-post-id="${esc(post.id)}"
-        >
-
-          <div class="post-head">
-
-            ${postAvatar(post)}
-
-            <div class="post-user">
-
-              <strong>
-                ${esc(post.display_name)}
-
-                ${
-                  post.verified
-                    ? `
-                      <span class="verified">
-                        <i data-lucide="badge-check"></i>
-                      </span>
-                    `
-                    : ""
-                }
-
-              </strong>
-
-              <span>
-                @${esc(post.username)}
-                ·
-                ${timeAgo(post.created_at)}
-              </span>
-
-            </div>
-
-            <button
-              class="more"
-              data-menu="${esc(post.id)}"
-            >
-              <i data-lucide="more-horizontal"></i>
-            </button>
-
-          </div>
-
-          <div class="post-text">
-            ${richText(post.text)}
-          </div>
-
-          ${
-            post.image
-              ? `
-                <img
-                  class="post-image"
-                  src="${esc(post.image)}"
-                  alt=""
-                  loading="lazy"
-                >
-              `
-              : ""
-          }
-
-          <div class="actions">
-
-            <button
-              class="${post.liked ? "liked" : ""}"
-              data-action="like"
-              data-id="${esc(post.id)}"
-            >
-              <i data-lucide="heart"></i>
-              <span>${fmt(post.likes)}</span>
-            </button>
-
-            <button
-              data-action="comment"
-              data-id="${esc(post.id)}"
-            >
-              <i data-lucide="message-circle"></i>
-              <span>${fmt(post.comments)}</span>
-            </button>
-
-            <button
-              class="${post.reposted ? "reposted" : ""}"
-              data-action="repost"
-              data-id="${esc(post.id)}"
-            >
-              <i data-lucide="repeat-2"></i>
-              <span>${fmt(post.reposts)}</span>
-            </button>
-
-            <button
-              class="${post.bookmarked ? "bookmarked" : ""}"
-              data-action="bookmark"
-              data-id="${esc(post.id)}"
-            >
-              <i data-lucide="bookmark"></i>
-            </button>
-
-            <button
-              class="views"
-              data-action="view"
-              data-id="${esc(post.id)}"
-            >
-              <i data-lucide="eye"></i>
-              <span>${fmt(post.views)}</span>
-            </button>
-
-          </div>
-
-        </article>
-
-      `)
+      .map(
+        postCardMarkup
+      )
       .join("");
 
   refreshIcons();
@@ -889,80 +1043,111 @@ function findPost(id) {
   );
 }
 
-function postAction(
+async function postAction(
   action,
   id
 ) {
+  const post =
+    findPost(id);
 
-  const post = findPost(id);
-
-  if (!post) {
+  if (
+    !post ||
+    !currentUser.id
+  ) {
     return;
   }
 
-  if (action === "like") {
-
-    post.liked =
-      !post.liked;
-
-    post.likes =
-      Math.max(
-        0,
-        post.likes +
-        (post.liked ? 1 : -1)
-      );
+  if (
+    action === "comment"
+  ) {
+    openComments(id);
+    return;
   }
 
-  if (action === "repost") {
-
-    post.reposted =
-      !post.reposted;
-
-    post.reposts =
-      Math.max(
-        0,
-        post.reposts +
-        (post.reposted ? 1 : -1)
-      );
+  if (
+    action === "view"
+  ) {
+    increasePostView(id);
+    return;
   }
 
-  if (action === "bookmark") {
+  try {
+    const table =
+      action === "like"
+        ? "likes"
+        : action === "repost"
+          ? "reposts"
+          : "bookmarks";
 
-    post.bookmarked =
-      !post.bookmarked;
-  }
+    const existing =
+      await supabaseClient
+        .from(table)
+        .select("id")
+        .eq(
+          "post_id",
+          id
+        )
+        .eq(
+          "user_id",
+          currentUser.id
+        )
+        .maybeSingle();
 
-  if (action === "view") {
+    if (existing.error) {
+      throw existing.error;
+    }
 
-    post.views++;
+    if (existing.data) {
+      const result =
+        await supabaseClient
+          .from(table)
+          .delete()
+          .eq(
+            "id",
+            existing.data.id
+          );
+
+      if (result.error) {
+        throw result.error;
+      }
+    } else {
+      const result =
+        await supabaseClient
+          .from(table)
+          .insert({
+            post_id: id,
+            user_id:
+              currentUser.id
+          });
+
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    await loadData();
+
+    renderPosts();
+    renderProfilePosts();
+    renderTrending();
+
+  } catch (error) {
+    console.error(
+      error
+    );
 
     toast(
-      "View counted."
+      error.message ||
+        "Action failed."
     );
   }
-
-  if (action === "comment") {
-
-    openComments(post);
-
-    return;
-  }
-
-  savePosts();
-
-  renderPosts();
-
-  renderProfilePosts();
-
-  renderTrending();
 }
 
 function renderProfile() {
-
-  const user = getUser();
+  const user =
+    getUser();
 
   $("profileHero").innerHTML = `
-
     <div class="profile-card">
 
       ${avatarMarkup(
@@ -973,755 +1158,641 @@ function renderProfile() {
       <div>
 
         <h1>
-          ${esc(user.display_name)}
+          ${esc(
+            user.display_name
+          )}
         </h1>
 
         <p>
-          @${esc(user.username)}
+          @${esc(
+            user.username
+          )}
         </p>
 
         <span>
           ${esc(
             user.bio ||
-            "Welcome to ARS."
+              "Welcome to ARS."
           )}
         </span>
 
       </div>
 
     </div>
-
   `;
 
   renderProfilePosts();
 }
 
 function renderProfilePosts() {
+  const element =
+    $("profilePostsList");
 
-  if (!$("profilePostsList")) {
+  if (!element) {
     return;
   }
 
   renderPosts(
     posts.filter(
       post =>
-        String(post.user_id) ===
-        String(getUser().id)
+        String(
+          post.user_id
+        ) ===
+        String(
+          getUser().id
+        )
     ),
-    $("profilePostsList")
+    element
   );
 }
 
 function extractTrendCounts() {
-
   const counts = {};
 
-  posts.forEach(post => {
-
-    (
-      post.hashtags ||
-      extractHashtags(post.text)
-    ).forEach(tag => {
-
-      counts[tag] =
-        (counts[tag] || 0) + 1;
-
-    });
-
-  });
+  posts.forEach(
+    post => {
+      (
+        post.hashtags ||
+        extractHashtags(
+          post.text
+        )
+      ).forEach(
+        tag => {
+          counts[tag] =
+            (counts[tag] ||
+              0) + 1;
+        }
+      );
+    }
+  );
 
   return counts;
 }
 
 function renderTrending() {
-
-  const counts =
-    extractTrendCounts();
-
   const items =
-    Object.entries(counts)
+    Object.entries(
+      extractTrendCounts()
+    )
       .sort(
         (a, b) =>
           b[1] - a[1]
       )
       .slice(0, 10);
 
-  if (!items.length) {
+  $("trendingList").innerHTML =
+    items.length
+      ? items
+          .map(
+            (
+              [tag, count],
+              index
+            ) => `
+              <button
+                class="trend"
+                data-trending-tag="${e
 
-    $("trendingList").innerHTML = `
-      <div class="empty-state">
+                                     sc(tag)}"
+                >
 
-        <i data-lucide="flame"></i>
+                  <b>
+                    ${index + 1}
+                  </b>
 
-        <h2>No trends yet</h2>
+                  <div>
 
-        <p>
-          Use hashtags in posts to create trends.
-        </p>
+                    <strong>
+                      #${esc(tag)}
+                    </strong>
 
-      </div>
-    `;
+                    <span>
+                      ${fmt(count)}
+                      post${count === 1 ? "" : "s"}
+                    </span>
 
-  } else {
+                  </div>
 
-    $("trendingList").innerHTML =
-      items
-        .map(
-          ([tag, count], index) => `
-            <button
-              class="trend"
-              data-trending-tag="${esc(tag)}"
-            >
+                  <i data-lucide="chevron-right"></i>
 
-              <b>
-                ${index + 1}
-              </b>
+                </button>
+              `
+          )
+          .join("")
+      : `
+        <div class="empty-state">
 
-              <div>
+          <i data-lucide="flame"></i>
 
-                <strong>
-                  #${esc(tag)}
-                </strong>
+          <h2>
+            No trends yet
+          </h2>
 
-                <span>
-                  ${fmt(count)}
-                  post${count === 1 ? "" : "s"}
-                </span>
+          <p>
+            Use hashtags in posts
+            to create trends.
+          </p>
 
-              </div>
-
-              <i data-lucide="chevron-right"></i>
-
-            </button>
-          `
-        )
-        .join("");
-  }
+        </div>
+      `;
 
   refreshIcons();
 }
 
 function showPage(id) {
-
   document
     .querySelectorAll(".page")
     .forEach(page => {
-
       page.classList.toggle(
         "active",
         page.id === id
       );
-
     });
 
   document
     .querySelectorAll(".nav-item")
     .forEach(item => {
-
       item.classList.toggle(
         "active",
         item.dataset.page === id
       );
-
     });
 
   currentPage = id;
 
-  if (
-    id ===
-    "trendingPage"
-  ) {
+  if (id === "trendingPage") {
     renderTrending();
   }
 
-  if (
-    id ===
-    "profilePage"
-  ) {
+  if (id === "profilePage") {
     renderProfile();
   }
 
-  if (
-    id ===
-    "streakPage"
-  ) {
+  if (id === "streakPage") {
     renderStreak();
   }
 
-  if (
-    id ===
-    "wheelPage"
-  ) {
-
-    if (!item) return;
-
-    const action = item.dataset.menuAction;
-    const postId = item.dataset.postId || "";
-
-    const post = posts.find(
-      (entry) => String(entry.id) === String(postId)
-    );
-
-    closeMenu();
-
-    if (!post) {
-      toast("Post not found.");
-      return;
-    }
-
-    await handlePostMenuAction(action, post);
-  }
-);
-
-async function handlePostMenuAction(action, post) {
-  if (!post) return;
-
-  if (action === "repost") {
-    const index = posts.findIndex(
-      (entry) => String(entry.id) === String(post.id)
-    );
-
-    if (index === -1) return;
-
-    posts[index].reposted = !Boolean(posts[index].reposted);
-
-    posts[index].reposts = Math.max(
-      0,
-      Number(posts[index].reposts || 0) +
-        (posts[index].reposted ? 1 : -1)
-    );
-
-    savePosts();
-    renderPosts();
-    renderProfile();
-    renderTrending();
-
-    toast(
-      posts[index].reposted
-        ? "Reposted."
-        : "Repost removed."
-    );
-
-    return;
-  }
-
-  if (action === "bookmark") {
-    const key = `ars_bookmark_${post.id}`;
-    const saved =
-      localStorage.getItem(key) === "true";
-
-    localStorage.setItem(
-      key,
-      String(!saved)
-    );
-
-    toast(
-      saved
-        ? "Removed from bookmarks."
-        : "Saved to bookmarks."
-    );
-
-    return;
-  }
-
-  if (action === "share") {
-    const shareText =
-      post.text ||
-      "Check out this post on ARS.";
-
-    const shareUrl =
-      `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-
-    if (
-      navigator.share &&
-      typeof navigator.share === "function"
-    ) {
-      try {
-        await navigator.share({
-          title: "ARS",
-          text: shareText,
-          url: shareUrl
-        });
-      } catch (error) {
-        if (error?.name !== "AbortError") {
-          toast("Unable to share this post.");
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(
-          `${shareText}\n${shareUrl}`
-        );
-
-        toast("Post link copied.");
-      } catch (error) {
-        toast("Unable to copy the post link.");
-      }
-    }
-
-    return;
-  }
-
-  if (action === "copy") {
-    try {
-      await navigator.clipboard.writeText(
-        post.text || ""
-      );
-
-      toast("Post text copied.");
-    } catch (error) {
-      toast("Unable to copy the text.");
-    }
-
-    return;
-  }
-
-  if (action === "report") {
-    toast("Report submitted.");
-
-    if (supabaseClient && currentUser?.id) {
-      try {
-        await supabaseClient
-          .from("reports")
-          .insert({
-            reporter_id: currentUser.id,
-            post_id: post.id,
-            reason: "user_report"
-          });
-      } catch (error) {
-        // Keep the local UI usable if reports are unavailable.
-      }
-    }
-
-    return;
-  }
-
-  if (action === "not-interested") {
-    const hiddenKey =
-      `ars_hidden_post_${post.id}`;
-
-    localStorage.setItem(
-      hiddenKey,
-      "true"
-    );
-
-    posts = posts.filter(
-      (entry) =>
-        String(entry.id) !==
-        String(post.id)
-    );
-
-    savePosts();
-    renderPosts();
-    renderProfile();
-    renderTrending();
-
-    toast("Post hidden.");
+  if (id === "wheelPage") {
+    renderWheel();
   }
 }
 
 function openComments(postId) {
-  const post = posts.find(
-    (entry) =>
-      String(entry.id) === String(postId)
-  );
+  const post = findPost(postId);
 
   if (!post) {
-    toast("Post not found.");
     return;
   }
 
   currentCommentPost = post;
 
-  const modal = $("commentsModal");
   const list = $("commentsList");
 
-  if (!modal || !list) return;
-
-  const comments =
-    Array.isArray(post.comments_data)
-      ? post.comments_data
-      : [];
-
-  if (!comments.length) {
-    list.innerHTML = `
-      <div class="empty-state compact">
-        <i data-lucide="message-circle"></i>
-        <h2>No comments yet</h2>
-        <p>Be the first to comment.</p>
-      </div>
-    `;
-  } else {
-    list.innerHTML = comments
-      .map((comment) => {
-        const name =
-          comment.display_name ||
-          comment.username ||
-          "User";
-
-        const username =
-          comment.username
-            ? `@${comment.username}`
-            : "";
-
-        return `
-          <article class="comment-item">
-            <div class="avatar small">
-              ${avatarMarkup({
-                avatar: comment.avatar,
-                letter:
-                  comment.letter ||
-                  String(name).charAt(0),
-                color:
-                  comment.letter_color ||
-                  "#9b38ff"
-              })}
-            </div>
-
-            <div class="comment-content">
-              <div class="comment-meta">
-                <strong>${esc(name)}</strong>
-                ${
-                  username
-                    ? `<span>${esc(username)}</span>`
-                    : ""
-                }
-              </div>
-
-              <p>${richText(
-                comment.text || ""
-              )}</p>
-            </div>
-          </article>
-        `;
-      })
-      .join("");
+  if (!list) {
+    return;
   }
 
-  modal.classList.add("open");
+  if (post.comments_data.length) {
+    list.innerHTML =
+      post.comments_data
+        .map(
+          comment => `
+            <article class="comment-item">
+
+              <div class="avatar small">
+                ${avatarMarkup(
+                  comment,
+                  "avatar"
+                )}
+              </div>
+
+              <div class="comment-content">
+
+                <div class="comment-meta">
+
+                  <strong>
+                    ${esc(
+                      comment.display_name
+                    )}
+                  </strong>
+
+                  <span>
+                    @${esc(
+                      comment.username
+                    )}
+                  </span>
+
+                </div>
+
+                <p>
+                  ${richText(
+                    comment.text
+                  )}
+                </p>
+
+              </div>
+
+            </article>
+          `
+        )
+        .join("");
+  } else {
+    list.innerHTML = `
+      <div class="empty-state compact">
+
+        <i data-lucide="message-circle"></i>
+
+        <h2>
+          No comments yet
+        </h2>
+
+        <p>
+          Be the first to comment.
+        </p>
+
+      </div>
+    `;
+  }
+
+  $("commentsModal").classList.add("open");
 
   refreshIcons();
 
-  const input = $("commentInput");
-
-  if (input) {
-    input.value = "";
-    setTimeout(
-      () => input.focus(),
-      100
-    );
-  }
+  setTimeout(
+    () => $("commentInput")?.focus(),
+    100
+  );
 }
 
 function closeComments() {
-  const modal = $("commentsModal");
-
-  if (modal) {
-    modal.classList.remove("open");
-  }
+  $("commentsModal")?.classList.remove("open");
 
   currentCommentPost = null;
 }
 
 async function sendComment() {
-  if (!currentCommentPost) return;
+  if (!currentCommentPost) {
+    return;
+  }
 
   const input = $("commentInput");
 
-  if (!input) return;
-
-  const text =
-    input.value.trim();
+  const text = input?.value.trim() || "";
 
   if (!text) {
     toast("Write a comment first.");
     return;
   }
 
-  const user = getUser();
+  try {
+    const result = await supabaseClient
+      .from("comments")
+      .insert({
+        post_id: currentCommentPost.id,
+        user_id: currentUser.id,
+        content: text
+      });
 
-  const comment = {
-    id: uid("comment"),
-    user_id:
-      user?.id ||
-      "",
-    display_name:
-      getUserName(),
-    username:
-      user?.username ||
-      "",
-    avatar:
-      user?.avatar ||
-      "",
-    letter:
-      localStorage.getItem(
-        "ars_letter"
-      ) ||
-      "R",
-    letter_color:
-      localStorage.getItem(
-        "ars_letter_color"
-      ) ||
-      "#9b38ff",
-    text,
-    created_at:
-      new Date().toISOString()
-  };
+    if (result.error) {
+      throw result.error;
+    }
 
-  const index =
-    posts.findIndex(
-      (entry) =>
-        String(entry.id) ===
-        String(currentCommentPost.id)
+    const postId = currentCommentPost.id;
+
+    if (input) {
+      input.value = "";
+    }
+
+    await loadData();
+
+    renderPosts();
+    renderProfilePosts();
+    renderTrending();
+
+    openComments(postId);
+
+    toast("Comment added.");
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to add comment."
     );
-
-  if (index === -1) return;
-
-  if (
-    !Array.isArray(
-      posts[index].comments_data
-    )
-  ) {
-    posts[index].comments_data = [];
   }
-
-  posts[index].comments_data.push(
-    comment
-  );
-
-  posts[index].comments =
-    posts[index].comments_data.length;
-
-  savePosts();
-
-  currentCommentPost =
-    posts[index];
-
-  input.value = "";
-
-  renderPosts();
-  renderProfile();
-
-  openComments(
-    currentCommentPost.id
-  );
-
-  toast("Comment added.");
 }
 
 function increasePostView(postId) {
-  const index =
-    posts.findIndex(
-      (entry) =>
-        String(entry.id) ===
-        String(postId)
-    );
+  const key = `ars_viewed_${postId}`;
 
-  if (index === -1) return;
-
-  if (
-    sessionStorage.getItem(
-      `ars_viewed_${postId}`
-    ) === "true"
-  ) {
+  if (sessionStorage.getItem(key)) {
     return;
   }
 
-  sessionStorage.setItem(
-    `ars_viewed_${postId}`,
-    "true"
-  );
+  sessionStorage.setItem(key, "1");
 
-  posts[index].views =
-    Number(posts[index].views || 0) +
-    1;
+  const post = findPost(postId);
 
-  savePosts();
+  if (!post) {
+    return;
+  }
+
+  post.views =
+    Number(post.views || 0) + 1;
+
+  renderPosts();
 }
 
 function openCreatePost() {
-  const modal =
-    $("createPostModal");
+  $("createPostModal")?.classList.add("open");
 
-  if (!modal) return;
-
-  modal.classList.add("open");
-
-  const avatar =
-    $("composeAvatar");
-
-  if (avatar) {
-    avatar.innerHTML =
-      avatarMarkup(getUser());
-  }
-
-  refreshIcons();
-
-  setTimeout(() => {
-    $("createPostText")?.focus();
-  }, 100);
+  $("createPostText")?.focus();
 }
 
 function closeCreatePost() {
-  const modal =
-    $("createPostModal");
-
-  if (modal) {
-    modal.classList.remove("open");
-  }
+  $("createPostModal")?.classList.remove("open");
 }
 
 function openCreateStory() {
-  const modal =
-    $("createStoryModal");
-
-  if (!modal) return;
-
-  modal.classList.add("open");
+  $("createStoryModal")?.classList.add("open");
 
   resetStoryEditor();
-
-  refreshIcons();
 }
 
 function closeCreateStory() {
-  const modal =
-    $("createStoryModal");
-
-  if (modal) {
-    modal.classList.remove("open");
-  }
+  $("createStoryModal")?.classList.remove("open");
 }
 
 function resetStoryEditor() {
-  const input =
-    $("storyImage");
+  const file = $("storyImage");
 
-  const text =
-    $("storyText");
-
-  const position =
-    $("storyPosition");
-
-  const color =
-    $("storyTextColor");
-
-  const image =
-    $("storyImagePreview");
-
-  const empty =
-    $("storyCanvasEmpty");
-
-  const textPreview =
-    $("storyTextPreview");
-
-  if (input) input.value = "";
-
-  if (text) text.value = "";
-
-  if (position) {
-    position.value = "center";
+  if (file) {
+    file.value = "";
   }
 
-  if (color) {
-    color.value = "#ffffff";
-  }
+  const image = $("storyImagePreview");
 
   if (image) {
     image.removeAttribute("src");
     image.style.display = "none";
   }
 
+  const empty = $("storyCanvasEmpty");
+
   if (empty) {
     empty.style.display = "flex";
   }
 
-  if (textPreview) {
-    textPreview.textContent = "";
-    textPreview.style.color =
-      "#ffffff";
-    textPreview.style.top =
-      "50%";
-    textPreview.style.transform =
-      "translateY(-50%)";
+  const text = $("storyText");
+
+  if (text) {
+    text.value = "";
+  }
+
+  const preview = $("storyTextPreview");
+
+  if (preview) {
+    preview.textContent = "";
   }
 }
 
 function updateStoryPreview() {
-  const text =
-    $("storyText")?.value.trim() ||
-    "";
+  const image = $("storyImagePreview");
 
-  const position =
-    $("storyPosition")?.value ||
-    "center";
+  const empty = $("storyCanvasEmpty");
 
-  const color =
-    $("storyTextColor")?.value ||
-    "#ffffff";
+  const text = $("storyText")?.value || "";
 
-  const preview =
-    $("storyTextPreview");
+  const preview = $("storyTextPreview");
 
-  if (!preview) return;
+  if (image?.src) {
+    image.style.display = "block";
 
-  preview.textContent = text;
-  preview.style.color = color;
+    if (empty) {
+      empty.style.display = "none";
+    }
+  }
 
-  if (position === "top") {
-    preview.style.top = "12%";
-    preview.style.transform =
-      "translateY(0)";
-  } else if (
-    position === "bottom"
-  ) {
-    preview.style.top = "88%";
-    preview.style.transform =
-      "translateY(-100%)";
-  } else {
-    preview.style.top = "50%";
+  if (preview) {
+    preview.textContent = text;
+
+    preview.style.color =
+      $("storyTextColor")?.value ||
+      "#fff";
+
+    preview.style.top =
+      $("storyPosition")?.value === "top"
+        ? "12%"
+        : $("storyPosition")?.value === "bottom"
+          ? "82%"
+          : "50%";
+
     preview.style.transform =
       "translateY(-50%)";
   }
 }
 
 function readFileAsDataURL(file) {
-  return new Promise(
-    (resolve, reject) => {
-      if (!file) {
-        resolve("");
-        return;
-      }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-      const reader =
-        new FileReader();
+    reader.onload = () => {
+      resolve(reader.result);
+    };
 
-      reader.onload = () =>
+    reader.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function composeStoryImage(
+  file,
+  text,
+  position,
+  color
+) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onload = () => {
+        const canvas =
+          document.createElement("canvas");
+
+        canvas.width = 1080;
+        canvas.height = 1920;
+
+        const context =
+          canvas.getContext("2d");
+
+        const scale = Math.max(
+          canvas.width / image.width,
+          canvas.height / image.height
+        );
+
+        const width =
+          image.width * scale;
+
+        const height =
+          image.height * scale;
+
+        context.drawImage(
+          image,
+          (canvas.width - width) / 2,
+          (canvas.height - height) / 2,
+          width,
+          height
+        );
+
+        if (text) {
+          context.fillStyle =
+            color || "#ffffff";
+
+          context.textAlign = "center";
+
+          context.textBaseline = "middle";
+
+          context.font =
+            "700 68px system-ui,-apple-system,Segoe UI,sans-serif";
+
+          const maxWidth = 900;
+
+          const words = text.split(/\s+/);
+
+          const lines = [];
+
+          let line = "";
+
+          words.forEach(word => {
+            const test =
+              line
+                ? `${line} ${word}`
+                : word;
+
+            if (
+              context.measureText(test).width >
+                maxWidth &&
+              line
+            ) {
+              lines.push(line);
+
+              line = word;
+            } else {
+              line = test;
+            }
+          });
+
+          if (line) {
+            lines.push(line);
+          }
+
+          const y =
+            position === "top"
+              ? 260
+              : position === "bottom"
+                ? 1660
+                : 960;
+
+          const lineHeight = 86;
+
+          const start =
+            y -
+            ((lines.length - 1) *
+              lineHeight) /
+              2;
+
+          lines.forEach(
+            (currentLine, index) => {
+              context.fillText(
+                currentLine,
+                canvas.width / 2,
+                start +
+                  index * lineHeight
+              );
+            }
+          );
+        }
+
         resolve(
-          String(
-            reader.result || ""
+          canvas.toDataURL(
+            "image/jpeg",
+            0.88
           )
         );
+      };
 
-      reader.onerror = () =>
-        reject(
-          new Error(
-            "Unable to read file."
-          )
-        );
+      image.onerror = reject;
 
-      reader.readAsDataURL(file);
-    }
+      image.src = reader.result;
+    };
+
+    reader.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function openStoryViewer(story) {
+  if (!story?.image) {
+    openCreateStory();
+    return;
+  }
+
+  currentStory = story;
+
+  $("storyViewerMedia").innerHTML = `
+    <img
+      src="${esc(story.image)}"
+      alt=""
+    >
+  `;
+
+  $("storyViewerText").textContent = "";
+
+  $("storyViewerUser").textContent =
+    story.display_name || "";
+
+  $("storyViewer").classList.add("open");
+
+  refreshIcons();
+
+  if (currentUser.id && story.id) {
+    supabaseClient
+      .from("story_views")
+      .insert({
+        story_id: story.id,
+        viewer_id: currentUser.id
+      })
+      .then(() => {});
+  }
+}
+
+function closeStoryViewer() {
+  $("storyViewer")?.classList.remove("open");
+
+  currentStory = null;
+}
+
+function openStoryGroup(userId) {
+  const group = stories.filter(
+    story =>
+      String(story.user_id) ===
+      String(userId)
   );
+
+  if (group[0]) {
+    openStoryViewer(group[0]);
+    return;
+  }
+
+  openCreateStory();
 }
 
 async function publishStory() {
   const file =
     $("storyImage")?.files?.[0];
-
-  const text =
-    $("storyText")?.value.trim() ||
-    "";
 
   if (!file) {
     toast("Choose a photo first.");
@@ -1734,81 +1805,73 @@ async function publishStory() {
   }
 
   try {
-    const image =
-      await readFileAsDataURL(file);
-
     const position =
       $("storyPosition")?.value ||
       "center";
 
-    const textColor =
+    const text =
+      $("storyText")?.value.trim() ||
+      "";
+
+    const color =
       $("storyTextColor")?.value ||
       "#ffffff";
 
-    const user =
-      getUser();
-
-    const story =
-      normalizeStory({
-        id: uid("story"),
-        user_id:
-          user?.id || "",
-        display_name:
-          getUserName(),
-        username:
-          user?.username || "",
-        avatar:
-          user?.avatar || "",
-        letter:
-          localStorage.getItem(
-            "ars_letter"
-          ) ||
-          "R",
-        letter_color:
-          localStorage.getItem(
-            "ars_letter_color"
-          ) ||
-          "#9b38ff",
-        image,
+    const image =
+      await composeStoryImage(
+        file,
         text,
-        text_color:
-          textColor,
-        text_position:
-          position,
-        created_at:
-          new Date().toISOString()
-      });
+        position,
+        color
+      );
 
-    stories.unshift(story);
+    const result =
+      await supabaseClient
+        .from("stories")
+        .insert({
+          user_id: currentUser.id,
+          image,
+          expires_at:
+            new Date(
+              Date.now() +
+                86400000
+            ).toISOString()
+        });
 
-    saveStories();
+    if (result.error) {
+      throw result.error;
+    }
 
     closeCreateStory();
+
+    await loadData();
 
     renderStories();
 
     toast("Story shared.");
   } catch (error) {
-    toast("Unable to create story.");
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to create story."
+    );
   }
 }
 
 async function publishPost() {
-  const textarea =
-    $("createPostText");
-
-  const fileInput =
-    $("createPostImage");
-
   const text =
-    textarea?.value.trim() ||
+    $("createPostText")?.value.trim() ||
     "";
 
   const file =
-    fileInput?.files?.[0];
+    $("createPostImage")?.files?.[0];
 
   if (!text && !file) {
-    toast("Write something or add an image.");
+    toast(
+      "Write something or add an image."
+    );
+
     return;
   }
 
@@ -1821,239 +1884,45 @@ async function publishPost() {
   }
 
   try {
-    let image = "";
+    const image = file
+      ? await readFileAsDataURL(file)
+      : null;
 
-    if (file) {
-      image =
-        await readFileAsDataURL(file);
+    const result =
+      await supabaseClient
+        .from("posts")
+        .insert({
+          user_id: currentUser.id,
+          content: text,
+          image
+        });
+
+    if (result.error) {
+      throw result.error;
     }
 
-    const user =
-      getUser();
+    $("createPostText").value = "";
 
-    const post =
-      normalizePost({
-        id: uid("post"),
-        user_id:
-          user?.id || "",
-        display_name:
-          getUserName(),
-        username:
-          user?.username || "",
-        avatar:
-          user?.avatar || "",
-        verified:
-          Boolean(
-            user?.verified
-          ),
-        text,
-        image,
-        created_at:
-          new Date().toISOString(),
-        likes: 0,
-        comments: 0,
-        reposts: 0,
-        views: 0,
-        liked: false,
-        reposted: false,
-        comments_data: [],
-        hashtags:
-          extractHashtags(text)
-      });
+    $("createPostImage").value = "";
 
-    posts.unshift(post);
-
-    savePosts();
-
-    if (textarea) {
-      textarea.value = "";
-    }
-
-    if (fileInput) {
-      fileInput.value = "";
-    }
-
-    const preview =
-      $("postImagePreview");
-
-    if (preview) {
-      preview.innerHTML = "";
-    }
+    $("postImagePreview").innerHTML = "";
 
     closeCreatePost();
 
+    await loadData();
+
     renderPosts();
-    renderProfile();
+    renderProfilePosts();
     renderTrending();
 
     toast("Post published.");
   } catch (error) {
-    toast("Unable to publish post.");
-  }
-}
+    console.error(error);
 
-function openStoryViewer(story) {
-  if (!story) return;
-
-  const viewer =
-    $("storyViewer");
-
-  const media =
-    $("storyViewerMedia");
-
-  const text =
-    $("storyViewerText");
-
-  const user =
-    $("storyViewerUser");
-
-  if (
-    !viewer ||
-    !media ||
-    !text ||
-    !user
-  ) {
-    return;
-  }
-
-  media.innerHTML = story.image
-    ? `<img src="${escAttr(story.image)}" alt="">`
-    : "";
-
-  text.textContent =
-    story.text || "";
-
-  text.style.color =
-    story.text_color ||
-    "#ffffff";
-
-  const position =
-    story.text_position ||
-    "center";
-
-  if (position === "top") {
-    text.style.top = "12%";
-    text.style.transform =
-      "translateY(0)";
-  } else if (
-    position === "bottom"
-  ) {
-    text.style.top = "88%";
-    text.style.transform =
-      "translateY(-100%)";
-  } else {
-    text.style.top = "50%";
-    text.style.transform =
-      "translateY(-50%)";
-  }
-
-  user.innerHTML = `
-    <div class="story-user-avatar">
-      ${avatarMarkup(story)}
-    </div>
-    <div>
-      <strong>${esc(
-        story.display_name ||
-        story.username ||
-        "User"
-      )}</strong>
-      ${
-        story.username
-          ? `<span>@${esc(
-              story.username
-            )}</span>`
-          : ""
-      }
-    </div>
-  `;
-
-  viewer.classList.add("open");
-
-  refreshIcons();
-}
-
-function closeStoryViewer() {
-  const viewer =
-    $("storyViewer");
-
-  if (viewer) {
-    viewer.classList.remove("open");
-  }
-}
-
-function openStoryGroup(userId) {
-  const userStories =
-    stories.filter(
-      (story) =>
-        String(story.user_id || story.username) ===
-        String(userId || "")
+    toast(
+      error.message ||
+      "Unable to publish post."
     );
-
-  if (!userStories.length) {
-    const fallback =
-      stories.find(
-        (story) =>
-          String(
-            story.username || ""
-          ) === String(userId || "")
-      );
-
-    if (fallback) {
-      openStoryViewer(fallback);
-    }
-
-    return;
-  }
-
-  openStoryViewer(
-    userStories[0]
-  );
-}
-
-function showPage(pageId) {
-  const pages =
-    document.querySelectorAll(
-      ".page"
-    );
-
-  pages.forEach((page) => {
-    page.classList.toggle(
-      "active",
-      page.id === pageId
-    );
-  });
-
-  document
-    .querySelectorAll(
-      ".nav-item"
-    )
-    .forEach((item) => {
-      item.classList.toggle(
-        "active",
-        item.dataset.page ===
-          pageId
-      );
-    });
-
-  const fab =
-    $("createPost");
-
-  if (fab) {
-    fab.style.display =
-      pageId === "homePage"
-        ? ""
-        : "none";
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-
-  if (
-    pageId === "searchPage"
-  ) {
-    $("searchInput")?.focus();
   }
 }
 
@@ -2063,13 +1932,11 @@ function runSearch(value) {
       .trim()
       .toLowerCase();
 
-  const home =
-    $("searchHome");
-
   const results =
     $("searchResults");
 
-  if (!results) return;
+  const home =
+    $("searchHome");
 
   if (!query) {
     results.innerHTML = "";
@@ -2079,6 +1946,7 @@ function runSearch(value) {
     }
 
     refreshIcons();
+
     return;
   }
 
@@ -2087,256 +1955,430 @@ function runSearch(value) {
   }
 
   const matches =
-    posts.filter((post) => {
-      const text =
-        String(
-          post.text || ""
-        ).toLowerCase();
+    posts.filter(post => {
+      const source =
+        `${post.text} ${
+          post.display_name
+        } ${
+          post.username
+        } ${
+          (
+            post.hashtags ||
+            []
+          ).join(" ")
+        }`.toLowerCase();
 
-      const name =
-        String(
-          post.display_name || ""
-        ).toLowerCase();
-
-      const username =
-        String(
-          post.username || ""
-        ).toLowerCase();
-
-      const hashtags =
-        Array.isArray(
-          post.hashtags
-        )
-          ? post.hashtags
-              .join(" ")
-              .toLowerCase()
-          : "";
-
-      return (
-        text.includes(query) ||
-        name.includes(query) ||
-        username.includes(query) ||
-        hashtags.includes(query)
-      );
+      return source.includes(query);
     });
 
   if (!matches.length) {
     results.innerHTML = `
       <div class="empty-state">
+
         <i data-lucide="search-x"></i>
-        <h2>No results</h2>
-        <p>Nothing matched "${esc(
-          value
-        )}".</p>
+
+        <h2>
+          No results
+        </h2>
+
+        <p>
+          Nothing matched
+          "${esc(value)}".
+        </p>
+
       </div>
     `;
+  } else {
+    results.innerHTML = "";
 
-    refreshIcons();
-    return;
+    renderPosts(
+      matches,
+      results
+    );
   }
-
-  results.innerHTML =
-    matches
-      .map(
-        (post) =>
-          postCardMarkup(post)
-      )
-      .join("");
-
-  refreshIcons();
-}
-
-function renderTrending() {
-  const container =
-    $("trendingList");
-
-  if (!container) return;
-
-  const counts =
-    new Map();
-
-  posts.forEach((post) => {
-    const tags =
-      Array.isArray(
-        post.hashtags
-      )
-        ? post.hashtags
-        : extractHashtags(
-            post.text || ""
-          );
-
-    tags.forEach((tag) => {
-      const normalized =
-        String(tag)
-          .replace(/^#/, "")
-          .toLowerCase();
-
-      if (!normalized) return;
-
-      counts.set(
-        normalized,
-        (counts.get(
-          normalized
-        ) || 0) + 1
-      );
-    });
-  });
-
-  const trending =
-    Array.from(
-      counts.entries()
-    )
-      .sort(
-        (a, b) =>
-          b[1] - a[1] ||
-          a[0].localeCompare(
-            b[0]
-          )
-      )
-      .slice(0, 20);
-
-  if (!trending.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <i data-lucide="flame"></i>
-        <h2>No trends yet</h2>
-        <p>Hashtags will appear here as people post.</p>
-      </div>
-    `;
-
-    refreshIcons();
-    return;
-  }
-
-  container.innerHTML =
-    trending
-      .map(
-        ([tag, total], index) => `
-          <button
-            class="trend-item"
-            type="button"
-            data-trend="${escAttr(
-              tag
-            )}"
-          >
-            <span class="trend-rank">
-              ${index + 1}
-            </span>
-
-            <span class="trend-main">
-              <strong>#${esc(
-                tag
-              )}</strong>
-              <small>
-                ${total}
-                ${
-                  total === 1
-                    ? "post"
-                    : "posts"
-                }
-              </small>
-            </span>
-
-            <i data-lucide="chevron-right"></i>
-          </button>
-        `
-      )
-      .join("");
 
   refreshIcons();
 }
 
 function renderStreak() {
-  const number =
-    $("streakNumber");
-
-  const text =
-    $("streakText");
-
-  const dots =
-    $("weekDots");
-
-  const done =
-    $("streakDone");
-
   const state =
-    readJSON(
-      STREAK_KEY,
-      {}
+    JSON.parse(
+      localStorage.getItem(
+        KEYS.streak
+      ) || "{}"
     );
 
   const streak =
     Number(
       state.streak ||
-        currentUser?.streak ||
-        0
+      currentUser.streak ||
+      0
     );
 
-  if (number) {
-    number.textContent =
-      String(streak);
-  }
+  $("streakNumber")
+    .textContent =
+    String(streak);
 
-  if (text) {
-    text.textContent =
-      streak === 1
-        ? "day streak"
-        : "day streak";
-  }
+  $("streakText")
+    .textContent =
+    "day streak";
 
-  if (dots) {
-    const active =
-      Number(
-        state.today ||
-          (streak > 0
-            ? 1
-            : 0)
-      );
-
-    dots.innerHTML =
-      Array.from(
-        { length: 7 },
-        (_, index) => `
-          <span class="${
-            index <
-            Math.min(
-              active,
-              7
-            )
+  $("weekDots")
+    .innerHTML =
+    Array.from(
+      {
+        length: 7
+      },
+      (_, index) => `
+        <span
+          class="${
+            index < streak
               ? "active"
               : ""
-          }"></span>
-        `
-      ).join("");
-  }
+          }"
+        >
+          ${
+            index < streak
+              ? "✓"
+              : ""
+          }
+        </span>
+      `
+    )
+    .join("");
 
-  if (done) {
-    done.textContent =
-      streak > 0
-        ? "Keep the streak alive."
-        : "Complete an activity to start your streak.";
-  }
+  $("streakDone")
+    .textContent =
+    streak
+      ? "Keep the streak alive."
+      : "Complete an activity to start your streak.";
 }
 
 function renderWheel() {
-  const counter =
-    $("spinCount 
-         );
+  const plan =
+    currentUser.plan ||
+    "free";
+
+  $("planLabel")
+    .textContent =
+    plan === "premium"
+      ? "Premium"
+      : "Free";
+
+  const state =
+    JSON.parse(
+      localStorage.getItem(
+        KEYS.wheel
+      ) || "{}"
+    );
+
+  $("spinCounter")
+    .textContent =
+    `${Number(
+      state.spins || 0
+    )} spins`;
+}
+
+function bindEvents() {
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(button => {
+      button.addEventListener(
+        "click",
+        () =>
+          showPage(
+            button.dataset.page
+          )
+      );
+    });
+
+  $("profileButton")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage("profilePage")
+    );
+
+  $("wheelButton")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage("wheelPage")
+    );
+
+  $("createPost")
+    ?.addEventListener(
+      "click",
+      openCreatePost
+    );
+
+  $("createPostClose")
+    ?.addEventListener(
+      "click",
+      closeCreatePost
+    );
+
+  $("publishPost")
+    ?.addEventListener(
+      "click",
+      publishPost
+    );
+
+  $("pickPostImage")
+    ?.addEventListener(
+      "click",
+      () =>
+        $("createPostImage")
+          ?.click()
+    );
+
+  $("createPostImage")
+    ?.addEventListener(
+      "change",
+      async event => {
+        const file =
+          event.target.files?.[0];
+
+        if (!file) {
+          return;
         }
+
+        const image =
+          await readFileAsDataURL(
+            file
+          );
+
+        $("postImagePreview")
+          .innerHTML = `
+            <div class="preview-wrap">
+
+              <img
+                src="${esc(image)}"
+                alt=""
+              >
+
+              <button
+                class="remove-media"
+                type="button"
+                data-remove-post-image
+              >
+                <i data-lucide="x"></i>
+              </button>
+
+            </div>
+          `;
+
+        refreshIcons();
+      }
+    );
+
+  $("createStoryClose")
+    ?.addEventListener(
+      "click",
+      closeCreateStory
+    );
+
+  $("publishStory")
+    ?.addEventListener(
+      "click",
+      publishStory
+    );
+
+  $("pickStoryImage")
+    ?.addEventListener(
+      "click",
+      () =>
+        $("storyImage")?.click()
+    );
+
+  $("storyImage")
+    ?.addEventListener(
+      "change",
+      async event => {
+        const file =
+          event.target.files?.[0];
+
+        if (!file) {
+          return;
+        }
+
+        $("storyImagePreview")
+          .src =
+          await readFileAsDataURL(
+            file
+          );
+
+        updateStoryPreview();
+      }
+    );
+
+  $("storyText")
+    ?.addEventListener(
+      "input",
+      updateStoryPreview
+    );
+
+  $("storyPosition")
+    ?.addEventListener(
+      "change",
+      updateStoryPreview
+    );
+
+  $("storyTextColor")
+    ?.addEventListener(
+      "input",
+      updateStoryPreview
+    );
+
+  $("storyViewerClose")
+    ?.addEventListener(
+      "click",
+      closeStoryViewer
+    );
+
+  $("commentsClose")
+    ?.addEventListener(
+      "click",
+      closeComments
+    );
+
+  $("sendComment")
+    ?.addEventListener(
+      "click",
+      sendComment
+    );
+
+  $("searchInput")
+    ?.addEventListener(
+      "input",
+      event =>
+        runSearch(
+          event.target.value
+        )
+    );
+
+  $("openStreakFromWheel")
+    ?.addEventListener(
+      "click",
+      () =>
+        showPage(
+          "streakPage"
+        )
+    );
+
+  $("spinButton")
+    ?.addEventListener(
+      "click",
+      () => {
+        const state =
+          JSON.parse(
+            localStorage.getItem(
+              KEYS.wheel
+            ) || "{}"
+          );
+
+        state.spins =
+          Number(
+            state.spins || 0
+          ) + 1;
+
+        localStorage.setItem(
+          KEYS.wheel,
+          JSON.stringify(state)
+        );
+
+        wheelRotation +=
+          360 +
+          Math.floor(
+            Math.random() * 360
+          );
+
+        $("wheel").style.transform =
+          `rotate(${wheelRotation}deg)`;
+
+        renderWheel();
+
+        $("challengeResult")
+          .textContent =
+          "Challenge unlocked. Keep going.";
+      }
+    );
+
+  document.addEventListener(
+    "click",
+    async event => {
+      const action =
+        event.target.closest(
+          "[data-action]"
+        );
+
+      if (action) {
+        await postAction(
+          action.dataset.action,
+          action.dataset.id
+        );
+
+        return;
+      }
+
+      const story =
+        event.target.closest(
+          "[data-story-group]"
+        );
+
+      if (story) {
+        openStoryGroup(
+          story.dataset.storyGroup
+        );
+
+        return;
+      }
+
+      const tag =
+        event.target.closest(
+          "[data-hashtag],[data-trending-tag]"
+        );
+
+      if (tag) {
+        const value =
+          tag.dataset.hashtag ||
+          tag.dataset.trendingTag;
+
+        showPage("searchPage");
+
+        $("searchInput").value =
+          `#${value}`;
+
+        runSearch(
+          `#${value}`
+        );
+
+        return;
+      }
+
+      if (
+        event.target.closest(
+          "[data-remove-post-image]"
+        )
+      ) {
+        $("postImagePreview")
+          .innerHTML = "";
+
+        $("createPostImage")
+          .value = "";
       }
     }
   );
 
   document.addEventListener(
     "keydown",
-    (event) => {
+    event => {
       if (
         event.key !== "Escape"
       ) {
         return;
       }
 
-      closeMenu();
       closeComments();
       closeCreatePost();
       closeCreateStory();
@@ -2345,25 +2387,21 @@ function renderWheel() {
   );
 }
 
-function init() {
-  if (initialized) return;
+async function init() {
+  if (initialized) {
+    return;
+  }
 
   initialized = true;
 
-  currentUser =
-    getUser();
+  const loaded =
+    await loadData();
 
-  plan =
-    localStorage.getItem(
-      PLAN_KEY
-    ) ||
-    currentUser?.plan ||
-    "free";
+  if (!loaded) {
+    return;
+  }
 
-  ensureDemo();
-
-  loadData();
-
+  renderTopAvatar();
   renderProfile();
   renderStories();
   renderPosts();
@@ -2377,24 +2415,36 @@ function init() {
 }
 
 window.ARSHome = {
-  getPosts: () => posts,
-  getStories: () => stories,
-  refresh: () => {
-    loadData();
+  getPosts: () =>
+    posts,
+
+  getStories: () =>
+    stories,
+
+  refresh: async () => {
+    await loadData();
+
+    renderTopAvatar();
     renderStories();
     renderPosts();
     renderTrending();
     renderProfile();
     renderStreak();
     renderWheel();
+
     refreshIcons();
   },
+
   openCreatePost,
+
   openCreateStory,
+
   openStreak: () =>
     showPage("streakPage"),
+
   openWheel: () =>
     showPage("wheelPage"),
+
   search: runSearch
 };
 
@@ -2403,13 +2453,44 @@ if (
   "loading"
 ) {
   document.addEventListener(
-    "DOMContentLoaded",
+    DOMContentLoaded,
     init,
-    { once: true }
+    {
+      once: true
+    }
   );
 } else {
   init();
 }
 
-})();
-   
+window.ARSHome = {
+  getPosts: () => posts,
+
+  getStories: () => stories,
+
+  refresh: async () => {
+    await loadData();
+
+    renderTopAvatar();
+    renderStories();
+    renderPosts();
+    renderTrending();
+    renderProfile();
+    renderStreak();
+    renderWheel();
+
+    refreshIcons();
+  },
+
+  openCreatePost,
+
+  openCreateStory,
+
+  openStreak: () =>
+    showPage("streakPage"),
+
+  openWheel: () =>
+    showPage("wheelPage"),
+
+  search: runSearch
+};
