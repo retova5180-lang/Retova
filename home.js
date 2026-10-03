@@ -1,5 +1,6 @@
 const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
@@ -20,18 +21,122 @@ const state = {
   posts: [],
   stories: [],
   comments: new Map(),
+
   searchQuery: "",
+
   postImageData: null,
-  storyImageData: null,
+
+  storyMediaData: null,
+  storyMediaType: "image",
+  storyFile: null,
+
   currentStoryGroup: [],
   currentStoryIndex: 0,
+
   currentPostId: null,
+
   wheelRotation: 0,
+  wheelSpins: 0,
+
   initialized: false,
   loading: false
 };
 
-const escapeHtml = (value) =>
+const ARS_WHEEL_FREE_SPINS = 2;
+const ARS_WHEEL_STORAGE_KEY =
+  "ars_wheel_spins";
+
+const WHEEL_CHALLENGES = [
+  {
+    title: "Post something today",
+    category: "Post",
+    reward: 20
+  },
+  {
+    title: "Share a story",
+    category: "Story",
+    reward: 20
+  },
+  {
+    title: "Like three posts",
+    category: "Engagement",
+    reward: 15
+  },
+  {
+    title: "Use a hashtag",
+    category: "Explore",
+    reward: 10
+  },
+  {
+    title: "Leave a comment",
+    category: "Community",
+    reward: 15
+  },
+  {
+    title: "Keep your streak alive",
+    category: "Streak",
+    reward: 25
+  }
+];
+
+function safeError(
+  feature,
+  error
+) {
+  console.error(
+    `[ARS:${feature}]`,
+    error
+  );
+
+  if (
+    window.ARSErrors &&
+    typeof window.ARSErrors.capture ===
+      "function"
+  ) {
+    try {
+      window.ARSErrors.capture(
+        error,
+        feature
+      );
+    } catch (_) {}
+  }
+}
+
+function safeRun(
+  feature,
+  callback
+) {
+  try {
+    return callback();
+  } catch (error) {
+    safeError(
+      feature,
+      error
+    );
+
+    return null;
+  }
+}
+
+async function safeRunAsync(
+  feature,
+  callback
+) {
+  try {
+    return await callback();
+  } catch (error) {
+    safeError(
+      feature,
+      error
+    );
+
+    return null;
+  }
+}
+
+const escapeHtml = (
+  value
+) =>
   String(value ?? "").replace(
     /[&<>"']/g,
     (char) =>
@@ -44,80 +149,133 @@ const escapeHtml = (value) =>
       })[char]
   );
 
-const formatCount = (value) => {
-  const number = Number(value || 0);
+function refreshIcons() {
+  safeRun(
+    "icons",
+    () => {
+      window.lucide?.createIcons?.();
+    }
+  );
+}
+
+function formatCount(
+  value
+) {
+  const number =
+    Number(value || 0);
 
   if (number >= 1000000) {
-    return `${(number / 1000000)
+    return `${(
+      number / 1000000
+    )
       .toFixed(1)
       .replace(".0", "")}M`;
   }
 
   if (number >= 1000) {
-    return `${(number / 1000)
+    return `${(
+      number / 1000
+    )
       .toFixed(1)
       .replace(".0", "")}K`;
   }
 
   return String(number);
-};
+}
 
-const timeAgo = (value) => {
+function timeAgo(
+  value
+) {
   if (!value) {
     return "";
   }
 
-  const seconds = Math.max(
-    0,
-    Math.floor(
-      (Date.now() -
-        new Date(value).getTime()) /
-        1000
-    )
-  );
+  const time =
+    new Date(
+      value
+    ).getTime();
+
+  if (
+    !Number.isFinite(time)
+  ) {
+    return "";
+  }
+
+  const seconds =
+    Math.max(
+      0,
+      Math.floor(
+        (Date.now() -
+          time) /
+          1000
+      )
+    );
 
   if (seconds < 60) {
     return `${seconds}s`;
   }
 
   if (seconds < 3600) {
-    return `${Math.floor(seconds / 60)}m`;
+    return `${Math.floor(
+      seconds / 60
+    )}m`;
   }
 
   if (seconds < 86400) {
-    return `${Math.floor(seconds / 3600)}h`;
+    return `${Math.floor(
+      seconds / 3600
+    )}h`;
   }
 
-  return `${Math.floor(seconds / 86400)}d`;
-};
+  if (seconds < 604800) {
+    return `${Math.floor(
+      seconds / 86400
+    )}d`;
+  }
 
-const refreshIcons = () =>
-  window.lucide?.createIcons?.();
+  return new Date(
+    value
+  ).toLocaleDateString(
+    undefined,
+    {
+      month: "short",
+      day: "numeric"
+    }
+  );
+}
 
-function showToast(message) {
-  const element = $("toast");
+function showToast(
+  message
+) {
+  const element =
+    $("toast");
 
   if (!element) {
     return;
   }
 
-  element.textContent = message;
-  element.classList.add("show");
+  element.textContent =
+    message;
+
+  element.classList.add(
+    "show"
+  );
 
   clearTimeout(
     window.__arsToastTimer
   );
 
-  window.__arsToastTimer = setTimeout(
-    () =>
-      element.classList.remove(
-        "show"
-      ),
-    2200
-  );
+  window.__arsToastTimer =
+    setTimeout(
+      () =>
+        element.classList.remove(
+          "show"
+        ),
+      2400
+    );
 }
 
-function localProfileSettings() {
+function getLocalProfileSettings() {
   return {
     letter: (
       localStorage.getItem(
@@ -139,21 +297,24 @@ function avatarMarkup(
   className = "avatar"
 ) {
   const settings =
-    localProfileSettings();
+    getLocalProfileSettings();
 
   const avatar =
-    typeof user.avatar === "string"
+    typeof user.avatar ===
+    "string"
       ? user.avatar
       : "";
 
-  const image =
+  const isImage =
     /^(https?:|data:image|blob:)/i.test(
       avatar
     );
 
-  if (image) {
+  if (isImage) {
     return `
-      <div class="${className}">
+      <div class="${escapeHtml(
+        className
+      )}">
         <img
           src="${escapeHtml(
             avatar
@@ -164,14 +325,15 @@ function avatarMarkup(
     `;
   }
 
-  const letter = String(
-    user.letter ||
-      settings.letter ||
-      user.display_name ||
-      "R"
-  )
-    .slice(0, 1)
-    .toUpperCase();
+  const letter =
+    String(
+      user.letter ||
+        user.display_name ||
+        settings.letter ||
+        "R"
+    )
+      .slice(0, 1)
+      .toUpperCase();
 
   const color =
     user.letterColor ||
@@ -180,13 +342,17 @@ function avatarMarkup(
 
   return `
     <div
-      class="${className}"
+      class="${escapeHtml(
+        className
+      )}"
       style="--avatar:${escapeHtml(
         color
       )}"
     >
       <span>
-        ${escapeHtml(letter)}
+        ${escapeHtml(
+          letter
+        )}
       </span>
     </div>
   `;
@@ -196,16 +362,18 @@ function normalizeUser(
   user = {}
 ) {
   const settings =
-    localProfileSettings();
+    getLocalProfileSettings();
 
   return {
     id: user.id || "",
 
     username:
-      user.username || "you",
+      user.username ||
+      "you",
 
     display_name:
-      user.display_name || "You",
+      user.display_name ||
+      "You",
 
     email:
       user.email || "",
@@ -217,21 +385,31 @@ function normalizeUser(
       user.avatar || "",
 
     verified:
-      Boolean(user.verified),
+      Boolean(
+        user.verified
+      ),
 
     plan:
-      user.plan || "free",
+      user.plan ||
+      "free",
 
     streak:
-      Number(user.streak || 0),
+      Number(
+        user.streak || 0
+      ),
 
     xp:
-      Number(user.xp || 0),
+      Number(
+        user.xp || 0
+      ),
 
     letter:
+      user.letter ||
       settings.letter,
 
     letterColor:
+      user.letterColor ||
+      user.letter_color ||
       settings.letterColor
   };
 }
@@ -239,11 +417,6 @@ function normalizeUser(
 function normalizePost(
   row = {}
 ) {
-  const user =
-    row.users ||
-    row.user ||
-    {};
-
   return {
     id: row.id,
 
@@ -261,49 +434,63 @@ function normalizePost(
 
     likes_count:
       Number(
-        row.likes_count ||
-          row.likes ||
-          0
+        row.likes_count || 0
       ),
 
     comments_count:
       Number(
-        row.comments_count ||
-          row.comments ||
-          0
+        row.comments_count || 0
       ),
 
     reposts_count:
       Number(
-        row.reposts_count ||
-          row.reposts ||
-          0
+        row.reposts_count || 0
       ),
 
     views_count:
       Number(
-        row.views_count ||
-          row.views ||
-          0
+        row.views_count || 0
       ),
 
     liked:
-      Boolean(row.liked),
+      Boolean(
+        row.liked
+      ),
 
     reposted:
-      Boolean(row.reposted),
+      Boolean(
+        row.reposted
+      ),
 
     bookmarked:
-      Boolean(row.bookmarked),
+      Boolean(
+        row.bookmarked
+      ),
 
     user:
-      normalizeUser(user)
+      normalizeUser(
+        row.users ||
+          row.user ||
+          {}
+      )
   };
 }
 
 function normalizeStory(
   row = {}
 ) {
+  const mediaType =
+    row.media_type ||
+    (
+      String(
+        row.image || ""
+      ).startsWith(
+        "data:video/"
+      )
+        ? "video"
+        : "image"
+    );
+
   return {
     id: row.id,
 
@@ -313,6 +500,34 @@ function normalizeStory(
     image:
       row.image || "",
 
+    media_type:
+      mediaType,
+
+    story_text:
+      row.story_text ||
+      "",
+
+    text_position:
+      row.text_position ||
+      "center",
+
+    text_color:
+      row.text_color ||
+      "#ffffff",
+
+    filter:
+      row.filter ||
+      "none",
+
+    sticker:
+      row.sticker ||
+      "",
+
+    zoom:
+      Number(
+        row.zoom || 1
+      ),
+
     created_at:
       row.created_at,
 
@@ -321,7 +536,8 @@ function normalizeStory(
 
     viewers_count:
       Number(
-        row.viewers_count || 0
+        row.viewers_count ||
+          0
       ),
 
     user:
@@ -337,7 +553,9 @@ function hashtagsFromText(
   text
 ) {
   return [
-    ...String(text || "").matchAll(
+    ...String(
+      text || ""
+    ).matchAll(
       /(^|\s)#([A-Za-z0-9_]+)/g
     )
   ].map(
@@ -365,8 +583,11 @@ async function requireSession() {
   } =
     await supabaseClient.auth.getSession();
 
+  if (error) {
+    throw error;
+  }
+
   if (
-    error ||
     !data.session?.user
   ) {
     window.location.replace(
@@ -394,12 +615,19 @@ async function loadCurrentUser() {
     await supabaseClient
       .from("users")
       .select("*")
-      .eq("id", authUser.id)
+      .eq(
+        "id",
+        authUser.id
+      )
       .maybeSingle();
 
   if (error) {
     throw error;
   }
+
+  const metadata =
+    authUser.user_metadata ||
+    {};
 
   const user =
     normalizeUser(
@@ -407,25 +635,24 @@ async function loadCurrentUser() {
         id: authUser.id,
 
         email:
-          authUser.email || "",
+          authUser.email ||
+          "",
 
         username:
-          authUser
-            .user_metadata
-            ?.username ||
+          metadata.username ||
           "you",
 
         display_name:
-          authUser
-            .user_metadata
-            ?.display_name ||
+          metadata.display_name ||
           "You"
       }
     );
 
   localStorage.setItem(
     "ars_user",
-    JSON.stringify(user)
+    JSON.stringify(
+      user
+    )
   );
 
   localStorage.setItem(
@@ -491,7 +718,8 @@ async function hydratePostActions() {
 
   const ids =
     state.posts.map(
-      (post) => post.id
+      (post) =>
+        post.id
     );
 
   const [
@@ -502,7 +730,9 @@ async function hydratePostActions() {
     await Promise.all([
       supabaseClient
         .from("likes")
-        .select("post_id")
+        .select(
+          "post_id"
+        )
         .eq(
           "user_id",
           state.user.id
@@ -514,7 +744,9 @@ async function hydratePostActions() {
 
       supabaseClient
         .from("reposts")
-        .select("post_id")
+        .select(
+          "post_id"
+        )
         .eq(
           "user_id",
           state.user.id
@@ -526,7 +758,9 @@ async function hydratePostActions() {
 
       supabaseClient
         .from("bookmarks")
-        .select("post_id")
+        .select(
+          "post_id"
+        )
         .eq(
           "user_id",
           state.user.id
@@ -551,42 +785,58 @@ async function hydratePostActions() {
 
   const liked =
     new Set(
-      (likes.data || []).map(
-        (row) =>
-          String(row.post_id)
-      )
+      (likes.data || [])
+        .map(
+          (row) =>
+            String(
+              row.post_id
+            )
+        )
     );
 
   const reposted =
     new Set(
-      (reposts.data || []).map(
-        (row) =>
-          String(row.post_id)
-      )
+      (reposts.data || [])
+        .map(
+          (row) =>
+            String(
+              row.post_id
+            )
+        )
     );
 
   const bookmarked =
     new Set(
-      (bookmarks.data || []).map(
-        (row) =>
-          String(row.post_id)
-      )
+      (bookmarks.data || [])
+        .map(
+          (row) =>
+            String(
+              row.post_id
+            )
+        )
     );
-    state.posts.forEach(
+
+  state.posts.forEach(
     (post) => {
       post.liked =
         liked.has(
-          String(post.id)
+          String(
+            post.id
+          )
         );
 
       post.reposted =
         reposted.has(
-          String(post.id)
+          String(
+            post.id
+          )
         );
 
       post.bookmarked =
         bookmarked.has(
-          String(post.id)
+          String(
+            post.id
+          )
         );
     }
   );
@@ -606,6 +856,13 @@ async function loadStories() {
         image,
         viewers_count,
         expires_at,
+        media_type,
+        story_text,
+        text_position,
+        text_color,
+        filter,
+        sticker,
+        zoom,
         users:user_id(
           id,
           username,
@@ -636,7 +893,8 @@ async function loadStories() {
 }
 
 async function loadAll() {
-  state.loading = true;
+  state.loading =
+    true;
 
   try {
     state.user =
@@ -655,8 +913,8 @@ async function loadAll() {
     updateUserUI();
 
   } catch (error) {
-    console.error(
-      "ARS load error:",
+    safeError(
+      "load",
       error
     );
 
@@ -666,19 +924,20 @@ async function loadAll() {
     );
 
   } finally {
-    state.loading = false;
+    state.loading =
+      false;
   }
 }
 
 function updateUserUI() {
-  const avatar =
+  const profileButton =
     $("profileButton");
 
-  if (avatar) {
-    avatar.innerHTML =
+  if (profileButton) {
+    profileButton.innerHTML =
       avatarMarkup(
         state.user,
-        "avatar"
+        "avatar top-avatar"
       );
   }
 
@@ -709,7 +968,9 @@ function renderStories() {
 
   state.stories.forEach(
     (story) => {
-      if (!story.user_id) {
+      if (
+        !story.user_id
+      ) {
         return;
       }
 
@@ -725,7 +986,9 @@ function renderStories() {
       }
 
       groups
-        .get(story.user_id)
+        .get(
+          story.user_id
+        )
         .push(story);
     }
   );
@@ -747,9 +1010,15 @@ function renderStories() {
 
   entries.sort(
     ([a], [b]) =>
-      a === state.user?.id
+      String(a) ===
+      String(
+        state.user?.id
+      )
         ? -1
-        : b === state.user?.id
+        : String(b) ===
+            String(
+              state.user?.id
+            )
           ? 1
           : 0
   );
@@ -761,14 +1030,20 @@ function renderStories() {
           const user =
             stories[0]?.user ||
             (
-              userId ===
-              state.user?.id
+              String(
+                userId
+              ) ===
+              String(
+                state.user?.id
+              )
                 ? state.user
                 : {}
             );
 
           const own =
-            String(userId) ===
+            String(
+              userId
+            ) ===
             String(
               state.user?.id
             );
@@ -782,10 +1057,14 @@ function renderStories() {
               )}"
             >
 
-              ${avatarMarkup(
-                user,
-                "story-avatar"
-              )}
+              <span
+                class="story-ring"
+              >
+                ${avatarMarkup(
+                  user,
+                  "story-avatar"
+                )}
+              </span>
 
               ${
                 own
@@ -816,7 +1095,9 @@ function renderStories() {
   refreshIcons();
 }
 
-function postMarkup(post) {
+function postMarkup(
+  post
+) {
   return `
     <article
       class="post-card"
@@ -827,12 +1108,26 @@ function postMarkup(post) {
 
       <div class="post-head">
 
-        ${avatarMarkup(
-          post.user,
-          "post-avatar"
-        )}
+        <button
+          type="button"
+          class="post-avatar-button"
+          data-profile-user="${escapeHtml(
+            post.user_id
+          )}"
+        >
+          ${avatarMarkup(
+            post.user,
+            "post-avatar"
+          )}
+        </button>
 
-        <div class="post-user">
+        <button
+          type="button"
+          class="post-user"
+          data-profile-user="${escapeHtml(
+            post.user_id
+          )}"
+        >
 
           <strong>
             ${escapeHtml(
@@ -848,7 +1143,6 @@ function postMarkup(post) {
                 `
                 : ""
             }
-
           </strong>
 
           <span>
@@ -856,12 +1150,14 @@ function postMarkup(post) {
               post.user.username
             )}
             ·
-            ${timeAgo(
-              post.created_at
+            ${escapeHtml(
+              timeAgo(
+                post.created_at
+              )
             )}
           </span>
 
-        </div>
+        </button>
 
         <button
           type="button"
@@ -995,7 +1291,6 @@ function postMarkup(post) {
     </article>
   `;
 }
-
 function renderPosts(
   list = state.posts,
   target = $("feed")
@@ -1021,7 +1316,9 @@ function renderPosts(
   } else {
     target.innerHTML =
       list
-        .map(postMarkup)
+        .map(
+          postMarkup
+        )
         .join("");
   }
 
@@ -1051,13 +1348,15 @@ function renderProfile() {
 
         <h1>
           ${escapeHtml(
-            state.user.display_name
+            state.user
+              .display_name
           )}
         </h1>
 
         <p>
           @${escapeHtml(
-            state.user.username
+            state.user
+              .username
           )}
         </p>
 
@@ -1092,14 +1391,7 @@ function renderProfile() {
   );
 }
 
-function renderTrending() {
-  const target =
-    $("trendingList");
-
-  if (!target) {
-    return;
-  }
-
+function buildHashtagCounts() {
   const counts =
     new Map();
 
@@ -1111,13 +1403,28 @@ function renderTrending() {
         (tag) => {
           counts.set(
             tag,
-            (counts.get(tag) ||
-              0) + 1
+            (counts.get(
+              tag
+            ) || 0) + 1
           );
         }
       );
     }
   );
+
+  return counts;
+}
+
+function renderTrending() {
+  const target =
+    $("trendingList");
+
+  if (!target) {
+    return;
+  }
+
+  const counts =
+    buildHashtagCounts();
 
   const rows =
     [...counts.entries()]
@@ -1127,52 +1434,99 @@ function renderTrending() {
       )
       .slice(0, 20);
 
+  if (!rows.length) {
+    target.innerHTML = `
+      <div class="empty-state compact">
+
+        <i data-lucide="flame"></i>
+
+        <h2>No trends yet</h2>
+
+        <p>
+          Hashtags will appear here when people start posting.
+        </p>
+
+      </div>
+    `;
+
+    refreshIcons();
+
+    return;
+  }
+
   target.innerHTML =
-    rows.length
-      ? rows
-          .map(
-            ([tag, count]) => `
-              <button
-                type="button"
-                class="trend"
-                data-trending-tag="${escapeHtml(
+    rows
+      .map(
+        ([tag, count]) => `
+          <button
+            type="button"
+            class="trend"
+            data-trending-tag="${escapeHtml(
+              tag
+            )}"
+          >
+
+            <b>#</b>
+
+            <div>
+
+              <strong>
+                #${escapeHtml(
                   tag
-                )}"
-              >
-                <b>#</b>
+                )}
+              </strong>
 
-                <div>
-                  <strong>
-                    #${escapeHtml(
-                      tag
-                    )}
-                  </strong>
+              <span>
+                ${count} posts
+              </span>
 
-                  <span>
-                    ${count} posts
-                  </span>
-                </div>
+            </div>
 
-                <i data-lucide="chevron-right"></i>
-              </button>
-            `
-          )
-          .join("")
-      : `
-        <div class="empty-state compact">
+            <i data-lucide="chevron-right"></i>
 
-          <i data-lucide="flame"></i>
-
-          <h2>No trends yet</h2>
-
-          <p>
-            Hashtags will appear here when people start posting.
-          </p>
-
-        </div>
-      `;
+          </button>
+        `
+      )
+      .join("");
 
   refreshIcons();
+}
+
+function renderSearchResultUser(
+  user
+) {
+  return `
+    <button
+      type="button"
+      class="search-result"
+      data-search-user="${escapeHtml(
+        user.id
+      )}"
+    >
+
+      ${avatarMarkup(
+        user,
+        "search-avatar"
+      )}
+
+      <div>
+
+        <strong>
+          ${escapeHtml(
+            user.display_name
+          )}
+        </strong>
+
+        <span>
+          @${escapeHtml(
+            user.username
+          )}
+        </span>
+
+      </div>
+
+    </button>
+  `;
 }
 
 function performSearch(
@@ -1211,20 +1565,35 @@ function performSearch(
   home.style.display =
     "none";
 
-  const people =
-    state.posts
-      .map(
-        (post) =>
+  const users =
+    new Map();
+
+  state.posts.forEach(
+    (post) => {
+      if (
+        post.user?.id
+      ) {
+        users.set(
+          String(
+            post.user.id
+          ),
           post.user
-      )
-      .filter(
-        (user, index, array) =>
-          array.findIndex(
-            (item) =>
-              item.id ===
-              user.id
-          ) === index
-      )
+        );
+      }
+    }
+  );
+
+  if (state.user?.id) {
+    users.set(
+      String(
+        state.user.id
+      ),
+      state.user
+    );
+  }
+
+  const people =
+    [...users.values()]
       .filter(
         (user) =>
           `${user.display_name} ${user.username}`
@@ -1241,15 +1610,19 @@ function performSearch(
     );
 
   const matchingTags =
-    state.posts.filter(
-      (post) =>
-        hashtagsFromText(
-          post.content
-        ).some(
-          (tag) =>
-            `#${tag}`.includes(
-              value
+    [
+      ...new Set(
+        state.posts.flatMap(
+          (post) =>
+            hashtagsFromText(
+              post.content
             )
+        )
+      )
+    ].filter(
+      (tag) =>
+        `#${tag}`.includes(
+          value
         )
     );
 
@@ -1259,32 +1632,37 @@ function performSearch(
     .slice(0, 10)
     .forEach(
       (user) => {
+        html.push(
+          renderSearchResultUser(
+            user
+          )
+        );
+      }
+    );
+
+  matchingTags
+    .slice(0, 10)
+    .forEach(
+      (tag) => {
         html.push(`
           <button
             type="button"
             class="search-result"
-            data-search-user="${escapeHtml(
-              user.id
+            data-search-tag="${escapeHtml(
+              tag
             )}"
           >
-
-            ${avatarMarkup(
-              user,
-              "search-avatar"
-            )}
 
             <div>
 
               <strong>
-                ${escapeHtml(
-                  user.display_name
+                #${escapeHtml(
+                  tag
                 )}
               </strong>
 
               <span>
-                @${escapeHtml(
-                  user.username
-                )}
+                Hashtag
               </span>
 
             </div>
@@ -1295,7 +1673,7 @@ function performSearch(
     );
 
   matchingPosts
-    .slice(0, 10)
+    .slice(0, 15)
     .forEach(
       (post) => {
         html.push(`
@@ -1316,7 +1694,8 @@ function performSearch(
 
               <strong>
                 ${escapeHtml(
-                  post.user.display_name
+                  post.user
+                    .display_name
                 )}
               </strong>
 
@@ -1333,49 +1712,6 @@ function performSearch(
 
           </button>
         `);
-      }
-    );
-
-  matchingTags
-    .slice(0, 10)
-    .forEach(
-      (post) => {
-        hashtagsFromText(
-          post.content
-        )
-          .filter(
-            (tag) =>
-              `#${tag}`.includes(
-                value
-              )
-          )
-          .forEach(
-            (tag) => {
-              html.push(`
-                <button
-                  type="button"
-                  class="search-result"
-                  data-search-tag="${escapeHtml(
-                    tag
-                  )}"
-                >
-                  <div>
-
-                    <strong>
-                      #${escapeHtml(
-                        tag
-                      )}
-                    </strong>
-
-                    <span>
-                      Hashtag
-                    </span>
-
-                  </div>
-                </button>
-              `);
-            }
-          );
       }
     );
 
@@ -1448,6 +1784,20 @@ function showPage(
 
   if (
     pageId ===
+    "streakPage"
+  ) {
+    renderStreak();
+  }
+
+  if (
+    pageId ===
+    "wheelPage"
+  ) {
+    renderWheel();
+  }
+
+  if (
+    pageId ===
     "searchPage"
   ) {
     $("searchInput")
@@ -1501,9 +1851,11 @@ function resetPostComposer() {
 function openPostComposer() {
   resetPostComposer();
 
-  if ($("composeAvatar")) {
-    $("composeAvatar")
-      .innerHTML =
+  const composeAvatar =
+    $("composeAvatar");
+
+  if (composeAvatar) {
+    composeAvatar.innerHTML =
       avatarMarkup(
         state.user,
         "avatar"
@@ -1520,15 +1872,18 @@ function openPostComposer() {
     ?.focus();
 }
 
-function openStoryEditor() {
-  state.storyImageData =
+function resetStoryEditor() {
+  state.storyMediaData =
+    null;
+
+  state.storyMediaType =
+    "image";
+
+  state.storyFile =
     null;
 
   const input =
     $("storyImage");
-
-  const text =
-    $("storyText");
 
   const preview =
     $("storyImagePreview");
@@ -1536,20 +1891,26 @@ function openStoryEditor() {
   const empty =
     $("storyCanvasEmpty");
 
+  const text =
+    $("storyText");
+
   const textPreview =
     $("storyTextPreview");
 
   if (input) {
     input.value = "";
-  }
 
-  if (text) {
-    text.value = "";
+    input.accept =
+      "image/*,video/*";
   }
 
   if (preview) {
     preview.removeAttribute(
       "src"
+    );
+
+    preview.removeAttribute(
+      "poster"
     );
 
     preview.style.display =
@@ -1561,14 +1922,42 @@ function openStoryEditor() {
       "flex";
   }
 
+  if (text) {
+    text.value = "";
+  }
+
   if (textPreview) {
     textPreview.textContent =
       "";
   }
 
+  const position =
+    $("storyPosition");
+
+  if (position) {
+    position.value =
+      "center";
+  }
+
+  const color =
+    $("storyTextColor");
+
+  if (color) {
+    color.value =
+      "#ffffff";
+  }
+
+  updateStoryEditorPreview();
+}
+
+function openStoryEditor() {
+  resetStoryEditor();
+
   openModal(
     "createStoryModal"
   );
+
+  refreshIcons();
 }
 
 function readFileAsDataUrl(
@@ -1594,10 +1983,224 @@ function readFileAsDataUrl(
     }
   );
 }
+
+function ensureStoryMediaInput() {
+  const input =
+    $("storyImage");
+
+  if (!input) {
+    return;
+  }
+
+  input.accept =
+    "image/*,video/*";
+
+  input.setAttribute(
+    "capture",
+    "environment"
+  );
+}
+
+async function handleStoryFile(
+  file
+) {
+  if (!file) {
+    return;
+  }
+
+  const isVideo =
+    file.type.startsWith(
+      "video/"
+    );
+
+  const isImage =
+    file.type.startsWith(
+      "image/"
+    );
+
+  if (
+    !isVideo &&
+    !isImage
+  ) {
+    showToast(
+      "Please choose an image or video."
+    );
+
+    return;
+  }
+
+  try {
+    state.storyFile =
+      file;
+
+    state.storyMediaType =
+      isVideo
+        ? "video"
+        : "image";
+
+    state.storyMediaData =
+      await readFileAsDataUrl(
+        file
+      );
+
+    updateStoryEditorPreview();
+
+  } catch (error) {
+    safeError(
+      "story-file",
+      error
+    );
+
+    showToast(
+      "Unable to read this file."
+    );
+  }
+}
+
+function updateStoryEditorPreview() {
+  const canvas =
+    $("storyCanvas");
+
+  const empty =
+    $("storyCanvasEmpty");
+
+  const textPreview =
+    $("storyTextPreview");
+
+  const text =
+    $("storyText")
+      ?.value || "";
+
+  const position =
+    $("storyPosition")
+      ?.value ||
+    "center";
+
+  const color =
+    $("storyTextColor")
+      ?.value ||
+    "#ffffff";
+
+  if (!canvas) {
+    return;
+  }
+
+  let media =
+    canvas.querySelector(
+      ".ars-story-editor-media"
+    );
+
+  if (
+    state.storyMediaData
+  ) {
+    if (
+      state.storyMediaType ===
+      "video"
+    ) {
+      if (
+        !media ||
+        media.tagName !==
+          "VIDEO"
+      ) {
+        media?.remove();
+
+        media =
+          document.createElement(
+            "video"
+          );
+
+        media.className =
+          "ars-story-editor-media";
+
+        media.muted =
+          true;
+
+        media.loop =
+          true;
+
+        media.autoplay =
+          true;
+
+        media.playsInline =
+          true;
+
+        canvas.prepend(
+          media
+        );
+      }
+
+      media.src =
+        state.storyMediaData;
+
+      media.style.display =
+        "block";
+
+    } else {
+      if (
+        !media ||
+        media.tagName !==
+          "IMG"
+      ) {
+        media?.remove();
+
+        media =
+          document.createElement(
+            "img"
+          );
+
+        media.className =
+          "ars-story-editor-media";
+
+        canvas.prepend(
+          media
+        );
+      }
+
+      media.src =
+        state.storyMediaData;
+
+      media.style.display =
+        "block";
+    }
+
+    if (empty) {
+      empty.style.display =
+        "none";
+    }
+
+  } else {
+    media?.remove();
+
+    if (empty) {
+      empty.style.display =
+        "flex";
+    }
+  }
+
+  if (textPreview) {
+    textPreview.textContent =
+      text;
+
+    textPreview.style.color =
+      color;
+
+    textPreview.style.top =
+      position === "top"
+        ? "20%"
+        : position ===
+            "bottom"
+          ? "75%"
+          : "45%";
+  }
+
+  refreshIcons();
+}
+
 async function publishPost() {
   const content =
     $("createPostText")
-      ?.value.trim() || "";
+      ?.value.trim() ||
+    "";
 
   if (
     !content &&
@@ -1619,10 +2222,6 @@ async function publishPost() {
   }
 
   try {
-    const image =
-      state.postImageData ||
-      null;
-
     const {
       data,
       error
@@ -1635,7 +2234,9 @@ async function publishPost() {
 
           content,
 
-          image
+          image:
+            state.postImageData ||
+            null
         })
         .select(`
           id,
@@ -1663,7 +2264,9 @@ async function publishPost() {
     }
 
     state.posts.unshift(
-      normalizePost(data)
+      normalizePost(
+        data
+      )
     );
 
     closeModal(
@@ -1678,152 +2281,16 @@ async function publishPost() {
     );
 
   } catch (error) {
-    console.error(error);
+    safeError(
+      "publish-post",
+      error
+    );
 
     showToast(
       error.message ||
         "Unable to publish post."
     );
   }
-}
-
-function createStoryCanvas(
-  dataUrl,
-  text,
-  position,
-  textColor
-) {
-  return new Promise(
-    (resolve) => {
-      const canvas =
-        document.createElement(
-          "canvas"
-        );
-
-      canvas.width =
-        1080;
-
-      canvas.height =
-        1920;
-
-      const ctx =
-        canvas.getContext(
-          "2d"
-        );
-
-      const drawText =
-        () => {
-          if (text) {
-            ctx.fillStyle =
-              textColor ||
-              "#ffffff";
-
-            ctx.font =
-              "700 76px Inter, Arial, sans-serif";
-
-            ctx.textAlign =
-              "center";
-
-            ctx.textBaseline =
-              position ===
-              "top"
-                ? "top"
-                : position ===
-                    "bottom"
-                  ? "bottom"
-                  : "middle";
-
-            const y =
-              position ===
-              "top"
-                ? 120
-                : position ===
-                    "bottom"
-                  ? 1800
-                  : 960;
-
-            ctx.shadowColor =
-              "rgba(0,0,0,.7)";
-
-            ctx.shadowBlur =
-              16;
-
-            ctx.fillText(
-              text,
-              540,
-              y,
-              900
-            );
-          }
-
-          resolve(
-            canvas.toDataURL(
-              "image/jpeg",
-              0.9
-            )
-          );
-        };
-
-      ctx.fillStyle =
-        "#12091a";
-
-      ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      if (dataUrl) {
-        const image =
-          new Image();
-
-        image.onload =
-          () => {
-            const scale =
-              Math.max(
-                canvas.width /
-                  image.width,
-
-                canvas.height /
-                  image.height
-              );
-
-            const width =
-              image.width *
-              scale;
-
-            const height =
-              image.height *
-              scale;
-
-            ctx.drawImage(
-              image,
-
-              (
-                canvas.width -
-                width
-              ) / 2,
-
-              (
-                canvas.height -
-                height
-              ) / 2,
-
-              width,
-              height
-            );
-
-            drawText();
-          };
-
-        image.src =
-          dataUrl;
-      } else {
-        drawText();
-      }
-    }
-  );
 }
 
 async function publishStory() {
@@ -1837,33 +2304,32 @@ async function publishStory() {
 
   const text =
     $("storyText")
-      ?.value.trim() || "";
+      ?.value.trim() ||
+    "";
 
   if (
-    !state.storyImageData &&
+    !state.storyMediaData &&
     !text
   ) {
     showToast(
-      "Add a photo or text first."
+      "Add a photo, video, or text first."
     );
 
     return;
   }
 
   try {
-    const rendered =
-      await createStoryCanvas(
-        state.storyImageData,
-        text,
-        $("storyPosition")
-          ?.value ||
-          "center",
-        $("storyTextColor")
-          ?.value ||
-          "#ffffff"
-      );
+    const position =
+      $("storyPosition")
+        ?.value ||
+      "center";
 
-    const expires =
+    const color =
+      $("storyTextColor")
+        ?.value ||
+      "#ffffff";
+
+    const expiresAt =
       new Date(
         Date.now() +
           24 *
@@ -1872,22 +2338,48 @@ async function publishStory() {
             1000
       ).toISOString();
 
+    const payload = {
+      user_id:
+        state.user.id,
+
+      image:
+        state.storyMediaData ||
+        null,
+
+      media_type:
+        state.storyMediaType,
+
+      story_text:
+        text,
+
+      text_position:
+        position,
+
+      text_color:
+        color,
+
+      filter:
+        "none",
+
+      sticker:
+        null,
+
+      zoom:
+        1,
+
+      expires_at:
+        expiresAt
+    };
+
     const {
       data,
       error
     } =
       await supabaseClient
         .from("stories")
-        .insert({
-          user_id:
-            state.user.id,
-
-          image:
-            rendered,
-
-          expires_at:
-            expires
-        })
+        .insert(
+          payload
+        )
         .select(`
           id,
           created_at,
@@ -1895,6 +2387,13 @@ async function publishStory() {
           image,
           viewers_count,
           expires_at,
+          media_type,
+          story_text,
+          text_position,
+          text_color,
+          filter,
+          sticker,
+          zoom,
           users:user_id(
             id,
             username,
@@ -1911,7 +2410,9 @@ async function publishStory() {
     }
 
     state.stories.unshift(
-      normalizeStory(data)
+      normalizeStory(
+        data
+      )
     );
 
     closeModal(
@@ -1925,15 +2426,17 @@ async function publishStory() {
     );
 
   } catch (error) {
-    console.error(error);
+    safeError(
+      "publish-story",
+      error
+    );
 
     showToast(
       error.message ||
         "Unable to publish story."
     );
   }
-}
-
+      }
 async function togglePostAction(
   action,
   postId
@@ -1941,8 +2444,12 @@ async function togglePostAction(
   const post =
     state.posts.find(
       (item) =>
-        String(item.id) ===
-        String(postId)
+        String(
+          item.id
+        ) ===
+        String(
+          postId
+        )
     );
 
   if (
@@ -1967,7 +2474,7 @@ async function togglePostAction(
     action ===
     "view"
   ) {
-    incrementViews(
+    await incrementViews(
       post
     );
 
@@ -1977,7 +2484,8 @@ async function togglePostAction(
   const table =
     action === "like"
       ? "likes"
-      : action === "repost"
+      : action ===
+          "repost"
         ? "reposts"
         : "bookmarks";
 
@@ -2015,7 +2523,6 @@ async function togglePostAction(
       if (error) {
         throw error;
       }
-
     } else {
       const {
         error
@@ -2041,7 +2548,10 @@ async function togglePostAction(
     renderTrending();
 
   } catch (error) {
-    console.error(error);
+    safeError(
+      `post-${action}`,
+      error
+    );
 
     showToast(
       error.message ||
@@ -2054,13 +2564,18 @@ async function incrementViews(
   post
 ) {
   if (
-    !post ||
-    !post.id
+    !post?.id
   ) {
     return;
   }
 
-  post.views_count += 1;
+  const next =
+    Number(
+      post.views_count || 0
+    ) + 1;
+
+  post.views_count =
+    next;
 
   renderPosts();
 
@@ -2071,7 +2586,7 @@ async function incrementViews(
       .from("posts")
       .update({
         views_count:
-          post.views_count
+          next
       })
       .eq(
         "id",
@@ -2079,8 +2594,8 @@ async function incrementViews(
       );
 
   if (error) {
-    console.error(
-      "View update failed:",
+    safeError(
+      "views",
       error
     );
   }
@@ -2126,7 +2641,8 @@ async function openComments(
           username,
           display_name,
           avatar,
-          verified
+          verified,
+          plan
         )
       `)
       .eq(
@@ -2141,7 +2657,10 @@ async function openComments(
       );
 
   if (error) {
-    console.error(error);
+    safeError(
+      "comments-load",
+      error
+    );
 
     list.innerHTML = `
       <div class="comments-empty">
@@ -2153,7 +2672,9 @@ async function openComments(
   }
 
   state.comments.set(
-    String(postId),
+    String(
+      postId
+    ),
     data || []
   );
 
@@ -2174,7 +2695,9 @@ function renderComments(
 
   const comments =
     state.comments.get(
-      String(postId)
+      String(
+        postId
+      )
     ) || [];
 
   if (!comments.length) {
@@ -2198,30 +2721,46 @@ function renderComments(
             );
 
           return `
-            <article class="comment">
+            <article class="comment-item">
 
-              <strong>
-                ${escapeHtml(
-                  user.display_name
-                )}
-              </strong>
+              ${avatarMarkup(
+                user,
+                "avatar small"
+              )}
 
-              <span>
-                @${escapeHtml(
-                  user.username
-                )}
-                ·
-                ${timeAgo(
-                  comment.created_at
-                )}
-              </span>
+              <div class="comment-content">
 
-              <p>
-                ${escapeHtml(
-                  comment.content ||
-                    ""
-                )}
-              </p>
+                <div class="comment-meta">
+
+                  <strong>
+                    ${escapeHtml(
+                      user.display_name
+                    )}
+                  </strong>
+
+                  <span>
+                    @${escapeHtml(
+                      user.username
+                    )}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      timeAgo(
+                        comment.created_at
+                      )
+                    )}
+                  </span>
+
+                </div>
+
+                <p>
+                  ${escapeHtml(
+                    comment.content
+                  )}
+                </p>
+
+              </div>
 
             </article>
           `;
@@ -2277,7 +2816,10 @@ async function sendComment() {
     renderPosts();
 
   } catch (error) {
-    console.error(error);
+    safeError(
+      "comment-send",
+      error
+    );
 
     showToast(
       error.message ||
@@ -2295,11 +2837,22 @@ function openStoryGroup(
         String(
           story.user_id
         ) ===
-        String(userId)
+        String(
+          userId
+        )
     );
 
   if (!group.length) {
-    openStoryEditor();
+    if (
+      String(
+        userId
+      ) ===
+      String(
+        state.user?.id
+      )
+    ) {
+      openStoryEditor();
+    }
 
     return;
   }
@@ -2342,21 +2895,83 @@ function renderStoryViewer() {
 
   if (media) {
     media.innerHTML =
+      "";
+
+    if (
+      story.media_type ===
+      "video"
+    ) {
+      const video =
+        document.createElement(
+          "video"
+        );
+
+      video.src =
+        story.image;
+
+      video.autoplay =
+        true;
+
+      video.muted =
+        true;
+
+      video.loop =
+        false;
+
+      video.controls =
+        false;
+
+      video.playsInline =
+        true;
+
+      video.className =
+        "story-viewer-video";
+
+      media.appendChild(
+        video
+      );
+
+      video.play().catch(
+        () => {}
+      );
+
+    } else if (
       story.image
-        ? `
-          <img
-            src="${escapeHtml(
-              story.image
-            )}"
-            alt=""
-          >
-        `
-        : "";
+    ) {
+      const image =
+        document.createElement(
+          "img"
+        );
+
+      image.src =
+        story.image;
+
+      image.alt =
+        "";
+
+      media.appendChild(
+        image
+      );
+    }
   }
 
   if (text) {
     text.textContent =
+      story.story_text ||
       "";
+
+    text.style.color =
+      story.text_color ||
+      "#ffffff";
+
+    text.style.top =
+      story.text_position ===
+      "top"
+        ? "20%"
+        : story.text_position ===
+            "bottom"
+          ? "75%"
+          : "45%";
   }
 
   if (user) {
@@ -2377,8 +2992,7 @@ function renderStoryViewer() {
 
         <span>
           @${escapeHtml(
-            story.user
-              .username
+            story.user.username
           )}
         </span>
 
@@ -2387,7 +3001,8 @@ function renderStoryViewer() {
   }
 
   refreshIcons();
-    }
+}
+
 async function recordStoryView(
   story
 ) {
@@ -2438,27 +3053,30 @@ async function recordStoryView(
           state.user.id
       });
 
-  if (!error) {
-    story.viewers_count +=
-      1;
-
-    await supabaseClient
-      .from("stories")
-      .update({
-        viewers_count:
-          story.viewers_count
-      })
-      .eq(
-        "id",
-        story.id
-      );
+  if (error) {
+    return;
   }
+
+  story.viewers_count +=
+    1;
+
+  await supabaseClient
+    .from("stories")
+    .update({
+      viewers_count:
+        story.viewers_count
+    })
+    .eq(
+      "id",
+      story.id
+    );
 }
 
 function nextStory() {
   if (
     state.currentStoryIndex >=
-    state.currentStoryGroup.length -
+    state.currentStoryGroup
+      .length -
       1
   ) {
     closeModal(
@@ -2483,362 +3101,310 @@ function nextStory() {
   );
 }
 
-function bindEvents() {
-  $("profileButton")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "profilePage"
+function getWheelStorage() {
+  const raw =
+    localStorage.getItem(
+      ARS_WHEEL_STORAGE_KEY
+    );
+
+  if (!raw) {
+    return {
+      week: getWheelWeekKey(),
+      spins: 0
+    };
+  }
+
+  try {
+    const data =
+      JSON.parse(raw);
+
+    if (
+      data.week !==
+      getWheelWeekKey()
+    ) {
+      return {
+        week:
+          getWheelWeekKey(),
+        spins: 0
+      };
+    }
+
+    return {
+      week:
+        data.week,
+      spins:
+        Number(
+          data.spins || 0
         )
+    };
+  } catch (_) {
+    return {
+      week:
+        getWheelWeekKey(),
+      spins: 0
+    };
+  }
+}
+
+function getWheelWeekKey() {
+  const date =
+    new Date();
+
+  const first =
+    new Date(
+      date.getFullYear(),
+      0,
+      1
     );
 
-  $("wheelButton")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "wheelPage"
-        )
+  const days =
+    Math.floor(
+      (
+        date -
+        first
+      ) /
+        86400000
     );
 
-  $("createPost")
-    ?.addEventListener(
-      "click",
-      openPostComposer
+  const week =
+    Math.ceil(
+      (
+        days +
+        first.getDay() +
+        1
+      ) / 7
     );
 
-  $("createPostClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "createPostModal"
-        )
-    );
+  return `${date.getFullYear()}-${week}`;
+}
 
-  $("publishPost")
-    ?.addEventListener(
-      "click",
-      publishPost
-    );
+function saveWheelStorage(
+  spins
+) {
+  localStorage.setItem(
+    ARS_WHEEL_STORAGE_KEY,
+    JSON.stringify({
+      week:
+        getWheelWeekKey(),
+      spins
+    })
+  );
 
-  $("createStoryClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "createStoryModal"
-        )
-    );
+  state.wheelSpins =
+    spins;
+}
 
-  $("publishStory")
-    ?.addEventListener(
-      "click",
-      publishStory
-    );
+function wheelRemainingSpins() {
+  if (
+    state.user?.plan ===
+    "premium"
+  ) {
+    return Infinity;
+  }
 
-  $("commentsClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "commentsModal"
-        )
-    );
-
-  $("sendComment")
-    ?.addEventListener(
-      "click",
-      sendComment
-    );
-
-  $("storyViewerClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "storyViewer"
-        )
-    );
-
-  $("storyViewerMedia")
-    ?.addEventListener(
-      "click",
-      nextStory
-    );
-
-  $("pickPostImage")
-    ?.addEventListener(
-      "click",
-      () =>
-        $("createPostImage")
-          ?.click()
-    );
-
-  $("pickStoryImage")
-    ?.addEventListener(
-      "click",
-      () =>
-        $("storyImage")
-          ?.click()
-    );
-
-  $("createPostImage")
-    ?.addEventListener(
-      "change",
-      async (event) => {
-        const file =
-          event.target
-            .files?.[0];
-
-        if (!file) {
-          return;
-        }
-
-        state.postImageData =
-          await readFileAsDataUrl(
-            file
-          );
-
-        $("postImagePreview")
-          .innerHTML = `
-            <div class="preview-wrap">
-
-              <img
-                src="${escapeHtml(
-                  state.postImageData
-                )}"
-                alt=""
-              >
-
-            </div>
-          `;
-      }
-    );
-
-  $("storyImage")
-    ?.addEventListener(
-      "change",
-      async (event) => {
-        const file =
-          event.target
-            .files?.[0];
-
-        if (!file) {
-          return;
-        }
-
-        state.storyImageData =
-          await readFileAsDataUrl(
-            file
-          );
-
-        const preview =
-          $("storyImagePreview");
-
-        const empty =
-          $("storyCanvasEmpty");
-
-        if (preview) {
-          preview.src =
-            state.storyImageData;
-
-          preview.style.display =
-            "block";
-        }
-
-        if (empty) {
-          empty.style.display =
-            "none";
-        }
-      }
-    );
-
-  $("storyText")
-    ?.addEventListener(
-      "input",
-      (event) => {
-        const preview =
-          $("storyTextPreview");
-
-        if (preview) {
-          preview.textContent =
-            event.target.value;
-        }
-      }
-    );
-
-  $("storyPosition")
-    ?.addEventListener(
-      "change",
-      (event) => {
-        const text =
-          $("storyTextPreview");
-
-        if (!text) {
-          return;
-        }
-
-        text.style.top =
-          event.target.value ===
-          "top"
-            ? "20%"
-            : event.target
-                  .value ===
-                "bottom"
-              ? "75%"
-              : "45%";
-      }
-    );
-
-  $("storyTextColor")
-    ?.addEventListener(
-      "input",
-      (event) => {
-        const text =
-          $("storyTextPreview");
-
-        if (text) {
-          text.style.color =
-            event.target.value;
-        }
-      }
-    );
-
-  $("searchInput")
-    ?.addEventListener(
-      "input",
-      (event) => {
-        state.searchQuery =
-          event.target.value;
-
-        performSearch(
-          state.searchQuery
-        );
-      }
-    );
-
-  $("openStreakFromWheel")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "streakPage"
-        )
-    );
-
-  $("spinButton")
-    ?.addEventListener(
-      "click",
-      spinWheel
-    );
-
-  document
-    .querySelectorAll(
-      ".nav-item[data-page]"
-    )
-    .forEach(
-      (button) =>
-        button.addEventListener(
-          "click",
-          () =>
-            showPage(
-              button.dataset.page
-            )
-        )
-    );
-
-  document.addEventListener(
-    "click",
-    handleDocumentClick
+  return Math.max(
+    0,
+    ARS_WHEEL_FREE_SPINS -
+      state.wheelSpins
   );
 }
 
-function handleDocumentClick(
-  event
-) {
-  const storyButton =
-    event.target.closest?.(
-      "[data-story-user]"
-    );
+function ensureWheelControls() {
+  const page =
+    $("wheelPage");
 
-  if (storyButton) {
-    event.preventDefault();
-
-    openStoryGroup(
-      storyButton.dataset
-        .storyUser
-    );
-
+  if (!page) {
     return;
   }
 
-  const action =
-    event.target.closest?.(
-      "[data-action]"
-    );
+  let backButton =
+    $("wheelBackButton");
 
-  if (action) {
-    event.preventDefault();
+  if (!backButton) {
+    backButton =
+      document.createElement(
+        "button"
+      );
 
-    togglePostAction(
-      action.dataset.action,
-      action.dataset.id
-    );
+    backButton.id =
+      "wheelBackButton";
 
-    return;
-  }
+    backButton.type =
+      "button";
 
-  const hashtag =
-    event.target.closest?.(
-      "[data-hashtag]"
-    );
+    backButton.className =
+      "secondary-button small";
 
-  if (hashtag) {
-    event.preventDefault();
+    backButton.innerHTML = `
+      <i data-lucide="arrow-left"></i>
+      Back
+    `;
 
-    state.searchQuery =
-      `#${hashtag.dataset.hashtag}`;
+    const card =
+      page.querySelector(
+        ".wheel-card"
+      );
 
-    showPage(
-      "searchPage"
-    );
-
-    if ($("searchInput")) {
-      $("searchInput").value =
-        state.searchQuery;
+    if (card) {
+      card.prepend(
+        backButton
+      );
     }
+  }
 
-    performSearch(
-      state.searchQuery
-    );
+  let subscribe =
+    $("wheelSubscribeButton");
 
+  if (!subscribe) {
+    subscribe =
+      document.createElement(
+        "button"
+      );
+
+    subscribe.id =
+      "wheelSubscribeButton";
+
+    subscribe.type =
+      "button";
+
+    subscribe.className =
+      "primary-button";
+
+    subscribe.textContent =
+      "Subscribe to continue";
+
+    subscribe.style.display =
+      "none";
+
+    const card =
+      page.querySelector(
+        ".wheel-card"
+      );
+
+    if (card) {
+      card.appendChild(
+        subscribe
+      );
+    }
+  }
+
+  refreshIcons();
+}
+
+function renderWheelSegments() {
+  const wheel =
+    $("wheel");
+
+  if (!wheel) {
     return;
   }
 
-  const trend =
-    event.target.closest?.(
-      "[data-trending-tag]"
+  wheel.innerHTML = `
+    <div class="ars-wheel-center">
+      <i data-lucide="sparkles"></i>
+    </div>
+
+    ${WHEEL_CHALLENGES.map(
+      (
+        challenge,
+        index
+      ) => `
+        <div
+          class="ars-wheel-segment"
+          data-segment="${index}"
+        >
+          <span>
+            ${escapeHtml(
+              challenge.category
+            )}
+          </span>
+        </div>
+      `
+    ).join("")}
+  `;
+
+  wheel.dataset.segments =
+    String(
+      WHEEL_CHALLENGES.length
     );
 
-  if (trend) {
-    state.searchQuery =
-      `#${trend.dataset.trendingTag}`;
+  refreshIcons();
+}
 
-    showPage(
-      "searchPage"
-    );
+function renderWheel() {
+  ensureWheelControls();
+  renderWheelSegments();
 
-    if ($("searchInput")) {
-      $("searchInput").value =
-        state.searchQuery;
-    }
+  const storage =
+    getWheelStorage();
 
-    performSearch(
-      state.searchQuery
-    );
+  state.wheelSpins =
+    storage.spins;
+
+  const remaining =
+    wheelRemainingSpins();
+
+  const counter =
+    $("spinCounter");
+
+  if (counter) {
+    counter.textContent =
+      remaining ===
+      Infinity
+        ? "Unlimited spins"
+        : `${remaining} free spin${
+            remaining === 1
+              ? ""
+              : "s"
+          } remaining`;
   }
+
+  const plan =
+    $("planLabel");
+
+  if (plan) {
+    plan.textContent =
+      state.user?.plan ===
+      "premium"
+        ? "Premium"
+        : "Free";
+  }
+
+  const result =
+    $("challengeResult");
+
+  if (
+    remaining === 0
+  ) {
+    if (result) {
+      result.textContent =
+        "Your free spins are finished.";
+    }
+  }
+
+  const spin =
+    $("spinButton");
+
+  if (spin) {
+    spin.disabled =
+      remaining === 0 &&
+      state.user?.plan !==
+        "premium";
+  }
+
+  const subscribe =
+    $("wheelSubscribeButton");
+
+  if (subscribe) {
+    subscribe.style.display =
+      remaining === 0 &&
+      state.user?.plan !==
+        "premium"
+        ? "block"
+        : "none";
+  }
+
+  refreshIcons();
 }
 
 async function spinWheel() {
@@ -2849,43 +3415,105 @@ async function spinWheel() {
     return;
   }
 
-  state.wheelRotation +=
-    1440 +
+  const remaining =
+    wheelRemainingSpins();
+
+  if (
+    remaining === 0 &&
+    state.user?.plan !==
+      "premium"
+  ) {
+    renderWheel();
+
+    showToast(
+      "Your 2 free spins are finished."
+    );
+
+    return;
+  }
+
+  const index =
     Math.floor(
       Math.random() *
-        360
+        WHEEL_CHALLENGES.length
     );
+
+  const challenge =
+    WHEEL_CHALLENGES[
+      index
+    ];
+
+  const segmentAngle =
+    360 /
+    WHEEL_CHALLENGES.length;
+
+  const targetAngle =
+    360 -
+    index *
+      segmentAngle -
+    segmentAngle /
+      2;
+
+  state.wheelRotation +=
+    360 * 5 +
+    targetAngle;
 
   wheel.style.transform =
     `rotate(${state.wheelRotation}deg)`;
 
-  const challenges = [
-    "Post something today",
-    "Share a story",
-    "Like three posts",
-    "Use a hashtag",
-    "Leave a comment"
-  ];
+  if (
+    state.user?.plan !==
+    "premium"
+  ) {
+    saveWheelStorage(
+      state.wheelSpins +
+        1
+    );
+  }
 
-  const result =
-    challenges[
-      Math.floor(
-        Math.random() *
-          challenges.length
-      )
-    ];
+  const spinButton =
+    $("spinButton");
+
+  if (spinButton) {
+    spinButton.disabled =
+      true;
+  }
 
   setTimeout(
     () => {
-      const target =
+      const result =
         $("challengeResult");
 
-      if (target) {
-        target.textContent =
-          result;
+      if (result) {
+        result.innerHTML = `
+          <strong>
+            ${escapeHtml(
+              challenge.title
+            )}
+          </strong>
+          <br>
+          <span>
+            +${challenge.reward} XP
+          </span>
+        `;
       }
+
+      renderWheel();
+
+      const nextRemaining =
+        wheelRemainingSpins();
+
+      if (
+        nextRemaining ===
+        0
+      ) {
+        showToast(
+          "Free spins finished. Subscribe for more."
+        );
+      }
+
     },
-    1200
+    1300
   );
 }
 
@@ -2938,50 +3566,283 @@ function renderStreak() {
         ? "Keep your ARS streak going."
         : "Start your streak by staying active.";
   }
+
+  refreshIcons();
 }
 
-function renderWheel() {
-  if ($("spinCounter")) {
-    $("spinCounter")
-      .textContent =
-      "0 spins";
-  }
-
-  if ($("planLabel")) {
-    $("planLabel")
-      .textContent =
-      state.user?.plan ===
-      "premium"
-        ? "Premium"
-        : "Free";
-  }
-}
-
-function renderAll() {
-  renderStories();
-  renderPosts();
-  renderTrending();
-  renderStreak();
-  renderWheel();
-}
-
-async function init() {
-  if (state.initialized) {
+function openProfileFromUser(
+  userId
+) {
+  if (
+    !userId ||
+    !state.user
+  ) {
     return;
   }
 
-  state.initialized =
-    true;
+  if (
+    String(userId) ===
+    String(
+      state.user.id
+    )
+  ) {
+    showPage(
+      "profilePage"
+    );
 
-  refreshIcons();
+    return;
+  }
 
-  bindEvents();
+  const posts =
+    state.posts.filter(
+      (post) =>
+        String(
+          post.user_id
+        ) ===
+        String(
+          userId
+        )
+    );
 
-  await loadAll();
+  const user =
+    posts[0]?.user;
+
+  if (!user) {
+    showToast(
+      "Profile is not available yet."
+    );
+
+    return;
+  }
+
+  const target =
+    $("profileHero");
+
+  if (target) {
+    target.innerHTML = `
+      <div class="profile-card">
+
+        ${avatarMarkup(
+          user,
+          "profile-avatar"
+        )}
+
+        <div>
+
+          <h1>
+            ${escapeHtml(
+              user.display_name
+            )}
+          </h1>
+
+          <p>
+            @${escapeHtml(
+              user.username
+            )}
+          </p>
+
+          ${
+            user.bio
+              ? `
+                <span>
+                  ${escapeHtml(
+                    user.bio
+                  )}
+                </span>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  renderPosts(
+    posts,
+    $("profilePostsList")
+  );
+
+  showPage(
+    "profilePage"
+  );
 }
 
-document.addEventListener(
-  "DOMContentLoaded",
-  init
-);
-  
+function handleDocumentClick(
+  event
+) {
+  const story =
+    event.target.closest?.(
+      "[data-story-user]"
+    );
+
+  if (story) {
+    event.preventDefault();
+
+    openStoryGroup(
+      story.dataset
+        .storyUser
+    );
+
+    return;
+  }
+
+  const profile =
+    event.target.closest?.(
+      "[data-profile-user]"
+    );
+
+  if (profile) {
+    event.preventDefault();
+
+    openProfileFromUser(
+      profile.dataset
+        .profileUser
+    );
+
+    return;
+  }
+
+  const action =
+    event.target.closest?.(
+      "[data-action]"
+    );
+
+  if (action) {
+    event.preventDefault();
+
+    togglePostAction(
+      action.dataset.action,
+      action.dataset.id
+    );
+
+    return;
+  }
+
+  const hashtag =
+    event.target.closest?.(
+      "[data-hashtag]"
+    );
+
+  if (hashtag) {
+    event.preventDefault();
+
+    const value =
+      `#${hashtag.dataset.hashtag}`;
+
+    state.searchQuery =
+      value;
+
+    showPage(
+      "searchPage"
+    );
+
+    if ($("searchInput")) {
+      $("searchInput").value =
+        value;
+    }
+
+    performSearch(
+      value
+    );
+
+    return;
+  }
+
+  const trend =
+    event.target.closest?.(
+      "[data-trending-tag]"
+    );
+
+  if (trend) {
+    const value =
+      `#${trend.dataset.trendingTag}`;
+
+    state.searchQuery =
+      value;
+
+    showPage(
+      "searchPage"
+    );
+
+    if ($("searchInput")) {
+      $("searchInput").value =
+        value;
+    }
+
+    performSearch(
+      value
+    );
+
+    return;
+  }
+
+  const searchUser =
+    event.target.closest?.(
+      "[data-search-user]"
+    );
+
+  if (searchUser) {
+    openProfileFromUser(
+      searchUser.dataset
+        .searchUser
+    );
+
+    return;
+  }
+
+  const searchPost =
+    event.target.closest?.(
+      "[data-search-post]"
+    );
+
+  if (searchPost) {
+    const post =
+      state.posts.find(
+        (item) =>
+          String(
+            item.id
+          ) ===
+          String(
+            searchPost.dataset
+              .searchPost
+          )
+      );
+
+    if (post) {
+      showPage(
+        "homePage"
+      );
+
+      requestAnimationFrame(
+        () => {
+          document
+            .querySelector(
+              `[data-post-id="${CSS.escape(
+                String(
+                  post.id
+                )
+              )}"]`
+            )
+            ?.scrollIntoView({
+              behavior:
+                "smooth",
+              block:
+                "center"
+            });
+        }
+      );
+    }
+
+    return;
+  }
+
+  const searchTag =
+    event.target.closest?.(
+      "[data-search-tag]"
+    );
+
+  if (searchTag) {
+    const value =
+      `#${searchTag.datas
