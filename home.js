@@ -1144,6 +1144,15 @@ function showPage(id) {
   if (
     id ===
     "streakPage"
+  ) {
+    renderStreak();
+  }
+
+  if (
+    id ===
+    "wheelPage"
+  ) {
+
     if (!item) return;
 
     const action = item.dataset.menuAction;
@@ -2311,13 +2320,96 @@ function renderStreak() {
 
 function renderWheel() {
   const counter =
-    $("spinCount
-  ) {
-    renderStreak();
-  }
+    $("spinCount 
+         );
+        }
+      }
+    }
+  );
 
-  if (
-    id ===
-    "wheelPage"
-  ) {
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key !== "Escape"
+      ) {
+        return;
+      }
+
+      closeMenu();
+      closeComments();
+      closeCreatePost();
+      closeCreateStory();
+      closeStoryViewer();
+    }
+  );
+}
+
+function init() {
+  if (initialized) return;
+
+  initialized = true;
+
+  currentUser =
+    getUser();
+
+  plan =
+    localStorage.getItem(
+      PLAN_KEY
+    ) ||
+    currentUser?.plan ||
+    "free";
+
+  ensureDemo();
+
+  loadData();
+
+  renderProfile();
+  renderStories();
+  renderPosts();
+  renderTrending();
+  renderStreak();
+  renderWheel();
+
+  bindEvents();
+
+  refreshIcons();
+}
+
+window.ARSHome = {
+  getPosts: () => posts,
+  getStories: () => stories,
+  refresh: () => {
+    loadData();
+    renderStories();
+    renderPosts();
+    renderTrending();
+    renderProfile();
+    renderStreak();
+    renderWheel();
+    refreshIcons();
+  },
+  openCreatePost,
+  openCreateStory,
+  openStreak: () =>
+    showPage("streakPage"),
+  openWheel: () =>
+    showPage("wheelPage"),
+  search: runSearch
+};
+
+if (
+  document.readyState ===
+  "loading"
+) {
+  document.addEventListener(
+    "DOMContentLoaded",
+    init,
+    { once: true }
+  );
+} else {
+  init();
+}
+
+})();
    
