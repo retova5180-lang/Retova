@@ -38,7 +38,11 @@
 
       <div class="search-box">
         <i data-lucide="search"></i>
-        <input id="searchInput" type="search" placeholder="Search people, posts or hashtags">
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search people, posts or hashtags"
+        >
       </div>
 
       <div id="searchHome" class="discover-panel">
@@ -51,27 +55,50 @@
         </div>
 
         <div class="topic-grid">
-          <button class="topic-card" data-discover-tag="focus">
+          <button
+            class="topic-card"
+            data-discover-tag="focus"
+          >
             <span>#focus</span>
             <b>Focus</b>
           </button>
-          <button class="topic-card" data-discover-tag="life">
+
+          <button
+            class="topic-card"
+            data-discover-tag="life"
+          >
             <span>#life</span>
             <b>Life</b>
           </button>
-          <button class="topic-card" data-discover-tag="technology">
+
+          <button
+            class="topic-card"
+            data-discover-tag="technology"
+          >
             <span>#technology</span>
             <b>Technology</b>
           </button>
-          <button class="topic-card" data-discover-tag="travel">
+
+          <button
+            class="topic-card"
+            data-discover-tag="travel"
+          >
             <span>#travel</span>
             <b>Travel</b>
           </button>
-          <button class="topic-card" data-discover-tag="fitness">
+
+          <button
+            class="topic-card"
+            data-discover-tag="fitness"
+          >
             <span>#fitness</span>
             <b>Fitness</b>
           </button>
-          <button class="topic-card" data-discover-tag="music">
+
+          <button
+            class="topic-card"
+            data-discover-tag="music"
+          >
             <span>#music</span>
             <b>Music</b>
           </button>
@@ -89,7 +116,9 @@
 
       <div class="trend-preview">
         <span>Discover topics</span>
-        <p>Explore popular conversations and hashtags.</p>
+        <p>
+          Explore popular conversations and hashtags.
+        </p>
       </div>
 
       <div id="trendingList"></div>
@@ -102,15 +131,40 @@
       </div>
 
       <div class="streak-card">
+
         <div class="streak-flame">
           <i data-lucide="flame"></i>
         </div>
 
         <strong id="streakNumber">0</strong>
-        <span id="streakText">day streak</span>
+
+        <span id="streakText">
+          day streak
+        </span>
 
         <div id="weekDots" class="week-dots"></div>
+
         <p id="streakDone"></p>
+
+        <div class="streak-partners">
+
+          <div class="streak-partners-head">
+            <strong>
+              People you have a streak with
+            </strong>
+
+            <span id="streakPartnersCount">
+              0
+            </span>
+          </div>
+
+          <div
+            id="streakPartnersList"
+            class="streak-partners-list"
+          ></div>
+
+        </div>
+
       </div>
     </section>
 
@@ -119,10 +173,18 @@
         <h1>Notifications</h1>
         <i data-lucide="bell"></i>
       </div>
+
       <div class="empty-state">
         <i data-lucide="bell"></i>
-        <h2>No notifications yet</h2>
-        <p>Your activity notifications will appear here.</p>
+
+        <h2>
+          No notifications yet
+        </h2>
+
+        <p>
+          Your activity notifications
+          will appear here.
+        </p>
       </div>
     </section>
 
@@ -131,10 +193,18 @@
         <h1>Messages</h1>
         <i data-lucide="mail"></i>
       </div>
+
       <div class="empty-state">
         <i data-lucide="mail"></i>
-        <h2>No messages yet</h2>
-        <p>Your conversations will appear here.</p>
+
+        <h2>
+          No messages yet
+        </h2>
+
+        <p>
+          Your conversations
+          will appear here.
+        </p>
       </div>
     </section>
 
@@ -142,258 +212,572 @@
       <div class="page-header">
         <h1>Profile</h1>
       </div>
+
       <div id="profileHero"></div>
-      <div id="profilePostsList" class="feed"></div>
+
+      <div
+        id="profilePostsList"
+        class="feed"
+      ></div>
     </section>
 
     <section id="wheelPage" class="page">
+
       <div class="page-header">
-        <button id="wheelBackButton" class="secondary-button small" type="button">
+
+        <button
+          id="wheelBackButton"
+          class="secondary-button small"
+          type="button"
+        >
           <i data-lucide="arrow-left"></i>
           Back
         </button>
-        <h1>Daily Wheel</h1>
-        <span id="planLabel">Free</span>
+
+        <h1>
+          Daily Wheel
+        </h1>
+
+        <span id="planLabel">
+          Free
+        </span>
+
       </div>
 
       <div class="wheel-card">
+
         <p class="wheel-description">
-          Spin the ARS wheel and complete your challenge.
+          Spin the ARS wheel and complete
+          your challenge.
         </p>
 
-        <div id="wheel" class="wheel"></div>
+        <div
+          id="wheel"
+          class="wheel"
+        ></div>
 
-        <div id="spinCounter" class="spin-counter">
+        <div
+          id="spinCounter"
+          class="spin-counter"
+        >
           2 free spins remaining
         </div>
 
-        <button id="spinButton" class="primary-button" type="button">
+        <button
+          id="spinButton"
+          class="primary-button"
+          type="button"
+        >
           <i data-lucide="rotate-cw"></i>
           Spin
         </button>
 
-        <div id="challengeResult" class="challenge-result"></div>
+        <div
+          id="challengeResult"
+          class="challenge-result"
+        ></div>
 
-        <button id="wheelSubscribeButton" class="primary-button" type="button">
+        <button
+          id="wheelSubscribeButton"
+          class="primary-button"
+          type="button"
+        >
           Subscribe to continue
         </button>
 
-        <button id="openStreakFromWheel" class="secondary-button" type="button">
-          <i data-lucide="arrow-left"></i>
-          Back
+        <button
+          id="wheelExitButton"
+          class="secondary-button wheel-exit-button"
+          type="button"
+        >
+          <i data-lucide="x"></i>
+          Exit to Home
         </button>
+
       </div>
+
     </section>
 
   </main>
 
-  <button id="createPost" class="fab" type="button">
+  <button
+    id="createPost"
+    class="fab"
+    type="button"
+  >
     <i data-lucide="plus"></i>
   </button>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-page="homePage" type="button">
+
+    <button
+      class="nav-item active"
+      data-page="homePage"
+      type="button"
+    >
       <i data-lucide="house"></i>
       <span>Home</span>
     </button>
-    <button class="nav-item" data-page="searchPage" type="button">
+
+    <button
+      class="nav-item"
+      data-page="searchPage"
+      type="button"
+    >
       <i data-lucide="search"></i>
       <span>Search</span>
     </button>
-    <button class="nav-item" data-page="trendingPage" type="button">
+
+    <button
+      class="nav-item"
+      data-page="trendingPage"
+      type="button"
+    >
       <i data-lucide="flame"></i>
       <span>Trending</span>
     </button>
-    <button class="nav-item" data-page="notificationsPage" type="button">
+
+    <button
+      class="nav-item"
+      data-page="notificationsPage"
+      type="button"
+    >
       <i data-lucide="bell"></i>
       <span>Alerts</span>
     </button>
-    <button class="nav-item" data-page="messagesPage" type="button">
+
+    <button
+      class="nav-item"
+      data-page="messagesPage"
+      type="button"
+    >
       <i data-lucide="mail"></i>
       <span>Messages</span>
     </button>
-      </nav>
-       <div id="createPostModal" class="modal">
+
+  </nav>
+
+  <div
+    id="createPostModal"
+    class="modal"
+  >
     <div class="modal-card composer-card">
-      <button id="createPostClose" class="modal-close" type="button">
+
+      <button
+        id="createPostClose"
+        class="modal-close"
+        type="button"
+      >
         <i data-lucide="x"></i>
       </button>
 
       <div class="composer-head">
-        <div id="composeAvatar" class="avatar"></div>
-        <strong>Create Post</strong>
+
+        <div
+          id="composeAvatar"
+          class="avatar"
+        ></div>
+
+        <strong>
+          Create Post
+        </strong>
+
       </div>
 
-      <textarea id="createPostText" placeholder="What's happening?"></textarea>
+      <textarea
+        id="createPostText"
+        placeholder="What's happening?"
+      ></textarea>
 
-      <div id="postImagePreview" class="media-preview"></div>
+      <div
+        id="postImagePreview"
+        class="media-preview"
+      ></div>
 
       <div class="composer-tools">
-        <button id="pickPostImage" type="button">
+
+        <button
+          id="pickPostImage"
+          type="button"
+        >
           <i data-lucide="image"></i>
         </button>
+
         <button type="button">
           <i data-lucide="smile"></i>
         </button>
+
         <button type="button">
           <i data-lucide="map-pin"></i>
         </button>
+
       </div>
 
-      <input id="createPostImage" type="file" accept="image/*" hidden>
+      <input
+        id="createPostImage"
+        type="file"
+        accept="image/*,video/*"
+        hidden
+      >
 
-      <button id="publishPost" class="primary-button" type="button">
+      <button
+        id="publishPost"
+        class="primary-button"
+        type="button"
+      >
         Publish
       </button>
+
     </div>
   </div>
 
-  <div id="createStoryModal" class="modal">
+  <div
+    id="createStoryModal"
+    class="modal"
+  >
     <div class="modal-card story-editor-card">
-      <button id="createStoryClose" class="modal-close" type="button">
+
+      <button
+        id="createStoryClose"
+        class="modal-close"
+        type="button"
+      >
         <i data-lucide="x"></i>
       </button>
 
       <div class="modal-title">
-        <h2>Create Story</h2>
-        <span>24 hours</span>
+
+        <h2>
+          Create Story
+        </h2>
+
+        <span>
+          24 hours
+        </span>
+
       </div>
 
-      <div id="storyCanvas" class="story-canvas">
-        <div id="storyCanvasEmpty" class="story-canvas-empty">
+      <div
+        id="storyCanvas"
+        class="story-canvas"
+      >
+
+        <div
+          id="storyCanvasEmpty"
+          class="story-canvas-empty"
+        >
           <i data-lucide="camera"></i>
-          <span>Add photo or video</span>
+
+          <span>
+            Add photo or video
+          </span>
         </div>
 
-        <img id="storyImagePreview" class="story-image-preview" alt="">
-        <div id="storyTextPreview" class="story-text-preview"></div>
+        <img
+          id="storyImagePreview"
+          class="story-image-preview"
+          alt=""
+        >
+
+        <div
+          id="storyTextPreview"
+          class="story-text-preview"
+        ></div>
+
       </div>
 
       <div class="story-controls">
 
         <label class="control-button">
+
           <i data-lucide="image"></i>
-          <span>Media</span>
-          <input id="storyImage" type="file" accept="image/*,video/*" hidden>
+
+          <span>
+            Media
+          </span>
+
+          <input
+            id="storyImage"
+            type="file"
+            accept="image/*,video/*"
+            hidden
+          >
+
         </label>
 
-        <button id="pickStoryImage" class="control-button" type="button">
+        <button
+          id="pickStoryImage"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="camera"></i>
-          <span>Camera</span>
+
+          <span>
+            Camera
+          </span>
         </button>
 
         <label class="control-button">
+
           <i data-lucide="type"></i>
-          <span>Text</span>
+
+          <span>
+            Text
+          </span>
+
         </label>
 
-        <button id="storyCropButton" class="control-button" type="button">
+        <button
+          id="storyCropButton"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="crop"></i>
-          <span>Crop</span>
+
+          <span>
+            Crop
+          </span>
         </button>
 
-        <button id="storyZoomOut" class="control-button" type="button">
+        <button
+          id="storyZoomOut"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="zoom-out"></i>
-          <span>Zoom −</span>
+
+          <span>
+            Zoom −
+          </span>
         </button>
 
-        <button id="storyZoomIn" class="control-button" type="button">
+        <button
+          id="storyZoomIn"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="zoom-in"></i>
-          <span>Zoom +</span>
+
+          <span>
+            Zoom +
+          </span>
         </button>
 
-        <button id="storyFilterButton" class="control-button" type="button">
+        <button
+          id="storyFilterButton"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="wand-2"></i>
-          <span>Filter</span>
+
+          <span>
+            Filter
+          </span>
         </button>
 
-        <button id="storyStickerButton" class="control-button" type="button">
+        <button
+          id="storyStickerButton"
+          class="control-button"
+          type="button"
+        >
           <i data-lucide="sticker"></i>
-          <span>Sticker</span>
+
+          <span>
+            Sticker
+          </span>
         </button>
 
       </div>
 
-      <textarea id="storyText" placeholder="Write something..."></textarea>
+      <textarea
+        id="storyText"
+        placeholder="Write something..."
+      ></textarea>
 
       <div class="story-options">
+
         <label>
+
           Position
+
           <select id="storyPosition">
-            <option value="top">Top</option>
-            <option value="center" selected>Center</option>
-            <option value="bottom">Bottom</option>
+
+            <option value="top">
+              Top
+            </option>
+
+            <option
+              value="center"
+              selected
+            >
+              Center
+            </option>
+
+            <option value="bottom">
+              Bottom
+            </option>
+
           </select>
+
         </label>
 
         <label>
+
           Color
-          <input id="storyTextColor" type="color" value="#ffffff">
+
+          <input
+            id="storyTextColor"
+            type="color"
+            value="#ffffff"
+          >
+
         </label>
+
       </div>
 
       <div class="story-actions">
-        <button id="storyDeleteMedia" class="secondary-button" type="button">
+
+        <button
+          id="storyDeleteMedia"
+          class="secondary-button"
+          type="button"
+        >
           <i data-lucide="trash-2"></i>
           Delete
         </button>
 
-        <button id="storyPasteButton" class="secondary-button" type="button">
+        <button
+          id="storyPasteButton"
+          class="secondary-button"
+          type="button"
+        >
           <i data-lucide="clipboard"></i>
           Paste
         </button>
 
-        <button id="publishStory" class="primary-button" type="button">
+        <button
+          id="publishStory"
+          class="primary-button"
+          type="button"
+        >
           Post Story
         </button>
+
       </div>
+
     </div>
   </div>
 
-  <div id="storyViewer" class="modal story-viewer-modal">
+  <div
+    id="storyViewer"
+    class="modal story-viewer-modal"
+  >
+
     <div class="story-viewer">
-      <button id="storyViewerClose" class="modal-close" type="button">
+
+      <button
+        id="storyViewerClose"
+        class="modal-close"
+        type="button"
+      >
         <i data-lucide="x"></i>
       </button>
 
-      <div id="storyViewerUser" class="story-viewer-user"></div>
+      <div
+        id="storyViewerUser"
+        class="story-viewer-user"
+      ></div>
 
-      <div id="storyViewerMedia" class="story-viewer-media"></div>
-      <div id="storyViewerText" class="story-viewer-text"></div>
+      <div
+        id="storyViewerMedia"
+        class="story-viewer-media"
+      ></div>
 
-      <button id="storyViewerPrev" class="story-nav prev" type="button">
+      <div
+        id="storyViewerText"
+        class="story-viewer-text"
+      ></div>
+
+      <button
+        id="storyViewerPrev"
+        class="story-nav prev"
+        type="button"
+      >
         <i data-lucide="chevron-left"></i>
       </button>
 
-      <button id="storyViewerNext" class="story-nav next" type="button">
+      <button
+        id="storyViewerNext"
+        class="story-nav next"
+        type="button"
+      >
         <i data-lucide="chevron-right"></i>
       </button>
+
     </div>
+
   </div>
-    <div id="commentsModal" class="modal">
-    <div class="modal-card comments-card">
-      <button id="commentsClose" class="modal-close" type="button">
+
+  <div
+    id="commentsModal"
+    class="modal"
+  >
+
+    <div
+      class="modal-card comments-card"
+    >
+
+      <button
+        id="commentsClose"
+        class="modal-close"
+        type="button"
+      >
         <i data-lucide="x"></i>
       </button>
 
-      <h2>Comments</h2>
+      <h2>
+        Comments
+      </h2>
 
-      <div id="commentsList" class="comments-list"></div>
+      <div
+        id="commentsList"
+        class="comments-list"
+      ></div>
 
       <div class="comment-compose">
-        <input id="commentInput" type="text" placeholder="Write a comment...">
-        <button id="sendComment" class="primary-button small" type="button">
+
+        <input
+          id="commentInput"
+          type="text"
+          placeholder="Write a comment..."
+        >
+
+        <button
+          id="sendComment"
+          class="primary-button small"
+          type="button"
+        >
           <i data-lucide="send"></i>
         </button>
+
       </div>
+
     </div>
+
   </div>
 
-  <div id="postMenuBackdrop" class="menu-backdrop"></div>
+  <div
+    id="postMenuBackdrop"
+    class="menu-backdrop"
+  ></div>
 
-  <div id="toast" class="toast"></div>
+  <div
+    id="toast"
+    class="toast"
+  ></div>
 
   <script src="ars-errors.js"></script>
   <script src="home.js"></script>
+
 </body>
 </html>
