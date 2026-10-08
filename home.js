@@ -798,7 +798,6 @@ function renderStories() {
       );
     }
   );
-
   if (state.user?.id) {
     const ownKey =
       String(state.user.id);
@@ -2609,24 +2608,27 @@ function openStoryGroup(
   state.currentStoryIndex =
     0;
 
-  renderStoryViewer();
+  renderCurrentStory();
 
   openModal(
     "storyViewer"
   );
-
-  recordStoryView(
-    group[0]
-  );
 }
 
-function renderStoryViewer() {
+function renderCurrentStory() {
   const story =
     state.currentStoryGroup[
       state.currentStoryIndex
     ];
 
   if (!story) {
+    return;
+  }
+
+  const viewer =
+    $("storyViewer");
+
+  if (!viewer) {
     return;
   }
 
@@ -2654,21 +2656,14 @@ function renderStoryViewer() {
       video.muted =
         true;
 
+      video.controls =
+        true;
+
       video.playsInline =
         true;
 
-      video.controls =
-        false;
-
-      video.className =
-        "story-viewer-video";
-
       media.appendChild(
         video
-      );
-
-      video.play().catch(
-        () => {}
       );
     } else if (
       story.image
@@ -2682,9 +2677,6 @@ function renderStoryViewer() {
         story.image;
 
       image.alt = "";
-
-      image.className =
-        "story-viewer-image";
 
       media.appendChild(
         image
@@ -2702,7 +2694,7 @@ function renderStoryViewer() {
 
     text.style.color =
       story.text_color ||
-      "#ffffff";
+      "#fff";
 
     text.style.top =
       story.text_position ===
@@ -2715,1591 +2707,285 @@ function renderStoryViewer() {
   }
 
   const user =
-    $("storyViewerUser");
+    story.user ||
+    {};
 
-  if (user) {
-    user.innerHTML = `
-      ${avatarMarkup(
-        story.user,
-        "avatar viewer-avatar"
-      )}
+  const name =
+    $("storyViewerName");
 
-      <div>
-        <strong>
-          ${escapeHtml(
-            story.user.display_name
-          )}
-        </strong>
-
-        <span>
-          @${escapeHtml(
-            story.user.username
-          )}
-        </span>
-      </div>
-    `;
+  if (name) {
+    name.textContent =
+      user.display_name ||
+      user.username ||
+      "User";
   }
 
-  refreshIcons();
-}
+  const avatar =
+    $("storyViewerAvatar");
 
-async function recordStoryView(
-  story
-) {
-  if (
-    !story?.id ||
-    !state.user?.id ||
-    String(
-      story.user_id
-    ) ===
-      String(
-        state.user.id
-      )
-  ) {
-    return;
-  }
-
-  try {
-    const {
-      data: existing,
-      error: selectError
-    } =
-      await supabaseClient
-        .from("story_views")
-        .select("id")
-        .eq(
-          "story_id",
-          story.id
-        )
-        .eq(
-          "viewer_id",
-          state.user.id
-        )
-        .maybeSingle();
-
-    if (selectError) {
-      throw selectError;
-    }
-
-    if (existing) {
-      return;
-    }
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("story_views")
-        .insert({
-          story_id:
-            story.id,
-          viewer_id:
-            state.user.id
-        });
-
-    if (error) {
-      throw error;
-    }
-
-    story.viewers_count =
-      Number(
-        story.viewers_count || 0
-      ) + 1;
-  } catch (error) {
-    safeError(
-      "story-view",
-      error
-    );
-  }
-}
-
-function nextStory() {
-  if (
-    state.currentStoryIndex >=
-    state.currentStoryGroup
-      .length - 1
-  ) {
-    closeModal(
-      "storyViewer"
-    );
-    return;
-  }
-
-  state.currentStoryIndex +=
-    1;
-
-  renderStoryViewer();
-
-  recordStoryView(
-    state.currentStoryGroup[
-      state.currentStoryIndex
-    ]
-  );
-}
-
-function previousStory() {
-  if (
-    state.currentStoryIndex <=
-    0
-  ) {
-    return;
-  }
-
-  state.currentStoryIndex -=
-    1;
-
-  renderStoryViewer();
-
-  recordStoryView(
-    state.currentStoryGroup[
-      state.currentStoryIndex
-    ]
-  );
-}
-
-function getWheelStorage() {
-  try {
-    const raw =
-      localStorage.getItem(
-        ARS_WHEEL_STORAGE_KEY
+  if (avatar) {
+    avatar.innerHTML =
+      avatarMarkup(
+        user,
+        "avatar story-viewer-avatar"
       );
-
-    if (!raw) {
-      return {
-        spins: 0
-      };
-    }
-
-    const value =
-      JSON.parse(raw);
-
-    return {
-      spins:
-        Number(
-          value.spins || 0
-        )
-    };
-  } catch (_) {
-    return {
-      spins: 0
-    };
   }
-}
-
-function saveWheelStorage(
-  spins
-) {
-  try {
-    localStorage.setItem(
-      ARS_WHEEL_STORAGE_KEY,
-      JSON.stringify({
-        spins
-      })
-    );
-  } catch (error) {
-    safeError(
-      "wheel-storage",
-      error
-    );
-  }
-
-  state.wheelSpins =
-    Number(spins || 0);
-}
-
-function wheelRemainingSpins() {
-  if (
-    state.user?.plan ===
-    "premium"
-  ) {
-    return Infinity;
-  }
-
-  return Math.max(
-    0,
-    ARS_WHEEL_FREE_SPINS -
-      state.wheelSpins
-  );
-}
-
-function renderWheelSegments() {
-  const wheel =
-    $("wheel");
-
-  if (!wheel) {
-    return;
-  }
-
-  const count =
-    WHEEL_CHALLENGES.length;
-
-  const angle =
-    360 / count;
-
-  wheel.innerHTML = `
-    <div class="ars-wheel-center">
-      <i data-lucide="sparkles"></i>
-    </div>
-
-    ${WHEEL_CHALLENGES.map(
-      (
-        challenge,
-        index
-      ) => `
-        <div
-          class="ars-wheel-segment"
-          style="--angle:${
-            index * angle
-          }deg"
-        >
-          <span>
-            ${escapeHtml(
-              challenge.category
-            )}
-          </span>
-        </div>
-      `
-    ).join("")}
-  `;
-
-  refreshIcons();
-}
-function renderWheel() {
-  renderWheelSegments();
-
-  const remaining =
-    wheelRemainingSpins();
 
   const counter =
-    $("spinCounter");
+    $("storyViewerCounter");
 
   if (counter) {
     counter.textContent =
-      remaining === Infinity
-        ? "Unlimited spins"
-        : `${remaining} free spin${
-            remaining === 1
-              ? ""
-              : "s"
-          } remaining`;
+      `${state.currentStoryIndex + 1} / ${state.currentStoryGroup.length}`;
   }
 
-  const plan =
-    $("planLabel");
+  const sticker =
+    $("storyViewerSticker");
 
-  if (plan) {
-    plan.textContent =
-      state.user?.plan ===
-      "premium"
-        ? "Premium"
-        : "Free";
-  }
+  if (sticker) {
+    sticker.textContent =
+      story.sticker ||
+      "";
 
-  const button =
-    $("spinButton");
-
-  if (button) {
-    button.disabled =
-      remaining === 0 &&
-      state.user?.plan !==
-        "premium";
-  }
-
-  const subscribe =
-    $("wheelSubscribeButton");
-
-  if (subscribe) {
-    subscribe.style.display =
-      remaining === 0 &&
-      state.user?.plan !==
-        "premium"
-        ? "inline-flex"
+    sticker.style.display =
+      story.sticker
+        ? "block"
         : "none";
   }
 
   refreshIcons();
 }
 
-async function spinWheel() {
-  const wheel =
-    $("wheel");
-
-  if (!wheel) {
-    return;
-  }
-
-  const remaining =
-    wheelRemainingSpins();
-
+function nextStory() {
   if (
-    remaining === 0 &&
-    state.user?.plan !==
-      "premium"
-  ) {
-    renderWheel();
-
-    showToast(
-      "Your 2 free spins are finished."
-    );
-
-    return;
-  }
-
-  const index =
-    Math.floor(
-      Math.random() *
-        WHEEL_CHALLENGES.length
-    );
-
-  const challenge =
-    WHEEL_CHALLENGES[
-      index
-    ];
-
-  const segmentAngle =
-    360 /
-    WHEEL_CHALLENGES.length;
-
-  const targetAngle =
-    360 -
-    index * segmentAngle -
-    segmentAngle / 2;
-
-  state.wheelRotation +=
-    1800 +
-    targetAngle;
-
-  wheel.style.transform =
-    `rotate(${state.wheelRotation}deg)`;
-
-  if (
-    state.user?.plan !==
-    "premium"
-  ) {
-    saveWheelStorage(
-      state.wheelSpins + 1
-    );
-  }
-
-  const button =
-    $("spinButton");
-
-  if (button) {
-    button.disabled =
-      true;
-  }
-
-  setTimeout(
-    async () => {
-      const result =
-        $("challengeResult");
-
-      if (result) {
-        result.innerHTML = `
-          <strong>
-            ${escapeHtml(
-              challenge.title
-            )}
-          </strong>
-
-          <br>
-
-          <span>
-            +${challenge.reward} XP
-          </span>
-        `;
-      }
-
-      await saveChallengeReward(
-        challenge.reward
-      );
-
-      renderWheel();
-
-      if (
-        wheelRemainingSpins() ===
-        0
-      ) {
-        showToast(
-          "Free spins finished. Subscribe for more."
-        );
-      }
-    },
-    1350
-  );
-}
-
-async function saveChallengeReward(
-  reward
-) {
-  if (
-    !state.user?.id ||
-    !Number.isFinite(
-      Number(reward)
-    )
+    !state.currentStoryGroup.length
   ) {
     return;
   }
 
-  const nextXp =
-    Number(
-      state.user.xp || 0
-    ) +
-    Number(reward);
+  if (
+    state.currentStoryIndex <
+    state.currentStoryGroup.length - 1
+  ) {
+    state.currentStoryIndex +=
+      1;
 
-  try {
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("users")
-        .update({
-          xp: nextXp
-        })
-        .eq(
-          "id",
-          state.user.id
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    state.user.xp =
-      nextXp;
-  } catch (error) {
-    safeError(
-      "wheel-reward",
-      error
+    renderCurrentStory();
+  } else {
+    closeModal(
+      "storyViewer"
     );
   }
 }
 
-function performSearch(
+function previousStory() {
+  if (
+    !state.currentStoryGroup.length
+  ) {
+    return;
+  }
+
+  if (
+    state.currentStoryIndex >
+    0
+  ) {
+    state.currentStoryIndex -=
+      1;
+
+    renderCurrentStory();
+  }
+}
+
+async function performSearch(
   query
 ) {
-  const home =
-    $("searchHome");
-
-  const results =
-    $("searchResults");
-
-  if (!home || !results) {
-    return;
-  }
-
-  const value =
+  const normalized =
     String(query || "")
       .trim()
       .toLowerCase();
 
   state.searchQuery =
-    value;
+    normalized;
 
-  if (!value) {
-    home.style.display =
-      "block";
+  const target =
+    $("searchResults");
 
-    results.innerHTML =
-      "";
-
+  if (!target) {
     return;
   }
 
-  home.style.display =
-    "none";
+  if (!normalized) {
+    target.innerHTML = "";
+    return;
+  }
 
   const users =
-    new Map();
+    [];
+
+  const seenUsers =
+    new Set();
+
+  const addUser = user => {
+    const normalizedUser =
+      normalizeUser(user);
+
+    if (
+      !normalizedUser.id ||
+      seenUsers.has(
+        String(
+          normalizedUser.id
+        )
+      )
+    ) {
+      return;
+    }
+
+    seenUsers.add(
+      String(
+        normalizedUser.id
+      )
+    );
+
+    users.push(
+      normalizedUser
+    );
+  };
 
   state.posts.forEach(
     post => {
-      if (post.user?.id) {
-        users.set(
-          String(
-            post.user.id
-          ),
-          post.user
-        );
-      }
+      addUser(
+        post.user
+      );
     }
   );
 
-  if (state.user?.id) {
-    users.set(
-      String(
-        state.user.id
-      ),
-      state.user
-    );
-  }
+  addUser(
+    state.user
+  );
 
   const people =
-    [...users.values()]
-      .filter(user => {
-        const haystack =
-          `${user.display_name || ""} ${
-            user.username || ""
-          }`.toLowerCase();
+    users.filter(
+      user =>
+        user.username
+          .toLowerCase()
+          .includes(
+            normalized
+          ) ||
+        user.display_name
+          .toLowerCase()
+          .includes(
+            normalized
+          )
+    );
 
-        return haystack.includes(
-          value
-        );
-      });
+  const searchTag =
+    normalized.startsWith(
+      "#"
+    )
+      ? normalized.slice(1)
+      : normalized;
 
   const matchingPosts =
     state.posts.filter(
       post => {
-        const content =
+        const text =
           String(
             post.content || ""
           ).toLowerCase();
 
-        const name =
-          String(
-            post.user
-              ?.display_name ||
-            ""
-          ).toLowerCase();
-
-        const username =
-          String(
-            post.user
-              ?.username ||
-            ""
-          ).toLowerCase();
-
-        const tags =
-          hashtagsFromText(
-            post.content
-          ).join(" ");
-
-        return (
-          content.includes(value) ||
-          name.includes(value) ||
-          username.includes(value) ||
-          tags.includes(
-            value.replace(
-              /^#/,
-              ""
-            )
+        if (
+          text.includes(
+            normalized
           )
-        );
+        ) {
+          return true;
+        }
+
+        if (
+          normalized.startsWith(
+            "#"
+          )
+        ) {
+          return hashtagsFromText(
+            post.content
+          ).includes(
+            searchTag
+          );
+        }
+
+        return false;
       }
     );
 
-  results.innerHTML =
-    "";
-
-  if (
-    !people.length &&
-    !matchingPosts.length
-  ) {
-    results.innerHTML = `
-      <div class="empty-state">
-        <i data-lucide="search"></i>
-
-        <strong>
-          No results found
-        </strong>
-
-        <span>
-          Try another name,
-          username, hashtag,
-          or keyword.
-        </span>
-      </div>
-    `;
-
-    refreshIcons();
-    return;
-  }
+  const results = [];
 
   if (people.length) {
-    const usersSection =
-      document.createElement(
-        "div"
-      );
+    results.push(`
+      <section class="search-section">
+        <div class="search-section-head">
+          <h3>People</h3>
+          <span>
+            ${people.length}
+          </span>
+        </div>
 
-    usersSection.className =
-      "search-section";
+        <div class="search-people">
+          ${people.map(
+            user => `
+              <button
+                type="button"
+                class="search-person"
+                data-profile-user="${escapeHtml(
+                  user.id
+                )}"
+              >
+                ${avatarMarkup(
+                  user,
+                  "avatar small"
+                )}
 
-    usersSection.innerHTML = `
-      <div class="search-section-title">
-        <span>People</span>
-      </div>
+                <span>
+                  <strong>
+                    ${escapeHtml(
+                      user.display_name
+                    )}
+                  </strong>
 
-      <div class="search-users"></div>
-    `;
+                  <small>
+                    @${escapeHtml(
+                      user.username
+                    )}
+                  </small>
+                </span>
 
-    const usersContainer =
-      usersSection.querySelector(
-        ".search-users"
-      );
-
-    people.forEach(
-      user => {
-        const item =
-          document.createElement(
-            "button"
-          );
-
-        item.type =
-          "button";
-
-        item.className =
-          "search-user-item";
-
-        item.innerHTML = `
-          ${avatarMarkup(
-            user,
-            "avatar search-user-avatar"
-          )}
-
-          <div class="search-user-info">
-            <strong>
-              ${escapeHtml(
-                user.display_name ||
-                user.username ||
-                "User"
-              )}
-            </strong>
-
-            <span>
-              @${escapeHtml(
-                user.username ||
-                ""
-              )}
-            </span>
-          </div>
-
-          <i data-lucide="chevron-right"></i>
-        `;
-
-        item.addEventListener(
-          "click",
-          () => {
-            openProfileFromUser(
-              user.id
-            );
-          }
-        );
-
-        usersContainer.appendChild(
-          item
-        );
-      }
-    );
-
-    results.appendChild(
-      usersSection
-    );
+                ${
+                  user.verified
+                    ? `
+                      <i data-lucide="badge-check"></i>
+                    `
+                    : ""
+                }
+              </button>
+            `
+          ).join("")}
+        </div>
+      </section>
+    `);
   }
 
   if (matchingPosts.length) {
-    const postsSection =
-      document.createElement(
-        "div"
-      );
-
-    postsSection.className =
-      "search-section";
-
-    postsSection.innerHTML = `
-      <div class="search-section-title">
-        <span>Posts</span>
-      </div>
-
-      <div class="search-posts"></div>
-    `;
-
-    const postsContainer =
-      postsSection.querySelector(
-        ".search-posts"
-      );
-
-    matchingPosts.forEach(
-      post => {
-        const wrapper =
-          document.createElement(
-            "div"
-          );
-
-        wrapper.innerHTML =
-          postMarkup(post);
-
-        const element =
-          wrapper.firstElementChild;
-
-        if (element) {
-          postsContainer.appendChild(
-            element
-          );
-        }
-      }
-    );
-
-    results.appendChild(
-      postsSection
-    );
-  }
-
-  refreshIcons();
-}
-
-function searchForTag(tag) {
-  const clean =
-    String(tag || "")
-      .trim()
-      .replace(/^#/, "");
-
-  if (!clean) {
-    return;
-  }
-
-  showPage(
-    "searchPage"
-  );
-
-  const input =
-    $("searchInput");
-
-  if (input) {
-    input.value =
-      `#${clean}`;
-  }
-
-  performSearch(
-    `#${clean}`
-  );
-}
-
-function handlePostMenu(
-  postId
-) {
-  const post =
-    state.posts.find(
-      item =>
-        String(item.id) ===
-        String(postId)
-    );
-
-  if (!post) {
-    return;
-  }
-
-  const backdrop =
-    $("postMenuBackdrop");
-
-  if (!backdrop) {
-    showToast(
-      "Post menu is not available."
-    );
-    return;
-  }
-
-  backdrop.classList.add(
-    "open"
-  );
-
-  backdrop.innerHTML = `
-    <div class="post-menu">
-      <button
-        type="button"
-        data-menu-action="close"
-      >
-        <i data-lucide="x"></i>
-        Close
-      </button>
-
-      ${
-        String(
-          post.user_id
-        ) ===
-        String(
-          state.user?.id
-        )
-          ? `
-            <button
-              type="button"
-              data-menu-action="profile"
-            >
-              <i data-lucide="user"></i>
-              View profile
-            </button>
-          `
-          : `
-            <button
-              type="button"
-              data-menu-action="profile"
-            >
-              <i data-lucide="user"></i>
-              View profile
-            </button>
-
-            <button
-              type="button"
-              data-menu-action="report"
-            >
-              <i data-lucide="flag"></i>
-              Report
-            </button>
-          `
-      }
-    </div>
-  `;
-
-  backdrop.dataset.postId =
-    String(postId);
-
-  refreshIcons();
-}
-
-function closePostMenu() {
-  const backdrop =
-    $("postMenuBackdrop");
-
-  if (!backdrop) {
-    return;
-  }
-
-  backdrop.classList.remove(
-    "open"
-  );
-
-  backdrop.innerHTML =
-    "";
-
-  delete backdrop.dataset
-    .postId;
-}
-
-function bindEvents() {
-  $("createPost")
-    ?.addEventListener(
-      "click",
-      openPostComposer
-    );
-
-  $("createPostClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "createPostModal"
-        )
-    );
-
-  $("publishPost")
-    ?.addEventListener(
-      "click",
-      publishPost
-    );
-
-  $("pickPostImage")
-    ?.addEventListener(
-      "click",
-      () =>
-        $("createPostImage")
-          ?.click()
-    );
-
-  $("createPostImage")
-    ?.addEventListener(
-      "change",
-      event => {
-        const file =
-          event.target
-            ?.files?.[0];
-
-        handlePostFile(
-          file
-        );
-      }
-    );
-
-  $("profileButton")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "profilePage"
-        )
-    );
-
-  $("wheelButton")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "wheelPage"
-        )
-    );
-
-  $("wheelBackButton")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "homePage"
-        )
-    );
-
-  $("openStreakFromWheel")
-    ?.addEventListener(
-      "click",
-      () =>
-        showPage(
-          "streakPage"
-        )
-    );
-
-  $("spinButton")
-    ?.addEventListener(
-      "click",
-      spinWheel
-    );
-
-  $("wheelSubscribeButton")
-    ?.addEventListener(
-      "click",
-      () => {
-        const target =
-          document.querySelector(
-            "[data-page='subscriptionPage']"
-          );
-
-        if (target) {
-          showPage(
-            "subscriptionPage"
-          );
-        } else {
-          showToast(
-            "Subscription is available from your account."
-          );
-        }
-      }
-    );
-
-  $("createStoryClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "createStoryModal"
-        )
-    );
-
-  $("publishStory")
-    ?.addEventListener(
-      "click",
-      publishStory
-    );
-
-  $("storyImage")
-    ?.addEventListener(
-      "change",
-      event => {
-        const file =
-          event.target
-            ?.files?.[0];
-
-        handleStoryFile(
-          file
-        );
-      }
-    );
-
-  $("pickStoryImage")
-    ?.addEventListener(
-      "click",
-      () =>
-        $("storyImage")
-          ?.click()
-    );
-
-  $("storyZoomOut")
-    ?.addEventListener(
-      "click",
-      () => {
-        state.storyZoom =
-          Math.max(
-            0.5,
-            state.storyZoom -
-              0.1
-          );
-
-        updateStoryEditorPreview();
-      }
-    );
-
-  $("storyZoomIn")
-    ?.addEventListener(
-      "click",
-      () => {
-        state.storyZoom =
-          Math.min(
-            2,
-            state.storyZoom +
-              0.1
-          );
-
-        updateStoryEditorPreview();
-      }
-    );
-
-  $("storyFilterButton")
-    ?.addEventListener(
-      "click",
-      () => {
-        const filters = [
-          "none",
-          "bw",
-          "warm"
-        ];
-
-        const current =
-          filters.indexOf(
-            state.storyFilter
-          );
-
-        state.storyFilter =
-          filters[
-            (
-              current + 1
-            ) %
-              filters.length
-          ];
-
-        updateStoryEditorPreview();
-
-        showToast(
-          `Filter: ${state.storyFilter}`
-        );
-      }
-    );
-
-  $("storyStickerButton")
-    ?.addEventListener(
-      "click",
-      () => {
-        state.storySticker =
-          state.storySticker
-            ? null
-            : "sparkles";
-
-        showToast(
-          state.storySticker
-            ? "Sticker added."
-            : "Sticker removed."
-        );
-      }
-    );
-
-  $("storyCropButton")
-    ?.addEventListener(
-      "click",
-      () => {
-        showToast(
-          "Story crop keeps the current media framing."
-        );
-      }
-    );
-
-  $("storyDeleteMedia")
-    ?.addEventListener(
-      "click",
-      () => {
-        state.storyFile =
-          null;
-
-        state.storyMediaData =
-          null;
-
-        state.storyMediaType =
-          "image";
-
-        updateStoryEditorPreview();
-
-        const input =
-          $("storyImage");
-
-        if (input) {
-          input.value =
-            "";
-        }
-      }
-    );
-
-  $("storyPasteButton")
-    ?.addEventListener(
-      "click",
-      async () => {
-        try {
-          if (
-            !navigator.clipboard ||
-            !navigator.clipboard
-              .readText
-          ) {
-            throw new Error(
-              "Clipboard unavailable"
-            );
-          }
-
-          const text =
-            await navigator
-              .clipboard
-              .readText();
-
-          const textarea =
-            $("storyText");
-
-          if (textarea) {
-            textarea.value =
-              text;
-
-            updateStoryEditorPreview();
-          }
-        } catch (error) {
-          safeError(
-            "story-paste",
-            error
-          );
-
-          showToast(
-            "Clipboard access is unavailable."
-          );
-        }
-      }
-    );
-
-  $("storyText")
-    ?.addEventListener(
-      "input",
-      updateStoryEditorPreview
-    );
-
-  $("storyPosition")
-    ?.addEventListener(
-      "change",
-      updateStoryEditorPreview
-    );
-
-  $("storyTextColor")
-    ?.addEventListener(
-      "input",
-      updateStoryEditorPreview
-    );
-
-  $("storyViewerClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "storyViewer"
-        )
-    );
-
-  $("storyViewerNext")
-    ?.addEventListener(
-      "click",
-      nextStory
-    );
-
-  $("storyViewerPrev")
-    ?.addEventListener(
-      "click",
-      previousStory
-    );
-
-  $("commentsClose")
-    ?.addEventListener(
-      "click",
-      () =>
-        closeModal(
-          "commentsModal"
-        )
-    );
-
-  $("sendComment")
-    ?.addEventListener(
-      "click",
-      sendComment
-    );
-
-  $("commentInput")
-    ?.addEventListener(
-      "keydown",
-      event => {
-        if (
-          event.key ===
-          "Enter"
-        ) {
-          event.preventDefault();
-          sendComment();
-        }
-      }
-    );
-
-  $("searchInput")
-    ?.addEventListener(
-      "input",
-      event => {
-        performSearch(
-          event.target.value
-        );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      ".nav-item[data-page]"
-    )
-    .forEach(
-      button => {
-        button.addEventListener(
-          "click",
-          () => {
-            showPage(
-              button.dataset
-                .page
-            );
-          }
-        );
-      }
-    );
-
-  document
-    .querySelectorAll(
-      "[data-discover-tag]"
-    )
-    .forEach(
-      button => {
-        button.addEventListener(
-          "click",
-          () => {
-            searchForTag(
-              button.dataset
-                .discoverTag
-            );
-          }
-        );
-      }
-    );
-
-  document.addEventListener(
-    "click",
-    event => {
-      const story =
-        event.target.closest(
-          "[data-story-user]"
-        );
-
-      if (story) {
-        openStoryGroup(
-          story.dataset
-            .storyUser
-        );
-        return;
-      }
-
-      const profile =
-        event.target.closest(
-          "[data-profile-user]"
-        );
-
-      if (profile) {
-        openProfileFromUser(
-          profile.dataset
-            .profileUser
-        );
-        return;
-      }
-
-      const action =
-        event.target.closest(
-          "[data-action]"
-        );
-
-      if (action) {
-        togglePostAction(
-          action.dataset
-            .action,
-          action.dataset.id
-        );
-        return;
-      }
-
-      const hashtag =
-        event.target.closest(
-          "[data-hashtag]"
-        );
-
-      if (hashtag) {
-        searchForTag(
-          hashtag.dataset
-            .hashtag
-        );
-        return;
-      }
-
-      const trend =
-        event.target.closest(
-          "[data-trending-tag]"
-        );
-
-      if (trend) {
-        searchForTag(
-          trend.dataset
-            .trendingTag
-        );
-        return;
-      }
-
-      const menu =
-        event.target.closest(
-          "[data-post-menu]"
-        );
-
-      if (menu) {
-        handlePostMenu(
-          menu.dataset
-            .postMenu
-        );
-      }
-    }
-  );
-
-  $("postMenuBackdrop")
-    ?.addEventListener(
-      "click",
-      event => {
-        const action =
-          event.target.closest(
-            "[data-menu-action]"
-          );
-
-        if (!action) {
-          if (
-            event.target ===
-            $("postMenuBackdrop")
-          ) {
-            closePostMenu();
-          }
-
-          return;
-        }
-
-        const postId =
-          $("postMenuBackdrop")
-            ?.dataset?.postId;
-
-        if (
-          action.dataset
-            .menuAction ===
-          "close"
-        ) {
-          closePostMenu();
-          return;
-        }
-
-        if (
-          action.dataset
-            .menuAction ===
-          "profile"
-        ) {
-          closePostMenu();
-
-          const post =
-            state.posts.find(
-              item =>
-                String(
-                  item.id
-                ) ===
-                String(postId)
-            );
-
-          if (post) {
-            openProfileFromUser(
-              post.user_id
-            );
-          }
-
-          return;
-        }
-
-        if (
-          action.dataset
-            .menuAction ===
-          "report"
-        ) {
-          closePostMenu();
-
-          showToast(
-            "Report submitted for review."
-          );
-        }
-      }
-    );
-
-  document
-    .querySelectorAll(
-      ".modal"
-    )
-    .forEach(
-      modal => {
-        modal.addEventListener(
-          "click",
-          event => {
-            if (
-              event.target ===
-              modal
-            ) {
-              modal.classList.remove(
-                "open"
-              );
-            }
-          }
-        );
-      }
-    );
-
-  document.addEventListener(
-    "keydown",
-    event => {
-      if (
-        event.key ===
-        "Escape"
-      ) {
-        document
-          .querySelectorAll(
-            ".modal.open"
-          )
-          .forEach(
-            modal =>
-              modal.classList.remove(
-                "open"
-              )
-          );
-
-        closePostMenu();
-      }
-
-   if (
-        $("storyViewer")
-          ?.classList.contains(
-            "open"
-          )
-      ) {
-        if (
-          event.key ===
-          "ArrowRight"
-        ) {
-          nextStory();
-        }
-
-        if (
-          event.key ===
-          "ArrowLeft"
-        ) {
-          previousStory();
-        }
-      }
-    }
-  );
-
-  window.addEventListener(
-    "storage",
-    event => {
-      if (
-        event.key ===
-        ARS_WHEEL_STORAGE_KEY
-      ) {
-        const stored =
-          getWheelStorage();
-
-        state.wheelSpins =
-          stored.spins;
-
-        renderWheel();
-      }
-    }
-  );
-}
-
-function initializeWheelStorage() {
-  const stored =
-    getWheelStorage();
-
-  state.wheelSpins =
-    stored.spins;
-}
-
-function initialize() {
-  initializeWheelStorage();
-
-  bindEvents();
-
-  refreshIcons();
-
-  loadAll();
-}
-
-if (
-  document.readyState ===
-  "loading"
-) {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initialize,
-    {
-      once: true
-    }
-  );
-} else {
-  initialize();
-}
-
-window.ARSHome = {
-  state,
-
-  load: loadAll,
-
-  renderAll,
-
-  renderStories,
-
-  renderPosts,
-
-  renderTrending,
-
-  renderStreak,
-
-  renderProfile,
-
-  showPage,
-
-  openPostComposer,
-
-  openStoryEditor,
-
-  openStoryGroup,
-
-  performSearch,
-
-  refresh: loadAll
-};
-
-window.addEventListener(
-  "ars:post-created",
-  () => {
-    loadAll();
-  }
-);
-
-window.addEventListener(
-  "ars:story-created",
-  () => {
-    loadAll();
-  }
-);   
+    results.push(`
+      <section class="search-section">
+        <div class="search-section-head">
+          <h3>Posts</h3>
+          <span>
+            ${matchingPosts.length}
+          </span>
+        </div>
+
+        <div class="search-posts">
+          ${matchingPosts
+            .map(
+              postMarkup
+            )
+      
