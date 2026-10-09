@@ -3647,7 +3647,7 @@ function bindEvents() {
 
   $("commentInput")
     ?.addEventListener(
-      "keydow
+      "keydown",
       event => {
         if (
           event.key ===
@@ -3769,4 +3769,4 @@ if (
   );
 } else {
   initializeHome();
-}
+      }
