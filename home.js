@@ -652,7 +652,7 @@ async function loadPostActions() {
       bookmarks.error
     );
   }
-    }
+    
 async function loadStories() {
   const {
     data,
