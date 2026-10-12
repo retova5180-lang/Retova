@@ -1,612 +1,1381 @@
-
 (() => {
   "use strict";
 
-  const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  /* =========================================
+     ARS HOME — SUPABASE CONFIGURATION
+  ========================================= */
 
-  const state = {
-    db: null,
-    user: null,
-    posts: [],
-    feed: "latest",
-    request: 0
+  const SUPABASE_URL =
+    "https://bfqsqgfyyewnfxekirfv.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+
+  const STORAGE = {
+    user: "ars_user",
+    loggedIn: "ars_logged_in",
+    letter: "ars_letter",
+    letterColor: "ars_letter_color",
+    background: "ars_background"
   };
 
-  const el = {
+  const PAGE_SIZE = 30;
+  const MAX_POST_LENGTH = 5000;
+
+  const supabaseClient =
+    window.supabase?.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    ) || null;
+
+  /* =========================================
+     DOM HELPERS
+  ========================================= */
+
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
+
+  const $$ = (selector, root = document) =>
+    Array.from(root.querySelectorAll(selector));
+
+  const elements = {
     searchForm: $("#searchForm"),
     searchInput: $("#searchInput"),
+
+    notificationsButton: $("#notificationsButton"),
     profileButton: $("#profileButton"),
     profileMenu: $("#profileMenu"),
+    viewProfileLink: $("#viewProfileLink"),
+    settingsLink: $("#settingsLink"),
     logoutButton: $("#logoutButton"),
+
+    exploreLink: $("#exploreLink"),
+    navNotificationsLink: $("#navNotificationsLink"),
+    messagesLink: $("#messagesLink"),
+    bookmarksLink: $("#bookmarksLink"),
+    sidebarProfileLink: $("#sidebarProfileLink"),
+
+    openComposerButton: $("#openComposerButton"),
+    refreshFeedButton: $("#refreshFeedButton"),
+    retryFeedButton: $("#retryFeedButton"),
+
+    composerCard: $("#composerCard"),
+    composerAvatar: $("#composerAvatar"),
     postContent: $("#postContent"),
     characterCount: $("#characterCount"),
-    publish: $("#publishPostButton"),
+    publishPostButton: $("#publishPostButton"),
     composerMessage: $("#composerMessage"),
-    refresh: $("#refreshFeedButton"),
+
     feedCount: $("#feedCount"),
     feedStatus: $("#feedStatus"),
-    posts: $("#postsList"),
-    empty: $("#feedEmpty"),
-    error: $("#feedError"),
-    errorMessage: $("#feedErrorMessage"),
-    retry: $("#retryFeedButton"),
-    toast: $("#toastContainer")
+    postsList: $("#postsList"),
+    feedEmpty: $("#feedEmpty"),
+    feedError: $("#feedError"),
+    feedErrorMessage: $("#feedErrorMessage"),
+
+    headerAvatar: $("#headerAvatar"),
+    accountAvatar: $("#accountAvatar"),
+    accountDisplayName: $("#accountDisplayName"),
+    accountUsername: $("#accountUsername"),
+    accountStreak: $("#accountStreak"),
+    accountXp: $("#accountXp"),
+
+    accountProfileLink: $("#accountProfileLink"),
+    communityPostButton: $("#communityPostButton"),
+
+    mobileExploreLink: $("#mobileExploreLink"),
+    mobileCreateButton: $("#mobileCreateButton"),
+    mobileNotificationsLink: $("#mobileNotificationsLink"),
+    mobileProfileLink: $("#mobileProfileLink"),
+
+    currentYear: $("#currentYear"),
+    toastContainer: $("#toastContainer"),
+    loadingOverlay: $("#loadingOverlay"),
+    loadingMessage: $("#loadingMessage")
   };
 
-  function readUser() {
+  /* =========================================
+     SAFE STORAGE
+  ========================================= */
+
+  function readStorage(key, fallback = null) {
     try {
-      return JSON.parse(localStorage.getItem("ars_user") || "{}") || {};
-    } catch {
-      return {};
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (error) {
+      console.error("ARS storage read error:", error);
+      return fallback;
     }
   }
+
+  function readJSON(key, fallback = null) {
+    try {
+      const value = localStorage.getItem(key);
+      return value ? JSON.parse(value) : fallback;
+    } catch (error) {
+      console.error("ARS storage JSON error:", error);
+      return fallback;
+    }
+  }
+
+  function writeStorage(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch (error) {
+      console.error("ARS storage write error:", error);
+      return false;
+    }
+  }
+
+  function removeStorage(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error("ARS storage removal error:", error);
+    }
+  }
+
+  /* =========================================
+     SECURITY AND FORMATTING
+  ========================================= */
 
   function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    })[char]);
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]
+    );
   }
 
-  function initials(value) {
-    return [...String(value || "ARS")][0]?.toUpperCase() || "A";
-  }
-
-  function setText(node, value) {
-    if (node) node.textContent = String(value ?? "");
-  }
-
-  function setMessage(text, type = "") {
-    if (!el.composerMessage) return;
-    el.composerMessage.textContent = text;
-    el.composerMessage.className = "form-message";
-    if (type) el.composerMessage.classList.add(type);
-  }
-
-  function showToast(text) {
-    if (!el.toast) return;
-    const item = document.createElement("div");
-    item.className = "toast";
-    item.setAttribute("role", "status");
-    item.textContent = text;
-    el.toast.append(item);
-    setTimeout(() => item.remove(), 3500);
-  }
-
-  function normalizeUser(raw = {}) {
-    const local = readUser();
-    return {
-      id: raw.id || local.id || "",
-      username: raw.username || local.username || "member",
-      display_name:
-        raw.display_name || raw.displayName ||
-        local.display_name || local.displayName || "ARS Member",
-      avatar: raw.avatar || local.avatar || "",
-      verified: Boolean(raw.verified),
-      streak: Number(raw.streak || 0),
-      xp: Number(raw.xp || 0),
-      letter: raw.letter || local.letter || ""
-    };
-  }
-
-  function paintAvatar(node, user) {
-    if (!node) return;
-    node.replaceChildren();
-
-    if (user.avatar && /^https?:\/\//i.test(user.avatar)) {
-      const img = document.createElement("img");
-      img.src = user.avatar;
-      img.alt = "";
-      img.loading = "lazy";
-      img.onerror = () => {
-        node.textContent = initials(user.display_name);
-      };
-      node.append(img);
-    } else {
-      node.textContent = user.letter || initials(user.display_name);
-    }
-  }
-
-  function renderAccount() {
-    const user = state.user || normalizeUser();
-
-    [
-      $("#headerAvatar"),
-      $("#composerAvatar"),
-      $("#accountAvatar")
-    ].forEach(node => paintAvatar(node, user));
-
-    setText($("#accountDisplayName"), user.display_name);
-    setText($("#accountUsername"), "@" + user.username.replace(/^@/, ""));
-    setText($("#accountStreak"), user.streak);
-    setText($("#accountXp"), user.xp);
-    setText($("#currentYear"), new Date().getFullYear());
+  function getInitial(value, fallback = "A") {
+    const text = String(value ?? "").trim();
+    return text ? Array.from(text)[0].toUpperCase() : fallback;
   }
 
   function formatDate(value) {
-    const date = new Date(value || "");
-    if (Number.isNaN(date.getTime())) return "Recently";
+    if (!value) return "Recently";
 
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short"
-    }).format(date);
-  }
+    const date = new Date(value);
 
-  async function attachAuthors(posts) {
-    if (!state.db || !posts.length) return posts;
-
-    const ids = [...new Set(posts.map(post => post.user_id).filter(Boolean))];
-    if (!ids.length) return posts;
-
-    const { data, error } = await state.db
-      .from("users")
-      .select("id, username, display_name, avatar, verified")
-      .in("id", ids);
-
-    if (error) {
-      console.warn("ARS: Could not load post authors.", error.message);
-      return posts;
+    if (Number.isNaN(date.getTime())) {
+      return "Recently";
     }
 
-    const users = new Map(
-      (data || []).map(user => [String(user.id), user])
+    const now = Date.now();
+    const difference = Math.max(0, now - date.getTime());
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+
+    if (difference < minute) return "Just now";
+    if (difference < hour) {
+      const count = Math.floor(difference / minute);
+      return `${count}m ago`;
+    }
+
+    if (difference < day) {
+      const count = Math.floor(difference / hour);
+      return `${count}h ago`;
+    }
+
+    if (difference < 7 * day) {
+      const count = Math.floor(difference / day);
+      return `${count}d ago`;
+    }
+
+    return date.toLocaleDateString("en", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  function setText(element, value) {
+    if (element) {
+      element.textContent = String(value ?? "");
+    }
+  }
+
+  function setHidden(element, hidden) {
+    if (element) {
+      element.hidden = Boolean(hidden);
+    }
+  }
+
+  function setComposerMessage(message, type = "") {
+    const element = elements.composerMessage;
+    if (!element) return;
+
+    element.textContent = message;
+    element.className = "form-message";
+
+    if (type) {
+      element.classList.add(type);
+    }
+  }
+
+  /* =========================================
+     USER AND SESSION
+  ========================================= */
+
+  function getUser() {
+    return readJSON(STORAGE.user, {}) || {};
+  }
+
+  function saveUser(user) {
+    return writeStorage(
+      STORAGE.user,
+      JSON.stringify(user || {})
     );
-
-    return posts.map(post => ({
-      ...post,
-      author: users.get(String(post.user_id)) || {}
-    }));
   }
 
-  function createPostElement(post) {
-    const author = post.author || {};
-    const name = author.display_name || author.username || "ARS Member";
-    const avatar = author.avatar || "";
-    const node = document.createElement("article");
+  function getCurrentUserId() {
+    const user = getUser();
+    return user.id || user.user_id || null;
+  }
 
-    node.className = "post-card";
-    node.dataset.postId = String(post.id || "");
+  function isLoggedInLocally() {
+    return readStorage(STORAGE.loggedIn) === "true";
+  }
 
-    const avatarHTML =
-      avatar && /^https?:\/\//i.test(avatar)
-        ? '<img src="' + escapeHTML(avatar) + '" alt="" loading="lazy">'
-        : escapeHTML(initials(name));
-
-    node.innerHTML =
-      '<div class="post-top">' +
-        '<span class="avatar">' + avatarHTML + '</span>' +
-        '<div class="post-author">' +
-          '<strong>' + escapeHTML(name) +
-            (author.verified
-              ? ' <span class="verified-badge" aria-label="Verified">✓</span>'
-              : '') +
-          '</strong>' +
-          '<span>@' + escapeHTML(author.username || "member") +
-            ' · <time>' + escapeHTML(formatDate(post.created_at)) + '</time>' +
-          '</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="post-content">' +
-        escapeHTML(post.content || "").replace(/\n/g, "<br>") +
-      '</div>' +
-      '<div class="post-actions">' +
-        '<button class="post-action" type="button" data-action="share">Share</button>' +
-      '</div>';
-
-    const image = node.querySelector(".avatar img");
-    if (image) {
-      image.onerror = () => {
-        image.parentElement.textContent = initials(name);
-      };
+  async function requireSession() {
+    if (!supabaseClient) {
+      showFatalError(
+        "Supabase could not be initialized. Check the Supabase script and configuration."
+      );
+      return false;
     }
 
-    return node;
-  }
+    try {
+      const { data, error } =
+        await supabaseClient.auth.getSession();
 
-  function sortedPosts() {
-    const posts = [...state.posts];
+      if (error) throw error;
 
-    if (state.feed === "popular") {
-      posts.sort((a, b) =>
-        Number(b.likes_count || b.likes || 0) -
-          Number(a.likes_count || a.likes || 0) ||
-        new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      if (!data?.session) {
+        writeStorage(STORAGE.loggedIn, "false");
+        window.location.replace("index.html");
+        return false;
+      }
+
+      const authUser = data.session.user;
+      const localUser = getUser();
+
+      if (
+        localUser.id &&
+        localUser.id !== authUser.id
+      ) {
+        console.warn(
+          "ARS local profile ID differs from the authenticated user."
+        );
+      }
+
+      if (!localUser.id) {
+        localUser.id = authUser.id;
+        localUser.email = authUser.email || "";
+        saveUser(localUser);
+      }
+
+      writeStorage(STORAGE.loggedIn, "true");
+      return true;
+    } catch (error) {
+      console.error("ARS session check failed:", error);
+
+      showFatalError(
+        "Your session could not be verified. Please refresh the page or log in again."
       );
-    } else {
-      posts.sort((a, b) =>
-        new Date(b.created_at || 0) - new Date(a.created_at || 0)
-      );
+
+      return false;
     }
-
-    return posts;
   }
 
-  function setFeedStatus(text, visible = true) {
-    if (!el.feedStatus) return;
-    el.feedStatus.textContent = text;
-    el.feedStatus.hidden = !visible;
+  /* =========================================
+     LOADING OVERLAY
+  ========================================= */
+
+  function showLoading(message = "Please wait...") {
+    setText(elements.loadingMessage, message);
+    setHidden(elements.loadingOverlay, false);
   }
 
-  function renderPosts(posts = sortedPosts()) {
-    if (!el.posts) return;
-
-    el.posts.replaceChildren();
-    setText(el.feedCount, posts.length || "");
-    setFeedStatus("", false);
-
-    if (el.error) el.error.hidden = true;
-    if (el.empty) el.empty.hidden = posts.length > 0;
-
-    if (!posts.length) return;
-
-    const fragment = document.createDocumentFragment();
-    posts.forEach(post => fragment.append(createPostElement(post)));
-    el.posts.append(fragment);
+  function hideLoading() {
+    setHidden(elements.loadingOverlay, true);
   }
 
-  async function loadPosts() {
-    if (!state.db) {
-      setFeedStatus("", false);
-      if (el.error) el.error.hidden = false;
-      setText(
-        el.errorMessage,
-        "Supabase could not initialize. Check the connection and configuration."
-      );
+  function showFatalError(message) {
+    console.error("ARS:", message);
+
+    setText(elements.feedErrorMessage, message);
+    setHidden(elements.feedError, false);
+    setHidden(elements.feedStatus, true);
+  }
+
+  /* =========================================
+     TOAST NOTIFICATIONS
+  ========================================= */
+
+  function showToast(message, type = "info") {
+    const container = elements.toastContainer;
+
+    if (!container) {
+      console.info("ARS:", message);
       return;
     }
 
-    const request = ++state.request;
-    setFeedStatus("Loading posts...");
-    if (el.empty) el.empty.hidden = true;
-    if (el.error) el.error.hidden = true;
-    if (el.refresh) el.refresh.disabled = true;
+    const toast = document.createElement("div");
+    toast.className = `ars-toast ars-toast-${type}`;
+    toast.setAttribute("role", "status");
+    toast.textContent = String(message);
+
+    container.appendChild(toast);
+
+    window.setTimeout(() => {
+      toast.classList.add("is-removing");
+
+      window.setTimeout(() => {
+        toast.remove();
+      }, 250);
+    }, 3500);
+  }
+
+  /* =========================================
+     AVATAR AND ACCOUNT DETAILS
+  ========================================= */
+
+  function applyAvatar(element, user) {
+    if (!element) return;
+
+    const letter =
+      user.letter ||
+      readStorage(STORAGE.letter, "") ||
+      getInitial(user.displayName || user.username);
+
+    const letterColor =
+      user.letterColor ||
+      readStorage(STORAGE.letterColor, "#ffffff");
+
+    const background =
+      user.background ||
+      readStorage(
+        STORAGE.background,
+        "linear-gradient(135deg, #8b3dff, #c54dff)"
+      );
+
+    const avatarUrl = user.avatar || "";
+
+    element.replaceChildren();
+
+    if (avatarUrl) {
+      const image = document.createElement("img");
+      image.src = avatarUrl;
+      image.alt = "Profile avatar";
+      image.loading = "lazy";
+      image.referrerPolicy = "no-referrer";
+
+      image.addEventListener("error", () => {
+        image.remove();
+        element.textContent = getInitial(letter);
+      }, { once: true });
+
+      element.appendChild(image);
+    } else {
+      element.textContent = getInitial(letter);
+    }
+
+    element.style.color = letterColor;
+    element.style.background = background;
+  }
+
+  function renderAccount(user = getUser()) {
+    const displayName =
+      user.displayName ||
+      user.display_name ||
+      user.username ||
+      "ARS Member";
+
+    const username =
+      user.username
+        ? `@${String(user.username).replace(/^@/, "")}`
+        : "@member";
+
+    applyAvatar(elements.headerAvatar, user);
+    applyAvatar(elements.composerAvatar, user);
+    applyAvatar(elements.accountAvatar, user);
+
+    setText(elements.accountDisplayName, displayName);
+    setText(elements.accountUsername, username);
+    setText(elements.accountStreak, user.streak ?? 0);
+    setText(elements.accountXp, user.xp ?? 0);
+
+    if (elements.accountDisplayName) {
+      elements.accountDisplayName.title = displayName;
+    }
+  }
+
+  async function refreshAccountFromSupabase() {
+    const userId = getCurrentUserId();
+    if (!userId || !supabaseClient) return;
 
     try {
-      const { data, error } = await state.db
-        .from("posts")
-        .select("id, user_id, content, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select(
+          "id, username, display_name, email, bio, avatar, cover, verified, plan, streak, xp"
+        )
+        .eq("id", userId)
+        .maybeSingle();
 
-      if (request !== state.request) return;
-      if (error) throw error;
+      if (error) {
+        console.warn("ARS profile refresh:", error.message);
+        return;
+      }
 
-      state.posts = await attachAuthors(data || []);
+      if (!data) return;
 
-      if (request === state.request) renderPosts();
+      const current = getUser();
+
+      const updated = {
+        ...current,
+        id: data.id,
+        username: data.username || current.username || "",
+        displayName:
+          data.display_name ||
+          current.displayName ||
+          "",
+        email: data.email || current.email || "",
+        bio: data.bio ?? current.bio ?? "",
+        avatar: data.avatar ?? current.avatar ?? "",
+        cover: data.cover ?? current.cover ?? "",
+        verified: data.verified ?? current.verified ?? false,
+        plan: data.plan || current.plan || "free",
+        streak: data.streak ?? current.streak ?? 0,
+        xp: data.xp ?? current.xp ?? 0
+      };
+
+      saveUser(updated);
+      renderAccount(updated);
     } catch (error) {
-      console.error("ARS feed error:", error);
+      console.warn("ARS profile refresh failed:", error);
+    }
+  }
 
-      if (request === state.request) {
-        setFeedStatus("", false);
-        if (el.error) el.error.hidden = false;
-        setText(
-          el.errorMessage,
-          error.message || "Could not load posts. Please try again."
+  /* =========================================
+     PROFILE MENU
+  ========================================= */
+
+  function closeProfileMenu() {
+    setHidden(elements.profileMenu, true);
+
+    elements.profileButton?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+
+  function toggleProfileMenu() {
+    if (!elements.profileMenu) return;
+
+    const opening = elements.profileMenu.hidden;
+    setHidden(elements.profileMenu, !opening);
+
+    elements.profileButton?.setAttribute(
+      "aria-expanded",
+      String(opening)
+    );
+  }
+
+  /* =========================================
+     FEED STATE
+  ========================================= */
+
+  let currentFeed = "latest";
+  let currentSearch = "";
+  let loadedPosts = [];
+  let isLoadingFeed = false;
+  let isPublishing = false;
+  let feedRequestNumber = 0;
+
+  /* =========================================
+     FEED STATUS
+  ========================================= */
+
+  function setFeedLoading(message = "Loading posts...") {
+    setText(elements.feedStatus, message);
+    setHidden(elements.feedStatus, false);
+    setHidden(elements.feedEmpty, true);
+    setHidden(elements.feedError, true);
+  }
+
+  function setFeedReady() {
+    setHidden(elements.feedStatus, true);
+    setHidden(elements.feedError, true);
+  }
+
+  function setFeedError(message) {
+    setText(elements.feedErrorMessage, message);
+    setHidden(elements.feedStatus, true);
+    setHidden(elements.feedEmpty, true);
+    setHidden(elements.feedError, false);
+  }
+
+  function updateFeedCount(count) {
+    setText(
+      elements.feedCount,
+      count ? `${count} ${count === 1 ? "post" : "posts"}` : "0 posts"
+    );
+  }
+
+  /* =========================================
+     POST DATA HELPERS
+  ========================================= */
+
+  function normalizePost(row) {
+    if (!row || typeof row !== "object") {
+      return null;
+    }
+
+    const author = row.users || row.profiles || {};
+    const localUser = getUser();
+
+    const userId =
+      row.user_id ||
+      row.author_id ||
+      row.profile_id ||
+      "";
+
+    const isOwnPost =
+      Boolean(getCurrentUserId()) &&
+      userId === getCurrentUserId();
+
+    const authorName =
+      author.display_name ||
+      author.displayName ||
+      row.display_name ||
+      (isOwnPost
+        ? localUser.displayName
+        : "") ||
+      author.username ||
+      row.username ||
+      (isOwnPost ? localUser.username : "") ||
+      "ARS Member";
+
+    const authorUsername =
+      author.username ||
+      row.username ||
+      (isOwnPost ? localUser.username : "") ||
+      "";
+
+    const authorAvatar =
+      author.avatar ||
+      row.avatar ||
+      (isOwnPost ? localUser.avatar : "") ||
+      "";
+
+    const content =
+      row.content ??
+      row.body ??
+      row.text ??
+      "";
+
+    const createdAt =
+      row.created_at ||
+      row.createdAt ||
+      row.inserted_at ||
+      null;
+
+    return {
+      id: row.id ?? row.post_id ?? null,
+      userId,
+      content: String(content),
+      createdAt,
+      authorName: String(authorName),
+      authorUsername: String(authorUsername),
+      authorAvatar: String(authorAvatar),
+      verified: Boolean(author.verified ?? row.verified ?? false),
+      isOwnPost
+    };
+  }
+
+  function getPostTimestamp(post) {
+    const value = new Date(post.createdAt || 0).getTime();
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function sortPosts(posts) {
+    const result = [...posts];
+
+    if (currentFeed === "popular") {
+      /*
+       * No likes-count column is assumed here.
+       * Popular currently uses newest-first ordering until
+       * the real engagement schema is confirmed.
+       */
+      result.sort(
+        (a, b) => getPostTimestamp(b) - getPostTimestamp(a)
+      );
+      return result;
+    }
+
+    result.sort(
+      (a, b) => getPostTimestamp(b) - getPostTimestamp(a)
+    );
+
+    return result;
+  }
+
+  function filterPosts(posts) {
+    const query = currentSearch.trim().toLowerCase();
+
+    if (!query) return posts;
+
+    return posts.filter(post => {
+      const text = [
+        post.content,
+        post.authorName,
+        post.authorUsername
+      ].join(" ").toLowerCase();
+
+      return text.includes(query);
+    });
+  }
+
+  /* =========================================
+     LOAD POSTS
+  ========================================= */
+
+  async function loadPosts(options = {}) {
+    if (isLoadingFeed) return;
+
+    if (!supabaseClient) {
+      setFeedError("Supabase is unavailable. Please refresh the page.");
+      return;
+    }
+
+    const requestId = ++feedRequestNumber;
+    isLoadingFeed = true;
+
+    if (!options.silent) {
+      setFeedLoading("Loading posts...");
+    }
+
+    try {
+      /*
+       * The existing project references the "users" table
+       * in auth.js. Posts are read from "posts".
+       *
+       * The query deliberately avoids assuming a relationship
+       * name for a joined author record.
+       */
+      const { data, error } = await supabaseClient
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
+
+      if (requestId !== feedRequestNumber) return;
+
+      if (error) {
+        throw error;
+      }
+
+      const rows = Array.isArray(data) ? data : [];
+
+      loadedPosts = rows
+        .map(normalizePost)
+        .filter(Boolean)
+        .filter(post => post.id !== null);
+
+      renderFeed();
+
+      if (!loadedPosts.length) {
+        setFeedReady();
+        setHidden(elements.feedEmpty, true);
+        setText(elements.feedStatus, "No posts have been shared yet.");
+        setHidden(elements.feedStatus, false);
+      }
+    } catch (error) {
+      console.error("ARS posts load error:", error);
+
+      if (requestId === feedRequestNumber) {
+        setFeedError(
+          error?.message ||
+          "Could not load posts. Check your posts table and access policies."
         );
       }
     } finally {
-      if (request === state.request && el.refresh) {
-        el.refresh.disabled = false;
+      if (requestId === feedRequestNumber) {
+        isLoadingFeed = false;
       }
+    }
+    }
+    /* =========================================
+     RENDER POST CARD
+  ========================================= */
+
+  function renderPostCard(post) {
+    const card = document.createElement("article");
+    card.className = "post-card";
+    card.dataset.postId = String(post.id);
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+
+    if (post.authorAvatar) {
+      const image = document.createElement("img");
+      image.src = post.authorAvatar;
+      image.alt = "";
+      image.loading = "lazy";
+      image.referrerPolicy = "no-referrer";
+
+      image.addEventListener("error", () => {
+        image.remove();
+        avatar.textContent = getInitial(post.authorName);
+      }, { once: true });
+
+      avatar.appendChild(image);
+    } else {
+      avatar.textContent = getInitial(post.authorName);
+    }
+
+    const header = document.createElement("div");
+    header.className = "post-header";
+
+    const authorDetails = document.createElement("div");
+    authorDetails.className = "post-author-details";
+
+    const nameLine = document.createElement("div");
+    nameLine.className = "post-author-name";
+
+    const name = document.createElement("strong");
+    name.textContent = post.authorName;
+    nameLine.appendChild(name);
+
+    if (post.verified) {
+      const verified = document.createElement("span");
+      verified.className = "post-verified";
+      verified.textContent = "✓";
+      verified.setAttribute("aria-label", "Verified account");
+      nameLine.appendChild(verified);
+    }
+
+    const username = document.createElement("span");
+    username.className = "post-author-username";
+    username.textContent = post.authorUsername
+      ? `@${post.authorUsername.replace(/^@/, "")}`
+      : "";
+
+    const time = document.createElement("time");
+    time.className = "post-time";
+    time.textContent = formatDate(post.createdAt);
+
+    if (post.createdAt) {
+      const date = new Date(post.createdAt);
+      if (!Number.isNaN(date.getTime())) {
+        time.dateTime = date.toISOString();
+      }
+    }
+
+    authorDetails.append(nameLine, username, time);
+    header.append(avatar, authorDetails);
+
+    const content = document.createElement("div");
+    content.className = "post-content";
+    content.textContent = post.content;
+
+    const body = document.createElement("div");
+    body.className = "post-body";
+    body.appendChild(content);
+
+    const footer = document.createElement("div");
+    footer.className = "post-footer";
+
+    if (post.isOwnPost) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "post-delete-button";
+      deleteButton.textContent = "Delete";
+      deleteButton.dataset.action = "delete";
+      deleteButton.dataset.postId = String(post.id);
+      deleteButton.setAttribute("aria-label", "Delete your post");
+      footer.appendChild(deleteButton);
+    }
+
+    card.append(header, body);
+
+    if (footer.childElementCount) {
+      card.appendChild(footer);
+    }
+
+    return card;
+  }
+
+  /* =========================================
+     RENDER FEED
+  ========================================= */
+
+  function renderFeed() {
+    if (!elements.postsList) return;
+
+    const orderedPosts = sortPosts(loadedPosts);
+    const visiblePosts = filterPosts(orderedPosts);
+
+    const fragment = document.createDocumentFragment();
+
+    visiblePosts.forEach(post => {
+      fragment.appendChild(renderPostCard(post));
+    });
+
+    elements.postsList.replaceChildren(fragment);
+
+    updateFeedCount(visiblePosts.length);
+    setFeedReady();
+
+    if (visiblePosts.length === 0 && currentSearch.trim()) {
+      setText(
+        elements.feedStatus,
+        "No posts match your search."
+      );
+      setHidden(elements.feedStatus, false);
+      setHidden(elements.feedEmpty, true);
+      return;
+    }
+
+    if (visiblePosts.length === 0) {
+      setHidden(elements.feedEmpty, false);
+    } else {
+      setHidden(elements.feedEmpty, true);
     }
   }
 
+  /* =========================================
+     PUBLISH POST
+  ========================================= */
+
   async function publishPost() {
-    const content = el.postContent?.value.trim() || "";
+    if (isPublishing) return;
+
+    if (!supabaseClient) {
+      setComposerMessage(
+        "Supabase is unavailable. Please refresh the page.",
+        "error"
+      );
+      return;
+    }
+
+    const content = elements.postContent?.value.trim() || "";
 
     if (!content) {
-      setMessage("Write something before publishing.", "error");
-      el.postContent?.focus();
+      setComposerMessage(
+        "Write something before publishing your post.",
+        "error"
+      );
+      elements.postContent?.focus();
       return;
     }
 
-    if (content.length > 5000) {
-      setMessage("Your post must be 5,000 characters or fewer.", "error");
+    if (content.length > MAX_POST_LENGTH) {
+      setComposerMessage(
+        `Your post must be ${MAX_POST_LENGTH} characters or fewer.`,
+        "error"
+      );
       return;
     }
 
-    if (!state.db) {
-      setMessage("Publishing service is unavailable. Refresh the page.", "error");
-      return;
+    isPublishing = true;
+
+    if (elements.publishPostButton) {
+      elements.publishPostButton.disabled = true;
+      elements.publishPostButton.textContent = "Publishing...";
     }
 
-    let userId = state.user?.id;
+    setComposerMessage("Publishing your post...");
 
     try {
-      const auth = await state.db.auth.getUser();
-      if (!auth.error && auth.data?.user?.id) {
-        userId = auth.data.user.id;
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await supabaseClient.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const authUser = sessionData?.session?.user;
+
+      if (!authUser) {
+        writeStorage(STORAGE.loggedIn, "false");
+        window.location.replace("index.html");
+        return;
       }
-    } catch (error) {
-      console.warn("ARS: Could not verify session.", error);
-    }
 
-    if (!userId) {
-      setMessage("Your session could not be verified. Please log in again.", "error");
-      return;
-    }
-
-    if (el.publish) {
-      el.publish.disabled = true;
-      el.publish.textContent = "Publishing...";
-    }
-
-    setMessage("Publishing your post...", "success");
-
-    try {
-      const { data, error } = await state.db
+      /*
+       * These are the two insert fields used here:
+       * user_id and content.
+       * The posts table must support both fields and
+       * permit authenticated users to insert their own posts.
+       */
+      const { data, error } = await supabaseClient
         .from("posts")
-        .insert({ user_id: userId, content })
-        .select("id, user_id, content, created_at")
+        .insert({
+          user_id: authUser.id,
+          content
+        })
+        .select("*")
         .single();
 
       if (error) throw error;
 
-      const [post] = await attachAuthors([data]);
-      state.posts.unshift(post);
-      el.postContent.value = "";
+      if (!data) {
+        throw new Error("The post was not returned after publishing.");
+      }
+
+      elements.postContent.value = "";
       updateCharacterCount();
-      renderPosts();
-      setMessage("Your post has been published.", "success");
-      showToast("Post published successfully.");
+      setComposerMessage("Your post has been published.", "success");
+
+      const newPost = normalizePost(data);
+
+      if (newPost) {
+        loadedPosts = [
+          newPost,
+          ...loadedPosts.filter(post => post.id !== newPost.id)
+        ];
+      }
+
+      currentFeed = "latest";
+      currentSearch = "";
+
+      if (elements.searchInput) {
+        elements.searchInput.value = "";
+      }
+
+      updateFeedTabs();
+      renderFeed();
+
+      showToast("Post published successfully.", "success");
     } catch (error) {
-      console.error("ARS publish error:", error);
-      setMessage(
-        error.message || "Could not publish your post. Please try again.",
+      console.error("ARS publish post error:", error);
+
+      setComposerMessage(
+        error?.message ||
+          "Could not publish your post. Please try again.",
         "error"
       );
     } finally {
-      if (el.publish) {
-        el.publish.disabled = false;
-        el.publish.textContent = "Publish Post";
+      isPublishing = false;
+
+      if (elements.publishPostButton) {
+        elements.publishPostButton.disabled = false;
+        elements.publishPostButton.textContent = "Publish Post";
       }
     }
   }
 
-  function updateCharacterCount() {
-    if (!el.postContent || !el.characterCount) return;
+  /* =========================================
+     DELETE OWN POST
+  ========================================= */
 
-    const length = el.postContent.value.length;
-    el.characterCount.textContent = length + " / 5000";
-    el.characterCount.classList.toggle("limit-reached", length >= 5000);
+  async function deletePost(postId) {
+    const post = loadedPosts.find(
+      item => String(item.id) === String(postId)
+    );
+
+    if (!post) {
+      showToast("This post could not be found.", "error");
+      return;
+    }
+
+    if (!post.isOwnPost) {
+      showToast("You can only delete your own posts.", "error");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await supabaseClient.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const authUser = sessionData?.session?.user;
+
+      if (!authUser || authUser.id !== post.userId) {
+        showToast("Your session could not be verified.", "error");
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("posts")
+        .delete()
+        .eq("id", post.id)
+        .eq("user_id", authUser.id)
+        .select("id");
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        showToast(
+          "The post was not deleted. Check your database permissions.",
+          "error"
+        );
+        return;
+      }
+
+      loadedPosts = loadedPosts.filter(
+        item => String(item.id) !== String(postId)
+      );
+
+      renderFeed();
+      showToast("Post deleted.", "success");
+    } catch (error) {
+      console.error("ARS delete post error:", error);
+
+      showToast(
+        error?.message || "Could not delete this post.",
+        "error"
+      );
+    }
   }
 
-  function focusComposer() {
-    $("#composerCard")?.scrollIntoView({
+  /* =========================================
+     CHARACTER COUNTER
+  ========================================= */
+
+  function updateCharacterCount() {
+    if (!elements.postContent || !elements.characterCount) {
+      return;
+    }
+
+    const length = elements.postContent.value.length;
+
+    elements.characterCount.textContent =
+      `${length} / ${MAX_POST_LENGTH}`;
+
+    elements.characterCount.classList.toggle(
+      "limit-reached",
+      length >= MAX_POST_LENGTH
+    );
+  }
+
+  /* =========================================
+     FEED TABS
+  ========================================= */
+
+  function updateFeedTabs() {
+    $$(".feed-tab").forEach(button => {
+      const active = button.dataset.feed === currentFeed;
+
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
+
+  function selectFeed(feed) {
+    if (!["latest", "popular"].includes(feed)) return;
+
+    currentFeed = feed;
+    updateFeedTabs();
+    renderFeed();
+
+    /*
+     * Popular uses newest-first ordering for now.
+     * A true popularity ranking requires the actual
+     * likes/reactions schema and count relationship.
+     */
+  }
+
+  /* =========================================
+     SEARCH
+  ========================================= */
+
+  function handleSearch(event) {
+    event?.preventDefault();
+
+    currentSearch = elements.searchInput?.value.trim() || "";
+    renderFeed();
+
+    if (currentSearch) {
+      showToast(
+        `Search results for "${currentSearch}"`,
+        "info"
+      );
+    }
+  }
+
+  /* =========================================
+     COMPOSER CONTROLS
+  ========================================= */
+
+  function openComposer() {
+    if (!elements.composerCard) return;
+
+    elements.composerCard.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
-    setTimeout(() => el.postContent?.focus({ preventScroll: true }), 150);
+    elements.postContent?.focus();
   }
 
-  function searchPosts(query) {
-    const term = query.trim().toLowerCase();
+  /* =========================================
+     LOG OUT
+  ========================================= */
 
-    if (!term) {
-      renderPosts();
-      return;
-    }
+  async function logout() {
+    closeProfileMenu();
+    showLoading("Signing out...");
 
-    const results = sortedPosts().filter(post => {
-      const author = post.author || {};
+    try {
+      if (supabaseClient) {
+        const { error } = await supabaseClient.auth.signOut();
 
-      return String(post.content || "").toLowerCase().includes(term) ||
-        String(author.username || "").toLowerCase().includes(term) ||
-        String(author.display_name || "").toLowerCase().includes(term);
-    });
+        if (error) throw error;
+      }
 
-    if (el.empty) {
-      el.empty.hidden = results.length > 0;
-      setText(el.empty.querySelector("h3"), "No matching posts");
-      setText(el.empty.querySelector("p"), "Try a different search term.");
-    }
+      writeStorage(STORAGE.loggedIn, "false");
+      removeStorage(STORAGE.user);
 
-    renderPosts(results);
-  }
+      window.location.replace("index.html");
+    } catch (error) {
+      console.error("ARS logout error:", error);
+      hideLoading();
 
-  function wireEvents() {
-    el.postContent?.addEventListener("input", updateCharacterCount);
-    el.publish?.addEventListener("click", publishPost);
-    el.refresh?.addEventListener("click", loadPosts);
-    el.retry?.addEventListener("click", loadPosts);
-
-    [
-      "#openComposerButton",
-      "#communityPostButton",
-      "#mobileCreateButton"
-    ].forEach(selector => {
-      $(selector)?.addEventListener("click", focusComposer);
-    });
-
-    $$(".feed-tab").forEach(button => {
-      button.addEventListener("click", () => {
-        state.feed = button.dataset.feed || "latest";
-
-        $$(".feed-tab").forEach(tab => {
-          const active = tab === button;
-          tab.classList.toggle("active", active);
-          tab.setAttribute("aria-pressed", String(active));
-        });
-
-        renderPosts();
-      });
-    });
-
-    el.profileButton?.addEventListener("click", event => {
-      event.stopPropagation();
-      if (!el.profileMenu) return;
-
-      el.profileMenu.hidden = !el.profileMenu.hidden;
-      el.profileButton.setAttribute(
-        "aria-expanded",
-        String(!el.profileMenu.hidden)
+      showToast(
+        error?.message || "Could not sign out. Please try again.",
+        "error"
       );
+    }
+  }
+
+  /* =========================================
+     NAVIGATION
+  ========================================= */
+
+  function openUnavailableSection(section) {
+    closeProfileMenu();
+
+    const messages = {
+      explore: "The Explore page is not connected in this version.",
+      notifications: "The Notifications page is not connected in this version.",
+      messages: "The Messages page is not connected in this version.",
+      bookmarks: "The Bookmarks page is not connected in this version.",
+      profile: "The Profile page is not connected in this version.",
+      settings: "The Settings page is not connected in this version."
+    };
+
+    showToast(messages[section] || "This section is not available.", "info");
+  }
+
+  function handleNavigationLink(event, section) {
+    event.preventDefault();
+    openUnavailableSection(section);
+  }
+
+  /* =========================================
+     EVENT LISTENERS
+  ========================================= */
+
+  function setupEvents() {
+    elements.searchForm?.addEventListener(
+      "submit",
+      handleSearch
+    );
+
+    elements.searchInput?.addEventListener("input", () => {
+      currentSearch = elements.searchInput.value.trim();
+      renderFeed();
     });
+
+    elements.profileButton?.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+        toggleProfileMenu();
+      }
+    );
 
     document.addEventListener("click", event => {
       if (
-        el.profileMenu &&
-        !el.profileMenu.contains(event.target) &&
-        !el.profileButton?.contains(event.target)
+        elements.profileMenu &&
+        !elements.profileMenu.hidden &&
+        !elements.profileMenu.contains(event.target) &&
+        !elements.profileButton?.contains(event.target)
       ) {
-        el.profileMenu.hidden = true;
+        closeProfileMenu();
       }
     });
 
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && el.profileMenu) {
-        el.profileMenu.hidden = true;
-      }
-
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "k"
-      ) {
-        event.preventDefault();
-        el.searchInput?.focus();
+      if (event.key === "Escape") {
+        closeProfileMenu();
       }
     });
 
-    el.logoutButton?.addEventListener("click", async () => {
-      try {
-        if (state.db) await state.db.auth.signOut();
-        localStorage.setItem("ars_logged_in", "false");
-      } catch (error) {
-        console.warn("ARS sign out warning:", error);
-      }
+    elements.logoutButton?.addEventListener(
+      "click",
+      logout
+    );
 
-      window.location.href = "index.html";
-    });
+    elements.openComposerButton?.addEventListener(
+      "click",
+      openComposer
+    );
 
-    el.searchForm?.addEventListener("submit", event => {
-      event.preventDefault();
-      searchPosts(el.searchInput?.value || "");
-      $("#mainContent")?.scrollIntoView({ behavior: "smooth" });
-    });
+    elements.communityPostButton?.addEventListener(
+      "click",
+      openComposer
+    );
 
-    el.searchInput?.addEventListener("input", () => {
-      if (!el.searchInput.value.trim()) renderPosts();
-    });
+    elements.mobileCreateButton?.addEventListener(
+      "click",
+      openComposer
+    );
 
-    el.posts?.addEventListener("click", async event => {
-      const button = event.target.closest('[data-action="share"]');
-      if (!button) return;
+    elements.publishPostButton?.addEventListener(
+      "click",
+      publishPost
+    );
 
-      const post = button.closest("[data-post-id]");
-      const url = new URL(window.location.href);
-      url.hash = "post-" + (post?.dataset.postId || "");
+    elements.postContent?.addEventListener(
+      "input",
+      updateCharacterCount
+    );
 
-      try {
-        if (navigator.share) {
-          await navigator.share({ title: "ARS post", url: url.href });
-        } else if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(url.href);
-          showToast("Post link copied.");
-        } else {
-          window.prompt("Copy this post link:", url.href);
-        }
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          showToast("Could not share this post.");
-        }
-      }
-    });
+    elements.refreshFeedButton?.addEventListener(
+      "click",
+      () => loadPosts()
+    );
 
-    $("#notificationsButton")?.addEventListener("click", () => {
-      showToast("Notifications are not connected yet.");
-    });
+    elements.retryFeedButton?.addEventListener(
+      "click",
+      () => loadPosts()
+    );
 
-    [
-      "#navNotificationsLink",
-      "#mobileNotificationsLink",
-      "#exploreLink",
-      "#mobileExploreLink",
-      "#messagesLink",
-      "#bookmarksLink",
-      "#sidebarProfileLink",
-      "#viewProfileLink",
-      "#accountProfileLink",
-      "#mobileProfileLink",
-      "#settingsLink"
-    ].forEach(selector => {
-      $(selector)?.addEventListener("click", event => {
-        const node = $(selector);
-
-        if (node?.getAttribute("href")?.startsWith("#")) {
-          event.preventDefault();
-        }
-
-        const messages = {
-          "#exploreLink": "Explore is not connected yet.",
-          "#mobileExploreLink": "Explore is not connected yet.",
-          "#messagesLink": "Messages are not connected yet.",
-          "#bookmarksLink": "Bookmarks are not connected yet.",
-          "#settingsLink": "Settings are not connected yet."
-        };
-
-        showToast(messages[selector] || "This section is not connected yet.");
+    $$(".feed-tab").forEach(button => {
+      button.addEventListener("click", () => {
+        selectFeed(button.dataset.feed);
       });
     });
+
+    elements.postsList?.addEventListener("click", event => {
+      const button = event.target.closest(
+        'button[data-action="delete"]'
+      );
+
+      if (!button) return;
+
+      deletePost(button.dataset.postId);
+    });
+
+    elements.notificationsButton?.addEventListener(
+      "click",
+      () => openUnavailableSection("notifications")
+    );
+
+    elements.navNotificationsLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "notifications")
+    );
+
+    elements.mobileNotificationsLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "notifications")
+    );
+
+    elements.exploreLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "explore")
+    );
+
+    elements.mobileExploreLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "explore")
+    );
+
+    elements.messagesLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "messages")
+    );
+
+    elements.bookmarksLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "bookmarks")
+    );
+
+    elements.sidebarProfileLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "profile")
+    );
+
+    elements.mobileProfileLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "profile")
+    );
+
+    elements.accountProfileLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "profile")
+    );
+
+    elements.viewProfileLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "profile")
+    );
+
+    elements.settingsLink?.addEventListener(
+      "click",
+      event => handleNavigationLink(event, "settings")
+    );
   }
 
-  async function initialize() {
-    if (window.supabase?.createClient) {
-      state.db = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+  /* =========================================
+     INITIALIZATION
+  ========================================= */
+
+  async function init() {
+    if (elements.currentYear) {
+      elements.currentYear.textContent =
+        String(new Date().getFullYear());
     }
 
-    state.user = normalizeUser(readUser());
-    renderAccount();
     updateCharacterCount();
-    wireEvents();
+    renderAccount();
+    setupEvents();
+    updateFeedTabs();
+    closeProfileMenu();
 
-    if (state.db) {
-      try {
-        const { data } = await state.db.auth.getUser();
+    const sessionAvailable = await requireSession();
 
-        if (data?.user) {
-          const authUser = data.user;
-          const metadata = authUser.user_metadata || {};
+    if (!sessionAvailable) return;
 
-          const result = await state.db
-            .from("users")
-            .select("id, username, display_name, avatar, verified, plan, streak, xp")
-            .eq("id", authUser.id)
-            .maybeSingle();
-
-          state.user = normalizeUser(
-            result.data || {
-              id: authUser.id,
-              username: metadata.username,
-              display_name: metadata.display_name,
-              ...readUser()
-            }
-          );
-
-          renderAccount();
-        }
-      } catch (error) {
-        console.warn("ARS: Could not refresh account details.", error);
-      }
-    }
-
+    renderAccount();
+    await refreshAccountFromSupabase();
     await loadPosts();
   }
 
+  /* =========================================
+     START APPLICATION
+  ========================================= */
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      init,
+      { once: true }
+    );
   } else {
-    initialize();
+    init();
   }
+
 })();
