@@ -40,11 +40,23 @@
             </form>
 
             <div class="topbar-actions">
-                <button class="icon-button" id="notificationsButton" type="button" aria-label="Notifications">
+                <button
+                    class="icon-button"
+                    id="notificationsButton"
+                    type="button"
+                    aria-label="Notifications"
+                >
                     ♧
                 </button>
 
-                <button class="profile-trigger" id="profileButton" type="button" aria-label="Open profile menu">
+                <button
+                    class="profile-trigger"
+                    id="profileButton"
+                    type="button"
+                    aria-label="Open profile menu"
+                    aria-expanded="false"
+                    aria-controls="profileMenu"
+                >
                     <span class="avatar avatar-small" id="headerAvatar">A</span>
                     <span class="profile-chevron" aria-hidden="true">⌄</span>
                 </button>
@@ -61,7 +73,7 @@
 
             <aside class="sidebar sidebar-left" aria-label="Main navigation">
                 <nav class="main-navigation">
-                    <a class="nav-link active" href="home.html">
+                    <a class="nav-link active" href="home.html" aria-current="page">
                         <span class="nav-icon" aria-hidden="true">⌂</span>
                         <span>Home</span>
                     </a>
@@ -76,7 +88,13 @@
                         <span>Notifications</span>
                     </a>
 
-                    <a class="nav-link" href="#messages" id="messagesLink">
+                    <a
+                        class="nav-link"
+                        href="#messages"
+                        id="messagesLink"
+                        aria-label="Messages — not enabled yet"
+                        title="Messages will be enabled later"
+                    >
                         <span class="nav-icon" aria-hidden="true">✉</span>
                         <span>Messages</span>
                     </a>
@@ -92,7 +110,11 @@
                     </a>
                 </nav>
 
-                <button class="primary-button sidebar-post-button" id="openComposerButton" type="button">
+                <button
+                    class="primary-button sidebar-post-button"
+                    id="openComposerButton"
+                    type="button"
+                >
                     Create Post
                 </button>
 
@@ -111,26 +133,48 @@
                         <p class="page-subtitle">Discover what people are sharing.</p>
                     </div>
 
-                    <button class="secondary-button" id="refreshFeedButton" type="button">
+                    <button
+                        class="secondary-button"
+                        id="refreshFeedButton"
+                        type="button"
+                    >
                         Refresh
                     </button>
                 </section>
 
                 <section class="feed-tabs" aria-label="Feed options">
-                    <button class="feed-tab active" type="button" data-feed="latest">
+                    <button
+                        class="feed-tab active"
+                        type="button"
+                        data-feed="latest"
+                        aria-pressed="true"
+                    >
                         Latest
                     </button>
-                    <button class="feed-tab" type="button" data-feed="popular">
+
+                    <button
+                        class="feed-tab"
+                        type="button"
+                        data-feed="popular"
+                        aria-pressed="false"
+                    >
                         Popular
                     </button>
                 </section>
 
-                <section class="composer-card" id="composerCard" aria-label="Create a post">
+                <section
+                    class="composer-card"
+                    id="composerCard"
+                    aria-label="Create a post"
+                >
                     <div class="composer-top">
                         <span class="avatar" id="composerAvatar">A</span>
 
                         <div class="composer-input-wrap">
-                            <label class="visually-hidden" for="postContent">Write your post</label>
+                            <label class="visually-hidden" for="postContent">
+                                Write your post
+                            </label>
+
                             <textarea
                                 id="postContent"
                                 name="content"
@@ -142,14 +186,25 @@
                     </div>
 
                     <div class="composer-footer">
-                        <span class="character-count" id="characterCount">0 / 5000</span>
+                        <span class="character-count" id="characterCount">
+                            0 / 5000
+                        </span>
 
-                        <button class="primary-button" id="publishPostButton" type="button">
+                        <button
+                            class="primary-button"
+                            id="publishPostButton"
+                            type="button"
+                        >
                             Publish Post
                         </button>
                     </div>
 
-                    <p class="form-message" id="composerMessage" role="status" aria-live="polite"></p>
+                    <p
+                        class="form-message"
+                        id="composerMessage"
+                        role="status"
+                        aria-live="polite"
+                    ></p>
                 </section>
 
                 <section class="feed-section" aria-label="Community posts">
@@ -158,7 +213,12 @@
                         <span class="feed-count" id="feedCount"></span>
                     </div>
 
-                    <div class="feed-status" id="feedStatus" role="status" aria-live="polite">
+                    <div
+                        class="feed-status"
+                        id="feedStatus"
+                        role="status"
+                        aria-live="polite"
+                    >
                         Loading posts...
                     </div>
 
@@ -173,7 +233,12 @@
                     <div class="feed-error" id="feedError" hidden>
                         <h3>Unable to load posts</h3>
                         <p id="feedErrorMessage">Please try again.</p>
-                        <button class="secondary-button" id="retryFeedButton" type="button">
+
+                        <button
+                            class="secondary-button"
+                            id="retryFeedButton"
+                            type="button"
+                        >
                             Try Again
                         </button>
                     </div>
@@ -184,7 +249,9 @@
                 <section class="widget-card welcome-card">
                     <p class="eyebrow">WELCOME TO ARS</p>
                     <h2>Your space to connect.</h2>
-                    <p>Share your thoughts, discover new voices, and join the conversation.</p>
+                    <p>
+                        Share your thoughts, discover new voices, and join the conversation.
+                    </p>
                 </section>
 
                 <section class="widget-card account-card">
@@ -194,6 +261,7 @@
 
                     <div class="account-summary">
                         <span class="avatar avatar-large" id="accountAvatar">A</span>
+
                         <div class="account-details">
                             <strong id="accountDisplayName">ARS Member</strong>
                             <span id="accountUsername">@member</span>
@@ -205,6 +273,7 @@
                             <strong id="accountStreak">0</strong>
                             <span>Day Streak</span>
                         </div>
+
                         <div>
                             <strong id="accountXp">0</strong>
                             <span>XP Points</span>
@@ -220,8 +289,14 @@
                     <div class="widget-heading">
                         <h2>Community</h2>
                     </div>
+
                     <p>Every conversation starts with a post.</p>
-                    <button class="secondary-button full-width" id="communityPostButton" type="button">
+
+                    <button
+                        class="secondary-button full-width"
+                        id="communityPostButton"
+                        type="button"
+                    >
                         Share Something
                     </button>
                 </section>
@@ -235,33 +310,63 @@
         </div>
 
         <nav class="mobile-navigation" aria-label="Mobile navigation">
-            <a class="mobile-nav-link active" href="home.html" aria-label="Home">
+            <a
+                class="mobile-nav-link active"
+                href="home.html"
+                aria-label="Home"
+                aria-current="page"
+            >
                 <span aria-hidden="true">⌂</span>
                 <small>Home</small>
             </a>
 
-            <a class="mobile-nav-link" href="#explore" id="mobileExploreLink" aria-label="Explore">
+            <a
+                class="mobile-nav-link"
+                href="#explore"
+                id="mobileExploreLink"
+                aria-label="Explore"
+            >
                 <span aria-hidden="true">⌕</span>
                 <small>Explore</small>
             </a>
 
-            <button class="mobile-nav-link" id="mobileCreateButton" type="button" aria-label="Create post">
+            <button
+                class="mobile-nav-link"
+                id="mobileCreateButton"
+                type="button"
+                aria-label="Create post"
+            >
                 <span aria-hidden="true">＋</span>
                 <small>Create</small>
             </button>
 
-            <a class="mobile-nav-link" href="#notifications" id="mobileNotificationsLink" aria-label="Notifications">
+            <a
+                class="mobile-nav-link"
+                href="#notifications"
+                id="mobileNotificationsLink"
+                aria-label="Notifications"
+            >
                 <span aria-hidden="true">♧</span>
                 <small>Alerts</small>
             </a>
 
-            <a class="mobile-nav-link" href="#profile" id="mobileProfileLink" aria-label="Profile">
+            <a
+                class="mobile-nav-link"
+                href="#profile"
+                id="mobileProfileLink"
+                aria-label="Profile"
+            >
                 <span aria-hidden="true">◎</span>
                 <small>Profile</small>
             </a>
         </nav>
 
-        <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+        <div
+            class="toast-container"
+            id="toastContainer"
+            aria-live="polite"
+            aria-atomic="true"
+        ></div>
 
         <div class="loading-overlay" id="loadingOverlay" hidden>
             <div class="loading-spinner" aria-hidden="true"></div>
@@ -270,4 +375,5 @@
 
     </div>
 </body>
-</html>
+                        </html>
+                        
