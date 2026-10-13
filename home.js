@@ -1,3 +1,4 @@
+
 (() => {
   "use strict";
 
@@ -22,11 +23,10 @@
   const PAGE_SIZE = 30;
   const MAX_POST_LENGTH = 5000;
 
-  const supabaseClient =
-    window.supabase?.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    ) || null;
+  const supabaseClient = window.supabase?.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  ) || null;
 
   /* =========================================
      DOM HELPERS
@@ -41,53 +41,44 @@
   const elements = {
     searchForm: $("#searchForm"),
     searchInput: $("#searchInput"),
-
     notificationsButton: $("#notificationsButton"),
     profileButton: $("#profileButton"),
     profileMenu: $("#profileMenu"),
     viewProfileLink: $("#viewProfileLink"),
     settingsLink: $("#settingsLink"),
     logoutButton: $("#logoutButton"),
-
     exploreLink: $("#exploreLink"),
     navNotificationsLink: $("#navNotificationsLink"),
     messagesLink: $("#messagesLink"),
     bookmarksLink: $("#bookmarksLink"),
     sidebarProfileLink: $("#sidebarProfileLink"),
-
     openComposerButton: $("#openComposerButton"),
     refreshFeedButton: $("#refreshFeedButton"),
     retryFeedButton: $("#retryFeedButton"),
-
     composerCard: $("#composerCard"),
     composerAvatar: $("#composerAvatar"),
     postContent: $("#postContent"),
     characterCount: $("#characterCount"),
     publishPostButton: $("#publishPostButton"),
     composerMessage: $("#composerMessage"),
-
     feedCount: $("#feedCount"),
     feedStatus: $("#feedStatus"),
     postsList: $("#postsList"),
     feedEmpty: $("#feedEmpty"),
     feedError: $("#feedError"),
     feedErrorMessage: $("#feedErrorMessage"),
-
     headerAvatar: $("#headerAvatar"),
     accountAvatar: $("#accountAvatar"),
     accountDisplayName: $("#accountDisplayName"),
     accountUsername: $("#accountUsername"),
     accountStreak: $("#accountStreak"),
     accountXp: $("#accountXp"),
-
     accountProfileLink: $("#accountProfileLink"),
     communityPostButton: $("#communityPostButton"),
-
     mobileExploreLink: $("#mobileExploreLink"),
     mobileCreateButton: $("#mobileCreateButton"),
     mobileNotificationsLink: $("#mobileNotificationsLink"),
     mobileProfileLink: $("#mobileProfileLink"),
-
     currentYear: $("#currentYear"),
     toastContainer: $("#toastContainer"),
     loadingOverlay: $("#loadingOverlay"),
@@ -140,19 +131,6 @@
      SECURITY AND FORMATTING
   ========================================= */
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(
-      /[&<>"']/g,
-      character => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[character]
-    );
-  }
-
   function getInitial(value, fallback = "A") {
     const text = String(value ?? "").trim();
     return text ? Array.from(text)[0].toUpperCase() : fallback;
@@ -162,31 +140,22 @@
     if (!value) return "Recently";
 
     const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Recently";
 
-    if (Number.isNaN(date.getTime())) {
-      return "Recently";
-    }
-
-    const now = Date.now();
-    const difference = Math.max(0, now - date.getTime());
-    const minute = 60 * 1000;
+    const difference = Math.max(0, Date.now() - date.getTime());
+    const minute = 60000;
     const hour = 60 * minute;
     const day = 24 * hour;
 
     if (difference < minute) return "Just now";
     if (difference < hour) {
-      const count = Math.floor(difference / minute);
-      return `${count}m ago`;
+      return `${Math.floor(difference / minute)}m ago`;
     }
-
     if (difference < day) {
-      const count = Math.floor(difference / hour);
-      return `${count}h ago`;
+      return `${Math.floor(difference / hour)}h ago`;
     }
-
     if (difference < 7 * day) {
-      const count = Math.floor(difference / day);
-      return `${count}d ago`;
+      return `${Math.floor(difference / day)}d ago`;
     }
 
     return date.toLocaleDateString("en", {
@@ -197,15 +166,11 @@
   }
 
   function setText(element, value) {
-    if (element) {
-      element.textContent = String(value ?? "");
-    }
+    if (element) element.textContent = String(value ?? "");
   }
 
   function setHidden(element, hidden) {
-    if (element) {
-      element.hidden = Boolean(hidden);
-    }
+    if (element) element.hidden = Boolean(hidden);
   }
 
   function setComposerMessage(message, type = "") {
@@ -214,10 +179,7 @@
 
     element.textContent = message;
     element.className = "form-message";
-
-    if (type) {
-      element.classList.add(type);
-    }
+    if (type) element.classList.add(type);
   }
 
   /* =========================================
@@ -229,19 +191,12 @@
   }
 
   function saveUser(user) {
-    return writeStorage(
-      STORAGE.user,
-      JSON.stringify(user || {})
-    );
+    return writeStorage(STORAGE.user, JSON.stringify(user || {}));
   }
 
   function getCurrentUserId() {
     const user = getUser();
     return user.id || user.user_id || null;
-  }
-
-  function isLoggedInLocally() {
-    return readStorage(STORAGE.loggedIn) === "true";
   }
 
   async function requireSession() {
@@ -253,9 +208,7 @@
     }
 
     try {
-      const { data, error } =
-        await supabaseClient.auth.getSession();
-
+      const { data, error } = await supabaseClient.auth.getSession();
       if (error) throw error;
 
       if (!data?.session) {
@@ -267,10 +220,7 @@
       const authUser = data.session.user;
       const localUser = getUser();
 
-      if (
-        localUser.id &&
-        localUser.id !== authUser.id
-      ) {
+      if (localUser.id && localUser.id !== authUser.id) {
         console.warn(
           "ARS local profile ID differs from the authenticated user."
         );
@@ -286,17 +236,15 @@
       return true;
     } catch (error) {
       console.error("ARS session check failed:", error);
-
       showFatalError(
         "Your session could not be verified. Please refresh the page or log in again."
       );
-
       return false;
     }
   }
 
   /* =========================================
-     LOADING OVERLAY
+     LOADING AND ERROR STATES
   ========================================= */
 
   function showLoading(message = "Please wait...") {
@@ -310,7 +258,6 @@
 
   function showFatalError(message) {
     console.error("ARS:", message);
-
     setText(elements.feedErrorMessage, message);
     setHidden(elements.feedError, false);
     setHidden(elements.feedStatus, true);
@@ -332,15 +279,11 @@
     toast.className = `ars-toast ars-toast-${type}`;
     toast.setAttribute("role", "status");
     toast.textContent = String(message);
-
     container.appendChild(toast);
 
     window.setTimeout(() => {
       toast.classList.add("is-removing");
-
-      window.setTimeout(() => {
-        toast.remove();
-      }, 250);
+      window.setTimeout(() => toast.remove(), 250);
     }, 3500);
   }
 
@@ -368,7 +311,6 @@
       );
 
     const avatarUrl = user.avatar || "";
-
     element.replaceChildren();
 
     if (avatarUrl) {
@@ -399,10 +341,9 @@
       user.username ||
       "ARS Member";
 
-    const username =
-      user.username
-        ? `@${String(user.username).replace(/^@/, "")}`
-        : "@member";
+    const username = user.username
+      ? `@${String(user.username).replace(/^@/, "")}`
+      : "@member";
 
     applyAvatar(elements.headerAvatar, user);
     applyAvatar(elements.composerAvatar, user);
@@ -439,15 +380,11 @@
       if (!data) return;
 
       const current = getUser();
-
       const updated = {
         ...current,
         id: data.id,
         username: data.username || current.username || "",
-        displayName:
-          data.display_name ||
-          current.displayName ||
-          "",
+        displayName: data.display_name || current.displayName || "",
         email: data.email || current.email || "",
         bio: data.bio ?? current.bio ?? "",
         avatar: data.avatar ?? current.avatar ?? "",
@@ -471,11 +408,7 @@
 
   function closeProfileMenu() {
     setHidden(elements.profileMenu, true);
-
-    elements.profileButton?.setAttribute(
-      "aria-expanded",
-      "false"
-    );
+    elements.profileButton?.setAttribute("aria-expanded", "false");
   }
 
   function toggleProfileMenu() {
@@ -483,7 +416,6 @@
 
     const opening = elements.profileMenu.hidden;
     setHidden(elements.profileMenu, !opening);
-
     elements.profileButton?.setAttribute(
       "aria-expanded",
       String(opening)
@@ -501,6 +433,7 @@
   let isPublishing = false;
   let feedRequestNumber = 0;
 
+ 
   /* =========================================
      FEED STATUS
   ========================================= */
@@ -527,7 +460,9 @@
   function updateFeedCount(count) {
     setText(
       elements.feedCount,
-      count ? `${count} ${count === 1 ? "post" : "posts"}` : "0 posts"
+      count
+        ? `${count} ${count === 1 ? "post" : "posts"}`
+        : "0 posts"
     );
   }
 
@@ -549,17 +484,17 @@
       row.profile_id ||
       "";
 
+    const currentUserId = getCurrentUserId();
+
     const isOwnPost =
-      Boolean(getCurrentUserId()) &&
-      userId === getCurrentUserId();
+      Boolean(currentUserId) &&
+      userId === currentUserId;
 
     const authorName =
       author.display_name ||
       author.displayName ||
       row.display_name ||
-      (isOwnPost
-        ? localUser.displayName
-        : "") ||
+      (isOwnPost ? localUser.displayName : "") ||
       author.username ||
       row.username ||
       (isOwnPost ? localUser.username : "") ||
@@ -597,7 +532,9 @@
       authorName: String(authorName),
       authorUsername: String(authorUsername),
       authorAvatar: String(authorAvatar),
-      verified: Boolean(author.verified ?? row.verified ?? false),
+      verified: Boolean(
+        author.verified ?? row.verified ?? false
+      ),
       isOwnPost
     };
   }
@@ -609,18 +546,6 @@
 
   function sortPosts(posts) {
     const result = [...posts];
-
-    if (currentFeed === "popular") {
-      /*
-       * No likes-count column is assumed here.
-       * Popular currently uses newest-first ordering until
-       * the real engagement schema is confirmed.
-       */
-      result.sort(
-        (a, b) => getPostTimestamp(b) - getPostTimestamp(a)
-      );
-      return result;
-    }
 
     result.sort(
       (a, b) => getPostTimestamp(b) - getPostTimestamp(a)
@@ -653,7 +578,9 @@
     if (isLoadingFeed) return;
 
     if (!supabaseClient) {
-      setFeedError("Supabase is unavailable. Please refresh the page.");
+      setFeedError(
+        "Supabase is unavailable. Please refresh the page."
+      );
       return;
     }
 
@@ -665,13 +592,6 @@
     }
 
     try {
-      /*
-       * The existing project references the "users" table
-       * in auth.js. Posts are read from "posts".
-       *
-       * The query deliberately avoids assuming a relationship
-       * name for a joined author record.
-       */
       const { data, error } = await supabaseClient
         .from("posts")
         .select("*")
@@ -679,10 +599,7 @@
         .limit(PAGE_SIZE);
 
       if (requestId !== feedRequestNumber) return;
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       const rows = Array.isArray(data) ? data : [];
 
@@ -693,10 +610,13 @@
 
       renderFeed();
 
-      if (!loadedPosts.length) {
+      if (loadedPosts.length === 0) {
         setFeedReady();
         setHidden(elements.feedEmpty, true);
-        setText(elements.feedStatus, "No posts have been shared yet.");
+        setText(
+          elements.feedStatus,
+          "No posts have been shared yet."
+        );
         setHidden(elements.feedStatus, false);
       }
     } catch (error) {
@@ -713,8 +633,9 @@
         isLoadingFeed = false;
       }
     }
-    }
-    /* =========================================
+  }
+
+  /* =========================================
      RENDER POST CARD
   ========================================= */
 
@@ -776,6 +697,7 @@
 
     if (post.createdAt) {
       const date = new Date(post.createdAt);
+
       if (!Number.isNaN(date.getTime())) {
         time.dateTime = date.toISOString();
       }
@@ -802,7 +724,10 @@
       deleteButton.textContent = "Delete";
       deleteButton.dataset.action = "delete";
       deleteButton.dataset.postId = String(post.id);
-      deleteButton.setAttribute("aria-label", "Delete your post");
+      deleteButton.setAttribute(
+        "aria-label",
+        "Delete your post"
+      );
       footer.appendChild(deleteButton);
     }
 
@@ -824,7 +749,6 @@
 
     const orderedPosts = sortPosts(loadedPosts);
     const visiblePosts = filterPosts(orderedPosts);
-
     const fragment = document.createDocumentFragment();
 
     visiblePosts.forEach(post => {
@@ -832,7 +756,6 @@
     });
 
     elements.postsList.replaceChildren(fragment);
-
     updateFeedCount(visiblePosts.length);
     setFeedReady();
 
@@ -912,12 +835,6 @@
         return;
       }
 
-      /*
-       * These are the two insert fields used here:
-       * user_id and content.
-       * The posts table must support both fields and
-       * permit authenticated users to insert their own posts.
-       */
       const { data, error } = await supabaseClient
         .from("posts")
         .insert({
@@ -930,19 +847,29 @@
       if (error) throw error;
 
       if (!data) {
-        throw new Error("The post was not returned after publishing.");
+        throw new Error(
+          "The post was not returned after publishing."
+        );
       }
 
-      elements.postContent.value = "";
+      if (elements.postContent) {
+        elements.postContent.value = "";
+      }
+
       updateCharacterCount();
-      setComposerMessage("Your post has been published.", "success");
+      setComposerMessage(
+        "Your post has been published.",
+        "success"
+      );
 
       const newPost = normalizePost(data);
 
       if (newPost) {
         loadedPosts = [
           newPost,
-          ...loadedPosts.filter(post => post.id !== newPost.id)
+          ...loadedPosts.filter(
+            post => post.id !== newPost.id
+          )
         ];
       }
 
@@ -955,14 +882,13 @@
 
       updateFeedTabs();
       renderFeed();
-
       showToast("Post published successfully.", "success");
     } catch (error) {
       console.error("ARS publish post error:", error);
 
       setComposerMessage(
         error?.message ||
-          "Could not publish your post. Please try again.",
+        "Could not publish your post. Please try again.",
         "error"
       );
     } finally {
@@ -990,7 +916,10 @@
     }
 
     if (!post.isOwnPost) {
-      showToast("You can only delete your own posts.", "error");
+      showToast(
+        "You can only delete your own posts.",
+        "error"
+      );
       return;
     }
 
@@ -1011,7 +940,10 @@
       const authUser = sessionData?.session?.user;
 
       if (!authUser || authUser.id !== post.userId) {
-        showToast("Your session could not be verified.", "error");
+        showToast(
+          "Your session could not be verified.",
+          "error"
+        );
         return;
       }
 
@@ -1046,336 +978,301 @@
         "error"
       );
     }
+                          }
+    
+/* CHARACTER COUNT */
+
+function updateCharacterCount() {
+  if (!postContent || !characterCount) return;
+
+  const length = postContent.value.length;
+  characterCount.textContent = `${length}/${MAX_POST_LENGTH}`;
+
+  const isOverLimit = length > MAX_POST_LENGTH;
+  characterCount.classList.toggle("is-over-limit", isOverLimit);
+
+  if (publishButton) {
+    publishButton.disabled =
+      !postContent.value.trim() ||
+      isOverLimit ||
+      isPublishing;
+  }
+}
+
+/* FEED TABS */
+
+function updateFeedTabs() {
+  feedTabs.forEach((tab) => {
+    const isActive = tab.dataset.feed === currentFeed;
+
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+    tab.setAttribute("tabindex", isActive ? "0" : "-1");
+  });
+}
+
+function selectFeed(feed) {
+  if (feed !== "latest" && feed !== "popular") return;
+
+  currentFeed = feed;
+  updateFeedTabs();
+
+  /*
+   * The current database query does not retrieve a reliable popularity
+   * score. Until that data exists, both tabs display posts newest-first.
+   */
+  renderFeed();
+}
+
+/* SEARCH */
+
+function handleSearch(event) {
+  event.preventDefault();
+
+  if (!searchInput) return;
+
+  searchQuery = searchInput.value.trim();
+  renderFeed();
+}
+
+/* COMPOSER */
+
+function openComposer() {
+  if (!postContent) return;
+
+  postContent.focus();
+
+  if (composer) {
+    composer.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+}
+
+/* LOGOUT */
+
+async function logout() {
+  if (isLoggingOut) return;
+
+  isLoggingOut = true;
+
+  if (logoutButton) {
+    logoutButton.disabled = true;
   }
 
-  /* =========================================
-     CHARACTER COUNTER
-  ========================================= */
-
-  function updateCharacterCount() {
-    if (!elements.postContent || !elements.characterCount) {
+  try {
+    if (!supabaseClient) {
+      window.location.replace(LOGIN_PAGE);
       return;
     }
 
-    const length = elements.postContent.value.length;
+    const { error } = await supabaseClient.auth.signOut();
 
-    elements.characterCount.textContent =
-      `${length} / ${MAX_POST_LENGTH}`;
+    if (error) {
+      console.error("Sign-out failed:", error);
+      showToast("Unable to sign out. Please try again.", "error");
+      return;
+    }
 
-    elements.characterCount.classList.toggle(
-      "limit-reached",
-      length >= MAX_POST_LENGTH
-    );
-  }
+    window.location.replace(LOGIN_PAGE);
+  } catch (error) {
+    console.error("Unexpected sign-out error:", error);
+    showToast("Unable to sign out. Please try again.", "error");
+  } finally {
+    isLoggingOut = false;
 
-  /* =========================================
-     FEED TABS
-  ========================================= */
-
-  function updateFeedTabs() {
-    $$(".feed-tab").forEach(button => {
-      const active = button.dataset.feed === currentFeed;
-
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-  }
-
-  function selectFeed(feed) {
-    if (!["latest", "popular"].includes(feed)) return;
-
-    currentFeed = feed;
-    updateFeedTabs();
-    renderFeed();
-
-    /*
-     * Popular uses newest-first ordering for now.
-     * A true popularity ranking requires the actual
-     * likes/reactions schema and count relationship.
-     */
-  }
-
-  /* =========================================
-     SEARCH
-  ========================================= */
-
-  function handleSearch(event) {
-    event?.preventDefault();
-
-    currentSearch = elements.searchInput?.value.trim() || "";
-    renderFeed();
-
-    if (currentSearch) {
-      showToast(
-        `Search results for "${currentSearch}"`,
-        "info"
-      );
+    if (logoutButton) {
+      logoutButton.disabled = false;
     }
   }
+}
 
-  /* =========================================
-     COMPOSER CONTROLS
-  ========================================= */
+/* UNAVAILABLE SECTIONS */
 
-  function openComposer() {
-    if (!elements.composerCard) return;
+function openUnavailableSection(section) {
+  const messages = {
+    notifications: "Notifications are not available yet.",
+    explore: "Explore is not available yet.",
+    messages: "Messages are not available yet.",
+    bookmarks: "Bookmarks are not available yet.",
+    profile: "Profile details are not available yet.",
+    settings: "Settings are not available yet.",
+  };
 
-    elements.composerCard.scrollIntoView({
+  const message = messages[section];
+
+  if (message) {
+    showToast(message, "info");
+  }
+}
+
+/* NAVIGATION */
+
+function handleNavigationLink(event, section) {
+  event.preventDefault();
+
+  if (section === "home") {
+    window.scrollTo({
+      top: 0,
       behavior: "smooth",
-      block: "center"
+    });
+    return;
+  }
+
+  openUnavailableSection(section);
+}
+
+/* EVENT SETUP */
+
+function setupEvents() {
+  if (postContent) {
+    postContent.addEventListener("input", updateCharacterCount);
+  }
+
+  if (composerForm) {
+    composerForm.addEventListener("submit", publishPost);
+  }
+
+  if (searchForm) {
+    searchForm.addEventListener("submit", handleSearch);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      if (!searchInput.value.trim() && searchQuery) {
+        searchQuery = "";
+        renderFeed();
+      }
+    });
+  }
+
+  feedTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      selectFeed(tab.dataset.feed);
     });
 
-    elements.postContent?.focus();
-  }
-
-  /* =========================================
-     LOG OUT
-  ========================================= */
-
-  async function logout() {
-    closeProfileMenu();
-    showLoading("Signing out...");
-
-    try {
-      if (supabaseClient) {
-        const { error } = await supabaseClient.auth.signOut();
-
-        if (error) throw error;
+    tab.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+        return;
       }
 
-      writeStorage(STORAGE.loggedIn, "false");
-      removeStorage(STORAGE.user);
+      event.preventDefault();
 
-      window.location.replace("index.html");
-    } catch (error) {
-      console.error("ARS logout error:", error);
-      hideLoading();
+      const currentIndex = feedTabs.indexOf(tab);
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const nextIndex =
+        (currentIndex + direction + feedTabs.length) % feedTabs.length;
 
-      showToast(
-        error?.message || "Could not sign out. Please try again.",
-        "error"
-      );
+      const nextTab = feedTabs[nextIndex];
+
+      if (nextTab) {
+        selectFeed(nextTab.dataset.feed);
+        nextTab.focus();
+      }
+    });
+  });
+
+  if (logoutButton) {
+    logoutButton.addEventListener("click", logout);
+  }
+
+  if (profileMenuButton) {
+    profileMenuButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleProfileMenu();
+    });
+  }
+
+  if (profileMenu) {
+    profileMenu.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (
+      profileMenu &&
+      profileMenuButton &&
+      !profileMenu.contains(event.target) &&
+      !profileMenuButton.contains(event.target)
+    ) {
+      closeProfileMenu();
     }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeProfileMenu();
+    }
+  });
+
+  if (createPostButton) {
+    createPostButton.addEventListener("click", openComposer);
   }
 
-  /* =========================================
-     NAVIGATION
-  ========================================= */
-
-  function openUnavailableSection(section) {
-    closeProfileMenu();
-
-    const messages = {
-      explore: "The Explore page is not connected in this version.",
-      notifications: "The Notifications page is not connected in this version.",
-      messages: "The Messages page is not connected in this version.",
-      bookmarks: "The Bookmarks page is not connected in this version.",
-      profile: "The Profile page is not connected in this version.",
-      settings: "The Settings page is not connected in this version."
-    };
-
-    showToast(messages[section] || "This section is not available.", "info");
+  if (messagesLink) {
+    messagesLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      showToast("Messages will be enabled later.", "info");
+    });
   }
 
-  function handleNavigationLink(event, section) {
+  navigationLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const section = link.dataset.section;
+
+      if (!section) {
+        event.preventDefault();
+        return;
+      }
+
+      handleNavigationLink(event, section);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const deleteButton = event.target.closest("[data-delete-post]");
+
+    if (!deleteButton) return;
+
     event.preventDefault();
-    openUnavailableSection(section);
-  }
 
-  /* =========================================
-     EVENT LISTENERS
-  ========================================= */
+    const postId = deleteButton.dataset.deletePost;
 
-  function setupEvents() {
-    elements.searchForm?.addEventListener(
-      "submit",
-      handleSearch
-    );
-
-    elements.searchInput?.addEventListener("input", () => {
-      currentSearch = elements.searchInput.value.trim();
-      renderFeed();
-    });
-
-    elements.profileButton?.addEventListener(
-      "click",
-      event => {
-        event.stopPropagation();
-        toggleProfileMenu();
-      }
-    );
-
-    document.addEventListener("click", event => {
-      if (
-        elements.profileMenu &&
-        !elements.profileMenu.hidden &&
-        !elements.profileMenu.contains(event.target) &&
-        !elements.profileButton?.contains(event.target)
-      ) {
-        closeProfileMenu();
-      }
-    });
-
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        closeProfileMenu();
-      }
-    });
-
-    elements.logoutButton?.addEventListener(
-      "click",
-      logout
-    );
-
-    elements.openComposerButton?.addEventListener(
-      "click",
-      openComposer
-    );
-
-    elements.communityPostButton?.addEventListener(
-      "click",
-      openComposer
-    );
-
-    elements.mobileCreateButton?.addEventListener(
-      "click",
-      openComposer
-    );
-
-    elements.publishPostButton?.addEventListener(
-      "click",
-      publishPost
-    );
-
-    elements.postContent?.addEventListener(
-      "input",
-      updateCharacterCount
-    );
-
-    elements.refreshFeedButton?.addEventListener(
-      "click",
-      () => loadPosts()
-    );
-
-    elements.retryFeedButton?.addEventListener(
-      "click",
-      () => loadPosts()
-    );
-
-    $$(".feed-tab").forEach(button => {
-      button.addEventListener("click", () => {
-        selectFeed(button.dataset.feed);
-      });
-    });
-
-    elements.postsList?.addEventListener("click", event => {
-      const button = event.target.closest(
-        'button[data-action="delete"]'
-      );
-
-      if (!button) return;
-
-      deletePost(button.dataset.postId);
-    });
-
-    elements.notificationsButton?.addEventListener(
-      "click",
-      () => openUnavailableSection("notifications")
-    );
-
-    elements.navNotificationsLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "notifications")
-    );
-
-    elements.mobileNotificationsLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "notifications")
-    );
-
-    elements.exploreLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "explore")
-    );
-
-    elements.mobileExploreLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "explore")
-    );
-
-    elements.messagesLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "messages")
-    );
-
-    elements.bookmarksLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "bookmarks")
-    );
-
-    elements.sidebarProfileLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "profile")
-    );
-
-    elements.mobileProfileLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "profile")
-    );
-
-    elements.accountProfileLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "profile")
-    );
-
-    elements.viewProfileLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "profile")
-    );
-
-    elements.settingsLink?.addEventListener(
-      "click",
-      event => handleNavigationLink(event, "settings")
-    );
-  }
-
-  /* =========================================
-     INITIALIZATION
-  ========================================= */
-
-  async function init() {
-    if (elements.currentYear) {
-      elements.currentYear.textContent =
-        String(new Date().getFullYear());
+    if (postId) {
+      deletePost(postId);
     }
+  });
+}
 
-    updateCharacterCount();
-    renderAccount();
-    setupEvents();
-    updateFeedTabs();
-    closeProfileMenu();
+/* INITIALIZATION */
 
-    const sessionAvailable = await requireSession();
-
-    if (!sessionAvailable) return;
-
-    renderAccount();
-    await refreshAccountFromSupabase();
-    await loadPosts();
+async function init() {
+  if (currentYearElement) {
+    currentYearElement.textContent = String(new Date().getFullYear());
   }
 
-  /* =========================================
-     START APPLICATION
-  ========================================= */
+  updateCharacterCount();
+  updateFeedTabs();
+  setupEvents();
+  closeProfileMenu();
 
-  if (document.readyState === "loading") {
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
-    );
-  } else {
-    init();
-  }
+  const hasSession = await requireSession();
 
+  if (!hasSession) return;
+
+  renderAccount();
+  await refreshAccountFromSupabase();
+  await loadPosts();
+}
+
+/* START APPLICATION */
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init, { once: true });
+} else {
+  init();
+}
 })();
