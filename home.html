@@ -2,378 +2,335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#09090f">
-    <meta name="description" content="ARS — Connect, share, and discover.">
-    <title>ARS — Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07060c">
+  <meta name="description" content="ARS — Connect, share, and discover your community.">
+  <title>ARS — Home</title>
 
-    <link rel="stylesheet" href="home.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="home.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="home.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="home.js" defer></script>
 </head>
 
 <body>
-    <div class="app-shell">
+  <div class="app-shell">
 
-        <header class="topbar">
-            <a class="brand" href="home.html" aria-label="ARS Home">
-                <span class="brand-mark">A</span>
-                <span class="brand-name">ARS</span>
-            </a>
+    <!-- TOP HEADER -->
+    <header class="topbar">
+      <a class="brand" href="home.html" aria-label="ARS home">
+        <span class="brand-mark">A</span>
+        <span class="brand-name">ARS</span>
+      </a>
 
-            <form class="search-form" id="searchForm" role="search">
-                <span class="search-icon" aria-hidden="true">⌕</span>
-                <input
-                    type="search"
-                    id="searchInput"
-                    placeholder="Search ARS"
-                    aria-label="Search ARS"
-                    autocomplete="off"
-                >
-                <button type="submit" class="search-submit">Search</button>
-            </form>
+      <form class="search-form" id="searchForm" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m16 16 4 4"></path>
+        </svg>
 
-            <div class="topbar-actions">
-                <button
-                    class="icon-button"
-                    id="notificationsButton"
-                    type="button"
-                    aria-label="Notifications"
-                >
-                    ♧
-                </button>
+        <label class="visually-hidden" for="searchInput">Search ARS</label>
+        <input
+          id="searchInput"
+          name="q"
+          type="search"
+          placeholder="Search for people, topics, or anything..."
+          autocomplete="off"
+        >
 
-                <button
-                    class="profile-trigger"
-                    id="profileButton"
-                    type="button"
-                    aria-label="Open profile menu"
-                    aria-expanded="false"
-                    aria-controls="profileMenu"
-                >
-                    <span class="avatar avatar-small" id="headerAvatar">A</span>
-                    <span class="profile-chevron" aria-hidden="true">⌄</span>
-                </button>
+        <button class="search-clear" id="clearSearchButton" type="button" aria-label="Clear search">
+          &times;
+        </button>
 
-                <div class="profile-menu" id="profileMenu" hidden>
-                    <a href="#profile" id="viewProfileLink">My Profile</a>
-                    <a href="#settings" id="settingsLink">Settings</a>
-                    <button type="button" id="logoutButton">Log Out</button>
-                </div>
-            </div>
-        </header>
+        <button class="search-submit" type="submit">Search</button>
+      </form>
 
-        <div class="layout">
+      <div class="topbar-actions">
+        <a class="icon-button" href="notifications.html" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+          </svg>
+        </a>
 
-            <aside class="sidebar sidebar-left" aria-label="Main navigation">
-                <nav class="main-navigation">
-                    <a class="nav-link active" href="home.html" aria-current="page">
-                        <span class="nav-icon" aria-hidden="true">⌂</span>
-                        <span>Home</span>
-                    </a>
+        <button
+          class="profile-trigger"
+          id="profileButton"
+          type="button"
+          aria-label="Open account menu"
+          aria-expanded="false"
+          aria-controls="profileMenu"
+        >
+          <span class="avatar avatar-small" id="headerAvatar">A</span>
+          <span class="profile-chevron" aria-hidden="true">⌄</span>
+        </button>
 
-                    <a class="nav-link" href="#explore" id="exploreLink">
-                        <span class="nav-icon" aria-hidden="true">⌕</span>
-                        <span>Explore</span>
-                    </a>
-
-                    <a class="nav-link" href="#notifications" id="navNotificationsLink">
-                        <span class="nav-icon" aria-hidden="true">♧</span>
-                        <span>Notifications</span>
-                    </a>
-
-                    <a
-                        class="nav-link"
-                        href="#messages"
-                        id="messagesLink"
-                        aria-label="Messages — not enabled yet"
-                        title="Messages will be enabled later"
-                    >
-                        <span class="nav-icon" aria-hidden="true">✉</span>
-                        <span>Messages</span>
-                    </a>
-
-                    <a class="nav-link" href="#bookmarks" id="bookmarksLink">
-                        <span class="nav-icon" aria-hidden="true">◇</span>
-                        <span>Bookmarks</span>
-                    </a>
-
-                    <a class="nav-link" href="#profile" id="sidebarProfileLink">
-                        <span class="nav-icon" aria-hidden="true">◎</span>
-                        <span>Profile</span>
-                    </a>
-                </nav>
-
-                <button
-                    class="primary-button sidebar-post-button"
-                    id="openComposerButton"
-                    type="button"
-                >
-                    Create Post
-                </button>
-
-                <div class="sidebar-footer">
-                    <span>ARS</span>
-                    <span>Connect beyond limits.</span>
-                    <a href="terms.html">Terms of Service</a>
-                </div>
-            </aside>
-
-            <main class="feed-column" id="mainContent">
-                <section class="page-heading">
-                    <div>
-                        <p class="eyebrow">YOUR COMMUNITY</p>
-                        <h1>Home Feed</h1>
-                        <p class="page-subtitle">Discover what people are sharing.</p>
-                    </div>
-
-                    <button
-                        class="secondary-button"
-                        id="refreshFeedButton"
-                        type="button"
-                    >
-                        Refresh
-                    </button>
-                </section>
-
-                <section class="feed-tabs" aria-label="Feed options">
-                    <button
-                        class="feed-tab active"
-                        type="button"
-                        data-feed="latest"
-                        aria-pressed="true"
-                    >
-                        Latest
-                    </button>
-
-                    <button
-                        class="feed-tab"
-                        type="button"
-                        data-feed="popular"
-                        aria-pressed="false"
-                    >
-                        Popular
-                    </button>
-                </section>
-
-                <section
-                    class="composer-card"
-                    id="composerCard"
-                    aria-label="Create a post"
-                >
-                    <div class="composer-top">
-                        <span class="avatar" id="composerAvatar">A</span>
-
-                        <div class="composer-input-wrap">
-                            <label class="visually-hidden" for="postContent">
-                                Write your post
-                            </label>
-
-                            <textarea
-                                id="postContent"
-                                name="content"
-                                rows="3"
-                                maxlength="5000"
-                                placeholder="What's on your mind?"
-                            ></textarea>
-                        </div>
-                    </div>
-
-                    <div class="composer-footer">
-                        <span class="character-count" id="characterCount">
-                            0 / 5000
-                        </span>
-
-                        <button
-                            class="primary-button"
-                            id="publishPostButton"
-                            type="button"
-                        >
-                            Publish Post
-                        </button>
-                    </div>
-
-                    <p
-                        class="form-message"
-                        id="composerMessage"
-                        role="status"
-                        aria-live="polite"
-                    ></p>
-                </section>
-
-                <section class="feed-section" aria-label="Community posts">
-                    <div class="section-heading">
-                        <h2>Recent Posts</h2>
-                        <span class="feed-count" id="feedCount"></span>
-                    </div>
-
-                    <div
-                        class="feed-status"
-                        id="feedStatus"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        Loading posts...
-                    </div>
-
-                    <div class="posts-list" id="postsList"></div>
-
-                    <div class="feed-empty" id="feedEmpty" hidden>
-                        <span class="empty-icon" aria-hidden="true">✳</span>
-                        <h3>It's quiet here</h3>
-                        <p>Be the first to share something with the community.</p>
-                    </div>
-
-                    <div class="feed-error" id="feedError" hidden>
-                        <h3>Unable to load posts</h3>
-                        <p id="feedErrorMessage">Please try again.</p>
-
-                        <button
-                            class="secondary-button"
-                            id="retryFeedButton"
-                            type="button"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                </section>
-            </main>
-
-            <aside class="sidebar sidebar-right" aria-label="Community information">
-                <section class="widget-card welcome-card">
-                    <p class="eyebrow">WELCOME TO ARS</p>
-                    <h2>Your space to connect.</h2>
-                    <p>
-                        Share your thoughts, discover new voices, and join the conversation.
-                    </p>
-                </section>
-
-                <section class="widget-card account-card">
-                    <div class="widget-heading">
-                        <h2>Your Account</h2>
-                    </div>
-
-                    <div class="account-summary">
-                        <span class="avatar avatar-large" id="accountAvatar">A</span>
-
-                        <div class="account-details">
-                            <strong id="accountDisplayName">ARS Member</strong>
-                            <span id="accountUsername">@member</span>
-                        </div>
-                    </div>
-
-                    <div class="account-stats">
-                        <div>
-                            <strong id="accountStreak">0</strong>
-                            <span>Day Streak</span>
-                        </div>
-
-                        <div>
-                            <strong id="accountXp">0</strong>
-                            <span>XP Points</span>
-                        </div>
-                    </div>
-
-                    <a class="text-link" href="#profile" id="accountProfileLink">
-                        View Profile
-                    </a>
-                </section>
-
-                <section class="widget-card community-card">
-                    <div class="widget-heading">
-                        <h2>Community</h2>
-                    </div>
-
-                    <p>Every conversation starts with a post.</p>
-
-                    <button
-                        class="secondary-button full-width"
-                        id="communityPostButton"
-                        type="button"
-                    >
-                        Share Something
-                    </button>
-                </section>
-
-                <footer class="right-footer">
-                    <span>© <span id="currentYear">2026</span> ARS</span>
-                    <span>Built for connection.</span>
-                </footer>
-            </aside>
-
+        <div class="profile-menu" id="profileMenu" hidden>
+          <a href="profile.html">My Profile</a>
+          <a href="settings.html">Settings</a>
+          <button type="button" id="logoutButton">Log Out</button>
         </div>
+      </div>
+    </header>
 
-        <nav class="mobile-navigation" aria-label="Mobile navigation">
-            <a
-                class="mobile-nav-link active"
-                href="home.html"
-                aria-label="Home"
-                aria-current="page"
-            >
-                <span aria-hidden="true">⌂</span>
-                <small>Home</small>
-            </a>
+    <!-- MAIN LAYOUT -->
+    <div class="layout">
 
-            <a
-                class="mobile-nav-link"
-                href="#explore"
-                id="mobileExploreLink"
-                aria-label="Explore"
-            >
-                <span aria-hidden="true">⌕</span>
-                <small>Explore</small>
-            </a>
+      <!-- DESKTOP NAVIGATION -->
+      <aside class="sidebar sidebar-left" aria-label="Main navigation">
+        <nav class="main-navigation">
+          <a class="nav-link active" href="home.html" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m3 10 9-7 9 7"></path>
+              <path d="M5 9v12h14V9M9 21v-7h6v7"></path>
+            </svg>
+            <span>Home</span>
+          </a>
 
-            <button
-                class="mobile-nav-link"
-                id="mobileCreateButton"
-                type="button"
-                aria-label="Create post"
-            >
-                <span aria-hidden="true">＋</span>
-                <small>Create</small>
-            </button>
+          <a class="nav-link" href="explore.html">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5"></circle>
+              <path d="m16 16 5 5"></path>
+            </svg>
+            <span>Explore</span>
+          </a>
 
-            <a
-                class="mobile-nav-link"
-                href="#notifications"
-                id="mobileNotificationsLink"
-                aria-label="Notifications"
-            >
-                <span aria-hidden="true">♧</span>
-                <small>Alerts</small>
-            </a>
+          <a class="nav-link" href="notifications.html">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+              <path d="M10 21h4"></path>
+            </svg>
+            <span>Notifications</span>
+          </a>
 
-            <a
-                class="mobile-nav-link"
-                href="#profile"
-                id="mobileProfileLink"
-                aria-label="Profile"
-            >
-                <span aria-hidden="true">◎</span>
-                <small>Profile</small>
-            </a>
+          <a class="nav-link" href="profile.html">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M4 21v-2a8 8 0 0 1 16 0v2"></path>
+            </svg>
+            <span>Profile</span>
+          </a>
         </nav>
 
-        <div
-            class="toast-container"
-            id="toastContainer"
-            aria-live="polite"
-            aria-atomic="true"
-        ></div>
+        <button class="primary-button sidebar-post-button" id="openComposerButton" type="button">
+          <span aria-hidden="true">＋</span>
+          Create Post
+        </button>
 
-        <div class="loading-overlay" id="loadingOverlay" hidden>
-            <div class="loading-spinner" aria-hidden="true"></div>
-            <p id="loadingMessage">Please wait...</p>
+        <div class="sidebar-footer">
+          <span>ARS</span>
+          <a href="terms.html">Terms of Service</a>
         </div>
+      </aside>
 
+      <!-- HOME FEED -->
+      <main class="feed-column" id="mainContent">
+
+        <!-- STORIES -->
+        <section class="stories-section" aria-label="Stories">
+          <div class="stories-header">
+            <h2>Stories</h2>
+            <a href="story-editor.html">Create Story</a>
+          </div>
+
+          <div class="stories-list" id="storiesList">
+            <button class="story-item story-create" id="createStoryButton" type="button">
+              <span class="story-avatar story-avatar-own">
+                <span class="avatar" id="storyAvatar">A</span>
+                <span class="story-add" aria-hidden="true">＋</span>
+              </span>
+              <span class="story-name">Your Story</span>
+            </button>
+
+            <div class="stories-empty" id="storiesEmpty">
+              <p>Stories from your community will appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGE HEADING -->
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow">YOUR COMMUNITY</p>
+            <h1>Home Feed</h1>
+            <p class="page-subtitle">Discover what people are sharing.</p>
+          </div>
+
+          <button class="secondary-button" id="refreshFeedButton" type="button">
+            Refresh
+          </button>
+        </section>
+
+        <!-- FEED TABS -->
+        <nav class="feed-tabs" aria-label="Feed filters">
+          <button class="feed-tab active" type="button" data-feed="latest" aria-pressed="true">
+            Latest
+          </button>
+          <button class="feed-tab" type="button" data-feed="popular" aria-pressed="false">
+            Popular
+          </button>
+        </nav>
+
+        <!-- CREATE POST -->
+        <section class="composer-card" id="composerCard" aria-label="Create a post">
+          <form id="composerForm">
+            <div class="composer-top">
+              <span class="avatar" id="composerAvatar">A</span>
+
+              <div class="composer-input-wrap">
+                <label class="visually-hidden" for="postContent">Write your post</label>
+                <textarea
+                  id="postContent"
+                  name="content"
+                  rows="3"
+                  maxlength="5000"
+                  placeholder="What's on your mind?"
+                  required
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="composer-footer">
+              <span class="character-count" id="characterCount">0 / 5000</span>
+
+              <button class="primary-button" id="publishPostButton" type="submit">
+                Publish Post
+              </button>
+            </div>
+
+            <p class="form-message" id="composerMessage" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <!-- POSTS -->
+        <section class="feed-section" aria-label="Community posts">
+          <div class="section-heading">
+            <h2>Recent Posts</h2>
+            <span class="feed-count" id="feedCount"></span>
+          </div>
+
+          <div class="feed-status" id="feedStatus" role="status" aria-live="polite">
+            Loading posts...
+          </div>
+
+          <div class="posts-list" id="postsList"></div>
+
+          <div class="feed-empty" id="feedEmpty" hidden>
+            <span class="empty-icon" aria-hidden="true">✳</span>
+            <h3>It's quiet here</h3>
+            <p>Be the first to share something with the community.</p>
+          </div>
+
+          <div class="feed-error" id="feedError" hidden>
+            <h3>Unable to load posts</h3>
+            <p id="feedErrorMessage">Please try again.</p>
+            <button class="secondary-button" id="retryFeedButton" type="button">
+              Try Again
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside class="sidebar sidebar-right" aria-label="Community information">
+        <section class="widget-card account-card">
+          <div class="widget-heading">
+            <h2>Your Account</h2>
+          </div>
+
+          <div class="account-summary">
+            <span class="avatar avatar-large" id="accountAvatar">A</span>
+            <div class="account-details">
+              <strong id="accountDisplayName">ARS Member</strong>
+              <span id="accountUsername">@member</span>
+            </div>
+          </div>
+
+          <div class="account-stats">
+            <div>
+              <strong id="accountStreak">0</strong>
+              <span>Day Streak</span>
+            </div>
+            <div>
+              <strong id="accountXp">0</strong>
+              <span>XP Points</span>
+            </div>
+          </div>
+
+          <a class="text-link" href="profile.html">View Profile</a>
+        </section>
+
+        <section class="widget-card community-card">
+          <div class="widget-heading">
+            <h2>Community</h2>
+          </div>
+          <p>Every conversation starts with a post.</p>
+          <button class="secondary-button full-width" id="communityPostButton" type="button">
+            Share Something
+          </button>
+        </section>
+
+        <footer class="right-footer">
+          <span>© <span id="currentYear">2026</span> ARS</span>
+          <a href="terms.html">Terms</a>
+        </footer>
+      </aside>
     </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="mobile-navigation" aria-label="Mobile navigation">
+      <a class="mobile-nav-link active" href="home.html" aria-current="page" aria-label="Home">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m3 10 9-7 9 7"></path>
+          <path d="M5 9v12h14V9M9 21v-7h6v7"></path>
+        </svg>
+        <small>Home</small>
+      </a>
+
+      <a class="mobile-nav-link" href="explore.html" aria-label="Explore">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5"></circle>
+          <path d="m16 16 5 5"></path>
+        </svg>
+        <small>Explore</small>
+      </a>
+
+      <button class="mobile-nav-link mobile-create-button" id="mobileCreateButton" type="button" aria-label="Create post">
+        <span class="mobile-create-icon" aria-hidden="true">＋</span>
+        <small>Create</small>
+      </button>
+
+      <a class="mobile-nav-link" href="notifications.html" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+          <path d="M10 21h4"></path>
+        </svg>
+        <small>Alerts</small>
+      </a>
+
+      <a class="mobile-nav-link" href="profile.html" aria-label="Profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4"></circle>
+          <path d="M4 21v-2a8 8 0 0 1 16 0v2"></path>
+        </svg>
+        <small>Profile</small>
+      </a>
+    </nav>
+
+    <!-- FEEDBACK -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="loading-overlay" id="loadingOverlay" hidden>
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p id="loadingMessage">Please wait...</p>
+    </div>
+
+  </div>
 </body>
-                        </html>
-                        
+    </html>
+    
