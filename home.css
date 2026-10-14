@@ -624,9 +624,26 @@ img {
   gap: 7px;
   padding: 0;
   border: 0;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
+  font: inherit;
+  text-align: center;
   cursor: pointer;
+}
+
+.story-item:focus-visible {
+  outline: 2px solid var(--color-primary-hover);
+  outline-offset: 4px;
+}
+
+.story-create {
+  flex-shrink: 0;
+}
+
+.story-create:hover .story-avatar {
+  border-color: var(--color-primary);
+}
 }
 
 .story-item:hover .story-avatar {
