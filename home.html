@@ -3,298 +3,962 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#09080d">
-
-  <title>ARS — Your World, Your Rules</title>
+  <meta name="theme-color" content="#09070f">
+  <meta name="description" content="ARS — Share your world, discover ideas, and connect with people.">
+  <title>Home | ARS</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="home.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="home.js" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./home.css">
 </head>
 
 <body>
   <div class="app-shell">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <a class="brand" href="home.html" aria-label="ARS Home">
-        <span class="brand-mark">Λ</span><span>RS</span>
+    <!-- =========================
+         LEFT SIDEBAR
+    ========================== -->
+    <aside class="sidebar sidebar-left" id="left-sidebar">
+      <a href="./home.html" class="brand" aria-label="ARS Home">
+        <span class="brand-symbol">Λ</span>
+        <span class="brand-name">RS</span>
         <span class="brand-dot"></span>
       </a>
 
-      <button class="sidebar-profile" id="sidebarProfile" type="button">
-        <img id="sidebarAvatar" class="avatar" src="" alt="Your profile">
-        <span class="profile-copy">
-          <strong id="sidebarDisplayName">Loading...</strong>
-          <small id="sidebarUsername">@loading</small>
-        </span>
-        <span class="online-dot"></span>
-      </button>
-
-      <nav class="main-nav" aria-label="Main navigation">
-        <a class="nav-item active" href="home.html" aria-current="page">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+      <nav class="main-navigation" aria-label="Main navigation">
+        <a href="./home.html" class="nav-link active" aria-current="page">
+          <i class="fa-solid fa-house"></i>
           <span>Home</span>
         </a>
 
-        <a class="nav-item" href="search.html" id="searchNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+        <a href="./search.html" class="nav-link">
+          <i class="fa-solid fa-compass"></i>
           <span>Explore</span>
         </a>
 
-        <a class="nav-item" href="notifications.html" id="notificationsNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+        <a href="./notifications.html" class="nav-link">
+          <i class="fa-regular fa-bell"></i>
           <span>Notifications</span>
-          <span class="nav-count hidden" id="notificationBadge">0</span>
+          <span class="nav-badge hidden" id="notification-badge">0</span>
         </a>
 
-        <a class="nav-item" href="messages.html" id="messagesNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg>
+        <a href="./messages.html" class="nav-link">
+          <i class="fa-regular fa-envelope"></i>
           <span>Messages</span>
+          <span class="nav-badge hidden" id="messages-badge">0</span>
         </a>
 
-        <a class="nav-item" href="streak.html" id="streakNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.4 0 7-3 7-7 0-2.8-1.7-5-4-7-.1 2-1.1 3.2-2.2 3.7C13 7.6 10.7 4.4 7 2c.5 4.6-2 6.8-2 11 0 5.1 2.8 9 7 9z"/><path d="M12 22c-2 0-3.2-1.5-3.2-3.4 0-1.4.8-2.7 2.2-4 .2 1.5 1 2.1 1.8 2.6 1.2 1.1 1.2 3.2-.8 4.8z"/></svg>
+        <a href="./streak.html" class="nav-link">
+          <i class="fa-solid fa-fire"></i>
           <span>Streak</span>
         </a>
 
-        <a class="nav-item" href="wheel.html" id="wheelNav">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="m12 3 2 7m7 2-7 2m-2 7-2-7m-7-2 7-2"/></svg>
-          <span>Daily Wheel</span>
+        <a href="./challenges.html" class="nav-link">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Challenges</span>
+        </a>
+
+        <a href="./subscriptions.html" class="nav-link">
+          <i class="fa-solid fa-crown"></i>
+          <span>Membership</span>
         </a>
       </nav>
 
-      <button class="create-button" id="openComposer" type="button">
-        <span class="create-plus">+</span>
-        <span>Create Post</span>
+      <button type="button" class="primary-button sidebar-create-button" id="open-post-dialog">
+        <i class="fa-solid fa-plus"></i>
+        <span>Create post</span>
       </button>
 
       <div class="sidebar-bottom">
-        <div class="sidebar-tagline">
-          <span class="tagline-orb"></span>
-          <span>Express yourself.<br><strong>Own your world.</strong></span>
-        </div>
+        <a href="./profile.html" class="sidebar-profile" id="sidebar-profile-link">
+          <img
+            src="https://placehold.co/100x100/17131f/ffffff?text=A"
+            alt="Your profile"
+            class="avatar avatar-medium"
+            id="sidebar-avatar"
+          >
 
-        <button class="logout-button" id="logoutButton" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg>
-          <span>Log out</span>
-        </button>
+          <span class="sidebar-profile-info">
+            <strong id="sidebar-display-name">Loading account...</strong>
+            <span id="sidebar-username">@loading</span>
+          </span>
+
+          <i class="fa-solid fa-ellipsis"></i>
+        </a>
       </div>
     </aside>
 
-    <!-- Main feed -->
-    <main class="main-content">
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main class="main-content" id="main-content">
+
+      <!-- Mobile header -->
       <header class="mobile-header">
-        <a class="brand" href="home.html">
-          <span class="brand-mark">Λ</span><span>RS</span>
+        <a href="./home.html" class="brand brand-small" aria-label="ARS Home">
+          <span class="brand-symbol">Λ</span>
+          <span class="brand-name">RS</span>
+          <span class="brand-dot"></span>
         </a>
-        <button class="icon-button" id="mobileSearch" type="button" aria-label="Explore">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+
+        <div class="mobile-header-actions">
+          <button
+            type="button"
+            class="icon-button"
+            id="mobile-search-button"
+            aria-label="Search"
+          >
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+
+          <button
+            type="button"
+            class="icon-button"
+            id="mobile-notifications-button"
+            aria-label="Notifications"
+          >
+            <i class="fa-regular fa-bell"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Feed header -->
+      <section class="feed-header">
+        <div class="feed-heading">
+          <div>
+            <p class="eyebrow">YOUR COMMUNITY</p>
+            <h1>Home</h1>
+          </div>
+
+          <button
+            type="button"
+            class="icon-button feed-settings-button"
+            id="feed-refresh-button"
+            aria-label="Refresh feed"
+            title="Refresh feed"
+          >
+            <i class="fa-solid fa-rotate"></i>
+          </button>
+        </div>
+
+        <div class="feed-tabs" role="tablist" aria-label="Feed type">
+          <button
+            type="button"
+            class="feed-tab active"
+            data-feed-tab="for-you"
+            role="tab"
+            aria-selected="true"
+          >
+            For You
+          </button>
+
+          <button
+            type="button"
+            class="feed-tab"
+            data-feed-tab="following"
+            role="tab"
+            aria-selected="false"
+          >
+            Following
+          </button>
+
+          <button
+            type="button"
+            class="feed-tab"
+            data-feed-tab="popular"
+            role="tab"
+            aria-selected="false"
+          >
+            Popular
+          </button>
+        </div>
+      </section>
+
+      <!-- =========================
+           DAILY WHEEL
+      ========================== -->
+      <section class="daily-wheel-card" aria-labelledby="daily-wheel-title">
+        <div class="wheel-card-background" aria-hidden="true"></div>
+
+        <div class="wheel-card-content">
+          <div class="wheel-card-icon">
+            <i class="fa-solid fa-gift"></i>
+          </div>
+
+          <div class="wheel-card-text">
+            <span class="eyebrow">DAILY REWARDS</span>
+            <h2 id="daily-wheel-title">Your next reward awaits.</h2>
+            <p>Try your luck and discover what ARS has for you.</p>
+
+            <div class="wheel-attempts">
+              <i class="fa-solid fa-ticket"></i>
+              <span id="wheel-attempts-text">Checking available attempts...</span>
+            </div>
+          </div>
+
+          <button type="button" class="wheel-play-button" id="open-wheel-button">
+            <span>Play now</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="wheel-result hidden" id="wheel-result" aria-live="polite">
+          <i class="fa-solid fa-sparkles"></i>
+          <span id="wheel-result-text"></span>
+        </div>
+      </section>
+
+      <!-- =========================
+           STORIES
+      ========================== -->
+      <section class="stories-section" aria-labelledby="stories-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="stories-title">Stories</h2>
+            <p>Little moments, shared with everyone.</p>
+          </div>
+
+          <button type="button" class="text-button" id="view-all-stories">
+            View all
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="stories-track" id="stories-track">
+
+          <!-- Create story -->
+          <button type="button" class="story-item create-story-item" id="open-story-dialog">
+            <span class="story-avatar-wrap create-story-avatar">
+              <img
+                src="https://placehold.co/100x100/17131f/ffffff?text=A"
+                alt=""
+                class="story-avatar"
+                id="create-story-avatar"
+              >
+              <span class="story-add-button">
+                <i class="fa-solid fa-plus"></i>
+              </span>
+            </span>
+
+            <span class="story-name">Your story</span>
+          </button>
+
+          <!-- Stories are rendered here by home.js -->
+          <div class="stories-loading" id="stories-loading">
+            <span class="loading-dot"></span>
+            <span>Loading stories...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================
+           POST COMPOSER
+      ========================== -->
+      <section class="composer-card" aria-label="Create a post">
+        <div class="composer-main">
+          <img
+            src="https://placehold.co/100x100/17131f/ffffff?text=A"
+            alt="Your avatar"
+            class="avatar avatar-medium"
+            id="composer-avatar"
+          >
+
+          <button type="button" class="composer-prompt" id="composer-prompt">
+            What's on your mind?
+          </button>
+        </div>
+
+        <div class="composer-divider"></div>
+
+        <div class="composer-actions">
+          <button type="button" class="composer-action" id="composer-photo-button">
+            <i class="fa-regular fa-image"></i>
+            <span>Photo</span>
+          </button>
+
+          <button type="button" class="composer-action" id="composer-video-button">
+            <i class="fa-solid fa-video"></i>
+            <span>Video</span>
+          </button>
+
+          <button type="button" class="composer-action" id="composer-hashtag-button">
+            <i class="fa-solid fa-hashtag"></i>
+            <span>Hashtag</span>
+          </button>
+
+          <button type="button" class="composer-submit" id="composer-open-button">
+            Create
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- =========================
+           FEED
+      ========================== -->
+      <section class="feed-section" aria-labelledby="feed-section-title">
+        <div class="section-heading feed-section-heading">
+          <div>
+            <h2 id="feed-section-title">Your feed</h2>
+            <p>Discover what's happening on ARS.</p>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="feed-loading" id="feed-loading">
+          <div class="post-skeleton">
+            <div class="skeleton-header">
+              <span class="skeleton skeleton-avatar"></span>
+              <span class="skeleton-text">
+                <span class="skeleton skeleton-line skeleton-line-medium"></span>
+                <span class="skeleton skeleton-line skeleton-line-short"></span>
+              </span>
+            </div>
+            <span class="skeleton skeleton-content-line"></span>
+            <span class="skeleton skeleton-content-line"></span>
+            <span class="skeleton skeleton-content-line skeleton-content-line-short"></span>
+          </div>
+
+          <div class="post-skeleton">
+            <div class="skeleton-header">
+              <span class="skeleton skeleton-avatar"></span>
+              <span class="skeleton-text">
+                <span class="skeleton skeleton-line skeleton-line-medium"></span>
+                <span class="skeleton skeleton-line skeleton-line-short"></span>
+              </span>
+            </div>
+            <span class="skeleton skeleton-content-line"></span>
+            <span class="skeleton skeleton-content-line"></span>
+            <span class="skeleton skeleton-content-line skeleton-content-line-short"></span>
+          </div>
+        </div>
+
+        <!-- Real posts are rendered here by home.js -->
+        <div class="posts-list" id="posts-list"></div>
+
+        <!-- Empty feed -->
+        <div class="empty-state hidden" id="feed-empty-state">
+          <div class="empty-state-icon">
+            <i class="fa-regular fa-comments"></i>
+          </div>
+
+          <h3>It's quiet around here.</h3>
+          <p>Follow people or create a post to get your feed started.</p>
+
+          <button type="button" class="primary-button" id="empty-feed-create-button">
+            <i class="fa-solid fa-plus"></i>
+            Create a post
+          </button>
+        </div>
+
+        <!-- Feed error -->
+        <div class="error-state hidden" id="feed-error-state" role="alert">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <div>
+            <strong>Couldn't load your feed.</strong>
+            <p id="feed-error-message">Please check your connection and try again.</p>
+          </div>
+
+          <button type="button" class="secondary-button" id="retry-feed-button">
+            Try again
+          </button>
+        </div>
+
+        <button type="button" class="load-more-button hidden" id="load-more-posts">
+          Load more
+          <i class="fa-solid fa-chevron-down"></i>
+        </button>
+
+        <div class="feed-end hidden" id="feed-end-message">
+          <span class="feed-end-line"></span>
+          <span>You're all caught up.</span>
+          <span class="feed-end-line"></span>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- =========================
+         RIGHT SIDEBAR
+    ========================== -->
+    <aside class="sidebar sidebar-right" id="right-sidebar">
+
+      <!-- Account summary -->
+      <section class="right-card account-card">
+        <div class="right-card-heading">
+          <h2>Your account</h2>
+          <a href="./profile.html" class="subtle-link">View profile</a>
+        </div>
+
+        <div class="account-card-main">
+          <img
+            src="https://placehold.co/100x100/17131f/ffffff?text=A"
+            alt="Your avatar"
+            class="avatar avatar-large"
+            id="right-sidebar-avatar"
+          >
+
+          <div class="account-card-info">
+            <strong id="right-sidebar-display-name">Loading...</strong>
+            <span id="right-sidebar-username">@loading</span>
+
+            <span class="verified-label hidden" id="account-verified-label">
+              <i class="fa-solid fa-circle-check"></i>
+              Verified
+            </span>
+          </div>
+        </div>
+
+        <div class="account-stats">
+          <a href="./profile.html" class="account-stat">
+            <strong id="account-posts-count">—</strong>
+            <span>Posts</span>
+          </a>
+
+          <a href="./profile.html#followers" class="account-stat">
+            <strong id="account-followers-count">—</strong>
+            <span>Followers</span>
+          </a>
+
+          <a href="./profile.html#following" class="account-stat">
+            <strong id="account-following-count">—</strong>
+            <span>Following</span>
+          </a>
+        </div>
+
+        <div class="account-plan">
+          <span class="plan-icon">
+            <i class="fa-solid fa-crown"></i>
+          </span>
+
+          <span class="plan-info">
+            <strong id="account-plan-name">Free member</strong>
+            <span>Your ARS membership</span>
+          </span>
+
+          <a href="./subscriptions.html" class="plan-upgrade-link" aria-label="Explore membership">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
+      </section>
+
+      <!-- Explore ARS -->
+      <section class="right-card explore-card">
+        <div class="right-card-heading">
+          <h2>Explore ARS</h2>
+          <i class="fa-solid fa-compass heading-icon"></i>
+        </div>
+
+        <a href="./search.html" class="explore-item">
+          <span class="explore-item-icon explore-icon-purple">
+            <i class="fa-solid fa-fire"></i>
+          </span>
+
+          <span class="explore-item-info">
+            <strong>Trending now</strong>
+            <span>Discover popular conversations</span>
+          </span>
+
+          <i class="fa-solid fa-chevron-right explore-arrow"></i>
+        </a>
+
+        <a href="./challenges.html" class="explore-item">
+          <span class="explore-item-icon explore-icon-pink">
+            <i class="fa-solid fa-bolt"></i>
+          </span>
+
+          <span class="explore-item-info">
+            <strong>Daily challenges</strong>
+            <span>Take part and earn XP</span>
+          </span>
+
+          <i class="fa-solid fa-chevron-right explore-arrow"></i>
+        </a>
+
+        <a href="./streak.html" class="explore-item">
+          <span class="explore-item-icon explore-icon-orange">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+          </span>
+
+          <span class="explore-item-info">
+            <strong>Build a streak</strong>
+            <span>Stay connected every day</span>
+          </span>
+
+          <i class="fa-solid fa-chevron-right explore-arrow"></i>
+        </a>
+      </section>
+
+      <!-- Suggested accounts -->
+      <section class="right-card suggestions-card">
+        <div class="right-card-heading">
+          <h2>Who to follow</h2>
+
+          <button type="button" class="text-button" id="refresh-suggestions-button">
+            <i class="fa-solid fa-rotate"></i>
+          </button>
+        </div>
+
+        <div class="suggestions-list" id="suggestions-list">
+          <div class="suggestions-loading" id="suggestions-loading">
+            <span class="loading-dot"></span>
+            <span>Finding people for you...</span>
+          </div>
+        </div>
+
+        <a href="./search.html" class="view-more-link">
+          Discover more people
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </section>
+
+      <!-- Footer -->
+      <footer class="sidebar-footer">
+        <div class="footer-links">
+          <a href="./about.html">About</a>
+          <a href="./terms.html">Terms</a>
+          <a href="./privacy.html">Privacy</a>
+          <a href="./help.html">Help</a>
+        </div>
+
+        <p>© <span id="current-year"></span> ARS. All rights reserved.</p>
+      </footer>
+
+    </aside>
+
+            </div>
+
+  <!-- =========================
+       MOBILE BOTTOM NAVIGATION
+  ========================== -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+
+    <a href="./home.html" class="mobile-nav-link active" aria-current="page">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+
+    <a href="./search.html" class="mobile-nav-link">
+      <i class="fa-solid fa-compass"></i>
+      <span>Explore</span>
+    </a>
+
+    <button type="button" class="mobile-nav-create" id="mobile-create-post-button" aria-label="Create post">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <a href="./notifications.html" class="mobile-nav-link">
+      <span class="mobile-nav-icon-wrap">
+        <i class="fa-regular fa-bell"></i>
+        <span class="mobile-nav-badge hidden" id="mobile-notification-badge"></span>
+      </span>
+      <span>Alerts</span>
+    </a>
+
+    <a href="./profile.html" class="mobile-nav-link">
+      <img
+        src="https://placehold.co/100x100/17131f/ffffff?text=A"
+        alt=""
+        class="avatar avatar-small"
+        id="mobile-nav-avatar"
+      >
+      <span>Profile</span>
+    </a>
+
+  </nav>
+
+  <!-- =========================
+       CREATE POST DIALOG
+  ========================== -->
+  <dialog class="app-dialog post-dialog" id="post-dialog">
+    <div class="dialog-container">
+
+      <header class="dialog-header">
+        <div>
+          <span class="eyebrow">SHARE YOUR THOUGHTS</span>
+          <h2>Create a post</h2>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button dialog-close-button"
+          data-close-dialog="post-dialog"
+          aria-label="Close create post dialog"
+        >
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </header>
 
-      <div class="feed-heading">
-        <div>
-          <p class="eyebrow">YOUR SPACE. YOUR PEOPLE.</p>
-          <h1>Your Feed<span class="heading-period">.</span></h1>
-          <p class="feed-subtitle">See what your world is talking about.</p>
-        </div>
+      <form id="create-post-form">
+        <div class="dialog-author">
+          <img
+            src="https://placehold.co/100x100/17131f/ffffff?text=A"
+            alt="Your avatar"
+            class="avatar avatar-medium"
+            id="post-dialog-avatar"
+          >
 
-        <button class="icon-button refresh-button" id="refreshFeed" type="button" aria-label="Refresh feed">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 17.3 6L20 12M4 12l2.7 6A7 7 0 0 0 18.4 15"/></svg>
-        </button>
-      </div>
-
-      <!-- Stories -->
-      <section class="stories-section" aria-labelledby="storiesHeading">
-        <div class="section-heading">
-          <div>
-            <h2 id="storiesHeading">Stories</h2>
-            <p>Little moments, shared with your world.</p>
+          <div class="dialog-author-info">
+            <strong id="post-dialog-display-name">Your account</strong>
+            <span id="post-dialog-username">@loading</span>
           </div>
-          <span class="live-label"><span></span> LIVE</span>
+
+          <span class="visibility-label">
+            <i class="fa-solid fa-earth-americas"></i>
+            Public
+          </span>
         </div>
 
-        <div class="stories-track" id="storiesTrack">
-          <div class="story-loading">Loading stories...</div>
-        </div>
-      </section>
+        <label class="sr-only" for="post-content">Write your post</label>
 
-      <!-- Daily engagement card -->
-      <section class="daily-card">
-        <div class="daily-card-glow"></div>
-        <div class="daily-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="m12 3 2 7m7 2-7 2m-2 7-2-7m-7-2 7-2"/></svg>
-        </div>
+        <textarea
+          id="post-content"
+          name="content"
+          class="post-textarea"
+          maxlength="280"
+          placeholder="What's happening? Share something worth talking about..."
+          required
+        ></textarea>
 
-        <div class="daily-copy">
-          <span class="daily-label">YOUR DAILY MOMENT</span>
-          <h3>A little surprise awaits.</h3>
-          <p>Visit the Daily Wheel and discover your next reward.</p>
-        </div>
+        <div class="textarea-footer">
+          <div class="textarea-tools">
+            <button type="button" class="text-tool-button" id="post-add-hashtag" title="Add hashtag">
+              <i class="fa-solid fa-hashtag"></i>
+            </button>
 
-        <a class="daily-action" href="wheel.html">Explore <span>↗</span></a>
-      </section>
-
-      <!-- Post composer -->
-      <section class="quick-composer" aria-label="Create a post">
-        <img id="composerAvatar" class="avatar" src="" alt="Your avatar">
-        <button id="quickComposerButton" class="composer-placeholder" type="button">
-          What's happening in your world?
-        </button>
-        <button id="quickComposerPlus" class="composer-plus" type="button" aria-label="Create a post">+</button>
-      </section>
-
-      <!-- Feed filters -->
-      <div class="feed-tabs" role="tablist" aria-label="Feed type">
-        <button class="feed-tab active" type="button" data-feed="latest" role="tab" aria-selected="true">For You</button>
-        <button class="feed-tab" type="button" data-feed="following" role="tab" aria-selected="false">Following</button>
-      </div>
-
-      <section id="feedContainer" class="feed-container" aria-live="polite">
-        <div class="feed-loading">
-          <span class="loading-spinner"></span>
-          <p>Loading your world...</p>
-        </div>
-      </section>
-
-      <div class="feed-end" id="feedEnd" hidden>
-        <span class="end-mark">ΛRS</span>
-        <p>You're all caught up.</p>
-      </div>
-    </main>
-
-    <!-- Right rail -->
-    <aside class="right-rail">
-      <div class="rail-search">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
-        <input id="railSearchInput" type="search" placeholder="Search ARS..." autocomplete="off">
-        <kbd>/</kbd>
-      </div>
-
-      <section class="rail-card welcome-card">
-        <div class="welcome-label"><span></span> WELCOME TO ARS</div>
-        <h2>Your voice.<br>Your <span>universe.</span></h2>
-        <p>A place for your thoughts, your people, and everything that makes you, you.</p>
-        <div class="welcome-decoration">Λ</div>
-      </section>
-
-      <section class="rail-card trending-card">
-        <div class="rail-heading">
-          <div>
-            <span class="rail-kicker">WHAT'S MOVING</span>
-            <h3>Trending Now</h3>
+            <button type="button" class="text-tool-button" id="post-add-emoji" title="Add emoji">
+              <i class="fa-regular fa-face-smile"></i>
+            </button>
           </div>
-          <span class="trend-spark">↗</span>
+
+          <span class="character-counter" id="post-character-counter">0 / 280</span>
         </div>
-        <div id="trendingContainer" class="trending-list">
-          <p class="muted-message">Discovering what's trending...</p>
+
+        <div class="media-preview hidden" id="post-media-preview">
+          <img src="" alt="Selected media preview" id="post-media-preview-image">
+
+          <video
+            class="hidden"
+            id="post-media-preview-video"
+            controls
+            playsinline
+          ></video>
+
+          <button
+            type="button"
+            class="media-remove-button"
+            id="remove-post-media"
+            aria-label="Remove selected media"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <a href="search.html" class="rail-link">Explore topics <span>→</span></a>
-      </section>
 
-      <section class="rail-card community-card">
-        <div class="community-symbol">✳</div>
-        <div>
-          <h3>Make it yours.</h3>
-          <p>Share something worth talking about.</p>
-        </div>
-        <button type="button" id="railCreatePost" aria-label="Create a post">+</button>
-      </section>
+        <div class="post-media-tools">
+          <span class="post-media-label">Add to your post</span>
 
-      <footer class="rail-footer">
-        <span>ARS © <span id="currentYear"></span></span>
-        <span>Made for your world.</span>
-      </footer>
-    </aside>
-  </div>
+          <div class="post-media-buttons">
+            <button type="button" class="media-tool-button" id="choose-post-image">
+              <i class="fa-regular fa-image"></i>
+              <span>Photo</span>
+            </button>
 
-  <!-- Mobile navigation -->
-  <nav class="mobile-nav" aria-label="Mobile navigation">
-    <a class="mobile-nav-item active" href="home.html" aria-label="Home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
-    </a>
+            <button type="button" class="media-tool-button" id="choose-post-video">
+              <i class="fa-solid fa-video"></i>
+              <span>Video</span>
+            </button>
 
-    <a class="mobile-nav-item" href="search.html" aria-label="Explore">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
-    </a>
-
-    <button class="mobile-nav-item mobile-create" id="mobileCreatePost" type="button" aria-label="Create a post">+</button>
-
-    <a class="mobile-nav-item" href="streak.html" aria-label="Streak">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.4 0 7-3 7-7 0-2.8-1.7-5-4-7-.1 2-1.1 3.2-2.2 3.7C13 7.6 10.7 4.4 7 2c.5 4.6-2 6.8-2 11 0 5.1 2.8 9 7 9z"/></svg>
-    </a>
-
-    <button class="mobile-nav-item" id="mobileProfileButton" type="button" aria-label="My profile">
-      <img id="mobileAvatar" class="avatar avatar-small" src="" alt="">
-    </button>
-  </nav>
-
-  <!-- Create post dialog -->
-  <dialog class="composer-dialog" id="composerDialog">
-    <form id="postForm" class="composer-form">
-      <div class="dialog-header">
-        <div>
-          <span class="dialog-eyebrow">SHARE YOUR WORLD</span>
-          <h2>Create a post<span>.</span></h2>
-        </div>
-        <button class="dialog-close" id="closeComposer" type="button" aria-label="Close">×</button>
-      </div>
-
-      <div class="dialog-author">
-        <img id="dialogAvatar" class="avatar" src="" alt="">
-        <div>
-          <strong id="dialogDisplayName">Your profile</strong>
-          <span id="dialogUsername">@you</span>
-        </div>
-      </div>
-
-      <label class="visually-hidden" for="postContent">Post content</label>
-      <textarea id="postContent" maxlength="280" placeholder="What's on your mind? Share a thought, a moment, an idea..." required></textarea>
-
-      <div class="composer-footer">
-        <span id="characterCount">0 / 280</span>
-        <button class="publish-button" id="publishButton" type="submit">
-          Publish <span>↗</span>
-        </button>
-      </div>
-
-      <p id="composerMessage" class="form-message" role="status"></p>
-    </form>
-  </dialog>
-
-  <!-- Story viewer -->
-  <dialog class="story-dialog" id="storyDialog">
-    <div class="story-viewer">
-      <div class="story-progress-track"><span id="storyProgress"></span></div>
-
-      <div class="story-viewer-header">
-        <div class="story-viewer-author">
-          <img id="storyViewerAvatar" class="avatar" src="" alt="">
-          <div>
-            <strong id="storyViewerName"></strong>
-            <span id="storyViewerTime"></span>
+            <button type="button" class="media-tool-button" id="choose-post-hashtag">
+              <i class="fa-solid fa-hashtag"></i>
+              <span>Hashtag</span>
+            </button>
           </div>
+
+          <input
+            type="file"
+            id="post-media-input"
+            name="media"
+            accept="image/*,video/*"
+            class="sr-only"
+          >
         </div>
-        <button id="closeStory" class="dialog-close story-close" type="button" aria-label="Close story">×</button>
-      </div>
 
-      <div class="story-media" id="storyMedia">
-        <p id="storyViewerText"></p>
-      </div>
+        <p class="form-error hidden" id="post-form-error" role="alert"></p>
 
-      <div class="story-viewer-bottom">
-        <span>ARS STORIES</span>
-        <button id="nextStory" type="button">Next story →</button>
-      </div>
+        <button type="submit" class="primary-button publish-post-button" id="publish-post-button">
+          <span>Publish post</span>
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+      </form>
+
     </div>
   </dialog>
 
-  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+  <!-- =========================
+       CREATE STORY DIALOG
+  ========================== -->
+  <dialog class="app-dialog story-dialog" id="story-dialog">
+    <div class="dialog-container">
+
+      <header class="dialog-header">
+        <div>
+          <span class="eyebrow">SHARE A MOMENT</span>
+          <h2>Create a story</h2>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button dialog-close-button"
+          data-close-dialog="story-dialog"
+          aria-label="Close story dialog"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <form id="create-story-form">
+
+        <div class="story-upload-area" id="story-upload-area">
+          <div class="story-upload-placeholder" id="story-upload-placeholder">
+            <span class="story-upload-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </span>
+
+            <strong>Choose your moment</strong>
+            <span>Upload a photo or video to share with your followers.</span>
+
+            <button type="button" class="secondary-button" id="choose-story-media">
+              Browse files
+            </button>
+
+            <span class="upload-limit-note">Choose a supported image or video file.</span>
+          </div>
+
+          <div class="story-preview hidden" id="story-preview">
+            <img
+              src=""
+              alt="Story preview"
+              id="story-preview-image"
+              class="hidden"
+            >
+
+            <video
+              id="story-preview-video"
+              class="hidden"
+              controls
+              playsinline
+            ></video>
+
+            <button
+              type="button"
+              class="media-remove-button"
+              id="remove-story-media"
+              aria-label="Remove story media"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          id="story-media-input"
+          name="media"
+          accept="image/*,video/*"
+          class="sr-only"
+        >
+
+        <div class="form-field">
+          <label for="story-text">Add a caption <span>(optional)</span></label>
+
+          <textarea
+            id="story-text"
+            name="story_text"
+            maxlength="180"
+            placeholder="Add a little context..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <p class="form-error hidden" id="story-form-error" role="alert"></p>
+
+        <button type="submit" class="primary-button publish-story-button" id="publish-story-button">
+          <span>Share story</span>
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+
+      </form>
+
+    </div>
+  </dialog>
+
+  <!-- =========================
+       STORY VIEWER DIALOG
+  ========================== -->
+  <dialog class="story-viewer-dialog" id="story-viewer-dialog">
+    <div class="story-viewer-shell">
+
+      <div class="story-viewer-progress" id="story-viewer-progress"></div>
+
+      <header class="story-viewer-header">
+        <div class="story-viewer-author">
+          <img
+            src="https://placehold.co/100x100/17131f/ffffff?text=A"
+            alt=""
+            class="avatar avatar-small"
+            id="story-viewer-avatar"
+          >
+
+          <div>
+            <strong id="story-viewer-display-name">User</strong>
+            <span id="story-viewer-time"></span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button story-viewer-close"
+          id="close-story-viewer"
+          aria-label="Close story viewer"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <div class="story-viewer-content" id="story-viewer-content">
+        <img src="" alt="Story" id="story-viewer-image" class="hidden">
+
+        <video
+          src=""
+          id="story-viewer-video"
+          class="hidden"
+          playsinline
+          controls
+        ></video>
+
+        <p id="story-viewer-caption" class="story-viewer-caption hidden"></p>
+      </div>
+
+      <div class="story-viewer-controls">
+        <button
+          type="button"
+          class="icon-button"
+          id="story-previous-button"
+          aria-label="Previous story"
+        >
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <button
+          type="button"
+          class="icon-button"
+          id="story-next-button"
+          aria-label="Next story"
+        >
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- =========================
+       DAILY WHEEL DIALOG
+  ========================== -->
+  <dialog class="app-dialog wheel-dialog" id="wheel-dialog">
+    <div class="dialog-container">
+
+      <header class="dialog-header">
+        <div>
+          <span class="eyebrow">ARS REWARDS</span>
+          <h2>Daily Wheel</h2>
+        </div>
+
+        <button
+          type="button"
+          class="icon-button dialog-close-button"
+          data-close-dialog="wheel-dialog"
+          aria-label="Close daily wheel"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
+
+      <div class="wheel-dialog-content">
+        <p>Give it a spin and see what reward you unlock.</p>
+
+        <div class="wheel-visual" id="wheel-visual">
+          <div class="wheel-pointer">
+            <i class="fa-solid fa-caret-down"></i>
+          </div>
+
+          <div class="wheel-outer-ring">
+            <div class="wheel-inner" id="wheel-inner">
+              <span class="wheel-segment wheel-segment-one">
+                <i class="fa-solid fa-star"></i>
+              </span>
+
+              <span class="wheel-segment wheel-segment-two">
+                <i class="fa-solid fa-bolt"></i>
+              </span>
+
+              <span class="wheel-segment wheel-segment-three">
+                <i class="fa-solid fa-gem"></i>
+              </span>
+
+              <span class="wheel-segment wheel-segment-four">
+                <i class="fa-solid fa-crown"></i>
+              </span>
+
+              <span class="wheel-segment wheel-segment-five">
+                <i class="fa-solid fa-medal"></i>
+              </span>
+
+              <span class="wheel-segment wheel-segment-six">
+                <i class="fa-solid fa-gift"></i>
+              </span>
+
+              <span class="wheel-center">
+                <span>ARS</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="wheel-dialog-status" id="wheel-dialog-status" aria-live="polite">
+          Your available attempts will be checked securely.
+        </div>
+
+        <p class="wheel-dialog-result hidden" id="wheel-dialog-result"></p>
+
+        <button type="button" class="primary-button wheel-spin-button" id="spin-wheel-button">
+          <i class="fa-solid fa-rotate"></i>
+          <span>Spin the wheel</span>
+        </button>
+
+        <p class="wheel-terms-note">
+          Rewards and daily limits are determined by the server.
+        </p>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- =========================
+       TOAST NOTIFICATIONS
+  ========================== -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Screen-reader status -->
+  <div class="sr-only" id="app-live-status" role="status" aria-live="polite"></div>
+
+  <!-- =========================
+       APPLICATION SCRIPTS
+  ========================== -->
+  <script type="module" src="./home.js"></script>
+
 </body>
-          </html
+</html>  
