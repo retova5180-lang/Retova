@@ -998,7 +998,7 @@ p {
 
 .composer-prompt:hover {
   border-color: var(--border-light);
-  background: var(--surface-2);
+     background: var(--surface-2);
 }
 
 .composer-divider {
@@ -1497,8 +1497,8 @@ p {
 
 .heading-icon {
   color: var(--purple-light);
-}
-
+     }
+ 
 .view-more-link,
 .subtle-link {
   color: var(--purple-light);
@@ -1996,8 +1996,7 @@ p {
   margin: 12px 0;
   border-radius: var(--radius-md);
   object-fit: contain;
-}
-
+   }
 .story-viewer-dialog {
   width: min(440px, calc(100% - 20px));
   max-width: 440px;
@@ -2350,5 +2349,7 @@ p {
     max-width: 920px;
   }
 
-
-   
+  .post-card {
+    padding: 15px;
+  }
+   }
