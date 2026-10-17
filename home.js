@@ -1,14 +1,9 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 (() => {
   "use strict";
 
-  /* =========================================
-     ARS HOME — SUPABASE CONFIGURATION
-  ========================================= */
-
-  const SUPABASE_URL =
-    "https://bfqsqgfyyewnfxekirfv.supabase.co";
-
+  const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
 
@@ -22,15 +17,11 @@
 
   const PAGE_SIZE = 30;
   const MAX_POST_LENGTH = 5000;
-
-  const supabaseClient = window.supabase?.createClient(
+  const LOGIN_PAGE = "index.html";
+  const supabaseClient = createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
-  ) || null;
-
-  /* =========================================
-     DOM HELPERS
-  ========================================= */
+  );
 
   const $ = (selector, root = document) =>
     root.querySelector(selector);
@@ -39,55 +30,109 @@
     Array.from(root.querySelectorAll(selector));
 
   const elements = {
-    searchForm: $("#searchForm"),
-    searchInput: $("#searchInput"),
-    notificationsButton: $("#notificationsButton"),
-    profileButton: $("#profileButton"),
-    profileMenu: $("#profileMenu"),
-    viewProfileLink: $("#viewProfileLink"),
-    settingsLink: $("#settingsLink"),
-    logoutButton: $("#logoutButton"),
-    exploreLink: $("#exploreLink"),
-    navNotificationsLink: $("#navNotificationsLink"),
-    messagesLink: $("#messagesLink"),
-    bookmarksLink: $("#bookmarksLink"),
-    sidebarProfileLink: $("#sidebarProfileLink"),
-    openComposerButton: $("#openComposerButton"),
-    refreshFeedButton: $("#refreshFeedButton"),
-    retryFeedButton: $("#retryFeedButton"),
-    composerCard: $("#composerCard"),
-    composerAvatar: $("#composerAvatar"),
-    postContent: $("#postContent"),
-    characterCount: $("#characterCount"),
-    publishPostButton: $("#publishPostButton"),
-    composerMessage: $("#composerMessage"),
-    feedCount: $("#feedCount"),
-    feedStatus: $("#feedStatus"),
-    postsList: $("#postsList"),
-    feedEmpty: $("#feedEmpty"),
-    feedError: $("#feedError"),
-    feedErrorMessage: $("#feedErrorMessage"),
-    headerAvatar: $("#headerAvatar"),
-    accountAvatar: $("#accountAvatar"),
-    accountDisplayName: $("#accountDisplayName"),
-    accountUsername: $("#accountUsername"),
-    accountStreak: $("#accountStreak"),
-    accountXp: $("#accountXp"),
-    accountProfileLink: $("#accountProfileLink"),
-    communityPostButton: $("#communityPostButton"),
-    mobileExploreLink: $("#mobileExploreLink"),
-    mobileCreateButton: $("#mobileCreateButton"),
-    mobileNotificationsLink: $("#mobileNotificationsLink"),
-    mobileProfileLink: $("#mobileProfileLink"),
-    currentYear: $("#currentYear"),
-    toastContainer: $("#toastContainer"),
-    loadingOverlay: $("#loadingOverlay"),
-    loadingMessage: $("#loadingMessage")
+    sidebarProfileLink: $("#sidebar-profile-link"),
+    sidebarAvatar: $("#sidebar-avatar"),
+    sidebarDisplayName: $("#sidebar-display-name"),
+    sidebarUsername: $("#sidebar-username"),
+    notificationBadge: $("#notification-badge"),
+    messagesBadge: $("#messages-badge"),
+    openPostDialog: $("#open-post-dialog"),
+    mobileSearchButton: $("#mobile-search-button"),
+    mobileNotificationsButton: $("#mobile-notifications-button"),
+    feedRefreshButton: $("#feed-refresh-button"),
+    wheelAttemptsText: $("#wheel-attempts-text"),
+    openWheelButton: $("#open-wheel-button"),
+    wheelResult: $("#wheel-result"),
+    wheelResultText: $("#wheel-result-text"),
+    wheelDialog: $("#wheel-dialog"),
+    wheelVisual: $("#wheel-visual"),
+    wheelInner: $("#wheel-inner"),
+    wheelDialogStatus: $("#wheel-dialog-status"),
+    wheelDialogResult: $("#wheel-dialog-result"),
+    spinWheelButton: $("#spin-wheel-button"),
+    viewAllStories: $("#view-all-stories"),
+    storiesTrack: $("#stories-track"),
+    openStoryDialog: $("#open-story-dialog"),
+    createStoryAvatar: $("#create-story-avatar"),
+    storiesLoading: $("#stories-loading"),
+    storyDialog: $("#story-dialog"),
+    createStoryForm: $("#create-story-form"),
+    storyUploadArea: $("#story-upload-area"),
+    storyUploadPlaceholder: $("#story-upload-placeholder"),
+    chooseStoryMedia: $("#choose-story-media"),
+    storyPreview: $("#story-preview"),
+    storyPreviewImage: $("#story-preview-image"),
+    storyPreviewVideo: $("#story-preview-video"),
+    removeStoryMedia: $("#remove-story-media"),
+    storyMediaInput: $("#story-media-input"),
+    storyText: $("#story-text"),
+    storyFormError: $("#story-form-error"),
+    publishStoryButton: $("#publish-story-button"),
+    storyViewerDialog: $("#story-viewer-dialog"),
+    storyViewerProgress: $("#story-viewer-progress"),
+    storyViewerAvatar: $("#story-viewer-avatar"),
+    storyViewerDisplayName: $("#story-viewer-display-name"),
+    storyViewerTime: $("#story-viewer-time"),
+    closeStoryViewer: $("#close-story-viewer"),
+    storyViewerContent: $("#story-viewer-content"),
+    storyViewerImage: $("#story-viewer-image"),
+    storyViewerVideo: $("#story-viewer-video"),
+    storyViewerCaption: $("#story-viewer-caption"),
+    storyPreviousButton: $("#story-previous-button"),
+    storyNextButton: $("#story-next-button"),
+    composerAvatar: $("#composer-avatar"),
+    composerPrompt: $("#composer-prompt"),
+    composerPhotoButton: $("#composer-photo-button"),
+    composerVideoButton: $("#composer-video-button"),
+    composerHashtagButton: $("#composer-hashtag-button"),
+    composerOpenButton: $("#composer-open-button"),
+    feedSectionTitle: $("#feed-section-title"),
+    feedLoading: $("#feed-loading"),
+    postsList: $("#posts-list"),
+    feedEmptyState: $("#feed-empty-state"),
+    emptyFeedCreateButton: $("#empty-feed-create-button"),
+    feedErrorState: $("#feed-error-state"),
+    feedErrorMessage: $("#feed-error-message"),
+    retryFeedButton: $("#retry-feed-button"),
+    loadMorePosts: $("#load-more-posts"),
+    feedEndMessage: $("#feed-end-message"),
+    rightSidebarAvatar: $("#right-sidebar-avatar"),
+    rightSidebarDisplayName: $("#right-sidebar-display-name"),
+    rightSidebarUsername: $("#right-sidebar-username"),
+    accountVerifiedLabel: $("#account-verified-label"),
+    accountPostsCount: $("#account-posts-count"),
+    accountFollowersCount: $("#account-followers-count"),
+    accountFollowingCount: $("#account-following-count"),
+    accountPlanName: $("#account-plan-name"),
+    refreshSuggestionsButton: $("#refresh-suggestions-button"),
+    suggestionsList: $("#suggestions-list"),
+    suggestionsLoading: $("#suggestions-loading"),
+    currentYear: $("#current-year"),
+    mobileCreatePostButton: $("#mobile-create-post-button"),
+    mobileNotificationBadge: $("#mobile-notification-badge"),
+    mobileNavAvatar: $("#mobile-nav-avatar"),
+    postDialog: $("#post-dialog"),
+    createPostForm: $("#create-post-form"),
+    postDialogAvatar: $("#post-dialog-avatar"),
+    postDialogDisplayName: $("#post-dialog-display-name"),
+    postDialogUsername: $("#post-dialog-username"),
+    postContent: $("#post-content"),
+    postAddHashtag: $("#post-add-hashtag"),
+    postAddEmoji: $("#post-add-emoji"),
+    postCharacterCounter: $("#post-character-counter"),
+    postMediaPreview: $("#post-media-preview"),
+    postMediaPreviewImage: $("#post-media-preview-image"),
+    postMediaPreviewVideo: $("#post-media-preview-video"),
+    removePostMedia: $("#remove-post-media"),
+    choosePostImage: $("#choose-post-image"),
+    choosePostVideo: $("#choose-post-video"),
+    choosePostHashtag: $("#choose-post-hashtag"),
+    postMediaInput: $("#post-media-input"),
+    postFormError: $("#post-form-error"),
+    publishPostButton: $("#publish-post-button"),
+    toastContainer: $("#toast-container"),
+    appLiveStatus: $("#app-live-status")
   };
-
-  /* =========================================
-     SAFE STORAGE
-  ========================================= */
 
   function readStorage(key, fallback = null) {
     try {
@@ -126,10 +171,6 @@
       console.error("ARS storage removal error:", error);
     }
   }
-
-  /* =========================================
-     SECURITY AND FORMATTING
-  ========================================= */
 
   function getInitial(value, fallback = "A") {
     const text = String(value ?? "").trim();
@@ -173,105 +214,15 @@
     if (element) element.hidden = Boolean(hidden);
   }
 
-  function setComposerMessage(message, type = "") {
-    const element = elements.composerMessage;
-    if (!element) return;
-
-    element.textContent = message;
-    element.className = "form-message";
-    if (type) element.classList.add(type);
+  function setLiveStatus(message) {
+    setText(elements.appLiveStatus, message);
   }
-
-  /* =========================================
-     USER AND SESSION
-  ========================================= */
-
-  function getUser() {
-    return readJSON(STORAGE.user, {}) || {};
-  }
-
-  function saveUser(user) {
-    return writeStorage(STORAGE.user, JSON.stringify(user || {}));
-  }
-
-  function getCurrentUserId() {
-    const user = getUser();
-    return user.id || user.user_id || null;
-  }
-
-  async function requireSession() {
-    if (!supabaseClient) {
-      showFatalError(
-        "Supabase could not be initialized. Check the Supabase script and configuration."
-      );
-      return false;
-    }
-
-    try {
-      const { data, error } = await supabaseClient.auth.getSession();
-      if (error) throw error;
-
-      if (!data?.session) {
-        writeStorage(STORAGE.loggedIn, "false");
-        window.location.replace("index.html");
-        return false;
-      }
-
-      const authUser = data.session.user;
-      const localUser = getUser();
-
-      if (localUser.id && localUser.id !== authUser.id) {
-        console.warn(
-          "ARS local profile ID differs from the authenticated user."
-        );
-      }
-
-      if (!localUser.id) {
-        localUser.id = authUser.id;
-        localUser.email = authUser.email || "";
-        saveUser(localUser);
-      }
-
-      writeStorage(STORAGE.loggedIn, "true");
-      return true;
-    } catch (error) {
-      console.error("ARS session check failed:", error);
-      showFatalError(
-        "Your session could not be verified. Please refresh the page or log in again."
-      );
-      return false;
-    }
-  }
-
-  /* =========================================
-     LOADING AND ERROR STATES
-  ========================================= */
-
-  function showLoading(message = "Please wait...") {
-    setText(elements.loadingMessage, message);
-    setHidden(elements.loadingOverlay, false);
-  }
-
-  function hideLoading() {
-    setHidden(elements.loadingOverlay, true);
-  }
-
-  function showFatalError(message) {
-    console.error("ARS:", message);
-    setText(elements.feedErrorMessage, message);
-    setHidden(elements.feedError, false);
-    setHidden(elements.feedStatus, true);
-  }
-
-  /* =========================================
-     TOAST NOTIFICATIONS
-  ========================================= */
 
   function showToast(message, type = "info") {
     const container = elements.toastContainer;
 
     if (!container) {
-      console.info("ARS:", message);
+      setLiveStatus(message);
       return;
     }
 
@@ -287,35 +238,81 @@
     }, 3500);
   }
 
-  /* =========================================
-     AVATAR AND ACCOUNT DETAILS
-  ========================================= */
+  function setFormError(element, message) {
+    setText(element, message);
+    setHidden(element, !message);
+  }
 
-  function applyAvatar(element, user) {
+  function getUser() {
+    return readJSON(STORAGE.user, {}) || {};
+  }
+
+  function saveUser(user) {
+    return writeStorage(STORAGE.user, JSON.stringify(user || {}));
+  }
+
+  function getCurrentUserId() {
+    const user = getUser();
+    return user.id || user.user_id || null;
+  }
+
+  async function requireSession() {
+    try {
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (error) throw error;
+
+      const authUser = data?.session?.user;
+      if (!authUser) {
+        writeStorage(STORAGE.loggedIn, "false");
+        window.location.replace(LOGIN_PAGE);
+        return false;
+      }
+
+      const localUser = getUser();
+      if (localUser.id && localUser.id !== authUser.id) {
+        console.warn("ARS local profile ID differs from the authenticated user.");
+      }
+
+      saveUser({
+        ...localUser,
+        id: authUser.id,
+        email: authUser.email || localUser.email || ""
+      });
+
+      writeStorage(STORAGE.loggedIn, "true");
+      return true;
+    } catch (error) {
+      console.error("ARS session check failed:", error);
+      showToast(
+        "Your session could not be verified. Please refresh or log in again.",
+        "error"
+      );
+      return false;
+    }
+  }
+
+  function applyAvatar(element, user = {}) {
     if (!element) return;
 
-    const letter =
-      user.letter ||
+    const letter = user.letter ||
       readStorage(STORAGE.letter, "") ||
-      getInitial(user.displayName || user.username);
+      getInitial(user.displayName || user.display_name || user.username);
 
-    const letterColor =
-      user.letterColor ||
+    const letterColor = user.letterColor ||
       readStorage(STORAGE.letterColor, "#ffffff");
 
-    const background =
-      user.background ||
+    const background = user.background ||
       readStorage(
         STORAGE.background,
         "linear-gradient(135deg, #8b3dff, #c54dff)"
       );
 
-    const avatarUrl = user.avatar || "";
     element.replaceChildren();
 
-    if (avatarUrl) {
+    if (user.avatar) {
       const image = document.createElement("img");
-      image.src = avatarUrl;
+      image.src = user.avatar;
       image.alt = "Profile avatar";
       image.loading = "lazy";
       image.referrerPolicy = "no-referrer";
@@ -335,8 +332,7 @@
   }
 
   function renderAccount(user = getUser()) {
-    const displayName =
-      user.displayName ||
+    const displayName = user.displayName ||
       user.display_name ||
       user.username ||
       "ARS Member";
@@ -345,23 +341,32 @@
       ? `@${String(user.username).replace(/^@/, "")}`
       : "@member";
 
-    applyAvatar(elements.headerAvatar, user);
-    applyAvatar(elements.composerAvatar, user);
-    applyAvatar(elements.accountAvatar, user);
+    [
+      elements.sidebarAvatar,
+      elements.composerAvatar,
+      elements.rightSidebarAvatar,
+      elements.mobileNavAvatar,
+      elements.postDialogAvatar,
+      elements.createStoryAvatar
+    ].forEach(element => applyAvatar(element, user));
 
-    setText(elements.accountDisplayName, displayName);
-    setText(elements.accountUsername, username);
-    setText(elements.accountStreak, user.streak ?? 0);
-    setText(elements.accountXp, user.xp ?? 0);
+    setText(elements.sidebarDisplayName, displayName);
+    setText(elements.sidebarUsername, username);
+    setText(elements.rightSidebarDisplayName, displayName);
+    setText(elements.rightSidebarUsername, username);
+    setText(elements.postDialogDisplayName, displayName);
+    setText(elements.postDialogUsername, username);
+    setText(elements.accountPlanName, user.plan || "Free");
 
-    if (elements.accountDisplayName) {
-      elements.accountDisplayName.title = displayName;
-    }
+    setHidden(elements.accountVerifiedLabel, !user.verified);
+    setText(elements.accountPostsCount, user.posts_count ?? 0);
+    setText(elements.accountFollowersCount, user.followers_count ?? 0);
+    setText(elements.accountFollowingCount, user.following_count ?? 0);
   }
 
   async function refreshAccountFromSupabase() {
     const userId = getCurrentUserId();
-    if (!userId || !supabaseClient) return;
+    if (!userId) return;
 
     try {
       const { data, error } = await supabaseClient
@@ -372,11 +377,7 @@
         .eq("id", userId)
         .maybeSingle();
 
-      if (error) {
-        console.warn("ARS profile refresh:", error.message);
-        return;
-      }
-
+      if (error) throw error;
       if (!data) return;
 
       const current = getUser();
@@ -402,247 +403,108 @@
     }
   }
 
-  /* =========================================
-     PROFILE MENU
-  ========================================= */
-
-  function closeProfileMenu() {
-    setHidden(elements.profileMenu, true);
-    elements.profileButton?.setAttribute("aria-expanded", "false");
-  }
-
-  function toggleProfileMenu() {
-    if (!elements.profileMenu) return;
-
-    const opening = elements.profileMenu.hidden;
-    setHidden(elements.profileMenu, !opening);
-    elements.profileButton?.setAttribute(
-      "aria-expanded",
-      String(opening)
-    );
-  }
-
-  /* =========================================
-     FEED STATE
-  ========================================= */
-
-  let currentFeed = "latest";
-  let currentSearch = "";
   let loadedPosts = [];
+  let nextPostsOffset = 0;
   let isLoadingFeed = false;
   let isPublishing = false;
+  let hasMorePosts = true;
   let feedRequestNumber = 0;
 
- 
-  /* =========================================
-     FEED STATUS
-  ========================================= */
-
   function setFeedLoading(message = "Loading posts...") {
-    setText(elements.feedStatus, message);
-    setHidden(elements.feedStatus, false);
-    setHidden(elements.feedEmpty, true);
-    setHidden(elements.feedError, true);
+    setText(elements.feedLoading, message);
+    setHidden(elements.feedLoading, false);
+    setHidden(elements.feedEmptyState, true);
+    setHidden(elements.feedErrorState, true);
   }
 
   function setFeedReady() {
-    setHidden(elements.feedStatus, true);
-    setHidden(elements.feedError, true);
+    setHidden(elements.feedLoading, true);
+    setHidden(elements.feedErrorState, true);
   }
 
   function setFeedError(message) {
     setText(elements.feedErrorMessage, message);
-    setHidden(elements.feedStatus, true);
-    setHidden(elements.feedEmpty, true);
-    setHidden(elements.feedError, false);
+    setHidden(elements.feedLoading, true);
+    setHidden(elements.feedEmptyState, true);
+    setHidden(elements.feedErrorState, false);
   }
-
-  function updateFeedCount(count) {
-    setText(
-      elements.feedCount,
-      count
-        ? `${count} ${count === 1 ? "post" : "posts"}`
-        : "0 posts"
-    );
-  }
-
-  /* =========================================
-     POST DATA HELPERS
-  ========================================= */
 
   function normalizePost(row) {
-    if (!row || typeof row !== "object") {
-      return null;
-    }
+    if (!row || typeof row !== "object") return null;
 
-    const author = row.users || row.profiles || {};
     const localUser = getUser();
-
-    const userId =
-      row.user_id ||
-      row.author_id ||
-      row.profile_id ||
-      "";
-
+    const userId = row.user_id || "";
     const currentUserId = getCurrentUserId();
-
-    const isOwnPost =
-      Boolean(currentUserId) &&
-      userId === currentUserId;
-
-    const authorName =
-      author.display_name ||
-      author.displayName ||
-      row.display_name ||
+    const isOwnPost = Boolean(currentUserId && userId === currentUserId);
+    const author = row.users || {};
+    const authorName = author.display_name ||
       (isOwnPost ? localUser.displayName : "") ||
       author.username ||
-      row.username ||
       (isOwnPost ? localUser.username : "") ||
       "ARS Member";
 
-    const authorUsername =
-      author.username ||
-      row.username ||
-      (isOwnPost ? localUser.username : "") ||
-      "";
-
-    const authorAvatar =
-      author.avatar ||
-      row.avatar ||
-      (isOwnPost ? localUser.avatar : "") ||
-      "";
-
-    const content =
-      row.content ??
-      row.body ??
-      row.text ??
-      "";
-
-    const createdAt =
-      row.created_at ||
-      row.createdAt ||
-      row.inserted_at ||
-      null;
-
     return {
-      id: row.id ?? row.post_id ?? null,
+      id: row.id,
       userId,
-      content: String(content),
-      createdAt,
+      content: String(row.content ?? ""),
+      image: row.image || "",
+      mediaType: row.media_type || "",
+      createdAt: row.created_at || null,
       authorName: String(authorName),
-      authorUsername: String(authorUsername),
-      authorAvatar: String(authorAvatar),
-      verified: Boolean(
-        author.verified ?? row.verified ?? false
+      authorUsername: String(
+        author.username || (isOwnPost ? localUser.username : "") || ""
       ),
+      authorAvatar: String(
+        author.avatar || (isOwnPost ? localUser.avatar : "") || ""
+      ),
+      verified: Boolean(author.verified),
+      likesCount: Number(row.likes_count || 0),
+      commentsCount: Number(row.comments_count || 0),
+      repostsCount: Number(row.reposts_count || 0),
       isOwnPost
     };
-  }
-
-  function getPostTimestamp(post) {
-    const value = new Date(post.createdAt || 0).getTime();
-    return Number.isFinite(value) ? value : 0;
+        }
+   function getPostTimestamp(post) {
+    const timestamp = new Date(post.createdAt || 0).getTime();
+    return Number.isFinite(timestamp) ? timestamp : 0;
   }
 
   function sortPosts(posts) {
-    const result = [...posts];
+    return [...posts].sort(
+      (first, second) =>
+        getPostTimestamp(second) - getPostTimestamp(first)
+    );
+  }
 
-    result.sort(
-      (a, b) => getPostTimestamp(b) - getPostTimestamp(a)
+  function renderPostMedia(post, body) {
+    if (!post.image) return;
+
+    const media = document.createElement(
+      post.mediaType === "video" ? "video" : "img"
     );
 
-    return result;
-  }
+    media.className = "post-media";
+    media.src = post.image;
+    media.loading = "lazy";
 
-  function filterPosts(posts) {
-    const query = currentSearch.trim().toLowerCase();
-
-    if (!query) return posts;
-
-    return posts.filter(post => {
-      const text = [
-        post.content,
-        post.authorName,
-        post.authorUsername
-      ].join(" ").toLowerCase();
-
-      return text.includes(query);
-    });
-  }
-
-  /* =========================================
-     LOAD POSTS
-  ========================================= */
-
-  async function loadPosts(options = {}) {
-    if (isLoadingFeed) return;
-
-    if (!supabaseClient) {
-      setFeedError(
-        "Supabase is unavailable. Please refresh the page."
-      );
-      return;
+    if (media instanceof HTMLImageElement) {
+      media.alt = "Post media";
+    } else {
+      media.controls = true;
+      media.preload = "metadata";
     }
 
-    const requestId = ++feedRequestNumber;
-    isLoadingFeed = true;
-
-    if (!options.silent) {
-      setFeedLoading("Loading posts...");
-    }
-
-    try {
-      const { data, error } = await supabaseClient
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(PAGE_SIZE);
-
-      if (requestId !== feedRequestNumber) return;
-      if (error) throw error;
-
-      const rows = Array.isArray(data) ? data : [];
-
-      loadedPosts = rows
-        .map(normalizePost)
-        .filter(Boolean)
-        .filter(post => post.id !== null);
-
-      renderFeed();
-
-      if (loadedPosts.length === 0) {
-        setFeedReady();
-        setHidden(elements.feedEmpty, true);
-        setText(
-          elements.feedStatus,
-          "No posts have been shared yet."
-        );
-        setHidden(elements.feedStatus, false);
-      }
-    } catch (error) {
-      console.error("ARS posts load error:", error);
-
-      if (requestId === feedRequestNumber) {
-        setFeedError(
-          error?.message ||
-          "Could not load posts. Check your posts table and access policies."
-        );
-      }
-    } finally {
-      if (requestId === feedRequestNumber) {
-        isLoadingFeed = false;
-      }
-    }
+    media.referrerPolicy = "no-referrer";
+    body.appendChild(media);
   }
-
-  /* =========================================
-     RENDER POST CARD
-  ========================================= */
 
   function renderPostCard(post) {
     const card = document.createElement("article");
     card.className = "post-card";
     card.dataset.postId = String(post.id);
+
+    const header = document.createElement("header");
+    header.className = "post-header";
 
     const avatar = document.createElement("div");
     avatar.className = "avatar";
@@ -663,9 +525,6 @@
     } else {
       avatar.textContent = getInitial(post.authorName);
     }
-
-    const header = document.createElement("div");
-    header.className = "post-header";
 
     const authorDetails = document.createElement("div");
     authorDetails.className = "post-author-details";
@@ -706,118 +565,242 @@
     authorDetails.append(nameLine, username, time);
     header.append(avatar, authorDetails);
 
+    const body = document.createElement("div");
+    body.className = "post-body";
+
     const content = document.createElement("div");
     content.className = "post-content";
     content.textContent = post.content;
-
-    const body = document.createElement("div");
-    body.className = "post-body";
     body.appendChild(content);
 
-    const footer = document.createElement("div");
+    renderPostMedia(post, body);
+
+    const footer = document.createElement("footer");
     footer.className = "post-footer";
+
+    const likes = document.createElement("span");
+    likes.className = "post-likes-count";
+    likes.textContent = `${post.likesCount} likes`;
+
+    const comments = document.createElement("span");
+    comments.className = "post-comments-count";
+    comments.textContent = `${post.commentsCount} comments`;
+
+    const reposts = document.createElement("span");
+    reposts.className = "post-reposts-count";
+    reposts.textContent = `${post.repostsCount} reposts`;
+
+    footer.append(likes, comments, reposts);
 
     if (post.isOwnPost) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
       deleteButton.className = "post-delete-button";
-      deleteButton.textContent = "Delete";
-      deleteButton.dataset.action = "delete";
+      deleteButton.dataset.action = "delete-post";
       deleteButton.dataset.postId = String(post.id);
-      deleteButton.setAttribute(
-        "aria-label",
-        "Delete your post"
-      );
+      deleteButton.textContent = "Delete";
+      deleteButton.setAttribute("aria-label", "Delete your post");
       footer.appendChild(deleteButton);
     }
 
-    card.append(header, body);
-
-    if (footer.childElementCount) {
-      card.appendChild(footer);
-    }
-
+    card.append(header, body, footer);
     return card;
   }
-
-  /* =========================================
-     RENDER FEED
-  ========================================= */
 
   function renderFeed() {
     if (!elements.postsList) return;
 
-    const orderedPosts = sortPosts(loadedPosts);
-    const visiblePosts = filterPosts(orderedPosts);
+    const posts = sortPosts(loadedPosts);
     const fragment = document.createDocumentFragment();
 
-    visiblePosts.forEach(post => {
+    posts.forEach(post => {
       fragment.appendChild(renderPostCard(post));
     });
 
     elements.postsList.replaceChildren(fragment);
-    updateFeedCount(visiblePosts.length);
-    setFeedReady();
 
-    if (visiblePosts.length === 0 && currentSearch.trim()) {
+    setHidden(elements.feedLoading, true);
+    setHidden(elements.feedErrorState, true);
+    setHidden(elements.feedEmptyState, posts.length > 0);
+    setHidden(elements.loadMorePosts, !hasMorePosts);
+    setHidden(
+      elements.feedEndMessage,
+      hasMorePosts || posts.length === 0
+    );
+
+    if (posts.length === 0) {
       setText(
-        elements.feedStatus,
-        "No posts match your search."
+        elements.feedEndMessage,
+        "You are all caught up."
       );
-      setHidden(elements.feedStatus, false);
-      setHidden(elements.feedEmpty, true);
-      return;
-    }
-
-    if (visiblePosts.length === 0) {
-      setHidden(elements.feedEmpty, false);
-    } else {
-      setHidden(elements.feedEmpty, true);
     }
   }
 
-  /* =========================================
-     PUBLISH POST
-  ========================================= */
+  async function loadPosts({ reset = true, silent = false } = {}) {
+    if (isLoadingFeed) return;
 
-  async function publishPost() {
-    if (isPublishing) return;
+    if (reset) {
+      nextPostsOffset = 0;
+      hasMorePosts = true;
+    }
 
-    if (!supabaseClient) {
-      setComposerMessage(
-        "Supabase is unavailable. Please refresh the page.",
-        "error"
-      );
+    if (!hasMorePosts && !reset) return;
+
+    const requestId = ++feedRequestNumber;
+    isLoadingFeed = true;
+
+    if (!silent) {
+      setFeedLoading("Loading posts...");
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("posts")
+        .select(
+          "id, created_at, user_id, content, image, media_type, likes_count, comments_count, reposts_count, users(id, username, display_name, avatar, verified)"
+        )
+        .order("created_at", { ascending: false })
+        .range(
+          nextPostsOffset,
+          nextPostsOffset + PAGE_SIZE - 1
+        );
+
+      if (requestId !== feedRequestNumber) return;
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+      const normalized = rows
+        .map(normalizePost)
+        .filter(post => post && post.id);
+
+      if (reset) {
+        loadedPosts = normalized;
+      } else {
+        const existingIds = new Set(
+          loadedPosts.map(post => String(post.id))
+        );
+
+        loadedPosts = loadedPosts.concat(
+          normalized.filter(
+            post => !existingIds.has(String(post.id))
+          )
+        );
+      }
+
+      nextPostsOffset += rows.length;
+      hasMorePosts = rows.length === PAGE_SIZE;
+
+      renderFeed();
+      setFeedReady();
+
+      if (rows.length === 0 && reset) {
+        setHidden(elements.feedEmptyState, false);
+        setText(
+          elements.feedEndMessage,
+          "No posts have been shared yet."
+        );
+      }
+
+      setLiveStatus(`${loadedPosts.length} posts loaded.`);
+    } catch (error) {
+      console.error("ARS feed loading failed:", error);
+
+      if (requestId === feedRequestNumber) {
+        setFeedError(
+          error?.message ||
+          "Could not load posts. Please try again."
+        );
+      }
+    } finally {
+      if (requestId === feedRequestNumber) {
+        isLoadingFeed = false;
+      }
+    }
+  }
+
+  function updateCharacterCount() {
+    const content = elements.postContent;
+    const counter = elements.postCharacterCounter;
+    const button = elements.publishPostButton;
+
+    if (!content) return;
+
+    const length = content.value.length;
+    const overLimit = length > MAX_POST_LENGTH;
+
+    setText(counter, `${length}/${MAX_POST_LENGTH}`);
+    counter?.classList.toggle("is-over-limit", overLimit);
+
+    if (button) {
+      button.disabled =
+        !content.value.trim() ||
+        overLimit ||
+        isPublishing;
+    }
+  }
+
+  function openDialog(dialog) {
+    if (!dialog) return;
+
+    if (typeof dialog.showModal === "function") {
+      if (!dialog.open) dialog.showModal();
       return;
     }
+
+    dialog.setAttribute("open", "");
+  }
+
+  function closeDialog(dialog) {
+    if (!dialog) return;
+
+    if (typeof dialog.close === "function" && dialog.open) {
+      dialog.close();
+      return;
+    }
+
+    dialog.removeAttribute("open");
+  }
+
+  function openPostComposer() {
+    setFormError(elements.postFormError, "");
+    updateCharacterCount();
+    openDialog(elements.postDialog);
+    elements.postContent?.focus();
+  }
+
+  async function publishPost(event) {
+    event?.preventDefault();
+
+    if (isPublishing) return;
 
     const content = elements.postContent?.value.trim() || "";
 
     if (!content) {
-      setComposerMessage(
-        "Write something before publishing your post.",
-        "error"
+      setFormError(
+        elements.postFormError,
+        "Write something before publishing."
       );
+
       elements.postContent?.focus();
       return;
     }
 
     if (content.length > MAX_POST_LENGTH) {
-      setComposerMessage(
-        `Your post must be ${MAX_POST_LENGTH} characters or fewer.`,
-        "error"
+      setFormError(
+        elements.postFormError,
+        `Your post must be ${MAX_POST_LENGTH} characters or fewer.`
       );
+
       return;
     }
 
     isPublishing = true;
+    updateCharacterCount();
+    setFormError(elements.postFormError, "");
 
     if (elements.publishPostButton) {
-      elements.publishPostButton.disabled = true;
       elements.publishPostButton.textContent = "Publishing...";
     }
-
-    setComposerMessage("Publishing your post...");
 
     try {
       const {
@@ -831,7 +814,7 @@
 
       if (!authUser) {
         writeStorage(STORAGE.loggedIn, "false");
-        window.location.replace("index.html");
+        window.location.replace(LOGIN_PAGE);
         return;
       }
 
@@ -841,93 +824,81 @@
           user_id: authUser.id,
           content
         })
-        .select("*")
+        .select(
+          "id, created_at, user_id, content, image, media_type, likes_count, comments_count, reposts_count"
+        )
         .single();
 
       if (error) throw error;
 
       if (!data) {
         throw new Error(
-          "The post was not returned after publishing."
+          "The published post was not returned."
         );
       }
 
-      if (elements.postContent) {
-        elements.postContent.value = "";
-      }
-
+      elements.postContent.value = "";
       updateCharacterCount();
-      setComposerMessage(
-        "Your post has been published.",
+      closeDialog(elements.postDialog);
+
+      showToast(
+        "Post published successfully.",
         "success"
       );
 
-      const newPost = normalizePost(data);
+      const post = normalizePost(data);
 
-      if (newPost) {
+      if (post) {
         loadedPosts = [
-          newPost,
+          post,
           ...loadedPosts.filter(
-            post => post.id !== newPost.id
+            item => String(item.id) !== String(post.id)
           )
         ];
       }
 
-      currentFeed = "latest";
-      currentSearch = "";
-
-      if (elements.searchInput) {
-        elements.searchInput.value = "";
-      }
-
-      updateFeedTabs();
       renderFeed();
-      showToast("Post published successfully.", "success");
+      setLiveStatus("Your post has been published.");
     } catch (error) {
-      console.error("ARS publish post error:", error);
+      console.error("ARS post publishing failed:", error);
 
-      setComposerMessage(
+      setFormError(
+        elements.postFormError,
         error?.message ||
-        "Could not publish your post. Please try again.",
-        "error"
+        "Could not publish your post. Please try again."
       );
     } finally {
       isPublishing = false;
 
       if (elements.publishPostButton) {
-        elements.publishPostButton.disabled = false;
         elements.publishPostButton.textContent = "Publish Post";
       }
+
+      updateCharacterCount();
     }
   }
-
-  /* =========================================
-     DELETE OWN POST
-  ========================================= */
 
   async function deletePost(postId) {
     const post = loadedPosts.find(
       item => String(item.id) === String(postId)
     );
 
-    if (!post) {
-      showToast("This post could not be found.", "error");
-      return;
-    }
-
-    if (!post.isOwnPost) {
+    if (!post || !post.isOwnPost) {
       showToast(
         "You can only delete your own posts.",
         "error"
       );
+
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this post? This action cannot be undone."
-    );
-
-    if (!confirmed) return;
+    if (
+      !window.confirm(
+        "Delete this post? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
 
     try {
       const {
@@ -944,6 +915,7 @@
           "Your session could not be verified.",
           "error"
         );
+
         return;
       }
 
@@ -956,12 +928,10 @@
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        showToast(
-          "The post was not deleted. Check your database permissions.",
-          "error"
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error(
+          "The post was not deleted. Check your database permissions."
         );
-        return;
       }
 
       loadedPosts = loadedPosts.filter(
@@ -971,308 +941,1419 @@
       renderFeed();
       showToast("Post deleted.", "success");
     } catch (error) {
-      console.error("ARS delete post error:", error);
+      console.error("ARS post deletion failed:", error);
 
       showToast(
         error?.message || "Could not delete this post.",
         "error"
       );
     }
-                          }
-    
-/* CHARACTER COUNT */
+      }
+    let selectedPostMedia = null;
+  let selectedStoryMedia = null;
+  let storyGroups = [];
+  let activeStoryGroupIndex = 0;
+  let activeStoryIndex = 0;
+  let storyViewerTimer = null;
 
-function updateCharacterCount() {
-  if (!postContent || !characterCount) return;
+  function clearMediaPreview(type) {
+    const isPost = type === "post";
+    const selectedMedia = isPost
+      ? selectedPostMedia
+      : selectedStoryMedia;
 
-  const length = postContent.value.length;
-  characterCount.textContent = `${length}/${MAX_POST_LENGTH}`;
+    if (selectedMedia?.previewUrl) {
+      URL.revokeObjectURL(selectedMedia.previewUrl);
+    }
 
-  const isOverLimit = length > MAX_POST_LENGTH;
-  characterCount.classList.toggle("is-over-limit", isOverLimit);
+    if (isPost) {
+      selectedPostMedia = null;
+      setHidden(elements.postMediaPreview, true);
 
-  if (publishButton) {
-    publishButton.disabled =
-      !postContent.value.trim() ||
-      isOverLimit ||
-      isPublishing;
-  }
-}
+      if (elements.postMediaPreviewImage) {
+        elements.postMediaPreviewImage.removeAttribute("src");
+        setHidden(elements.postMediaPreviewImage, true);
+      }
 
-/* FEED TABS */
+      if (elements.postMediaPreviewVideo) {
+        elements.postMediaPreviewVideo.pause();
+        elements.postMediaPreviewVideo.removeAttribute("src");
+        elements.postMediaPreviewVideo.load();
+        setHidden(elements.postMediaPreviewVideo, true);
+      }
 
-function updateFeedTabs() {
-  feedTabs.forEach((tab) => {
-    const isActive = tab.dataset.feed === currentFeed;
+      if (elements.postMediaInput) {
+        elements.postMediaInput.value = "";
+      }
+    } else {
+      selectedStoryMedia = null;
+      setHidden(elements.storyPreview, true);
 
-    tab.classList.toggle("active", isActive);
-    tab.setAttribute("aria-selected", String(isActive));
-    tab.setAttribute("tabindex", isActive ? "0" : "-1");
-  });
-}
+      if (elements.storyPreviewImage) {
+        elements.storyPreviewImage.removeAttribute("src");
+        setHidden(elements.storyPreviewImage, true);
+      }
 
-function selectFeed(feed) {
-  if (feed !== "latest" && feed !== "popular") return;
+      if (elements.storyPreviewVideo) {
+        elements.storyPreviewVideo.pause();
+        elements.storyPreviewVideo.removeAttribute("src");
+        elements.storyPreviewVideo.load();
+        setHidden(elements.storyPreviewVideo, true);
+      }
 
-  currentFeed = feed;
-  updateFeedTabs();
-
-  /*
-   * The current database query does not retrieve a reliable popularity
-   * score. Until that data exists, both tabs display posts newest-first.
-   */
-  renderFeed();
-}
-
-/* SEARCH */
-
-function handleSearch(event) {
-  event.preventDefault();
-
-  if (!searchInput) return;
-
-  searchQuery = searchInput.value.trim();
-  renderFeed();
-}
-
-/* COMPOSER */
-
-function openComposer() {
-  if (!postContent) return;
-
-  postContent.focus();
-
-  if (composer) {
-    composer.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }
-}
-
-/* LOGOUT */
-
-async function logout() {
-  if (isLoggingOut) return;
-
-  isLoggingOut = true;
-
-  if (logoutButton) {
-    logoutButton.disabled = true;
+      if (elements.storyMediaInput) {
+        elements.storyMediaInput.value = "";
+      }
+    }
   }
 
-  try {
-    if (!supabaseClient) {
-      window.location.replace(LOGIN_PAGE);
+  function showMediaPreview(file, type) {
+    if (!file) return;
+
+    const isPost = type === "post";
+    const input = isPost
+      ? elements.postMediaInput
+      : elements.storyMediaInput;
+    const imageElement = isPost
+      ? elements.postMediaPreviewImage
+      : elements.storyPreviewImage;
+    const videoElement = isPost
+      ? elements.postMediaPreviewVideo
+      : elements.storyPreviewVideo;
+    const previewContainer = isPost
+      ? elements.postMediaPreview
+      : elements.storyPreview;
+    const errorElement = isPost
+      ? elements.postFormError
+      : elements.storyFormError;
+
+    const allowedImage = file.type.startsWith("image/");
+    const allowedVideo = file.type.startsWith("video/");
+    const maxBytes = 50 * 1024 * 1024;
+
+    if (!allowedImage && !allowedVideo) {
+      setFormError(
+        errorElement,
+        "Choose a supported image or video file."
+      );
+
+      if (input) input.value = "";
       return;
     }
 
-    const { error } = await supabaseClient.auth.signOut();
+    if (file.size > maxBytes) {
+      setFormError(
+        errorElement,
+        "The selected file must be smaller than 50 MB."
+      );
 
-    if (error) {
-      console.error("Sign-out failed:", error);
-      showToast("Unable to sign out. Please try again.", "error");
+      if (input) input.value = "";
       return;
     }
 
-    window.location.replace(LOGIN_PAGE);
-  } catch (error) {
-    console.error("Unexpected sign-out error:", error);
-    showToast("Unable to sign out. Please try again.", "error");
-  } finally {
-    isLoggingOut = false;
+    clearMediaPreview(type);
 
-    if (logoutButton) {
-      logoutButton.disabled = false;
+    const previewUrl = URL.createObjectURL(file);
+    const media = {
+      file,
+      mediaType: allowedVideo ? "video" : "image",
+      previewUrl
+    };
+
+    if (isPost) {
+      selectedPostMedia = media;
+    } else {
+      selectedStoryMedia = media;
+    }
+
+    if (allowedVideo) {
+      if (imageElement) {
+        imageElement.removeAttribute("src");
+        setHidden(imageElement, true);
+      }
+
+      if (videoElement) {
+        videoElement.src = previewUrl;
+        setHidden(videoElement, false);
+      }
+    } else {
+      if (videoElement) {
+        videoElement.pause();
+        videoElement.removeAttribute("src");
+        videoElement.load();
+        setHidden(videoElement, true);
+      }
+
+      if (imageElement) {
+        imageElement.src = previewUrl;
+        setHidden(imageElement, false);
+      }
+    }
+
+    setHidden(previewContainer, false);
+    setFormError(errorElement, "");
+  }
+
+  function insertAtCursor(input, text) {
+    if (!input) return;
+
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+
+    input.setRangeText(text, start, end, "end");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.focus();
+  }
+
+  function addPostHashtag() {
+    const input = elements.postContent;
+    if (!input) return;
+
+    const prefix = input.value && !/\s$/.test(input.value)
+      ? " #"
+      : "#";
+
+    insertAtCursor(input, `${prefix}`);
+  }
+
+  function addPostEmoji() {
+    const emojis = ["✨", "💜", "🔥", "🌟", "😊"];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const input = elements.postContent;
+
+    if (!input) return;
+
+    const prefix = input.value && !/\s$/.test(input.value)
+      ? " "
+      : "";
+
+    insertAtCursor(input, `${prefix}${emoji}`);
+  }
+
+  function getStoryMediaUrl(story) {
+    return story.image || story.media_url || "";
+  }
+
+  function normalizeStory(row) {
+    if (!row || typeof row !== "object") return null;
+
+    const currentUserId = getCurrentUserId();
+    const user = row.users || {};
+    const storyUserId = row.user_id || "";
+
+    return {
+      id: row.id,
+      userId: storyUserId,
+      image: getStoryMediaUrl(row),
+      mediaType: row.media_type || "image",
+      text: String(row.story_text || ""),
+      createdAt: row.created_at || null,
+      expiresAt: row.expires_at || null,
+      viewersCount: Number(row.viewers_count || 0),
+      displayName: user.display_name ||
+        user.username ||
+        (storyUserId === currentUserId
+          ? getUser().displayName || getUser().username
+          : "") ||
+        "ARS Member",
+      username: user.username || "",
+      avatar: user.avatar || "",
+      isOwnStory: Boolean(
+        currentUserId && storyUserId === currentUserId
+      )
+    };
+  }
+
+  function groupStories(stories) {
+    const groups = new Map();
+
+    stories.forEach(story => {
+      if (!story) return;
+
+      if (!groups.has(story.userId)) {
+        groups.set(story.userId, {
+          userId: story.userId,
+          displayName: story.displayName,
+          username: story.username,
+          avatar: story.avatar,
+          isOwnStory: story.isOwnStory,
+          stories: []
+        });
+      }
+
+      groups.get(story.userId).stories.push(story);
+    });
+
+    return Array.from(groups.values()).map(group => ({
+      ...group,
+      stories: group.stories.sort((first, second) => {
+        const firstTime = new Date(first.createdAt || 0).getTime();
+        const secondTime = new Date(second.createdAt || 0).getTime();
+
+        return firstTime - secondTime;
+      })
+    }));
+  }
+
+  function renderStoryAvatar(group) {
+    const avatar = document.createElement("div");
+    avatar.className = "story-avatar";
+
+    if (group.avatar) {
+      const image = document.createElement("img");
+      image.src = group.avatar;
+      image.alt = "";
+      image.loading = "lazy";
+      image.referrerPolicy = "no-referrer";
+
+      image.addEventListener("error", () => {
+        image.remove();
+        avatar.textContent = getInitial(group.displayName);
+      }, { once: true });
+
+      avatar.appendChild(image);
+    } else {
+      avatar.textContent = getInitial(group.displayName);
+    }
+
+    return avatar;
+  }
+
+  function renderStories() {
+    const track = elements.storiesTrack;
+    if (!track) return;
+
+    const fragment = document.createDocumentFragment();
+
+    storyGroups.forEach((group, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "story-item";
+      button.dataset.storyGroupIndex = String(index);
+      button.setAttribute(
+        "aria-label",
+        `View ${group.displayName}'s story`
+      );
+
+      const avatar = renderStoryAvatar(group);
+      const name = document.createElement("span");
+      name.className = "story-item-name";
+      name.textContent = group.isOwnStory
+        ? "Your story"
+        : group.displayName;
+
+      button.append(avatar, name);
+      fragment.appendChild(button);
+    });
+
+    track.replaceChildren(fragment);
+    setHidden(elements.storiesLoading, true);
+  }
+
+  async function loadStories() {
+    if (!elements.storiesTrack) return;
+
+    setHidden(elements.storiesLoading, false);
+
+    try {
+      const now = new Date().toISOString();
+
+      const { data, error } = await supabaseClient
+        .from("stories")
+        .select(
+          "id, created_at, user_id, image, viewers_count, expires_at, media_type, story_text, users(id, username, display_name, avatar)"
+        )
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const stories = (Array.isArray(data) ? data : [])
+        .map(normalizeStory)
+        .filter(story => story && story.userId && story.image);
+
+      storyGroups = groupStories(stories);
+      renderStories();
+    } catch (error) {
+      console.error("ARS stories loading failed:", error);
+      setHidden(elements.storiesLoading, true);
+
+      showToast(
+        "Stories could not be loaded right now.",
+        "error"
+      );
     }
   }
-}
 
-/* UNAVAILABLE SECTIONS */
-
-function openUnavailableSection(section) {
-  const messages = {
-    notifications: "Notifications are not available yet.",
-    explore: "Explore is not available yet.",
-    messages: "Messages are not available yet.",
-    bookmarks: "Bookmarks are not available yet.",
-    profile: "Profile details are not available yet.",
-    settings: "Settings are not available yet.",
-  };
-
-  const message = messages[section];
-
-  if (message) {
-    showToast(message, "info");
-  }
-}
-
-/* NAVIGATION */
-
-function handleNavigationLink(event, section) {
-  event.preventDefault();
-
-  if (section === "home") {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-    return;
+  function stopStoryViewerTimer() {
+    if (storyViewerTimer !== null) {
+      window.clearTimeout(storyViewerTimer);
+      storyViewerTimer = null;
+    }
   }
 
-  openUnavailableSection(section);
-}
+  function getActiveStory() {
+    const group = storyGroups[activeStoryGroupIndex];
+    if (!group) return null;
 
-/* EVENT SETUP */
-
-function setupEvents() {
-  if (postContent) {
-    postContent.addEventListener("input", updateCharacterCount);
+    return group.stories[activeStoryIndex] || null;
   }
 
-  if (composerForm) {
-    composerForm.addEventListener("submit", publishPost);
-  }
+  function renderStoryProgress(group) {
+    const container = elements.storyViewerProgress;
+    if (!container) return;
 
-  if (searchForm) {
-    searchForm.addEventListener("submit", handleSearch);
-  }
+    const fragment = document.createDocumentFragment();
 
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      if (!searchInput.value.trim() && searchQuery) {
-        searchQuery = "";
-        renderFeed();
-      }
-    });
-  }
+    group.stories.forEach((story, index) => {
+      const segment = document.createElement("span");
+      segment.className = "story-progress-segment";
 
-  feedTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      selectFeed(tab.dataset.feed);
-    });
-
-    tab.addEventListener("keydown", (event) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
-        return;
+      if (index < activeStoryIndex) {
+        segment.classList.add("is-complete");
+      } else if (index === activeStoryIndex) {
+        segment.classList.add("is-active");
       }
 
-      event.preventDefault();
-
-      const currentIndex = feedTabs.indexOf(tab);
-      const direction = event.key === "ArrowRight" ? 1 : -1;
-      const nextIndex =
-        (currentIndex + direction + feedTabs.length) % feedTabs.length;
-
-      const nextTab = feedTabs[nextIndex];
-
-      if (nextTab) {
-        selectFeed(nextTab.dataset.feed);
-        nextTab.focus();
-      }
+      segment.dataset.storyId = String(story.id);
+      fragment.appendChild(segment);
     });
-  });
 
-  if (logoutButton) {
-    logoutButton.addEventListener("click", logout);
+    container.replaceChildren(fragment);
   }
 
-  if (profileMenuButton) {
-    profileMenuButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleProfileMenu();
+  function renderActiveStory() {
+    const group = storyGroups[activeStoryGroupIndex];
+    const story = getActiveStory();
+
+    if (!group || !story) {
+      closeStoryViewer();
+      return;
+    }
+
+    stopStoryViewerTimer();
+
+    setText(elements.storyViewerDisplayName, story.displayName);
+    setText(elements.storyViewerTime, formatDate(story.createdAt));
+    setText(elements.storyViewerCaption, story.text);
+
+    applyAvatar(elements.storyViewerAvatar, {
+      displayName: story.displayName,
+      username: story.username,
+      avatar: story.avatar
     });
+
+    const isVideo = story.mediaType === "video";
+
+    if (elements.storyViewerImage) {
+      elements.storyViewerImage.removeAttribute("src");
+      setHidden(elements.storyViewerImage, isVideo);
+    }
+
+    if (elements.storyViewerVideo) {
+      elements.storyViewerVideo.pause();
+      elements.storyViewerVideo.removeAttribute("src");
+      elements.storyViewerVideo.load();
+      setHidden(elements.storyViewerVideo, !isVideo);
+    }
+
+    if (isVideo && elements.storyViewerVideo) {
+      elements.storyViewerVideo.src = story.image;
+      elements.storyViewerVideo.controls = true;
+    } else if (elements.storyViewerImage) {
+      elements.storyViewerImage.src = story.image;
+      elements.storyViewerImage.alt = `${story.displayName}'s story`;
+    }
+
+    setHidden(elements.storyViewerCaption, !story.text);
+    renderStoryProgress(group);
+
+    storyViewerTimer = window.setTimeout(() => {
+      showNextStory();
+    }, isVideo ? 15000 : 5000);
   }
 
-  if (profileMenu) {
-    profileMenu.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-  }
-
-  document.addEventListener("click", (event) => {
+  function openStoryViewer(groupIndex, storyIndex = 0) {
     if (
-      profileMenu &&
-      profileMenuButton &&
-      !profileMenu.contains(event.target) &&
-      !profileMenuButton.contains(event.target)
+      groupIndex < 0 ||
+      groupIndex >= storyGroups.length
     ) {
-      closeProfileMenu();
+      return;
     }
-  });
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeProfileMenu();
-    }
-  });
+    activeStoryGroupIndex = groupIndex;
+    activeStoryIndex = storyIndex;
 
-  if (createPostButton) {
-    createPostButton.addEventListener("click", openComposer);
+    openDialog(elements.storyViewerDialog);
+    renderActiveStory();
   }
 
-  if (messagesLink) {
-    messagesLink.addEventListener("click", (event) => {
-      event.preventDefault();
-      showToast("Messages will be enabled later.", "info");
+  function closeStoryViewer() {
+    stopStoryViewerTimer();
+
+    if (elements.storyViewerVideo) {
+      elements.storyViewerVideo.pause();
+    }
+
+    closeDialog(elements.storyViewerDialog);
+  }
+
+  function showNextStory() {
+    stopStoryViewerTimer();
+
+    const group = storyGroups[activeStoryGroupIndex];
+
+    if (!group) {
+      closeStoryViewer();
+      return;
+    }
+
+    if (activeStoryIndex + 1 < group.stories.length) {
+      activeStoryIndex += 1;
+      renderActiveStory();
+      return;
+    }
+
+    if (activeStoryGroupIndex + 1 < storyGroups.length) {
+      activeStoryGroupIndex += 1;
+      activeStoryIndex = 0;
+      renderActiveStory();
+      return;
+    }
+
+    closeStoryViewer();
+  }
+
+  function showPreviousStory() {
+    stopStoryViewerTimer();
+
+    if (activeStoryIndex > 0) {
+      activeStoryIndex -= 1;
+      renderActiveStory();
+      return;
+    }
+
+    if (activeStoryGroupIndex > 0) {
+      activeStoryGroupIndex -= 1;
+
+      const previousGroup = storyGroups[activeStoryGroupIndex];
+      activeStoryIndex = previousGroup.stories.length - 1;
+
+      renderActiveStory();
+      return;
+    }
+
+    renderActiveStory();
+        }
+   async function recordStoryView(story) {
+    const viewerId = getCurrentUserId();
+
+    if (!viewerId || !story?.id || story.userId === viewerId) {
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from("story_views")
+        .upsert(
+          {
+            story_id: story.id,
+            viewer_id: viewerId
+          },
+          {
+            onConflict: "story_id,viewer_id",
+            ignoreDuplicates: true
+          }
+        );
+
+      if (error) {
+        console.warn("ARS story view could not be recorded:", error);
+      }
+    } catch (error) {
+      console.warn("ARS story view error:", error);
+    }
+  }
+
+  async function publishStory(event) {
+    event?.preventDefault();
+
+    const userId = getCurrentUserId();
+    const media = selectedStoryMedia;
+    const caption = elements.storyText?.value.trim() || "";
+
+    if (!userId) {
+      showToast("Please log in to publish a story.", "error");
+      return;
+    }
+
+    if (!media) {
+      setFormError(
+        elements.storyFormError,
+        "Choose an image or video for your story."
+      );
+      return;
+    }
+
+    const button = elements.publishStoryButton;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Publishing...";
+    }
+
+    setFormError(elements.storyFormError, "");
+
+    try {
+      showToast(
+        "Story publishing requires a configured Supabase Storage bucket.",
+        "error"
+      );
+    } catch (error) {
+      console.error("ARS story publishing failed:", error);
+
+      setFormError(
+        elements.storyFormError,
+        error?.message || "Could not publish your story."
+      );
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Publish Story";
+      }
+    }
+  }
+
+  function resetStoryForm() {
+    clearMediaPreview("story");
+
+    if (elements.storyText) {
+      elements.storyText.value = "";
+    }
+
+    setFormError(elements.storyFormError, "");
+  }
+
+  function openStoryComposer() {
+    resetStoryForm();
+    openDialog(elements.storyDialog);
+  }
+
+  function closeStoryComposer() {
+    closeDialog(elements.storyDialog);
+    resetStoryForm();
+  }
+
+  function getSelectedFeedTab() {
+    const selected = $(
+      '[data-feed-tab][aria-selected="true"]'
+    );
+
+    return selected?.dataset.feedTab || "latest";
+  }
+
+  function updateFeedTabs(selectedTab) {
+    const tabs = $$("[data-feed-tab]");
+
+    tabs.forEach(tab => {
+      const active = tab.dataset.feedTab === selectedTab;
+
+      tab.setAttribute("aria-selected", String(active));
+      tab.classList.toggle("is-active", active);
+      tab.tabIndex = active ? 0 : -1;
     });
+
+    if (elements.feedSectionTitle) {
+      elements.feedSectionTitle.textContent =
+        selectedTab === "following"
+          ? "Following"
+          : "Latest Posts";
+    }
   }
 
-  navigationLinks.forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const section = link.dataset.section;
+  function selectFeedTab(tabName) {
+    const allowedTabs = new Set(["latest", "following"]);
 
-      if (!section) {
-        event.preventDefault();
+    if (!allowedTabs.has(tabName)) {
+      return;
+    }
+
+    updateFeedTabs(tabName);
+
+    if (tabName === "latest") {
+      loadPosts({ reset: true });
+      return;
+    }
+
+    loadFollowingFeed();
+  }
+
+  async function loadFollowingFeed() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+      setFeedError("Please log in to view your following feed.");
+      return;
+    }
+
+    if (isLoadingFeed) {
+      return;
+    }
+
+    isLoadingFeed = true;
+    setFeedLoading("Loading posts from accounts you follow...");
+
+    try {
+      const { data: relationships, error: relationshipError } =
+        await supabaseClient
+          .from("followers")
+          .select("following_id")
+          .eq("follower_id", userId);
+
+      if (relationshipError) {
+        throw relationshipError;
+      }
+
+      const followingIds = [
+        ...new Set(
+          (relationships || [])
+            .map(row => row.following_id)
+            .filter(Boolean)
+        )
+      ];
+
+      if (followingIds.length === 0) {
+        loadedPosts = [];
+        hasMorePosts = false;
+        renderFeed();
+        setFeedReady();
+        setHidden(elements.feedEmptyState, false);
         return;
       }
 
-      handleNavigationLink(event, section);
-    });
-  });
+      const { data, error } = await supabaseClient
+        .from("posts")
+        .select(
+          "id, created_at, user_id, content, image, media_type, likes_count, comments_count, reposts_count, users(id, username, display_name, avatar, verified)"
+        )
+        .in("user_id", followingIds)
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
 
-  document.addEventListener("click", (event) => {
-    const deleteButton = event.target.closest("[data-delete-post]");
+      if (error) {
+        throw error;
+      }
 
-    if (!deleteButton) return;
+      loadedPosts = (data || [])
+        .map(normalizePost)
+        .filter(Boolean);
 
-    event.preventDefault();
+      hasMorePosts = false;
+      renderFeed();
+      setFeedReady();
+    } catch (error) {
+      console.error("ARS following feed failed:", error);
 
-    const postId = deleteButton.dataset.deletePost;
+      setFeedError(
+        error?.message || "Could not load your following feed."
+      );
+    } finally {
+      isLoadingFeed = false;
+    }
+  }
 
-    if (postId) {
+  async function loadAccountCounts() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+      return;
+    }
+
+    try {
+      const [
+        postsResult,
+        followersResult,
+        followingResult
+      ] = await Promise.all([
+        supabaseClient
+          .from("posts")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabaseClient
+          .from("followers")
+          .select("id", { count: "exact", head: true })
+          .eq("following_id", userId),
+        supabaseClient
+          .from("followers")
+          .select("id", { count: "exact", head: true })
+          .eq("follower_id", userId)
+      ]);
+
+      if (postsResult.error) {
+        throw postsResult.error;
+      }
+
+      if (followersResult.error) {
+        throw followersResult.error;
+      }
+
+      if (followingResult.error) {
+        throw followingResult.error;
+      }
+
+      setText(
+        elements.accountPostsCount,
+        postsResult.count ?? 0
+      );
+
+      setText(
+        elements.accountFollowersCount,
+        followersResult.count ?? 0
+      );
+
+      setText(
+        elements.accountFollowingCount,
+        followingResult.count ?? 0
+      );
+    } catch (error) {
+      console.warn("ARS account counts failed:", error);
+    }
+  }
+
+  async function loadNotificationsCount() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+      return;
+    }
+
+    try {
+      const { count, error } = await supabaseClient
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_read", false);
+
+      if (error) {
+        throw error;
+      }
+
+      const unreadCount = Number(count || 0);
+
+      [
+        elements.notificationBadge,
+        elements.mobileNotificationBadge
+      ].forEach(badge => {
+        if (!badge) {
+          return;
+        }
+
+        badge.textContent = unreadCount > 99
+          ? "99+"
+          : String(unreadCount);
+
+        setHidden(badge, unreadCount === 0);
+      });
+    } catch (error) {
+      console.warn("ARS notification count failed:", error);
+    }
+  }
+
+  async function loadSuggestions() {
+    const userId = getCurrentUserId();
+
+    if (!userId || !elements.suggestionsList) {
+      return;
+    }
+
+    setHidden(elements.suggestionsLoading, false);
+
+    try {
+      const { data: relationships, error: relationshipError } =
+        await supabaseClient
+          .from("followers")
+          .select("following_id")
+          .eq("follower_id", userId);
+
+      if (relationshipError) {
+        throw relationshipError;
+      }
+
+      const excludedIds = new Set([
+        userId,
+        ...(relationships || []).map(row => row.following_id)
+      ]);
+
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select("id, username, display_name, avatar, verified, plan")
+        .neq("id", userId)
+        .limit(20);
+
+      if (error) {
+        throw error;
+      }
+
+      const suggestions = (data || [])
+        .filter(user => !excludedIds.has(user.id))
+        .slice(0, 8);
+
+      const fragment = document.createDocumentFragment();
+
+      suggestions.forEach(user => {
+        const item = document.createElement("div");
+        item.className = "suggestion-item";
+
+        const avatar = document.createElement("div");
+        avatar.className = "suggestion-avatar";
+        applyAvatar(avatar, user);
+
+        const details = document.createElement("div");
+        details.className = "suggestion-details";
+
+        const name = document.createElement("strong");
+        name.textContent =
+          user.display_name || user.username || "ARS Member";
+
+        const username = document.createElement("span");
+        username.textContent = user.username
+          ? `@${user.username.replace(/^@/, "")}`
+          : "";
+
+        const followButton = document.createElement("button");
+        followButton.type = "button";
+        followButton.textContent = "Follow";
+        followButton.dataset.action = "follow-user";
+        followButton.dataset.userId = user.id;
+
+        details.append(name, username);
+        item.append(avatar, details, followButton);
+        fragment.appendChild(item);
+      });
+
+      elements.suggestionsList.replaceChildren(fragment);
+    } catch (error) {
+      console.warn("ARS suggestions failed:", error);
+    } finally {
+      setHidden(elements.suggestionsLoading, true);
+    }
+  }
+
+  async function followUser(targetUserId) {
+    const userId = getCurrentUserId();
+
+    if (!userId || !targetUserId || userId === targetUserId) {
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from("followers")
+        .insert({
+          follower_id: userId,
+          following_id: targetUserId
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      showToast("You are now following this account.", "success");
+      await Promise.all([
+        loadSuggestions(),
+        loadAccountCounts()
+      ]);
+    } catch (error) {
+      console.error("ARS follow action failed:", error);
+
+      showToast(
+        error?.code === "23505"
+          ? "You are already following this account."
+          : error?.message || "Could not follow this account.",
+        "error"
+      );
+    }
+}
+   let isSpinningWheel = false;
+
+  async function loadWheelAttempts() {
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+      setText(elements.wheelAttemptsText, "Log in to use the wheel");
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { count, error } = await supabaseClient
+        .from("wheel_spins")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("spin_date", today);
+
+      if (error) {
+        throw error;
+      }
+
+      setText(
+        elements.wheelAttemptsText,
+        `${count || 0} spins used today`
+      );
+    } catch (error) {
+      console.warn("ARS wheel attempts failed:", error);
+      setText(elements.wheelAttemptsText, "Attempts unavailable");
+    }
+  }
+
+  async function spinWheel() {
+    if (isSpinningWheel) {
+      return;
+    }
+
+    const userId = getCurrentUserId();
+
+    if (!userId) {
+      showToast("Please log in to spin the wheel.", "error");
+      return;
+    }
+
+    isSpinningWheel = true;
+
+    if (elements.spinWheelButton) {
+      elements.spinWheelButton.disabled = true;
+      elements.spinWheelButton.textContent = "Spinning...";
+    }
+
+    setText(elements.wheelDialogStatus, "Finding your challenge...");
+    setHidden(elements.wheelDialogResult, true);
+
+    try {
+      const { data: challenges, error: challengeError } =
+        await supabaseClient
+          .from("wheel_challenges")
+          .select("id, title, category, reward_xp, image_required")
+          .limit(100);
+
+      if (challengeError) {
+        throw challengeError;
+      }
+
+      if (!Array.isArray(challenges) || challenges.length === 0) {
+        throw new Error("No wheel challenges are available yet.");
+      }
+
+      const challenge =
+        challenges[Math.floor(Math.random() * challenges.length)];
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { count, error: countError } = await supabaseClient
+        .from("wheel_spins")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("spin_date", today);
+
+      if (countError) {
+        throw countError;
+      }
+
+      const attemptNumber = (count || 0) + 1;
+
+      const { error: insertError } = await supabaseClient
+        .from("wheel_spins")
+        .insert({
+          user_id: userId,
+          spin_date: today,
+          attempt_number: attemptNumber,
+          reward_code: "challenge",
+          reward_payload: {
+            challenge_id: challenge.id,
+            title: challenge.title,
+            category: challenge.category,
+            reward_xp: challenge.reward_xp,
+            image_required: challenge.image_required
+          }
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      if (elements.wheelVisual) {
+        elements.wheelVisual.classList.remove("is-spinning");
+        void elements.wheelVisual.offsetWidth;
+        elements.wheelVisual.classList.add("is-spinning");
+      }
+
+      setText(elements.wheelDialogStatus, "Your challenge is ready!");
+      setText(elements.wheelDialogResult, challenge.title);
+      setHidden(elements.wheelDialogResult, false);
+      setText(elements.wheelResultText, challenge.title);
+      setHidden(elements.wheelResult, false);
+
+      showToast("Your challenge has been selected!", "success");
+      await loadWheelAttempts();
+    } catch (error) {
+      console.error("ARS wheel spin failed:", error);
+
+      setText(
+        elements.wheelDialogStatus,
+        error?.message || "Could not spin the wheel."
+      );
+
+      showToast(
+        error?.message || "Could not spin the wheel.",
+        "error"
+      );
+    } finally {
+      isSpinningWheel = false;
+
+      if (elements.spinWheelButton) {
+        elements.spinWheelButton.disabled = false;
+        elements.spinWheelButton.textContent = "Spin the Wheel";
+      }
+    }
+  }
+
+  async function logout() {
+    const confirmed = window.confirm("Are you sure you want to log out?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+
+      removeStorage(STORAGE.user);
+      removeStorage(STORAGE.loggedIn);
+      window.location.replace(LOGIN_PAGE);
+    } catch (error) {
+      console.error("ARS logout failed:", error);
+
+      showToast(
+        error?.message || "Could not log out. Please try again.",
+        "error"
+      );
+    }
+  }
+
+  function handlePostListClick(event) {
+    const button = event.target.closest("[data-action]");
+
+    if (!button || !elements.postsList?.contains(button)) {
+      return;
+    }
+
+    const action = button.dataset.action;
+    const postId = button.dataset.postId;
+
+    if (action === "delete-post" && postId) {
       deletePost(postId);
     }
-  });
-}
-
-/* INITIALIZATION */
-
-async function init() {
-  if (currentYearElement) {
-    currentYearElement.textContent = String(new Date().getFullYear());
   }
 
-  updateCharacterCount();
-  updateFeedTabs();
-  setupEvents();
-  closeProfileMenu();
+  function handleStoryTrackClick(event) {
+    const button = event.target.closest("[data-story-group-index]");
 
-  const hasSession = await requireSession();
+    if (!button || !elements.storiesTrack?.contains(button)) {
+      return;
+    }
 
-  if (!hasSession) return;
+    const groupIndex = Number(button.dataset.storyGroupIndex);
 
-  renderAccount();
-  await refreshAccountFromSupabase();
-  await loadPosts();
-}
+    if (Number.isInteger(groupIndex)) {
+      openStoryViewer(groupIndex);
+    }
+  }
 
-/* START APPLICATION */
+  function handleSuggestionClick(event) {
+    const button = event.target.closest('[data-action="follow-user"]');
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init, { once: true });
-} else {
-  init();
-}
+    if (!button || !elements.suggestionsList?.contains(button)) {
+      return;
+    }
+
+    const targetUserId = button.dataset.userId;
+
+    if (targetUserId) {
+      followUser(targetUserId);
+    }
+  }
+
+  function setupEvents() {
+    elements.openPostDialog?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+    elements.composerOpenButton?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+    elements.composerPrompt?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+    elements.mobileCreatePostButton?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+    elements.emptyFeedCreateButton?.addEventListener(
+      "click",
+      openPostComposer
+    );
+
+    elements.createPostForm?.addEventListener(
+      "submit",
+      publishPost
+    );
+
+    elements.postContent?.addEventListener(
+      "input",
+      updateCharacterCount
+    );
+
+    elements.postAddHashtag?.addEventListener(
+      "click",
+      addPostHashtag
+    );
+
+    elements.choosePostHashtag?.addEventListener(
+      "click",
+      addPostHashtag
+    );
+
+    elements.postAddEmoji?.addEventListener(
+      "click",
+      addPostEmoji
+    );
+
+    elements.choosePostImage?.addEventListener("click", () => {
+      if (elements.postMediaInput) {
+        elements.postMediaInput.accept = "image/*";
+        elements.postMediaInput.click();
+      }
+    });
+
+    elements.choosePostVideo?.addEventListener("click", () => {
+      if (elements.postMediaInput) {
+        elements.postMediaInput.accept = "video/*";
+        elements.postMediaInput.click();
+      }
+    });
+
+    elements.composerPhotoButton?.addEventListener("click", () => {
+      openPostComposer();
+
+      if (elements.postMediaInput) {
+        elements.postMediaInput.accept = "image/*";
+        elements.postMediaInput.click();
+      }
+    });
+
+    elements.composerVideoButton?.addEventListener("click", () => {
+      openPostComposer();
+
+      if (elements.postMediaInput) {
+        elements.postMediaInput.accept = "video/*";
+        elements.postMediaInput.click();
+      }
+    });
+
+    elements.postMediaInput?.addEventListener("change", event => {
+      const file = event.target.files?.[0];
+
+      if (file) {
+        showMediaPreview(file, "post");
+      }
+    });
+
+    elements.removePostMedia?.addEventListener("click", () => {
+      clearMediaPreview("post");
+    });
+
+    elements.postsList?.addEventListener(
+      "click",
+      handlePostListClick
+    );
+
+    elements.feedRefreshButton?.addEventListener("click", () => {
+      loadPosts({ reset: true });
+    });
+
+    elements.retryFeedButton?.addEventListener("click", () => {
+      loadPosts({ reset: true });
+    });
+
+    elements.loadMorePosts?.addEventListener("click", () => {
+      loadPosts({ reset: false });
+    });
+
+    elements.storiesTrack?.addEventListener(
+      "click",
+      handleStoryTrackClick
+    );
+
+    elements.openStoryDialog?.addEventListener(
+      "click",
+      openStoryComposer
+    );
+
+    elements.chooseStoryMedia?.addEventListener("click", () => {
+      elements.storyMediaInput?.click();
+    });
+
+    elements.storyUploadArea?.addEventListener("click", event => {
+      if (event.target.closest("button")) {
+        return;
+      }
+
+      elements.storyMediaInput?.click();
+    });
+
+    elements.storyMediaInput?.addEventListener("change", event => {
+      const file = event.target.files?.[0];
+
+      if (file) {
+        showMediaPreview(file, "story");
+      }
+    });
+
+    elements.removeStoryMedia?.addEventListener("click", () => {
+      clearMediaPreview("story");
+    });
+
+    elements.createStoryForm?.addEventListener(
+      "submit",
+      publishStory
+    );
+
+    elements.storyDialog?.addEventListener("close", resetStoryForm);
+
+    elements.closeStoryViewer?.addEventListener(
+      "click",
+      closeStoryViewer
+    );
+
+    elements.storyPreviousButton?.addEventListener(
+      "click",
+      showPreviousStory
+    );
+
+    elements.storyNextButton?.addEventListener(
+      "click",
+      showNextStory
+    );
+
+    elements.storyViewerDialog?.addEventListener("click", event => {
+      if (event.target === elements.storyViewerDialog) {
+        closeStoryViewer();
+      }
+    });
+
+    elements.viewAllStories?.addEventListener("click", () => {
+      if (storyGroups.length > 0) {
+        openStoryViewer(0);
+      }
+    });
+
+    elements.refreshSuggestionsButton?.addEventListener(
+      "click",
+      loadSuggestions
+    );
+
+    elements.suggestionsList?.addEventListener(
+      "click",
+      handleSuggestionClick
+    );
+
+    elements.openWheelButton?.addEventListener("click", () => {
+      openDialog(elements.wheelDialog);
+      loadWheelAttempts();
+    });
+
+    elements.spinWheelButton?.addEventListener(
+      "click",
+      spinWheel
+    );
+
+    elements.mobileSearchButton?.addEventListener("click", () => {
+      window.location.href = "search.html";
+    });
+
+    elements.mobileNotificationsButton?.addEventListener(
+      "click",
+      () => {
+        window.location.href = "notifications.html";
+      }
+    );
+
+    elements.sidebarProfileLink?.addEventListener("click", event => {
+      event.preventDefault();
+      window.location.href = "profile.html";
+    });
+
+    $$("[data-feed-tab]").forEach(tab => {
+      tab.addEventListener("click", () => {
+        selectFeedTab(tab.dataset.feedTab);
+      });
+    });
+
+    $$("[data-action='logout']").forEach(button => {
+      button.addEventListener("click", logout);
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        stopStoryViewerTimer();
+      }
+    });
+  }
+
+  async function init() {
+    if (elements.currentYear) {
+      elements.currentYear.textContent = String(
+        new Date().getFullYear()
+      );
+    }
+
+    setupEvents();
+    renderAccount();
+
+    const authenticated = await requireSession();
+
+    if (!authenticated) {
+      return;
+    }
+
+    renderAccount();
+    updateCharacterCount();
+
+    await Promise.all([
+      refreshAccountFromSupabase(),
+      loadPosts({ reset: true }),
+      loadStories(),
+      loadAccountCounts(),
+      loadNotificationsCount(),
+      loadSuggestions(),
+      loadWheelAttempts()
+    ]);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, {
+      once: true
+    });
+  } else {
+    init();
+  }
 })();
