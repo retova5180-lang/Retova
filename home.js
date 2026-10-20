@@ -238,13 +238,14 @@
       : '<span class="avatar">' + escapeHTML(author.trim().charAt(0).toUpperCase()) + "</span>";
     const body = post.content ? '<div class="post-body">' + escapeHTML(post.content) + "</div>" : "";
     const location = post.location ? '<div class="post-location">⌖ ' + escapeHTML(post.location) + "</div>" : "";
+    const tags = Array.isArray(post.hashtags) ? post.hashtags : [];
+    const tagMarkup = tags.length ? '<div class="post-tags">' + tags.map(tag => escapeHTML(String(tag).startsWith("#") ? tag : "#" + tag)).join(" ") + "</div>" : "";
     const commentsEnabled = post.allow_comments !== false;
     return '<article class="panel post-card" data-post-id="' + escapeHTML(post.id) + '">' +
       '<div class="post-head">' + avatar +
       '<div class="post-author"><strong>' + escapeHTML(author) + (profile.verified ? " ✓" : "") + '</strong><span>' + escapeHTML(username) + " · " + escapeHTML(relativeTime(post.created_at)) + "</span></div>" +
       '<button class="post-menu" type="button" data-post-menu="' + escapeHTML(post.id) + '" aria-label="Post options">···</button></div>' +
-      body + location + mediaMarkup(post) +
-      '<div class="post-tags" data-post-tags="' + escapeHTML(post.id) + '"></div>' +
+      body + location + mediaMarkup(post) + tagMarkup +
       '<div class="post-stats"><span><b data-likes-count="' + escapeHTML(post.id) + '">' + Number(post.likes_count || 0) + '</b> likes</span><span>' + Number(post.comments_count || 0) + ' comments · ' + Number(post.views_count || 0) + ' views</span></div>' +
       '<div class="post-actions"><button class="post-action" type="button" data-like="' + escapeHTML(post.id) + '">♡ Like</button><button class="post-action" type="button" data-comment-focus="' + escapeHTML(post.id) + '">▤ Comment</button><button class="post-action" type="button" data-share="' + escapeHTML(post.id) + '">↗ Share</button><button class="post-action" type="button" data-save="' + escapeHTML(post.id) + '">♧ Save</button></div>' +
       (commentsEnabled ? '<div class="post-comments"><div class="comment-list" id="comments-' + escapeHTML(post.id) + '"></div><form class="comment-form" data-comment-form="' + escapeHTML(post.id) + '"><input name="comment" maxlength="1000" placeholder="Write a comment…" aria-label="Write a comment"><button type="submit">Send</button></form></div>' : "") +
@@ -446,30 +447,26 @@
         mediaType = fileMediaType(file);
         mediaUrl = await uploadMedia(file, "post-media");
       }
-      const mentions = $("#postMention").value.trim();
+      const mentions = $("#postMention").value.trim().split(/[\s,]+/).map(item => item.replace(/^@/, "")).filter(Boolean);
       const location = $("#postLocation").value.trim();
-      const hashtags = parseTags($("#postHashtags").value + " " + content).filter(tag => !content.includes(tag) || true);
+      const hashtags = parseTags($("#postHashtags").value + " " + content).map(tag => tag.replace(/^#/, ""));
       const post = {
         user_id: currentUserId(),
         content,
         image: mediaUrl,
         media_type: mediaType,
         privacy: $("#postPrivacy").value,
+        location: location || null,
+        mentions,
+        hashtags,
+        allow_comments: $("#allowComments").checked,
         likes_count: 0,
         comments_count: 0,
         reposts_count: 0,
         views_count: 0
       };
-      if (location) post.location = location;
-      if (mentions) post.mentions = mentions.split(/[\s,]+/).map(item => item.replace(/^@/, "")).filter(Boolean);
       const { data, error } = await supabase.from("posts").insert(post).select("id").single();
       if (error) throw error;
-
-      if (hashtags.length) {
-        const hashtagRows = hashtags.map(tag => ({ post_id: data.id, hashtag: tag.replace(/^#/, "") }));
-        const { error: tagError } = await supabase.from("post_hashtags").insert(hashtagRows);
-        if (tagError) console.warn("Post published but hashtags were not saved:", tagError.message);
-      }
 
       const shouldStory = $("#postToStory").getAttribute("aria-pressed") === "true";
       if (shouldStory && file && mediaType !== "audio") {
@@ -751,15 +748,24 @@
     openDialog("storyViewer");
     const userId = currentUserId();
     if (userId && userId !== story.user_id) {
-      const { error } = await supabase.from("story_views").upsert({ story_id: story.id, user_id: userId }, { onConflict: "story_id,user_id" });
+      const { error } = await supabase.from("story_views").insert({ story_id: story.id, viewer_id: userId });
       if (error) console.warn("Story view was not recorded:", error.message);
     }
     void user;
   }
 
   async function reactToStory(storyId, emoji) {
-    toast("Reaction selected: " + emoji);
-    // The current schema does not expose a confirmed story-reactions table, so no fake server save is attempted.
+    if (!currentUserId()) return toast("Sign in to react to stories.");
+    const allowed = ["💜", "🔥", "😂", "😍", "👏", "😮"];
+    if (!allowed.includes(emoji)) return;
+    try {
+      const { error } = await supabase.from("story_reactions").upsert({ story_id: storyId, user_id: currentUserId(), emoji }, { onConflict: "story_id,user_id" });
+      if (error) throw error;
+      toast("Reaction sent.");
+    } catch (error) {
+      console.error("Story reaction failed:", error);
+      toast("Couldn't send the reaction. Please try again.");
+    }
   }
 
   async function searchPosts(query) {
