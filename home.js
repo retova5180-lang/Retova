@@ -225,7 +225,11 @@
       return;
     }
 
-    feed.innerHTML = rows.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
+    const displayRows = await Promise.all(rows.map(async post => ({
+      ...post,
+      image: await resolvePostMedia(post.image)
+    })));
+    feed.innerHTML = displayRows.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
     loadComments(rows.map(post => post.id)).catch(error => console.warn("Comments load warning:", error));
     loadLikeStates(rows.map(post => post.id)).catch(error => console.warn("Like state warning:", error));
     renderTrending(rows);
@@ -379,8 +383,22 @@
     const path = userId + "/" + Date.now() + "-" + crypto.randomUUID() + "." + extension;
     const { data, error } = await supabase.storage.from(bucket).upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
     if (error) throw error;
+    if (bucket === "private-post-media" || bucket === "story-media") {
+      return data.path;
+    }
     const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(data.path);
     return publicData.publicUrl;
+  }
+
+  async function resolvePostMedia(image) {
+    if (!image) return "";
+    if (/^https?:\/\//i.test(image)) return image;
+    const { data, error } = await supabase.storage.from("private-post-media").createSignedUrl(image, 3600);
+    if (error) {
+      console.warn("Post media URL unavailable:", error.message);
+      return "";
+    }
+    return data?.signedUrl || "";
   }
 
   function fileMediaType(file) {
@@ -446,7 +464,7 @@
       let mediaType = "text";
       if (file) {
         mediaType = fileMediaType(file);
-        mediaUrl = await uploadMedia(file, "post-media");
+        mediaUrl = await uploadMedia(file, "private-post-media");
       }
       const mentions = $("#postMention").value.trim().split(/[\s,]+/).map(item => item.replace(/^@/, "")).filter(Boolean);
       const location = $("#postLocation").value.trim();
@@ -471,10 +489,11 @@
 
       const shouldStory = $("#postToStory").getAttribute("aria-pressed") === "true";
       if (shouldStory && file && mediaType !== "audio") {
+        const storyMediaPath = await uploadMedia(file, "story-media");
         const { error: storyError } = await supabase.from("stories").insert({
           user_id: currentUserId(),
-          image: mediaUrl,
-          original_image: mediaUrl,
+          image: storyMediaPath,
+          original_image: storyMediaPath,
           media_type: mediaType === "video" ? "video" : "image",
           story_text: content.slice(0, 240),
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -836,9 +855,19 @@
     const story = state.stories.find(item => String(item.id) === String(storyId));
     if (!story) return;
     const isVideo = story.media_type === "video";
+    let storyMediaUrl = story.image || "";
+    if (storyMediaUrl && !/^https?:\/\//i.test(storyMediaUrl)) {
+      const { data: signedMedia, error: mediaError } = await supabase.storage.from("story-media").createSignedUrl(storyMediaUrl, 3600);
+      if (mediaError) {
+        console.warn("Story media could not be opened:", mediaError.message);
+        toast("This story media is unavailable to your account.");
+        return;
+      }
+      storyMediaUrl = signedMedia?.signedUrl || "";
+    }
     const media = isVideo
-      ? '<video controls autoplay playsinline src="' + escapeHTML(story.image) + '"></video>'
-      : '<img src="' + escapeHTML(story.image) + '" alt="Story">';
+      ? '<video controls autoplay playsinline src="' + escapeHTML(storyMediaUrl) + '"></video>'
+      : '<img src="' + escapeHTML(storyMediaUrl) + '" alt="Story">';
     $("#storyViewerContent").innerHTML = media + (story.story_text ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
     $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button><span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span><div class=\"story-viewer-list\" id=\"storyViewerList\"></div>";
     openDialog("storyViewer");
@@ -908,7 +937,11 @@
     const ids = [...new Set(state.posts.map(post => post.user_id).filter(Boolean))];
     const { data: users } = await supabase.from("users").select("id, username, display_name, avatar, verified").in("id", ids);
     const profiles = Object.fromEntries((users || []).map(user => [user.id, user]));
-    feed.innerHTML = state.posts.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
+    const displayRows = await Promise.all(state.posts.map(async post => ({
+      ...post,
+      image: await resolvePostMedia(post.image)
+    })));
+    feed.innerHTML = displayRows.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
     loadComments(state.posts.map(post => post.id));
     loadLikeStates(state.posts.map(post => post.id));
   }
