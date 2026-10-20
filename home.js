@@ -947,13 +947,22 @@
   }
 
   function navigate(section) {
-    if (section === "search") {
-      $("#globalSearch").focus();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    const destinations = {
+      home: "home.html",
+      search: "search.html",
+      streak: "streak.html",
+      profile: "profile.html",
+      notifications: "notifications.html"
+    };
+
+    if (destinations[section] && section !== "home") {
+      window.location.href = destinations[section];
       return;
     }
-    if (section === "home") return;
-    toast(section.charAt(0).toUpperCase() + section.slice(1) + " is in the next ARS build. Home is being completed first.");
+
+    if (section === "home") {
+      window.location.href = destinations.home;
+    }
   }
 
   function bindEvents() {
