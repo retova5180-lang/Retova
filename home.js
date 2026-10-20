@@ -15,6 +15,7 @@
     mediaUrl: "",
     storyFile: null,
     storyUrl: "",
+    storyDraftMediaPath: "",
     storyRotation: 0,
     storyZoom: 1,
     storyDraftTimer: null,
@@ -619,9 +620,13 @@
     $("#storyFilter").value = "none";
   }
 
-  function handleStoryFile(file) {
+  async function handleStoryFile(file) {
     resetStoryPreview();
-    if (!file) return;
+    state.storyDraftMediaPath = "";
+    if (!file) {
+      scheduleStoryDraftSave();
+      return;
+    }
     if (!/^(image|video)\//.test(file.type)) {
       setMessage("#storyMessage", "Choose a photo or video for your story.", "error");
       return;
@@ -635,50 +640,127 @@
     $("#storyPreview").classList.remove("hidden");
     setStoryPreviewFilter();
     scheduleStoryDraftSave();
+    try {
+      await uploadStoryDraftMedia(file);
+    } catch (error) {
+      console.warn("Cloud story media draft upload failed:", error);
+      setMessage("#storyMessage", "Draft media could not sync across devices yet; the local preview is still available.", "error");
+    }
+  }
+
+  function readStoryDraftFields() {
+    return {
+      text: $("#storyText").value,
+      textColor: $("#storyTextColor").value,
+      filter: $("#storyFilter").value,
+      duration: $("#storyDuration").value,
+      privacy: $("#storyPrivacy").value,
+      location: $("#storyLocation").value,
+      mention: $("#storyMention").value,
+      hashtags: $("#storyHashtags").value,
+      rotation: state.storyRotation,
+      zoom: state.storyZoom
+    };
+  }
+
+  async function persistStoryDraft() {
+    const draft = readStoryDraftFields();
+    try {
+      localStorage.setItem("ars_story_draft", JSON.stringify(draft));
+    } catch (error) {
+      console.warn("Local story draft save warning:", error);
+    }
+    if (!supabase || !currentUserId()) return;
+    const { error } = await supabase.from("story_drafts").upsert({
+      user_id: currentUserId(),
+      draft_data: draft,
+      media_url: state.storyDraftMediaPath || null,
+      media_type: state.storyFile?.type.startsWith("video/") ? "video" : state.storyFile ? "image" : null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+    if (error) console.warn("Cloud story draft save warning:", error.message);
   }
 
   function scheduleStoryDraftSave() {
     if (state.storyDraftTimer) window.clearTimeout(state.storyDraftTimer);
     state.storyDraftTimer = window.setTimeout(() => {
-      try {
-        const draft = {
-          text: $("#storyText").value,
-          textColor: $("#storyTextColor").value,
-          filter: $("#storyFilter").value,
-          duration: $("#storyDuration").value,
-          privacy: $("#storyPrivacy").value,
-          location: $("#storyLocation").value,
-          mention: $("#storyMention").value,
-          hashtags: $("#storyHashtags").value,
-          rotation: state.storyRotation,
-          zoom: state.storyZoom
-        };
-        localStorage.setItem("ars_story_draft", JSON.stringify(draft));
-      } catch (error) {
-        console.warn("Story draft could not be saved locally:", error);
-      }
-    }, 250);
+      persistStoryDraft().catch(error => console.warn("Story draft save failed:", error));
+    }, 350);
   }
 
-  function restoreStoryDraft() {
+  function applyStoryDraftFields(draft) {
+    if (!draft) return;
+    $("#storyText").value = draft.text || "";
+    $("#storyTextColor").value = draft.textColor || "#ffffff";
+    $("#storyFilter").value = draft.filter || "none";
+    $("#storyDuration").value = String(draft.duration || "24");
+    $("#storyPrivacy").value = draft.privacy || "public";
+    $("#storyLocation").value = draft.location || "";
+    $("#storyMention").value = draft.mention || "";
+    $("#storyHashtags").value = draft.hashtags || "";
+    state.storyRotation = Number(draft.rotation || 0);
+    state.storyZoom = Number(draft.zoom || 1);
+    updateStoryText();
+    setStoryPreviewFilter();
+  }
+
+  async function restoreStoryDraft() {
+    let draft = null;
+    let mediaPath = "";
     try {
-      const draft = JSON.parse(localStorage.getItem("ars_story_draft") || "null");
-      if (!draft) return;
-      $("#storyText").value = draft.text || "";
-      $("#storyTextColor").value = draft.textColor || "#ffffff";
-      $("#storyFilter").value = draft.filter || "none";
-      $("#storyDuration").value = draft.duration || "24";
-      $("#storyPrivacy").value = draft.privacy || "public";
-      $("#storyLocation").value = draft.location || "";
-      $("#storyMention").value = draft.mention || "";
-      $("#storyHashtags").value = draft.hashtags || "";
-      state.storyRotation = Number(draft.rotation || 0);
-      state.storyZoom = Number(draft.zoom || 1);
-      updateStoryText();
-      setStoryPreviewFilter();
+      draft = JSON.parse(localStorage.getItem("ars_story_draft") || "null");
     } catch (error) {
-      console.warn("Story draft restore warning:", error);
+      console.warn("Local story draft restore warning:", error);
     }
+
+    if (supabase && currentUserId()) {
+      const { data, error } = await supabase.from("story_drafts")
+        .select("draft_data, media_url, media_type")
+        .eq("user_id", currentUserId())
+        .maybeSingle();
+      if (!error && data) {
+        draft = data.draft_data || draft;
+        mediaPath = data.media_url || "";
+      } else if (error) {
+        console.warn("Cloud story draft restore warning:", error.message);
+      }
+    }
+
+    applyStoryDraftFields(draft);
+    if (mediaPath && supabase && currentUserId()) {
+      const { data, error } = await supabase.storage.from("private-post-media").download(mediaPath);
+      if (!error && data) {
+        const mediaType = data.type || (mediaPath.match(/\.(mp4|webm|mov)$/i) ? "video/mp4" : "image/jpeg");
+        state.storyFile = new File([data], mediaPath.split("/").pop() || "story-draft", { type: mediaType });
+        state.storyDraftMediaPath = mediaPath;
+        state.storyUrl = URL.createObjectURL(state.storyFile);
+        const isVideo = state.storyFile.type.startsWith("video/");
+        const target = isVideo ? $("#storyVideoPreview") : $("#storyImagePreview");
+        target.src = state.storyUrl;
+        target.classList.remove("hidden");
+        $("#storyPreview").classList.remove("hidden");
+        setStoryPreviewFilter();
+      } else if (error) {
+        console.warn("Could not restore story draft media:", error.message);
+      }
+    }
+  }
+
+  async function uploadStoryDraftMedia(file) {
+    if (!supabase || !currentUserId()) return;
+    const extension = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = currentUserId() + "/story-drafts/" + Date.now() + "-" + crypto.randomUUID() + "." + extension;
+    const { data, error } = await supabase.storage.from("private-post-media").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined
+    });
+    if (error) throw error;
+    if (state.storyDraftMediaPath) {
+      await supabase.storage.from("private-post-media").remove([state.storyDraftMediaPath]);
+    }
+    state.storyDraftMediaPath = data.path;
+    await persistStoryDraft();
   }
 
   async function publishStory(event) {
@@ -696,10 +778,22 @@
     button.textContent = "Publishing…";
     setMessage("#storyMessage", "Publishing your story…");
     try {
-      const url = await uploadMedia(state.storyFile, "story-media");
+      let sourceFile = state.storyFile;
+      if (state.storyDraftMediaPath) {
+        const { data: draftBlob, error: draftDownloadError } = await supabase.storage.from("private-post-media").download(state.storyDraftMediaPath);
+        if (draftDownloadError) throw draftDownloadError;
+        sourceFile = new File([draftBlob], state.storyFile.name || "story-media", { type: state.storyFile.type });
+      }
+      const url = await uploadMedia(sourceFile, "story-media");
       const hours = Number($("#storyDuration").value || 24);
-      const mentions = $("#storyMention").value.trim().split(/[\s,]+/).map(value => value.replace(/^@/, "")).filter(Boolean);
-      const hashtags = parseTags($("#storyHashtags").value);
+      const mentionNames = $("#storyMention").value.trim().split(/[\s,]+/).map(value => value.replace(/^@/, "")).filter(Boolean);
+      let mentions = [];
+      if (mentionNames.length) {
+        const { data: mentionedUsers, error: mentionError } = await supabase.from("users").select("id, username").in("username", mentionNames);
+        if (mentionError) console.warn("Story mentions could not be resolved:", mentionError.message);
+        mentions = (mentionedUsers || []).map(user => user.id);
+      }
+      const hashtags = parseTags($("#storyHashtags").value).map(tag => tag.replace(/^#/, ""));
       const story = {
         user_id: currentUserId(),
         image: url,
@@ -720,6 +814,9 @@
       const { error } = await supabase.from("stories").insert(story);
       if (error) throw error;
       localStorage.removeItem("ars_story_draft");
+      if (state.storyDraftMediaPath) await supabase.storage.from("private-post-media").remove([state.storyDraftMediaPath]);
+      await supabase.from("story_drafts").delete().eq("user_id", currentUserId());
+      state.storyDraftMediaPath = "";
       closeDialog("storyDialog");
       resetStoryPreview();
       $("#storyForm").reset();
@@ -797,22 +894,13 @@
   }
 
   function navigate(section) {
-    const destinations = {
-      home: "home.html",
-      streak: "streak.html",
-      search: "#globalSearch",
-      profile: "profile.html",
-      notifications: "notifications.html"
-    };
     if (section === "search") {
       $("#globalSearch").focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     if (section === "home") return;
-    const destination = destinations[section];
-    if (destination) window.location.href = destination;
-    else toast(section + " is not available yet.");
+    toast(section.charAt(0).toUpperCase() + section.slice(1) + " is in the next ARS build. Home is being completed first.");
   }
 
   function bindEvents() {
@@ -909,8 +997,8 @@
 
   async function init() {
     bindEvents();
-    restoreStoryDraft();
     await getSessionAndProfile();
+    await restoreStoryDraft();
     if (currentUserId()) {
       await Promise.allSettled([loadFeed(), loadStories(), loadSuggestions()]);
     } else {
