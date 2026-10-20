@@ -177,7 +177,7 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
 .viewer-close { position: absolute; z-index: 3; top: 10px; right: 10px; }
 #storyViewerContent img, #storyViewerContent video { display: block; width: 100%; height: min(68vh,600px); object-fit: contain; }
 .viewer-caption { position: absolute; bottom: 75px; left: 15px; right: 15px; text-align: center; font-weight: 800; text-shadow: 0 2px 8px #000; }
-.viewer-footer { display: flex; justify-content: center; gap: 9px; padding: 13px; }
+.viewer-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; padding: 13px; }
 .viewer-footer button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; background: #21182d; color: #e3caff; font-size: 10px; }
 .toast-region { position: fixed; z-index: 100; right: 18px; bottom: 95px; display: grid; gap: 8px; max-width: min(350px,calc(100% - 36px)); }
 .toast { padding: 12px 14px; border: 1px solid rgba(186,130,255,.3); border-radius: 11px; background: #21182d; color: #f5eaff; font-size: 11px; }
