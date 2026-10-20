@@ -187,7 +187,7 @@
 
     const { data, error } = await supabase
       .from("posts")
-      .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy")
+      .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy, location, mentions, hashtags, allow_comments")
       .order("created_at", { ascending: false })
       .limit(40);
 
@@ -772,7 +772,7 @@
     const term = query.trim();
     if (!term) return loadFeed();
     const { data, error } = await supabase.from("posts")
-      .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy")
+      .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy, location, mentions, hashtags, allow_comments")
       .ilike("content", "%" + term.replace(/[%_]/g, "") + "%")
       .order("created_at", { ascending: false })
       .limit(30);
