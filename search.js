@@ -84,6 +84,36 @@
     renderAccounts(data || []);
   }
 
+  async function loadPopularContent() {
+    if (!supabase) return;
+    const container = $("#popularContent");
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, content, image, media_type, likes_count, created_at")
+      .eq("privacy", "public")
+      .order("likes_count", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(6);
+    if (error) {
+      console.warn("Popular content unavailable:", error.message);
+      container.innerHTML = '<p class="empty-copy">Popular content is unavailable right now.</p>';
+      return;
+    }
+    if (!data?.length) {
+      container.innerHTML = '<p class="empty-copy">Popular posts will appear here as the community shares.</p>';
+      return;
+    }
+    container.innerHTML = data.map(post => {
+      const content = post.content || (post.media_type ? "Shared " + post.media_type : "Shared a moment");
+      const media = post.image
+        ? '<div class="popular-media"><span>' + (post.media_type === "video" ? "▶" : "✦") + '</span></div>'
+        : '<div class="popular-media popular-media-text"><span>ΛRS</span></div>';
+      return '<article class="popular-card" data-popular-post="' + escapeHTML(post.id) + '">' +
+        media + '<div class="popular-card-copy"><strong>' + escapeHTML(content.slice(0, 92)) + '</strong>' +
+        '<small>♥ ' + Number(post.likes_count || 0) + ' likes</small></div></article>';
+    }).join("");
+  }
+
   async function runSearch(value) {
     const term = value.trim();
     if (!term) {
@@ -126,7 +156,7 @@
     }
     button.disabled = true;
     try {
-      const { error } = await supabase.from("follows").insert({ follower_id: currentUser.id, following_id: userId });
+      const { error } = await supabase.from("followers").insert({ follower_id: currentUser.id, following_id: userId });
       if (error) throw error;
       button.textContent = "Following";
       toast("Account followed.");
@@ -159,6 +189,7 @@
     });
     $("#refreshContent").addEventListener("click", () => {
       loadAccounts();
+      loadPopularContent();
       toast("Explore refreshed.");
     });
     document.addEventListener("click", event => {
@@ -190,5 +221,6 @@
     bindEvents();
     renderRecent();
     loadAccounts();
+    loadPopularContent();
   });
 })();
