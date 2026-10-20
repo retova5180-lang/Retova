@@ -835,20 +835,40 @@
   async function openStoryViewer(storyId) {
     const story = state.stories.find(item => String(item.id) === String(storyId));
     if (!story) return;
-    const user = state.user || {};
     const isVideo = story.media_type === "video";
     const media = isVideo
       ? '<video controls autoplay playsinline src="' + escapeHTML(story.image) + '"></video>'
       : '<img src="' + escapeHTML(story.image) + '" alt="Story">';
     $("#storyViewerContent").innerHTML = media + (story.story_text ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
-    $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><span class="muted">' + Number(story.viewers_count || 0) + " views</span>";
+    $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button><span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span><div class=\"story-viewer-list\" id=\"storyViewerList\"></div>";
     openDialog("storyViewer");
     const userId = currentUserId();
     if (userId && userId !== story.user_id) {
-      const { error } = await supabase.from("story_views").insert({ story_id: story.id, viewer_id: userId });
+      const { error } = await supabase.from("story_views").upsert({ story_id: story.id, viewer_id: userId }, { onConflict: "story_id,viewer_id" });
       if (error) console.warn("Story view was not recorded:", error.message);
     }
-    void user;
+
+    const { data: refreshedStory } = await supabase.from("stories").select("viewers_count").eq("id", story.id).maybeSingle();
+    if (refreshedStory) {
+      story.viewers_count = refreshedStory.viewers_count || 0;
+      $("#storyViewsCount").textContent = story.viewers_count + " views";
+    }
+
+    if (userId && userId === story.user_id) {
+      const { data: views, error: viewsError } = await supabase.from("story_views").select("viewer_id").eq("story_id", story.id);
+      if (viewsError) {
+        console.warn("Story viewer list unavailable:", viewsError.message);
+        return;
+      }
+      const viewerIds = [...new Set((views || []).map(view => view.viewer_id).filter(Boolean))];
+      if (viewerIds.length) {
+        const { data: viewers } = await supabase.from("users").select("id, username, display_name, avatar").in("id", viewerIds);
+        const names = (viewers || []).map(viewer => viewer.display_name || viewer.username || "ARS member");
+        $("#storyViewerList").textContent = "Viewed by: " + names.join(", ");
+      } else {
+        $("#storyViewerList").textContent = "No viewers yet.";
+      }
+    }
   }
 
   async function reactToStory(storyId, emoji) {
