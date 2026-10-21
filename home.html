@@ -9,12 +9,13 @@
 </head>
 <body>
   <header class="topbar">
+    <button class="avatar header-profile" id="headerAvatar" data-nav="profile" type="button" aria-label="Profile">A</button>
     <a class="brand" href="home.html" aria-label="ARS Home">Λ<span>RS</span></a>
-    <label class="search-box"><span aria-hidden="true">⌕</span><input id="globalSearch" type="search" placeholder="Search ARS" autocomplete="off"></label>
-    <div class="top-actions">
-      <button class="icon-button" data-nav="notifications" aria-label="Notifications" type="button">♧<i id="notificationDot"></i></button>
-      <button class="avatar avatar-small" id="headerAvatar" data-nav="profile" type="button" aria-label="Profile">A</button>
-    </div>
+    <button class="wheel-button" id="openWheel" type="button" aria-label="Rewards and Challenges" title="Rewards and Challenges">
+      <span aria-hidden="true">✦</span>
+    </button>
+    <input id="globalSearch" class="visually-hidden" type="search" aria-label="Search ARS" autocomplete="off">
+    <button class="icon-button header-notifications" data-nav="notifications" aria-label="Notifications" type="button">♧<i id="notificationDot"></i></button>
   </header>
 
   <div class="app-layout">
@@ -36,11 +37,6 @@
     </aside>
 
     <main class="main-column">
-      <section class="welcome">
-        <div><p class="eyebrow">YOUR WORLD, IN ONE PLACE</p><h1>Home<span class="glow">.</span></h1><p class="muted">Catch up with your people and share a moment.</p></div>
-        <button class="primary-button mobile-create" data-open="postDialog" type="button">＋ Create</button>
-      </section>
-
       <section class="panel stories-panel">
         <div class="section-heading"><div><h2>Stories</h2><p class="muted">Moments that disappear</p></div><button class="text-button" id="refreshStories" type="button">Refresh</button></div>
         <div class="stories-row" id="storiesRow">
