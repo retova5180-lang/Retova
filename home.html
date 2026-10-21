@@ -118,6 +118,28 @@
     </form>
   </dialog>
 
+  <dialog class="modal" id="wheelDialog">
+    <div class="modal-content">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">YOUR ARS SPACE</p>
+          <h2>Rewards &amp; Challenges</h2>
+        </div>
+        <button class="close-button" data-close="wheelDialog" type="button" aria-label="Close rewards">×</button>
+      </div>
+      <p class="muted" id="wheelStatus" role="status">Loading rewards and challenges…</p>
+      <section class="wheel-content-section">
+        <h3>Challenges</h3>
+        <div id="wheelChallenges" class="wheel-challenges"></div>
+      </section>
+      <section class="wheel-content-section">
+        <h3>Your rewards</h3>
+        <div id="wheelRewards" class="wheel-rewards"></div>
+      </section>
+      <p class="muted wheel-note">Spins will be enabled when the secure reward rules and subscription limits are connected.</p>
+    </div>
+  </dialog>
+
   <dialog class="modal story-viewer" id="storyViewer"><div class="viewer-card"><button class="close-button viewer-close" data-close="storyViewer" type="button" aria-label="Close story">×</button><div id="storyViewerContent"></div><div id="storyViewerFooter" class="viewer-footer"></div></div></dialog>
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
