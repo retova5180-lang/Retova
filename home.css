@@ -408,3 +408,21 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+.wheel-content-section { margin-top: 19px; }
+.wheel-content-section h3 { margin: 0 0 10px; font-size: 13px; }
+.wheel-challenges, .wheel-rewards { display: grid; gap: 9px; }
+.wheel-challenge, .wheel-reward {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .025);
+}
+.wheel-challenge > div { display: grid; gap: 5px; min-width: 0; }
+.wheel-challenge strong, .wheel-reward strong { font-size: 12px; overflow-wrap: anywhere; }
+.wheel-challenge span, .wheel-challenge small, .wheel-reward span { color: var(--muted); font-size: 10px; }
+.wheel-challenge > b { flex: 0 0 auto; color: var(--purple-light); font-size: 11px; }
+.wheel-note { margin: 17px 0 0; font-size: 10px; line-height: 1.5; }
