@@ -946,6 +946,71 @@
     loadLikeStates(state.posts.map(post => post.id));
   }
 
+  async function loadWheelContent() {
+    const status = $("#wheelStatus");
+    const challengesTarget = $("#wheelChallenges");
+    const rewardsTarget = $("#wheelRewards");
+    const userId = currentUserId();
+
+    status.textContent = "Loading rewards and challenges…";
+    challengesTarget.innerHTML = '<p class="muted">Loading challenges…</p>';
+    rewardsTarget.innerHTML = '<p class="muted">Loading rewards…</p>';
+
+    const challengeResult = await supabase
+      .from("wheel_challenges")
+      .select("id, title, category, reward_xp, image_required")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (challengeResult.error) {
+      challengesTarget.innerHTML = '<p class="muted">Challenges are unavailable right now.</p>';
+      console.warn("Wheel challenges load failed:", challengeResult.error.message);
+    } else if (!challengeResult.data?.length) {
+      challengesTarget.innerHTML = '<p class="muted">No challenges have been published yet.</p>';
+    } else {
+      challengesTarget.innerHTML = challengeResult.data.map(challenge =>
+        '<article class="wheel-challenge"><div><strong>' + escapeHTML(challenge.title || "ARS challenge") +
+        '</strong><span>' + escapeHTML(challenge.category || "Community") + '</span></div><b>' +
+        Number(challenge.reward_xp || 0) + ' XP</b>' +
+        (challenge.image_required ? '<small>Photo required</small>' : '') + '</article>'
+      ).join("");
+    }
+
+    if (!userId) {
+      rewardsTarget.innerHTML = '<p class="muted">Sign in to see your rewards.</p>';
+      status.textContent = "Explore ARS challenges and rewards.";
+      return;
+    }
+
+    const rewardResult = await supabase
+      .from("user_rewards")
+      .select("id, reward_code, reward_payload, starts_at, expires_at, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (rewardResult.error) {
+      rewardsTarget.innerHTML = '<p class="muted">Your rewards could not be loaded.</p>';
+      console.warn("User rewards load failed:", rewardResult.error.message);
+    } else if (!rewardResult.data?.length) {
+      rewardsTarget.innerHTML = '<p class="muted">Your earned rewards will appear here.</p>';
+    } else {
+      rewardsTarget.innerHTML = rewardResult.data.map(reward => {
+        const payload = reward.reward_payload && typeof reward.reward_payload === "object"
+          ? reward.reward_payload
+          : {};
+        const label = payload.title || payload.label || reward.reward_code || "ARS reward";
+        const expires = reward.expires_at
+          ? "Expires " + new Date(reward.expires_at).toLocaleDateString()
+          : "No expiry listed";
+        return '<article class="wheel-reward"><strong>' + escapeHTML(String(label)) +
+          '</strong><span>' + escapeHTML(expires) + '</span></article>';
+      }).join("");
+    }
+
+    status.textContent = "Your challenges and rewards.";
+  }
+
   function navigate(section) {
     const destinations = {
       home: "home.html",
@@ -970,6 +1035,13 @@
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
     $$("[data-nav]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.nav)));
     $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openWheel").addEventListener("click", () => {
+      openDialog("wheelDialog");
+      loadWheelContent().catch(error => {
+        console.error("Rewards panel failed:", error);
+        $("#wheelStatus").textContent = "Rewards are unavailable right now.";
+      });
+    });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
