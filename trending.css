@@ -1,0 +1,92 @@
+body {
+  background: #08070d;
+  color: #f5efff;
+  font-family: Inter, system-ui, sans-serif;
+}
+.ars-page {
+  width: min(760px, calc(100% - 28px));
+  margin: 24px auto 110px;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.page-header a {
+  color: #c98aff;
+  text-decoration: none;
+  font-weight: 900;
+}
+.page-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.page-header button {
+  padding: 9px 12px;
+  border: 1px solid #39294a;
+  border-radius: 10px;
+  background: #1b1426;
+  color: #e6d3ff;
+}
+.trend-card {
+  position: relative;
+  margin: 12px 0;
+  padding: 16px;
+  border: 1px solid #30243e;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #171020, #0e0b14);
+}
+.trend-card h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.trend-card p {
+  margin: 0;
+  color: #bdb2cc;
+  line-height: 1.6;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.trend-card img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  margin-top: 12px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.trend-card footer,
+.trend-rank {
+  display: block;
+  margin-top: 10px;
+  color: #bd78ff;
+  font-size: 12px;
+}
+.ars-bottom-nav {
+  position: fixed;
+  z-index: 20;
+  inset: auto 0 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 9px 5px calc(9px + env(safe-area-inset-bottom));
+  border-top: 1px solid #30243e;
+  background: rgba(12, 10, 18, .97);
+  text-align: center;
+  backdrop-filter: blur(18px);
+}
+.ars-bottom-nav a {
+  color: #9d91b1;
+  text-decoration: none;
+  font-size: 20px;
+}
+.ars-bottom-nav a span {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+}
+.ars-bottom-nav a.active {
+  color: #d8a8ff;
+  text-shadow: 0 0 12px rgba(175, 99, 255, .4);
+}
