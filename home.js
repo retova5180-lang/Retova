@@ -673,6 +673,11 @@
     state.storyUrl = "";
     state.storyRotation = 0;
     state.storyZoom = 1;
+    state.storyCropMode = false;
+    state.storyDrawingStrokes = [];
+    state.storyCurrentStroke = null;
+    setStoryDrawingEnabled(false);
+    $("#storyCrop").textContent = "□ Crop";
     $("#storyMedia").value = "";
     $("#storyPreview").classList.add("hidden");
     $("#storyImagePreview").classList.add("hidden");
@@ -682,6 +687,7 @@
     $("#storyText").value = "";
     $("#storyTextOverlay").textContent = "";
     $("#storyFilter").value = "none";
+    redrawStoryDrawing();
   }
 
   async function handleStoryFile(file) {
