@@ -691,3 +691,13 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
   margin: 12px 4px;
   padding: 0 2px;
 }
+
+.story-delete-button {
+  min-height: 33px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 117, 140, .35);
+  border-radius: 9px;
+  background: rgba(255, 117, 140, .1);
+  color: #ff9aab;
+  font-size: 10px;
+}
