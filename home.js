@@ -470,9 +470,41 @@
     const row = $("#storiesRow");
     $("#storiesLoading")?.remove();
     if (!supabase) return;
+    const userId = currentUserId();
+    if (!userId) {
+      state.stories = [];
+      row.querySelectorAll(".story-item:not(.add-story)").forEach(item => item.remove());
+      return;
+    }
+
+    const { data: followingRows, error: followingError } = await supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", userId);
+    if (followingError) {
+      console.warn("Story follower list could not be loaded:", followingError.message);
+    }
+
+    const followingIds = [...new Set((followingRows || []).map(item => item.following_id).filter(Boolean))];
+    const { data: userRows, error: userRowsError } = await supabase
+      .from("users")
+      .select("id")
+      .neq("id", userId)
+      .limit(30);
+    if (userRowsError) {
+      console.warn("Suggested story accounts could not be loaded:", userRowsError.message);
+    }
+
+    const followingSet = new Set(followingIds);
+    const suggestedIds = (userRows || [])
+      .map(user => user.id)
+      .filter(id => id && id !== userId && !followingSet.has(id))
+      .slice(0, 5);
+    const storyAuthorIds = [...new Set([userId, ...followingIds, ...suggestedIds])];
     const now = new Date().toISOString();
     const { data, error } = await supabase.from("stories")
-      .select("id, created_at, user_id, image, viewers_count, expires_at, media_type, story_text, text_color, filter, location, mentions, hashtags, original_image, rotation_degrees, zoom, privacy")
+      .select("id, created_at, user_id, image, viewers_count, expires_at, media_type, story_text, text_color, filter, edit_metadata, location, mentions, hashtags, original_image, rotation_degrees, zoom, privacy")
+      .in("user_id", storyAuthorIds)
       .gt("expires_at", now)
       .order("created_at", { ascending: false })
       .limit(50);
