@@ -17,6 +17,7 @@
     storyFile: null,
     storyUrl: "",
     storyDraftMediaPath: "",
+    storyDraftUploadPromise: null,
     storyRotation: 0,
     storyZoom: 1,
     storyCropX: 50,
@@ -1151,10 +1152,13 @@
     setMessage("#storyMessage", "");
     scheduleStoryDraftSave();
     try {
-      await uploadStoryDraftMedia(file);
+      state.storyDraftUploadPromise = uploadStoryDraftMedia(file);
+      await state.storyDraftUploadPromise;
     } catch (error) {
       console.warn("Cloud story media draft upload failed:", error);
       setMessage("#storyMessage", "Draft media could not sync across devices yet; the local preview is still available.", "error");
+    } finally {
+      state.storyDraftUploadPromise = null;
     }
   }
 
@@ -1747,10 +1751,25 @@
       setStoryStage("settings");
     });
     $("#storyBackToEditor").addEventListener("click", () => setStoryStage("editor"));
-    $("#saveStoryDraftClose").addEventListener("click", async () => {
-      await persistStoryDraft();
-      closeDialog("storyDialog");
-      toast("Story draft saved.");
+    $("#saveStoryDraftClose").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        if (state.storyDraftUploadPromise) {
+          await state.storyDraftUploadPromise;
+        }
+        if (state.storyFile && supabase && currentUserId() && !state.storyDraftMediaPath) {
+          await uploadStoryDraftMedia(state.storyFile);
+        }
+        await persistStoryDraft();
+        closeDialog("storyDialog");
+        toast("Story draft saved.");
+      } catch (error) {
+        console.error("Explicit story draft save failed:", error);
+        setMessage("#storyMessage", "The story draft could not sync. Keep the editor open and try saving again.", "error");
+      } finally {
+        button.disabled = false;
+      }
     });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
