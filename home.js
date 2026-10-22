@@ -378,6 +378,27 @@
       button.innerHTML = '<span class="story-ring">' + avatar + '</span><span>' + escapeHTML(name) + "</span>";
       row.append(button);
     });
+
+    if (currentUserId()) {
+      const followedIds = new Set(stories.map(story => story.user_id));
+      const { data: suggested, error: suggestionError } = await supabase
+        .from("users")
+        .select("id, username, display_name, avatar")
+        .neq("id", currentUserId())
+        .limit(8);
+      if (!suggestionError) {
+        (suggested || []).filter(user => !followedIds.has(user.id)).slice(0, 6).forEach(user => {
+          const name = user.display_name || user.username || "ARS member";
+          const avatar = user.avatar
+            ? '<img class="avatar" src="' + escapeHTML(user.avatar) + '" alt="">'
+            : '<span class="avatar">' + escapeHTML(name.charAt(0).toUpperCase()) + "</span>";
+          const suggestion = document.createElement("div");
+          suggestion.className = "story-item suggested-story";
+          suggestion.innerHTML = '<span class="story-ring">' + avatar + '</span><span>' + escapeHTML(name) + '</span><button class="follow-button" data-follow="' + escapeHTML(user.id) + '" type="button">Follow</button>';
+          row.append(suggestion);
+        });
+      }
+    }
   }
 
   async function uploadMedia(file, bucket) {
