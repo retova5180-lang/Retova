@@ -1388,6 +1388,7 @@
       resetStoryPreview();
       $("#storyForm").reset();
       $("#storyTextColor").value = "#ffffff";
+      setStoryStage("choose");
       toast("Your story is live.");
       await loadStories();
     } catch (error) {
