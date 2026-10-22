@@ -364,7 +364,7 @@
       const { data: users } = await supabase.from("users").select("id, username, display_name, avatar").in("id", userIds);
       usersById = Object.fromEntries((users || []).map(user => [user.id, user]));
     }
-    row.querySelectorAll(".story-item:not(.add-story)").forEach(item => item.remove());
+    row.querySelectorAll(".story-item:not(.add-story):not(.wheel-story)").forEach(item => item.remove());
     stories.forEach(story => {
       const user = usersById[story.user_id] || {};
       const name = user.display_name || user.username || "ARS member";
@@ -1142,6 +1142,13 @@
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
     $$("[data-nav]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.nav)));
     $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openWheelStory").addEventListener("click", () => {
+      openDialog("wheelDialog");
+      loadWheelContent().catch(error => {
+        console.error("Rewards panel failed:", error);
+        $("#wheelStatus").textContent = "Rewards are unavailable right now.";
+      });
+    });
     $("#openWheel").addEventListener("click", () => {
       openDialog("wheelDialog");
       loadWheelContent().catch(error => {
