@@ -138,7 +138,8 @@
   async function refreshDashboard() {
     $("#refreshStreaks").disabled = true;
     try {
-      await supabase.rpc("refresh_streak_status");
+      const { error: refreshError } = await supabase.rpc("refresh_streak_status");
+      if (refreshError) throw refreshError;
       await Promise.all([loadInvitations(), loadStreaks()]);
       setMessage("#streakMessage", "");
     } catch (error) {
