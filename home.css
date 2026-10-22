@@ -623,3 +623,64 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
     max-height: 34vh;
   }
 }
+
+
+/* Wide-screen layout: preserve the mobile composition while using available space. */
+@media (min-width: 900px) {
+  .topbar {
+    width: min(100%, 1180px);
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    padding: 0 20px;
+  }
+  .header-profile {
+    width: 39px;
+    height: 39px;
+  }
+  .wheel-button {
+    width: 41px;
+    height: 41px;
+  }
+  .app-layout {
+    width: min(1180px, calc(100% - 48px));
+    margin: 26px auto 80px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 650px) 270px;
+    gap: 22px;
+    justify-content: center;
+    align-items: start;
+  }
+  .left-panel {
+    display: block !important;
+  }
+  .right-panel {
+    display: grid !important;
+  }
+  .main-column {
+    width: 100%;
+  }
+  .stories-panel {
+    margin: 0;
+    padding: 18px 16px 14px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: linear-gradient(155deg, rgba(24, 21, 34, .97), rgba(15, 13, 22, .98));
+    box-shadow: none;
+  }
+  .stories-panel > .section-heading {
+    display: flex;
+  }
+  .composer {
+    display: flex !important;
+  }
+  .feed-heading {
+    display: flex;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+  .floating-create {
+    right: max(24px, calc((100vw - 1180px) / 2 + 20px));
+    bottom: 28px;
+  }
+}
