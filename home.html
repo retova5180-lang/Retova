@@ -67,11 +67,11 @@
 
   <button class="floating-create" data-open="postDialog" type="button" aria-label="Create post">＋</button>
   <nav class="bottom-nav" aria-label="Main navigation">
-    <a class="bottom-item active" href="home.html"><span>⌂</span><small>Home</small></a>
-    <button class="bottom-item" data-nav="streak" type="button"><span>♨</span><small>Streak</small></button>
-    <button class="bottom-item" data-nav="search" type="button"><span>⌕</span><small>Search</small></button>
-    <button class="bottom-item" data-nav="profile" type="button"><span>◉</span><small>Profile</small></button>
-    <button class="bottom-item" data-nav="notifications" type="button"><span>♧</span><small>Notifications</small></button>
+    <a class="bottom-item active" href="home.html"><span aria-hidden="true">⌂</span><small>Home</small></a>
+    <button class="bottom-item" data-nav="search" type="button"><span aria-hidden="true">⌕</span><small>Search</small></button>
+    <button class="bottom-item" data-nav="trending" type="button"><span aria-hidden="true">♨</span><small>Trending</small></button>
+    <button class="bottom-item" data-nav="notifications" type="button"><span aria-hidden="true">♧</span><small>Notifications</small></button>
+    <button class="bottom-item" data-nav="messages" type="button"><span aria-hidden="true">✉</span><small>Messages</small></button>
   </nav>
 
   <dialog class="modal" id="postDialog">
@@ -99,13 +99,18 @@
       <label class="story-upload" for="storyMedia"><span class="upload-icon">＋</span><strong>Choose a photo or video</strong><span class="muted">Photos have editing tools; videos support preview and publish.</span></label>
       <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
       <div class="story-preview hidden" id="storyPreview"><img id="storyImagePreview" alt="Story preview"><video id="storyVideoPreview" class="hidden" controls playsinline></video><span id="storyTextOverlay"></span></div>
-      <div class="tool-row editor-tools">
+      <div class="tool-row editor-tools" aria-label="Story editing tools">
         <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
         <button class="tool-button" id="storyZoom" type="button">＋ Zoom</button>
+        <button class="tool-button" id="storyCrop" type="button">□ Crop</button>
+        <button class="tool-button" id="storySticker" type="button">☺ Sticker</button>
+        <button class="tool-button" id="storyDraw" type="button" aria-pressed="false">✎ Draw</button>
+        <button class="tool-button" id="storyUndo" type="button">↶ Undo</button>
         <label class="tool-button">Text color <input id="storyTextColor" type="color" value="#ffffff" aria-label="Text color"></label>
         <select id="storyFilter" aria-label="Photo filter"><option value="none">Original</option><option value="grayscale(1)">Mono</option><option value="sepia(.55) saturate(1.2)">Warm</option><option value="brightness(1.12) saturate(1.25)">Dream</option><option value="brightness(.75) contrast(1.15)">Night</option></select>
         <select id="storyDuration" aria-label="Story duration"><option value="24">24 hours</option><option value="12">12 hours</option><option value="6">6 hours</option><option value="1">1 hour</option></select>
       </div>
+      <p class="muted editor-hint" id="storyEditorHint">Choose a photo to enable crop, stickers, and drawing tools.</p>
       <label class="field-label" for="storyText">Story text</label><input id="storyText" maxlength="240" placeholder="Add a caption">
       <div class="field-grid">
         <label><span class="field-label">Location</span><input id="storyLocation" maxlength="160" placeholder="Add a place"></label>
