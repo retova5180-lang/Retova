@@ -1,3 +1,50 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08070d"><title>ARS — Notifications</title><link rel="stylesheet" href="ars-pages.css"></head>
-<body data-page="notifications"><header class="top"><a class="brand" href="home.html">Λ<span>RS</span></a><a class="btn" href="home.html">Back Home</a></header><main class="page-wrap"><section class="panel"><p class="muted">STAY IN THE LOOP</p><h1>Notifications<span style="color:#c08aff">.</span></h1><p class="muted">Likes, comments, follows and activity from your ARS community.</p></section><section class="panel"><div class="section-heading" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>Recent activity</h2><button class="btn" id="markAllRead" type="button">Mark all read</button></div><div class="list" id="notificationList"><p class="empty">Loading notifications…</p></div><p class="notice" id="notificationMessage" role="status"></p></section></main><nav class="bottom-nav" aria-label="Main navigation"><a class="bottom-item" href="home.html"><span>⌂</span><small>Home</small></a><a class="bottom-item" href="streak.html"><span>♨</span><small>Streak</small></a><a class="bottom-item" href="search.html"><span>⌕</span><small>Search</small></a><a class="bottom-item" href="profile.html"><span>◉</span><small>Profile</small></a><a class="bottom-item active" href="notifications.html"><span>♧</span><small>Notifications</small></a></nav><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="ars-pages.js" defer></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08070d">
+  <title>ΛRS — Notifications</title>
+  <link rel="stylesheet" href="notifications.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="home.html" aria-label="ARS Home">Λ<span>RS</span></a>
+    <a class="back-link" href="home.html">Back to Home</a>
+  </header>
+  <main class="notifications-layout">
+    <section class="intro panel">
+      <p class="eyebrow">STAY IN THE LOOP</p>
+      <h1>Notifications<span>.</span></h1>
+      <p class="muted">Likes, comments, follows, story reactions, and updates about your streaks.</p>
+      <div class="notification-summary">
+        <span id="unreadCount">0 unread</span>
+        <button class="primary-button" id="markAllRead" type="button">Mark all read</button>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR ACTIVITY</p>
+          <h2>Recent notifications</h2>
+        </div>
+        <button class="text-button" id="refreshNotifications" type="button">Refresh</button>
+      </div>
+      <p id="notificationMessage" class="status-message" role="status"></p>
+      <div id="notificationList" class="notification-list">
+        <p class="empty-state">Loading notifications…</p>
+      </div>
+    </section>
+  </main>
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <a class="bottom-item" href="home.html"><span>⌂</span><small>Home</small></a>
+    <a class="bottom-item" href="streak.html"><span>♨</span><small>Streak</small></a>
+    <a class="bottom-item" href="search.html"><span>⌕</span><small>Search</small></a>
+    <a class="bottom-item" href="profile.html"><span>◉</span><small>Profile</small></a>
+    <a class="bottom-item active" href="notifications.html"><span>♧</span><small>Notifications</small></a>
+  </nav>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js" defer></script>
+</body>
+</html>
