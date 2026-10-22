@@ -34,7 +34,10 @@
     storyEditorPreviewUrl: "",
     storyDraftTimer: null,
     likes: new Set(),
-    comments: new Map()
+    comments: new Map(),
+    conversations: [],
+    conversationProfiles: {},
+    activeConversationId: null
   };
 
   function escapeHTML(value) {
@@ -188,7 +191,7 @@
     return '<img class="post-media" loading="lazy" src="' + escapeHTML(media) + '" alt="Post media">';
   }
 
-  async function loadFeed() {
+  async function loadFeed(sortMode = "latest") {
     const feed = $("#feed");
     const empty = $("#feedEmpty");
     feed.innerHTML = '<div class="panel loading-card">Loading your feed…</div>';
@@ -203,6 +206,7 @@
     const { data, error } = await supabase
       .from("posts")
       .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy, location, mentions, hashtags, allow_comments")
+      .order(sortMode === "trending" ? "likes_count" : "created_at", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(40);
 
@@ -1317,29 +1321,200 @@
     loadLikeStates(state.posts.map(post => post.id));
   }
 
-  function navigate(section) {
-    const destinations = {
-      home: "home.html",
-      search: "search.html",
-      streak: "streak.html",
-      profile: "profile.html",
-      notifications: "notifications.html"
-    };
+  async function openMessages() {
+    if (!supabase || !currentUserId()) {
+      toast("Sign in to open your messages.");
+      return;
+    }
 
-    if (destinations[section] && section !== "home") {
-      window.location.href = destinations[section];
+    openDialog("messagesDialog");
+    $("#messagesList").innerHTML = '<p class="muted">Loading conversations…</p>';
+    $("#conversationPanel").classList.add("hidden");
+    $("#messagesStatus").textContent = "";
+    state.activeConversationId = null;
+
+    const userId = currentUserId();
+    const { data: conversations, error } = await supabase
+      .from("conversations")
+      .select("id, user1_id, user2_id, last_message, created_at")
+      .or("user1_id.eq." + userId + ",user2_id.eq." + userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Messages load failed:", error);
+      $("#messagesList").innerHTML = '<p class="muted">Messages could not be loaded.</p>';
+      setMessage("#messagesStatus", "Check your connection and conversation permissions.", "error");
+      return;
+    }
+
+    state.conversations = conversations || [];
+    if (!state.conversations.length) {
+      $("#messagesList").innerHTML = '<p class="muted">No conversations yet.</p>';
+      return;
+    }
+
+    const otherUserIds = [...new Set(state.conversations.map(conversation => (
+      conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id
+    )).filter(Boolean))];
+    const { data: profiles, error: profilesError } = otherUserIds.length
+      ? await supabase.from("users").select("id, username, display_name, avatar").in("id", otherUserIds)
+      : { data: [], error: null };
+
+    if (profilesError) {
+      console.warn("Conversation profiles unavailable:", profilesError.message);
+    }
+
+    state.conversationProfiles = Object.fromEntries((profiles || []).map(profile => [profile.id, profile]));
+    $("#messagesList").innerHTML = state.conversations.map(conversation => {
+      const otherId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+      const profile = state.conversationProfiles[otherId] || {};
+      const name = profile.display_name || profile.username || "ARS member";
+      const preview = conversation.last_message || "Open conversation";
+      return '<button class="conversation-choice" type="button" data-conversation-id="' + escapeHTML(conversation.id) + '">' +
+        (profile.avatar
+          ? '<img class="avatar" src="' + escapeHTML(profile.avatar) + '" alt="">'
+          : '<span class="avatar">' + escapeHTML(name.charAt(0).toUpperCase() || "A") + "</span>") +
+        '<span><strong>' + escapeHTML(name) + '</strong><br><span class="muted">' + escapeHTML(preview) + "</span></span></button>";
+    }).join("");
+  }
+
+  async function openConversation(conversationId) {
+    const conversation = state.conversations.find(item => item.id === conversationId);
+    if (!conversation || !supabase) return;
+
+    state.activeConversationId = conversationId;
+    const userId = currentUserId();
+    const otherId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+    const profile = state.conversationProfiles[otherId] || {};
+    $("#conversationTitle").textContent = profile.display_name || profile.username || "ARS member";
+    $("#conversationPanel").classList.remove("hidden");
+    $("#conversationMessages").innerHTML = '<p class="muted">Loading messages…</p>';
+
+    const { data: messages, error } = await supabase
+      .from("messages")
+      .select("id, sender_id, content, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) {
+      console.error("Conversation messages failed to load:", error);
+      $("#conversationMessages").innerHTML = '<p class="muted">Messages could not be loaded.</p>';
+      return;
+    }
+
+    if (!messages?.length) {
+      $("#conversationMessages").innerHTML = '<p class="muted">No messages in this conversation yet.</p>';
+      return;
+    }
+
+    $("#conversationMessages").innerHTML = messages.map(message =>
+      '<div class="message-bubble' + (message.sender_id === userId ? " own" : "") + '">' +
+      escapeHTML(message.content || "") +
+      '<div class="muted">' + escapeHTML(relativeTime(message.created_at)) + "</div></div>"
+    ).join("");
+    $("#conversationMessages").scrollTop = $("#conversationMessages").scrollHeight;
+
+    $(".conversation-choice").forEach(button => {
+      button.classList.toggle("active", button.dataset.conversationId === conversationId);
+    });
+  }
+
+  async function sendMessage(event) {
+    event.preventDefault();
+    const content = $("#messageText").value.trim();
+    const conversationId = state.activeConversationId;
+    if (!content || !conversationId || !currentUserId()) return;
+
+    const button = $("#messageForm").querySelector("button");
+    button.disabled = true;
+
+    try {
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_id: currentUserId(),
+        content
+      });
+      if (error) throw error;
+
+      const { error: conversationError } = await supabase
+        .from("conversations")
+        .update({ last_message: content })
+        .eq("id", conversationId);
+      if (conversationError) {
+        console.warn("Conversation preview update failed:", conversationError.message);
+      }
+
+      $("#messageText").value = "";
+      const conversation = state.conversations.find(item => item.id === conversationId);
+      if (conversation) conversation.last_message = content;
+      await openConversation(conversationId);
+      toast("Message sent.");
+    } catch (error) {
+      console.error("Message send failed:", error);
+      setMessage("#messagesStatus", "The message could not be sent. Check your access and try again.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function setActiveNavigation(section) {
+    $(".bottom-item, .nav-item").forEach(item => {
+      item.classList.toggle("active", item.dataset.nav === section);
+    });
+  }
+
+  function navigate(section) {
+    setActiveNavigation(section);
+
+    if (section === "profile") {
+      toast("The Profile page will be added after Home is complete.");
       return;
     }
 
     if (section === "home") {
-      window.location.href = destinations.home;
+      $("#feedTitle").textContent = "Your feed";
+      loadFeed("latest");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (section === "trending") {
+      $("#feedTitle").textContent = "Trending";
+      loadFeed("trending");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (section === "messages") {
+      openMessages();
+      return;
+    }
+
+    const destinations = {
+      search: "search.html",
+      streak: "streak.html",
+      notifications: "notifications.html"
+    };
+
+    if (destinations[section]) {
+      window.location.href = destinations[section];
     }
   }
 
   function bindEvents() {
     $$("[data-open]").forEach(button => button.addEventListener("click", () => openDialog(button.dataset.open)));
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
-    $$("[data-nav]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.nav)));
+    $("[data-nav]").forEach(button => button.addEventListener("click", event => {
+      event.preventDefault();
+      navigate(button.dataset.nav);
+    }));
+    $("#messagesList").addEventListener("click", event => {
+      const button = event.target.closest("[data-conversation-id]");
+      if (button) openConversation(button.dataset.conversationId);
+    });
+    $("#messageForm").addEventListener("submit", sendMessage);
     $("#openWheel").addEventListener("click", () => {
       window.location.href = "rewards.html";
     });
@@ -1499,7 +1674,7 @@
     document.addEventListener("submit", event => {
       if (event.target.matches("[data-comment-form]")) submitComment(event);
     });
-    ["postDialog", "storyDialog", "storyViewer"].forEach(id => {
+    ["postDialog", "storyDialog", "storyViewer", "messagesDialog"].forEach(id => {
       const dialog = document.getElementById(id);
       dialog.addEventListener("click", event => {
         if (event.target === dialog) closeDialog(id);
