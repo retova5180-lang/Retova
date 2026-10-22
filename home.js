@@ -17,6 +17,7 @@
     storyFile: null,
     storyUrl: "",
     storyDraftMediaPath: "",
+    storyDraftUploadPromise: null,
     storyRotation: 0,
     storyZoom: 1,
     storyCropX: 50,
@@ -62,6 +63,23 @@
     if (!element) return;
     element.textContent = message;
     element.className = "form-message" + (type ? " " + type : "");
+  }
+
+  function setStoryStage(stage) {
+    const allowedStages = ["choose", "editor", "settings"];
+    const nextStage = allowedStages.includes(stage) ? stage : "choose";
+
+    allowedStages.forEach(name => {
+      const panel = $("#storyStage" + name.charAt(0).toUpperCase() + name.slice(1));
+      if (panel) panel.classList.toggle("hidden", name !== nextStage);
+    });
+
+    $$("#storyDialog [data-story-step]").forEach(indicator => {
+      const active = indicator.dataset.storyStep === nextStage;
+      indicator.classList.toggle("active", active);
+      if (active) indicator.setAttribute("aria-current", "step");
+      else indicator.removeAttribute("aria-current");
+    });
   }
 
   function openDialog(id) {
@@ -1130,12 +1148,17 @@
     updateStoryText();
     drawStoryCanvas();
     state.storyEditorSnapshot = storyEditorSnapshot();
+    setStoryStage("editor");
+    setMessage("#storyMessage", "");
     scheduleStoryDraftSave();
     try {
-      await uploadStoryDraftMedia(file);
+      state.storyDraftUploadPromise = uploadStoryDraftMedia(file);
+      await state.storyDraftUploadPromise;
     } catch (error) {
       console.warn("Cloud story media draft upload failed:", error);
       setMessage("#storyMessage", "Draft media could not sync across devices yet; the local preview is still available.", "error");
+    } finally {
+      state.storyDraftUploadPromise = null;
     }
   }
 
@@ -1280,6 +1303,10 @@
 
   async function publishStory(event) {
     event.preventDefault();
+    if (!$("#storyStageSettings") || $("#storyStageSettings").classList.contains("hidden")) {
+      setStoryStage(state.storyFile ? "settings" : "choose");
+      return;
+    }
     if (!supabase || !currentUserId()) {
       setMessage("#storyMessage", "Your ARS session is not ready. Sign in again and retry.", "error");
       return;
@@ -1361,6 +1388,7 @@
       resetStoryPreview();
       $("#storyForm").reset();
       $("#storyTextColor").value = "#ffffff";
+      setStoryStage("choose");
       toast("Your story is live.");
       await loadStories();
     } catch (error) {
@@ -1650,7 +1678,7 @@
   }
 
   function setActiveNavigation(section) {
-    $(".bottom-item, .nav-item, .rail-tool").forEach(item => {
+    $$(".bottom-item, .nav-item, .rail-tool").forEach(item => {
       item.classList.toggle("active", item.dataset.nav === section);
     });
   }
@@ -1697,7 +1725,7 @@
   function bindEvents() {
     $$("[data-open]").forEach(button => button.addEventListener("click", () => openDialog(button.dataset.open)));
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
-    $("[data-nav]").forEach(button => button.addEventListener("click", event => {
+    $$("[data-nav]").forEach(button => button.addEventListener("click", event => {
       event.preventDefault();
       navigate(button.dataset.nav);
     }));
@@ -1709,7 +1737,41 @@
     $("#openWheel").addEventListener("click", () => {
       window.location.href = "rewards.html";
     });
-    $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openStory").addEventListener("click", () => {
+      setStoryStage(state.storyFile ? "editor" : "choose");
+      openDialog("storyDialog");
+    });
+    $("#storyBackToChoose").addEventListener("click", () => setStoryStage("choose"));
+    $("#storyNextToSettings").addEventListener("click", () => {
+      if (!state.storyFile) {
+        setMessage("#storyMessage", "Choose a photo or video before continuing.", "error");
+        setStoryStage("choose");
+        return;
+      }
+      setMessage("#storyMessage", "");
+      setStoryStage("settings");
+    });
+    $("#storyBackToEditor").addEventListener("click", () => setStoryStage("editor"));
+    $("#saveStoryDraftClose").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        if (state.storyDraftUploadPromise) {
+          await state.storyDraftUploadPromise;
+        }
+        if (state.storyFile && supabase && currentUserId() && !state.storyDraftMediaPath) {
+          await uploadStoryDraftMedia(state.storyFile);
+        }
+        await persistStoryDraft();
+        closeDialog("storyDialog");
+        toast("Story draft saved.");
+      } catch (error) {
+        console.error("Explicit story draft save failed:", error);
+        setMessage("#storyMessage", "The story draft could not sync. Keep the editor open and try saving again.", "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
@@ -1879,6 +1941,7 @@
     bindEvents();
     await getSessionAndProfile();
     await restoreStoryDraft();
+    setStoryStage(state.storyFile ? "editor" : "choose");
 
     if (window.location.hash === "#profile") {
       setActiveNavigation("profile");

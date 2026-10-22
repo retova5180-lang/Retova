@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08070d">
   <title>ΛRS — Home</title>
-  <link rel="stylesheet" href="home.css?v=ars-rebuild-20261022-r3">
+  <link rel="stylesheet" href="home.css?v=ars-home-story-flow-fix-20261022">
 </head>
 <body>
   <header class="topbar">
@@ -117,68 +117,114 @@
     </form>
   </dialog>
 
-  <dialog class="modal" id="storyDialog">
+  <dialog class="modal story-modal" id="storyDialog" aria-labelledby="storyDialogTitle">
     <form class="modal-content story-content" id="storyForm">
-      <div class="modal-heading"><div><p class="eyebrow">SHARE A MOMENT</p><h2>Create story</h2></div><button class="close-button" data-close="storyDialog" type="button" aria-label="Close">×</button></div>
-      <label class="story-upload" for="storyMedia"><span class="upload-icon">＋</span><strong>Choose a photo or video</strong><span class="muted">Photos have editing tools; videos support preview and publish.</span></label>
-      <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
-      <div class="story-preview hidden" id="storyPreview">
-        <img id="storyImagePreview" alt="Story preview">
-        <video id="storyVideoPreview" class="hidden" controls playsinline></video>
-        <canvas id="storyDrawingCanvas" aria-label="Draw on your story"></canvas>
-        <span id="storyStickerOverlay" aria-hidden="true"></span>
-        <span id="storyTextOverlay" role="button" tabindex="0" aria-label="Drag to move story text"></span>
-      </div>
-      <div class="story-tool-groups">
-        <div class="tool-row editor-tools" aria-label="Photo editing tools">
-          <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
-          <label class="tool-button range-tool">Zoom <input id="storyZoomRange" type="range" min="1" max="2.5" step="0.1" value="1" aria-label="Zoom photo"></label>
-          <label class="tool-button range-tool">Crop X <input id="storyCropX" type="range" min="0" max="100" step="1" value="50" aria-label="Horizontal crop"></label>
-          <label class="tool-button range-tool">Crop Y <input id="storyCropY" type="range" min="0" max="100" step="1" value="50" aria-label="Vertical crop"></label>
-          <select id="storyFilter" aria-label="Photo filter">
-            <option value="none">Original</option>
-            <option value="grayscale(1)">Mono</option>
-            <option value="sepia(.55) saturate(1.2)">Warm</option>
-            <option value="brightness(1.12) saturate(1.25)">Dream</option>
-            <option value="brightness(.75) contrast(1.15)">Night</option>
-          </select>
-          <label class="tool-button range-tool">Text size <input id="storyTextSize" type="range" min="14" max="48" step="1" value="24" aria-label="Story text size"></label>
-          <label class="tool-button">Text color <input id="storyTextColor" type="color" value="#ffffff" aria-label="Text color"></label>
-          <select id="storySticker" aria-label="Add a sticker">
-            <option value="">No sticker</option>
-            <option value="💜">💜 Purple heart</option>
-            <option value="✨">✨ Sparkles</option>
-            <option value="🔥">🔥 Fire</option>
-            <option value="🌙">🌙 Moon</option>
-            <option value="🌸">🌸 Flower</option>
-            <option value="⭐">⭐ Star</option>
-            <option value="🦋">🦋 Butterfly</option>
-            <option value="😂">😂 Laugh</option>
-          </select>
-          <label class="tool-button">Pen color <input id="storyPenColor" type="color" value="#ffffff" aria-label="Pen color"></label>
-          <button class="tool-button" id="storyPenToggle" type="button" aria-pressed="false">✎ Draw</button>
-          <button class="tool-button" id="storyUndo" type="button" disabled>↶ Undo</button>
-          <button class="tool-button" id="storyPreviewButton" type="button">Preview</button>
+      <div class="story-modal-header">
+        <div>
+          <p class="eyebrow">SHARE A MOMENT</p>
+          <h2 id="storyDialogTitle">Create story</h2>
         </div>
+        <button class="close-button" data-close="storyDialog" type="button" aria-label="Close story editor">×</button>
       </div>
-      <label class="field-label" for="storyText">Story text (drag it on the photo to move)</label>
-      <input id="storyText" maxlength="240" placeholder="Add a caption">
-      <label class="tool-button duration-tool" for="storyDuration">Story duration
-        <select id="storyDuration" aria-label="Story duration">
-          <option value="24">24 hours</option>
-          <option value="12">12 hours</option>
-          <option value="6">6 hours</option>
-          <option value="1">1 hour</option>
-        </select>
-      </label>
-      <div class="field-grid">
-        <label><span class="field-label">Location</span><input id="storyLocation" maxlength="160" placeholder="Add a place"></label>
-        <label><span class="field-label">Mention</span><input id="storyMention" placeholder="@username"></label>
-        <label><span class="field-label">Hashtags</span><input id="storyHashtags" placeholder="#life #ars"></label>
-        <label><span class="field-label">Story privacy</span><select id="storyPrivacy"><option value="public">Everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select></label>
+      <div class="story-step-indicator" aria-label="Story creation steps">
+        <span data-story-step="choose" class="active">1 <b>Choose media</b></span>
+        <span data-story-step="editor">2 <b>Edit story</b></span>
+        <span data-story-step="settings">3 <b>Share settings</b></span>
       </div>
-      <p class="form-message" id="storyMessage" role="status"></p>
-      <div class="modal-actions"><button class="secondary-button" data-close="storyDialog" type="button">Cancel</button><button class="primary-button" id="publishStory" type="submit">Publish story</button></div>
+
+      <section class="story-stage" id="storyStageChoose" data-stage="choose">
+        <label class="story-upload" for="storyMedia">
+          <span class="upload-icon">＋</span>
+          <strong>Choose a photo or video</strong>
+          <span class="muted">Select media first, then edit your story before publishing.</span>
+        </label>
+        <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
+        <div class="modal-actions">
+          <button class="secondary-button" data-close="storyDialog" type="button">Cancel</button>
+        </div>
+      </section>
+
+      <section class="story-stage hidden" id="storyStageEditor" data-stage="editor">
+        <div class="story-editor-layout">
+          <div class="story-editor-preview-column">
+            <div class="story-preview hidden" id="storyPreview">
+              <img id="storyImagePreview" alt="Story preview">
+              <video id="storyVideoPreview" class="hidden" controls playsinline></video>
+              <canvas id="storyDrawingCanvas" aria-label="Draw on your story"></canvas>
+              <span id="storyStickerOverlay" aria-hidden="true"></span>
+              <span id="storyTextOverlay" role="button" tabindex="0" aria-label="Drag to move story text"></span>
+            </div>
+            <p class="muted story-editor-hint">Drag text on the preview to reposition it. Video stories support preview and publishing with limited editing.</p>
+          </div>
+          <div class="story-editor-controls">
+            <div class="story-tool-groups">
+              <div class="tool-row editor-tools" aria-label="Photo editing tools">
+                <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
+                <label class="tool-button range-tool">Zoom <input id="storyZoomRange" type="range" min="1" max="2.5" step="0.1" value="1" aria-label="Zoom photo"></label>
+                <label class="tool-button range-tool">Crop X <input id="storyCropX" type="range" min="0" max="100" step="1" value="50" aria-label="Horizontal crop"></label>
+                <label class="tool-button range-tool">Crop Y <input id="storyCropY" type="range" min="0" max="100" step="1" value="50" aria-label="Vertical crop"></label>
+                <select id="storyFilter" aria-label="Photo filter">
+                  <option value="none">Original</option>
+                  <option value="grayscale(1)">Mono</option>
+                  <option value="sepia(.55) saturate(1.2)">Warm</option>
+                  <option value="brightness(1.12) saturate(1.25)">Dream</option>
+                  <option value="brightness(.75) contrast(1.15)">Night</option>
+                </select>
+                <label class="tool-button range-tool">Text size <input id="storyTextSize" type="range" min="14" max="48" step="1" value="24" aria-label="Story text size"></label>
+                <label class="tool-button">Text color <input id="storyTextColor" type="color" value="#ffffff" aria-label="Text color"></label>
+                <select id="storySticker" aria-label="Add a sticker">
+                  <option value="">No sticker</option>
+                  <option value="💜">💜 Purple heart</option>
+                  <option value="✨">✨ Sparkles</option>
+                  <option value="🔥">🔥 Fire</option>
+                  <option value="🌙">🌙 Moon</option>
+                  <option value="🌸">🌸 Flower</option>
+                  <option value="⭐">⭐ Star</option>
+                  <option value="🦋">🦋 Butterfly</option>
+                  <option value="😂">😂 Laugh</option>
+                </select>
+                <label class="tool-button">Pen color <input id="storyPenColor" type="color" value="#ffffff" aria-label="Pen color"></label>
+                <button class="tool-button" id="storyPenToggle" type="button" aria-pressed="false">✎ Draw</button>
+                <button class="tool-button" id="storyUndo" type="button" disabled>↶ Undo</button>
+                <button class="tool-button" id="storyPreviewButton" type="button">Preview</button>
+              </div>
+            </div>
+            <label class="field-label" for="storyText">Story text</label>
+            <input id="storyText" maxlength="240" placeholder="Add a caption">
+          </div>
+        </div>
+        <div class="modal-actions story-stage-actions">
+          <button class="secondary-button" id="storyBackToChoose" type="button">Back</button>
+          <button class="primary-button" id="storyNextToSettings" type="button">Next</button>
+        </div>
+      </section>
+
+      <section class="story-stage hidden" id="storyStageSettings" data-stage="settings">
+        <div class="story-settings-heading">
+          <h3>Review and share</h3>
+          <p class="muted">Choose who can see your story and how long it stays visible.</p>
+        </div>
+        <label class="tool-button duration-tool" for="storyDuration">Story duration
+          <select id="storyDuration" aria-label="Story duration">
+            <option value="24">24 hours</option>
+            <option value="12">12 hours</option>
+            <option value="6">6 hours</option>
+            <option value="1">1 hour</option>
+          </select>
+        </label>
+        <div class="field-grid">
+          <label><span class="field-label">Location</span><input id="storyLocation" maxlength="160" placeholder="Add a place"></label>
+          <label><span class="field-label">Mention</span><input id="storyMention" placeholder="@username"></label>
+          <label><span class="field-label">Hashtags</span><input id="storyHashtags" placeholder="#life #ars"></label>
+          <label><span class="field-label">Story privacy</span><select id="storyPrivacy"><option value="public">Everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select></label>
+        </div>
+        <div class="modal-actions story-stage-actions">
+          <button class="secondary-button" id="storyBackToEditor" type="button">Back to editor</button>
+          <button class="secondary-button" id="saveStoryDraftClose" type="button">Save draft &amp; close</button>
+          <button class="primary-button" id="publishStory" type="submit">Publish story</button>
+        </div>
+      </section>
+      <p class="form-message" id="storyMessage" role="status" aria-live="polite"></p>
     </form>
   </dialog>
 
@@ -211,6 +257,6 @@
   <dialog class="modal story-viewer" id="storyViewer"><div class="viewer-card"><button class="close-button viewer-close" data-close="storyViewer" type="button" aria-label="Close story">×</button><div id="storyViewerContent"></div><div id="storyViewerFooter" class="viewer-footer"></div></div></dialog>
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="home.js?v=ars-rebuild-20261022-r3" defer></script>
+  <script src="home.js?v=ars-home-story-flow-fix-20261022" defer></script>
 </body>
 </html>
