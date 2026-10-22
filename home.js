@@ -247,6 +247,25 @@
       ...post,
       image: await resolvePostMedia(post.image)
     })));
+
+    displayRows.sort((first, second) => {
+      const firstPlan = String(profiles[first.user_id]?.plan || "").toLowerCase();
+      const secondPlan = String(profiles[second.user_id]?.plan || "").toLowerCase();
+      const firstSubscriber = ["vip", "premium", "subscriber"].includes(firstPlan) ? 1 : 0;
+      const secondSubscriber = ["vip", "premium", "subscriber"].includes(secondPlan) ? 1 : 0;
+
+      if (firstSubscriber !== secondSubscriber) {
+        return secondSubscriber - firstSubscriber;
+      }
+
+      if (sortMode === "trending") {
+        const engagementDifference = Number(second.likes_count || 0) - Number(first.likes_count || 0);
+        if (engagementDifference !== 0) return engagementDifference;
+      }
+
+      return new Date(second.created_at).getTime() - new Date(first.created_at).getTime();
+    });
+
     feed.innerHTML = displayRows.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
     loadComments(rows.map(post => post.id)).catch(error => console.warn("Comments load warning:", error));
     loadLikeStates(rows.map(post => post.id)).catch(error => console.warn("Like state warning:", error));
