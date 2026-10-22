@@ -333,3 +333,15 @@ input:not([type="checkbox"]):not([type="color"]):not([type="file"]), select { wi
   height: min(68vh, 600px);
   object-fit: contain;
 }
+
+
+.wheel-story-avatar {
+  border-color: rgba(225, 171, 255, .8);
+  background: radial-gradient(circle at 35% 25%, #d6a2ff, #7d2ce8 65%, #24103e);
+  box-shadow: 0 0 18px rgba(176, 77, 255, .5);
+  color: #fff;
+  font-size: 24px;
+}
+.suggested-story .story-ring {
+  background: conic-gradient(from 15deg, #ee68df, #923cff, #d95dff, #ee68df);
+}
