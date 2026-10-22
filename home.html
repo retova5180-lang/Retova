@@ -98,7 +98,7 @@
       <div class="modal-heading"><div><p class="eyebrow">SHARE A MOMENT</p><h2>Create story</h2></div><button class="close-button" data-close="storyDialog" type="button" aria-label="Close">×</button></div>
       <label class="story-upload" for="storyMedia"><span class="upload-icon">＋</span><strong>Choose a photo or video</strong><span class="muted">Photos have editing tools; videos support preview and publish.</span></label>
       <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
-      <div class="story-preview hidden" id="storyPreview"><img id="storyImagePreview" alt="Story preview"><video id="storyVideoPreview" class="hidden" controls playsinline></video><span id="storyTextOverlay"></span></div>
+      <div class="story-preview hidden" id="storyPreview"><img id="storyImagePreview" alt="Story preview"><video id="storyVideoPreview" class="hidden" controls playsinline></video><canvas id="storyDrawingCanvas" class="story-drawing-canvas" aria-label="Story drawing layer"></canvas><span id="storyTextOverlay"></span></div>
       <div class="tool-row editor-tools" aria-label="Story editing tools">
         <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
         <button class="tool-button" id="storyZoom" type="button">＋ Zoom</button>
