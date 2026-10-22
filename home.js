@@ -1467,6 +1467,7 @@
 
   function navigate(section) {
     setActiveNavigation(section);
+    document.body.classList.toggle("trending-mode", section === "trending");
 
     if (section === "profile") {
       toast("The Profile page will be added after Home is complete.");
@@ -1697,6 +1698,7 @@
 
       if (showTrending) {
         setActiveNavigation("trending");
+        document.body.classList.add("trending-mode");
         $("#feedTitle").textContent = "Trending";
       }
 
