@@ -18,6 +18,10 @@
     storyDraftMediaPath: "",
     storyRotation: 0,
     storyZoom: 1,
+    storyCropMode: false,
+    storyDrawingEnabled: false,
+    storyDrawingStrokes: [],
+    storyCurrentStroke: null,
     storyDraftTimer: null,
     likes: new Set(),
     comments: new Map()
@@ -252,7 +256,7 @@
       '<button class="post-menu" type="button" data-post-menu="' + escapeHTML(post.id) + '" aria-label="Post options">···</button></div>' +
       body + location + mediaMarkup(post) + tagMarkup +
       '<div class="post-stats"><span><b data-likes-count="' + escapeHTML(post.id) + '">' + Number(post.likes_count || 0) + '</b> likes</span><span>' + Number(post.comments_count || 0) + ' comments · ' + Number(post.views_count || 0) + ' views</span></div>' +
-      '<div class="post-actions"><button class="post-action" type="button" data-like="' + escapeHTML(post.id) + '">♡ Like</button><button class="post-action" type="button" data-comment-focus="' + escapeHTML(post.id) + '">▤ Comment</button><button class="post-action" type="button" data-share="' + escapeHTML(post.id) + '">↗ Share</button><button class="post-action" type="button" data-save="' + escapeHTML(post.id) + '">♧ Save</button></div>' +
+      '<div class="post-actions"><button class="post-action" type="button" data-like="' + escapeHTML(post.id) + '"><span aria-hidden="true">♡</span><span>Like</span></button><button class="post-action" type="button" data-comment-focus="' + escapeHTML(post.id) + '"><span aria-hidden="true">▢</span><span>Comment</span></button><button class="post-action" type="button" data-share="' + escapeHTML(post.id) + '"><span aria-hidden="true">↗</span><span>Share</span></button><button class="post-action" type="button" data-save="' + escapeHTML(post.id) + '"><span aria-hidden="true">♧</span><span>Save</span></button></div>' +
       (commentsEnabled ? '<div class="post-comments"><div class="comment-list" id="comments-' + escapeHTML(post.id) + '"></div><form class="comment-form" data-comment-form="' + escapeHTML(post.id) + '"><input name="comment" maxlength="1000" placeholder="Write a comment…" aria-label="Write a comment"><button type="submit">Send</button></form></div>' : "") +
       "</article>";
   }
@@ -613,7 +617,48 @@
     [image, video].forEach(element => {
       element.style.filter = filter === "none" ? "none" : filter;
       element.style.transform = "rotate(" + state.storyRotation + "deg) scale(" + state.storyZoom + ")";
+      element.style.objectFit = state.storyCropMode ? "cover" : "contain";
     });
+  }
+
+  function redrawStoryDrawing() {
+    const canvas = $("#storyDrawingCanvas");
+    if (!canvas) return;
+    const preview = $("#storyPreview");
+    const width = Math.max(1, preview.clientWidth);
+    const height = Math.max(1, preview.clientHeight);
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    state.storyDrawingStrokes.forEach(stroke => {
+      if (!Array.isArray(stroke.points) || stroke.points.length < 1) return;
+      context.strokeStyle = stroke.color || "#ffffff";
+      context.lineWidth = stroke.width || 4;
+      context.beginPath();
+      context.moveTo(stroke.points[0].x * canvas.width, stroke.points[0].y * canvas.height);
+      stroke.points.slice(1).forEach(point => context.lineTo(point.x * canvas.width, point.y * canvas.height));
+      if (stroke.points.length === 1) {
+        context.lineTo(stroke.points[0].x * canvas.width + 0.1, stroke.points[0].y * canvas.height + 0.1);
+      }
+      context.stroke();
+    });
+  }
+
+  function setStoryDrawingEnabled(enabled) {
+    state.storyDrawingEnabled = enabled;
+    const canvas = $("#storyDrawingCanvas");
+    const button = $("#storyDraw");
+    canvas.classList.toggle("drawing-active", enabled);
+    button.setAttribute("aria-pressed", String(enabled));
+    button.textContent = enabled ? "✓ Finish drawing" : "✎ Draw";
+    $("#storyEditorHint").textContent = enabled
+      ? "Draw directly on the photo with your finger or mouse."
+      : "Edits autosave to your account. Use Undo to remove the last drawing stroke.";
   }
 
   function updateStoryText() {
@@ -678,7 +723,9 @@
       mention: $("#storyMention").value,
       hashtags: $("#storyHashtags").value,
       rotation: state.storyRotation,
-      zoom: state.storyZoom
+      zoom: state.storyZoom,
+      cropMode: state.storyCropMode,
+      drawingStrokes: state.storyDrawingStrokes
     };
   }
 
@@ -719,6 +766,9 @@
     $("#storyHashtags").value = draft.hashtags || "";
     state.storyRotation = Number(draft.rotation || 0);
     state.storyZoom = Number(draft.zoom || 1);
+    state.storyCropMode = Boolean(draft.cropMode);
+    state.storyDrawingStrokes = Array.isArray(draft.drawingStrokes) ? draft.drawingStrokes : [];
+    redrawStoryDrawing();
     updateStoryText();
     setStoryPreviewFilter();
   }
@@ -823,6 +873,7 @@
         filter: $("#storyFilter").value,
         zoom: state.storyZoom,
         rotation_degrees: state.storyRotation,
+        drawing_data: state.storyDrawingStrokes,
         location: $("#storyLocation").value.trim() || null,
         mentions,
         hashtags,
@@ -946,10 +997,77 @@
     loadLikeStates(state.posts.map(post => post.id));
   }
 
+  async function loadWheelContent() {
+    const status = $("#wheelStatus");
+    const challengesTarget = $("#wheelChallenges");
+    const rewardsTarget = $("#wheelRewards");
+    const userId = currentUserId();
+
+    status.textContent = "Loading rewards and challenges…";
+    challengesTarget.innerHTML = '<p class="muted">Loading challenges…</p>';
+    rewardsTarget.innerHTML = '<p class="muted">Loading rewards…</p>';
+
+    const challengeResult = await supabase
+      .from("wheel_challenges")
+      .select("id, title, category, reward_xp, image_required")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (challengeResult.error) {
+      challengesTarget.innerHTML = '<p class="muted">Challenges are unavailable right now.</p>';
+      console.warn("Wheel challenges load failed:", challengeResult.error.message);
+    } else if (!challengeResult.data?.length) {
+      challengesTarget.innerHTML = '<p class="muted">No challenges have been published yet.</p>';
+    } else {
+      challengesTarget.innerHTML = challengeResult.data.map(challenge =>
+        '<article class="wheel-challenge"><div><strong>' + escapeHTML(challenge.title || "ARS challenge") +
+        '</strong><span>' + escapeHTML(challenge.category || "Community") + '</span></div><b>' +
+        Number(challenge.reward_xp || 0) + ' XP</b>' +
+        (challenge.image_required ? '<small>Photo required</small>' : '') + '</article>'
+      ).join("");
+    }
+
+    if (!userId) {
+      rewardsTarget.innerHTML = '<p class="muted">Sign in to see your rewards.</p>';
+      status.textContent = "Explore ARS challenges and rewards.";
+      return;
+    }
+
+    const rewardResult = await supabase
+      .from("user_rewards")
+      .select("id, reward_code, reward_payload, starts_at, expires_at, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (rewardResult.error) {
+      rewardsTarget.innerHTML = '<p class="muted">Your rewards could not be loaded.</p>';
+      console.warn("User rewards load failed:", rewardResult.error.message);
+    } else if (!rewardResult.data?.length) {
+      rewardsTarget.innerHTML = '<p class="muted">Your earned rewards will appear here.</p>';
+    } else {
+      rewardsTarget.innerHTML = rewardResult.data.map(reward => {
+        const payload = reward.reward_payload && typeof reward.reward_payload === "object"
+          ? reward.reward_payload
+          : {};
+        const label = payload.title || payload.label || reward.reward_code || "ARS reward";
+        const expires = reward.expires_at
+          ? "Expires " + new Date(reward.expires_at).toLocaleDateString()
+          : "No expiry listed";
+        return '<article class="wheel-reward"><strong>' + escapeHTML(String(label)) +
+          '</strong><span>' + escapeHTML(expires) + '</span></article>';
+      }).join("");
+    }
+
+    status.textContent = "Your challenges and rewards.";
+  }
+
   function navigate(section) {
     const destinations = {
       home: "home.html",
       search: "search.html",
+      trending: "trending.html",
+      messages: "messages.html",
       streak: "streak.html",
       profile: "profile.html",
       notifications: "notifications.html"
@@ -970,6 +1088,13 @@
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
     $$("[data-nav]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.nav)));
     $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openWheel").addEventListener("click", () => {
+      openDialog("wheelDialog");
+      loadWheelContent().catch(error => {
+        console.error("Rewards panel failed:", error);
+        $("#wheelStatus").textContent = "Rewards are unavailable right now.";
+      });
+    });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
@@ -994,6 +1119,59 @@
       setStoryPreviewFilter();
       scheduleStoryDraftSave();
     });
+    $("#storyCrop").addEventListener("click", () => {
+      state.storyCropMode = !state.storyCropMode;
+      $("#storyCrop").textContent = state.storyCropMode ? "□ Fit image" : "□ Crop";
+      setStoryPreviewFilter();
+      scheduleStoryDraftSave();
+    });
+    $("#storySticker").addEventListener("click", () => {
+      const sticker = window.prompt("Enter a sticker or emoji to add to your story", "💜");
+      if (sticker && sticker.trim()) {
+        $("#storyText").value = ($("#storyText").value + " " + sticker.trim()).trim();
+        updateStoryText();
+        scheduleStoryDraftSave();
+      }
+    });
+    $("#storyDraw").addEventListener("click", () => {
+      setStoryDrawingEnabled(!state.storyDrawingEnabled);
+    });
+    $("#storyUndo").addEventListener("click", () => {
+      if (state.storyCurrentStroke) state.storyCurrentStroke = null;
+      else state.storyDrawingStrokes.pop();
+      redrawStoryDrawing();
+      scheduleStoryDraftSave();
+    });
+    const drawingCanvas = $("#storyDrawingCanvas");
+    drawingCanvas.addEventListener("pointerdown", event => {
+      if (!state.storyDrawingEnabled) return;
+      event.preventDefault();
+      drawingCanvas.setPointerCapture(event.pointerId);
+      const bounds = drawingCanvas.getBoundingClientRect();
+      state.storyCurrentStroke = { color: $("#storyTextColor").value, width: 4, points: [{
+        x: (event.clientX - bounds.left) / bounds.width,
+        y: (event.clientY - bounds.top) / bounds.height
+      }] };
+      state.storyDrawingStrokes.push(state.storyCurrentStroke);
+      redrawStoryDrawing();
+    });
+    drawingCanvas.addEventListener("pointermove", event => {
+      if (!state.storyDrawingEnabled || !state.storyCurrentStroke) return;
+      const bounds = drawingCanvas.getBoundingClientRect();
+      state.storyCurrentStroke.points.push({
+        x: Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)),
+        y: Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height))
+      });
+      redrawStoryDrawing();
+    });
+    const finishDrawing = () => {
+      if (!state.storyCurrentStroke) return;
+      state.storyCurrentStroke = null;
+      scheduleStoryDraftSave();
+    };
+    drawingCanvas.addEventListener("pointerup", finishDrawing);
+    drawingCanvas.addEventListener("pointercancel", finishDrawing);
+    window.addEventListener("resize", redrawStoryDrawing);
     $("#storyZoom").addEventListener("click", () => {
       state.storyZoom = state.storyZoom >= 1.6 ? 1 : Math.round((state.storyZoom + .2) * 10) / 10;
       setStoryPreviewFilter();

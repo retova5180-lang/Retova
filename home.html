@@ -26,11 +26,11 @@
         <span class="vip-badge hidden" id="vipBadge">VIP</span>
       </div>
       <nav class="side-nav" aria-label="Main navigation">
-        <a class="nav-item active" href="home.html"><span>⌂</span>Home</a>
-        <button class="nav-item" data-nav="streak" type="button"><span>♨</span>Streak</button>
-        <button class="nav-item" data-nav="search" type="button"><span>⌕</span>Search</button>
-        <button class="nav-item" data-nav="profile" type="button"><span>◉</span>Profile</button>
-        <button class="nav-item" data-nav="notifications" type="button"><span>♧</span>Notifications</button>
+        <a class="nav-item active" href="home.html"><span aria-hidden="true">⌂</span>Home</a>
+        <button class="nav-item" data-nav="streak" type="button"><span aria-hidden="true">♨</span>Streak</button>
+        <button class="nav-item" data-nav="search" type="button"><span aria-hidden="true">⌕</span>Search</button>
+        <button class="nav-item" data-nav="profile" type="button"><span aria-hidden="true">◉</span>Profile</button>
+        <button class="nav-item" data-nav="notifications" type="button"><span aria-hidden="true">♧</span>Notifications</button>
       </nav>
       <button class="primary-button wide-button" data-open="postDialog" type="button">＋ Create post</button>
       <p class="rail-caption"><span class="online-dot"></span> Your space. Your people.</p>
@@ -67,11 +67,11 @@
 
   <button class="floating-create" data-open="postDialog" type="button" aria-label="Create post">＋</button>
   <nav class="bottom-nav" aria-label="Main navigation">
-    <a class="bottom-item active" href="home.html"><span>⌂</span><small>Home</small></a>
-    <button class="bottom-item" data-nav="streak" type="button"><span>♨</span><small>Streak</small></button>
-    <button class="bottom-item" data-nav="search" type="button"><span>⌕</span><small>Search</small></button>
-    <button class="bottom-item" data-nav="profile" type="button"><span>◉</span><small>Profile</small></button>
-    <button class="bottom-item" data-nav="notifications" type="button"><span>♧</span><small>Notifications</small></button>
+    <a class="bottom-item active" href="home.html"><span aria-hidden="true">⌂</span><small>Home</small></a>
+    <button class="bottom-item" data-nav="search" type="button"><span aria-hidden="true">⌕</span><small>Search</small></button>
+    <button class="bottom-item" data-nav="trending" type="button"><span aria-hidden="true">♨</span><small>Trending</small></button>
+    <button class="bottom-item" data-nav="notifications" type="button"><span aria-hidden="true">♧</span><small>Notifications</small></button>
+    <button class="bottom-item" data-nav="messages" type="button"><span aria-hidden="true">✉</span><small>Messages</small></button>
   </nav>
 
   <dialog class="modal" id="postDialog">
@@ -98,14 +98,19 @@
       <div class="modal-heading"><div><p class="eyebrow">SHARE A MOMENT</p><h2>Create story</h2></div><button class="close-button" data-close="storyDialog" type="button" aria-label="Close">×</button></div>
       <label class="story-upload" for="storyMedia"><span class="upload-icon">＋</span><strong>Choose a photo or video</strong><span class="muted">Photos have editing tools; videos support preview and publish.</span></label>
       <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
-      <div class="story-preview hidden" id="storyPreview"><img id="storyImagePreview" alt="Story preview"><video id="storyVideoPreview" class="hidden" controls playsinline></video><span id="storyTextOverlay"></span></div>
-      <div class="tool-row editor-tools">
+      <div class="story-preview hidden" id="storyPreview"><img id="storyImagePreview" alt="Story preview"><video id="storyVideoPreview" class="hidden" controls playsinline></video><canvas id="storyDrawingCanvas" class="story-drawing-canvas" aria-label="Story drawing layer"></canvas><span id="storyTextOverlay"></span></div>
+      <div class="tool-row editor-tools" aria-label="Story editing tools">
         <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
         <button class="tool-button" id="storyZoom" type="button">＋ Zoom</button>
+        <button class="tool-button" id="storyCrop" type="button">□ Crop</button>
+        <button class="tool-button" id="storySticker" type="button">☺ Sticker</button>
+        <button class="tool-button" id="storyDraw" type="button" aria-pressed="false">✎ Draw</button>
+        <button class="tool-button" id="storyUndo" type="button">↶ Undo</button>
         <label class="tool-button">Text color <input id="storyTextColor" type="color" value="#ffffff" aria-label="Text color"></label>
         <select id="storyFilter" aria-label="Photo filter"><option value="none">Original</option><option value="grayscale(1)">Mono</option><option value="sepia(.55) saturate(1.2)">Warm</option><option value="brightness(1.12) saturate(1.25)">Dream</option><option value="brightness(.75) contrast(1.15)">Night</option></select>
         <select id="storyDuration" aria-label="Story duration"><option value="24">24 hours</option><option value="12">12 hours</option><option value="6">6 hours</option><option value="1">1 hour</option></select>
       </div>
+      <p class="muted editor-hint" id="storyEditorHint">Choose a photo to enable crop, stickers, and drawing tools.</p>
       <label class="field-label" for="storyText">Story text</label><input id="storyText" maxlength="240" placeholder="Add a caption">
       <div class="field-grid">
         <label><span class="field-label">Location</span><input id="storyLocation" maxlength="160" placeholder="Add a place"></label>
@@ -116,6 +121,28 @@
       <p class="form-message" id="storyMessage" role="status"></p>
       <div class="modal-actions"><button class="secondary-button" data-close="storyDialog" type="button">Cancel</button><button class="primary-button" id="publishStory" type="submit">Publish story</button></div>
     </form>
+  </dialog>
+
+  <dialog class="modal" id="wheelDialog">
+    <div class="modal-content">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">YOUR ARS SPACE</p>
+          <h2>Rewards &amp; Challenges</h2>
+        </div>
+        <button class="close-button" data-close="wheelDialog" type="button" aria-label="Close rewards">×</button>
+      </div>
+      <p class="muted" id="wheelStatus" role="status">Loading rewards and challenges…</p>
+      <section class="wheel-content-section">
+        <h3>Challenges</h3>
+        <div id="wheelChallenges" class="wheel-challenges"></div>
+      </section>
+      <section class="wheel-content-section">
+        <h3>Your rewards</h3>
+        <div id="wheelRewards" class="wheel-rewards"></div>
+      </section>
+      <p class="muted wheel-note">Spins will be enabled when the secure reward rules and subscription limits are connected.</p>
+    </div>
   </dialog>
 
   <dialog class="modal story-viewer" id="storyViewer"><div class="viewer-card"><button class="close-button viewer-close" data-close="storyViewer" type="button" aria-label="Close story">×</button><div id="storyViewerContent"></div><div id="storyViewerFooter" class="viewer-footer"></div></div></dialog>
