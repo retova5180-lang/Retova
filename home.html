@@ -26,11 +26,12 @@
         <span class="vip-badge hidden" id="vipBadge">VIP</span>
       </div>
       <nav class="side-nav" aria-label="Main navigation">
-        <a class="nav-item active" href="home.html"><span>⌂</span>Home</a>
+        <a class="nav-item active" href="home.html" data-nav="home"><span>⌂</span>Home</a>
         <button class="nav-item" data-nav="streak" type="button"><span>♨</span>Streak</button>
         <button class="nav-item" data-nav="search" type="button"><span>⌕</span>Search</button>
-        <button class="nav-item" data-nav="profile" type="button"><span>◉</span>Profile</button>
+        <button class="nav-item" data-nav="trending" type="button"><span>↗</span>Trending</button>
         <button class="nav-item" data-nav="notifications" type="button"><span>♧</span>Notifications</button>
+        <button class="nav-item" data-nav="messages" type="button"><span>✉</span>Messages</button>
       </nav>
       <button class="primary-button wide-button" data-open="postDialog" type="button">＋ Create post</button>
       <p class="rail-caption"><span class="online-dot"></span> Your space. Your people.</p>
@@ -52,7 +53,7 @@
       </section>
 
       <section class="feed-section">
-        <div class="section-heading feed-heading"><div><h2>Your feed</h2><p class="muted">Fresh from your community</p></div><button class="icon-button" id="refreshFeed" type="button" aria-label="Refresh feed">↻</button></div>
+        <div class="section-heading feed-heading"><div><h2 id="feedTitle">Your feed</h2><p class="muted">Fresh from your community</p></div><button class="icon-button" id="refreshFeed" type="button" aria-label="Refresh feed">↻</button></div>
         <div class="feed-list" id="feed" aria-live="polite"><div class="panel loading-card">Loading your feed…</div></div>
         <section class="panel empty-state hidden" id="feedEmpty"><span class="empty-icon">✦</span><h3>Your feed is waiting</h3><p class="muted">Follow people or share your first moment to get things moving.</p><button class="primary-button" data-open="postDialog" type="button">Create a post</button></section>
       </section>
@@ -67,11 +68,11 @@
 
   <button class="floating-create" data-open="postDialog" type="button" aria-label="Create post">＋</button>
   <nav class="bottom-nav" aria-label="Main navigation">
-    <a class="bottom-item active" href="home.html"><span>⌂</span><small>Home</small></a>
-    <button class="bottom-item" data-nav="streak" type="button"><span>♨</span><small>Streak</small></button>
+    <a class="bottom-item active" href="home.html" data-nav="home"><span>⌂</span><small>Home</small></a>
     <button class="bottom-item" data-nav="search" type="button"><span>⌕</span><small>Search</small></button>
-    <button class="bottom-item" data-nav="profile" type="button"><span>◉</span><small>Profile</small></button>
+    <button class="bottom-item" data-nav="trending" type="button"><span>↗</span><small>Trending</small></button>
     <button class="bottom-item" data-nav="notifications" type="button"><span>♧</span><small>Notifications</small></button>
+    <button class="bottom-item" data-nav="messages" type="button"><span>✉</span><small>Messages</small></button>
   </nav>
 
   <dialog class="modal" id="postDialog">
@@ -156,6 +157,32 @@
       <p class="form-message" id="storyMessage" role="status"></p>
       <div class="modal-actions"><button class="secondary-button" data-close="storyDialog" type="button">Cancel</button><button class="primary-button" id="publishStory" type="submit">Publish story</button></div>
     </form>
+  </dialog>
+
+  <dialog class="modal" id="messagesDialog">
+    <div class="modal-content messages-content">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">YOUR CONVERSATIONS</p>
+          <h2>Messages</h2>
+        </div>
+        <button class="close-button" data-close="messagesDialog" type="button" aria-label="Close messages">×</button>
+      </div>
+      <div class="messages-layout">
+        <div class="messages-list" id="messagesList" aria-label="Conversations">
+          <p class="muted">Loading conversations…</p>
+        </div>
+        <section class="conversation-panel hidden" id="conversationPanel">
+          <h3 id="conversationTitle">Conversation</h3>
+          <div class="conversation-messages" id="conversationMessages" aria-live="polite"></div>
+          <form class="message-form" id="messageForm">
+            <input id="messageText" name="message" maxlength="2000" placeholder="Write a message…" autocomplete="off" required>
+            <button class="primary-button" type="submit">Send</button>
+          </form>
+        </section>
+      </div>
+      <p class="form-message" id="messagesStatus" role="status"></p>
+    </div>
   </dialog>
 
   <dialog class="modal story-viewer" id="storyViewer"><div class="viewer-card"><button class="close-button viewer-close" data-close="storyViewer" type="button" aria-label="Close story">×</button><div id="storyViewerContent"></div><div id="storyViewerFooter" class="viewer-footer"></div></div></dialog>
