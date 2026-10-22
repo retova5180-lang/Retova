@@ -877,3 +877,20 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
   .story-publish-stage { padding: 12px; }
   .story-publish-card { padding: 18px; }
 }
+
+
+/* The supplied home reference uses a wider phone/tablet canvas than the old 480px cap. */
+@media (min-width: 481px) {
+  .topbar,
+  .app-layout,
+  .bottom-nav {
+    width: min(100%, 650px);
+  }
+  .app-layout {
+    margin: 0 auto 110px;
+    padding: 0 10px;
+  }
+  .floating-create {
+    right: max(18px, calc((100vw - 650px) / 2 + 16px));
+  }
+}
