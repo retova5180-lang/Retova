@@ -1842,6 +1842,11 @@
     await getSessionAndProfile();
     await restoreStoryDraft();
 
+    if (window.location.hash === "#profile") {
+      setActiveNavigation("profile");
+      toast("The Profile page will be added after Home is complete.");
+    }
+
     if (currentUserId()) {
       const showTrending = window.location.hash === "#trending";
       await Promise.allSettled([
