@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08070d">
+  <title>ARS — Messages</title>
+  <link rel="stylesheet" href="ars-pages.css">
+  <link rel="stylesheet" href="messages.css">
+</head>
+<body>
+  <main class="ars-page messages-page">
+    <header class="page-header">
+      <a href="home.html" aria-label="Back to ARS Home">ΛRS</a>
+      <h1>Messages</h1>
+      <button id="refreshMessages" type="button">Refresh</button>
+    </header>
+    <div class="messages-layout">
+      <section class="conversation-list" id="conversationList" aria-label="Conversations">
+        <p class="empty-state">Loading conversations…</p>
+      </section>
+      <section class="chat-panel" aria-label="Selected conversation">
+        <div class="chat-title" id="chatTitle">Choose a conversation</div>
+        <div class="chat-log" id="chatLog" aria-live="polite">
+          <p class="empty-state">Your conversations will appear here.</p>
+        </div>
+        <form class="send-form" id="sendMessageForm">
+          <input id="messageText" maxlength="4000" autocomplete="off" placeholder="Write a message…" aria-label="Message" required>
+          <button type="submit">Send</button>
+        </form>
+        <p id="messageStatus" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+  <nav class="ars-bottom-nav" aria-label="Main navigation">
+    <a href="home.html">⌂<span>Home</span></a>
+    <a href="search.html">⌕<span>Search</span></a>
+    <a href="trending.html">♨<span>Trending</span></a>
+    <a href="notifications.html">♧<span>Notifications</span></a>
+    <a class="active" href="messages.html">✉<span>Messages</span></a>
+  </nav>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="messages.js"></script>
+</body>
+</html>
