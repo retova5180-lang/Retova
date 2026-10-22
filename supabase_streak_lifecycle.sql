@@ -117,6 +117,10 @@ DECLARE
   v_today date := (now() AT TIME ZONE 'UTC')::date;
   v_day_offset integer;
   v_setup_days integer := 0;
+  v_user_a_subscriber boolean := false;
+  v_user_b_subscriber boolean := false;
+  v_user_a_missed boolean := false;
+  v_user_b_missed boolean := false;
 BEGIN
   IF p_activity_type NOT IN ('like', 'story_view') THEN
     RETURN;
@@ -132,17 +136,42 @@ BEGIN
     RETURN;
   END IF;
 
-  IF v_streak.status = 'active'
-    AND v_streak.recovery_grace_date IS DISTINCT FROM v_today
-    AND (
-      v_streak.last_activity_user_a IS NULL
-      OR v_streak.last_activity_user_b IS NULL
-      OR v_streak.last_activity_user_a < v_today - 1
-      OR v_streak.last_activity_user_b < v_today - 1
+  IF v_streak.status = 'active' THEN
+    SELECT EXISTS (
+      SELECT 1
+      FROM public.subscriptions s
+      WHERE s.user_id = v_streak.user_a_id
+        AND s.active = true
+        AND (s.expires_at IS NULL OR s.expires_at > now())
     )
-  THEN
-    PERFORM private.mark_streak_broken(v_streak.id);
-    RETURN;
+    INTO v_user_a_subscriber;
+
+    SELECT EXISTS (
+      SELECT 1
+      FROM public.subscriptions s
+      WHERE s.user_id = v_streak.user_b_id
+        AND s.active = true
+        AND (s.expires_at IS NULL OR s.expires_at > now())
+    )
+    INTO v_user_b_subscriber;
+
+    v_user_a_missed :=
+      v_streak.last_activity_user_a IS NULL
+      OR v_streak.last_activity_user_a < v_today - 1;
+
+    v_user_b_missed :=
+      v_streak.last_activity_user_b IS NULL
+      OR v_streak.last_activity_user_b < v_today - 1;
+
+    IF v_streak.recovery_grace_date IS DISTINCT FROM v_today
+      AND (
+        (v_user_a_missed AND NOT v_user_a_subscriber)
+        OR (v_user_b_missed AND NOT v_user_b_subscriber)
+      )
+    THEN
+      PERFORM private.mark_streak_broken(v_streak.id);
+      RETURN;
+    END IF;
   END IF;
 
   INSERT INTO public.streak_activities (
@@ -569,10 +598,33 @@ BEGIN
       AND (s.user_a_id = v_user_id OR s.user_b_id = v_user_id)
       AND s.recovery_grace_date IS DISTINCT FROM (now() AT TIME ZONE 'UTC')::date
       AND (
-        s.last_activity_user_a IS NULL
-        OR s.last_activity_user_b IS NULL
-        OR s.last_activity_user_a < (now() AT TIME ZONE 'UTC')::date - 1
-        OR s.last_activity_user_b < (now() AT TIME ZONE 'UTC')::date - 1
+        (
+          (
+            s.last_activity_user_a IS NULL
+            OR s.last_activity_user_a < (now() AT TIME ZONE 'UTC')::date - 1
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM public.subscriptions sub
+            WHERE sub.user_id = s.user_a_id
+              AND sub.active = true
+              AND (sub.expires_at IS NULL OR sub.expires_at > now())
+          )
+        )
+        OR
+        (
+          (
+            s.last_activity_user_b IS NULL
+            OR s.last_activity_user_b < (now() AT TIME ZONE 'UTC')::date - 1
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM public.subscriptions sub
+            WHERE sub.user_id = s.user_b_id
+              AND sub.active = true
+              AND (sub.expires_at IS NULL OR sub.expires_at > now())
+          )
+        )
       )
   LOOP
     IF private.mark_streak_broken(v_streak.id) THEN
