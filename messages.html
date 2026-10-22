@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08070d">
+<title>ARS — Messages</title>
+<link rel="stylesheet" href="ars-pages.css">
+<link rel="stylesheet" href="messages.css">
+</head>
+<body data-page="messages">
+<header class="top"><a class="brand" href="home.html" aria-label="ARS Home">Λ<span>RS</span></a><a class="btn" href="home.html">Back Home</a></header>
+<main class="page-wrap messages-layout">
+<section class="panel messages-heading"><p class="muted">PRIVATE CONVERSATIONS</p><h1>Messages<span class="accent">.</span></h1><p class="muted">Chat privately with people in your ARS community.</p></section>
+<section class="panel new-conversation"><h2>Start a conversation</h2><form id="newConversationForm"><label class="field">Username<input id="recipientUsername" maxlength="40" autocomplete="off" placeholder="Enter an exact username" required></label><button class="btn primary" type="submit">Start chat</button></form><p id="messagesNotice" class="notice" role="status" aria-live="polite"></p></section>
+<section class="panel inbox-panel"><div class="inbox-heading"><h2>Your conversations</h2><button class="btn" id="refreshConversations" type="button">Refresh</button></div><div class="conversation-layout"><div id="conversationList" class="conversation-list"><p class="empty">Loading conversations…</p></div><section id="chatPanel" class="chat-panel"><div id="chatEmpty" class="chat-empty"><span aria-hidden="true">✉</span><strong>Select a conversation</strong><p class="muted">Your messages will appear here.</p></div><div id="chatActive" class="chat-active" hidden><header class="chat-header"><div><strong id="chatTitle">Conversation</strong><p id="chatSubtitle" class="muted"></p></div><button id="refreshMessages" class="btn" type="button">Refresh</button></header><div id="messageList" class="message-list" aria-live="polite"></div><form id="sendMessageForm" class="send-message-form"><label class="visually-hidden" for="messageText">Write a message</label><textarea id="messageText" maxlength="4000" rows="2" placeholder="Write a message…" required></textarea><button class="btn primary" type="submit">Send</button></form></div></section></div></section>
+</main>
+<nav class="bottom-nav" aria-label="Main navigation"><a class="bottom-item" href="home.html"><span>⌂</span><small>Home</small></a><a class="bottom-item" href="search.html"><span>⌕</span><small>Search</small></a><a class="bottom-item" href="trending.html"><span>♨</span><small>Trending</small></a><a class="bottom-item" href="notifications.html"><span>♧</span><small>Notifications</small></a><a class="bottom-item active" href="messages.html"><span>✉</span><small>Messages</small></a></nav>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="messages.js" defer></script>
+</body>
+</html>
