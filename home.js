@@ -1028,7 +1028,22 @@
     }
   }
 
+
+  function showStoryStage(stage) {
+    const stages = {
+      select: $("#storySelectStage"),
+      edit: $("#storyEditStage"),
+      publish: $("#storyPublishStage")
+    };
+    Object.entries(stages).forEach(([key, element]) => {
+      if (element) element.classList.toggle("hidden", key !== stage);
+    });
+    const label = $("#storyStepLabel");
+    if (label) label.textContent = stage === "select" ? "CHOOSE MEDIA" : stage === "edit" ? "EDIT STORY" : "SHARE STORY";
+  }
+
   function resetStoryPreview() {
+    showStoryStage("select");
     if (state.storyUrl) URL.revokeObjectURL(state.storyUrl);
     state.storyFile = null;
     state.storyUrl = "";
@@ -1088,6 +1103,7 @@
     target.src = state.storyUrl;
     target.classList.remove("hidden");
     $("#storyPreview").classList.remove("hidden");
+    showStoryStage("edit");
     setStoryPreviewFilter();
     updateStoryText();
     drawStoryCanvas();
@@ -1202,6 +1218,7 @@
     }
 
     applyStoryDraftFields(draft);
+    if (draft) showStoryStage("edit");
     if (mediaPath && supabase && currentUserId()) {
       const { data, error } = await supabase.storage.from("private-post-media").download(mediaPath);
       if (!error && data) {
@@ -1214,6 +1231,7 @@
         target.src = state.storyUrl;
         target.classList.remove("hidden");
         $("#storyPreview").classList.remove("hidden");
+        showStoryStage("edit");
         setStoryPreviewFilter();
         updateStoryText();
         drawStoryCanvas();
@@ -1671,7 +1689,33 @@
     $("#openWheel").addEventListener("click", () => {
       window.location.href = "rewards.html";
     });
-    $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openStory").addEventListener("click", () => {
+      showStoryStage(state.storyFile ? "edit" : "select");
+      openDialog("storyDialog");
+    });
+    $("#storyNextButton").addEventListener("click", () => {
+      if (!state.storyFile) {
+        setMessage("#storyMessage", "Choose a photo or video first.", "error");
+        return;
+      }
+      showStoryStage("publish");
+    });
+    $("#storyBackToEdit").addEventListener("click", () => showStoryStage("edit"));
+    $("#storySaveDraftButton").addEventListener("click", async () => {
+      try {
+        await persistStoryDraft();
+        closeDialog("storyDialog");
+        toast("Story draft saved.");
+      } catch (error) {
+        console.error("Story draft save failed:", error);
+        setMessage("#storyMessage", "Could not save the story draft.", "error");
+      }
+    });
+    $("#storyRestoreDraftButton").addEventListener("click", async () => {
+      await restoreStoryDraft();
+      if (state.storyFile) showStoryStage("edit");
+      else toast("No saved story media was found.");
+    });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
