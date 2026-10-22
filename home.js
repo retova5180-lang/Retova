@@ -908,6 +908,33 @@
     }
   }
 
+  function storyDrawingMarkup(value) {
+    let strokes = value;
+    if (typeof strokes === "string") {
+      try {
+        strokes = JSON.parse(strokes);
+      } catch {
+        strokes = [];
+      }
+    }
+    if (!Array.isArray(strokes) || !strokes.length) return "";
+    const paths = strokes.map(stroke => {
+      const points = Array.isArray(stroke.points) ? stroke.points : [];
+      if (!points.length) return "";
+      const coordinates = points.map(point => ({
+        x: Math.max(0, Math.min(1, Number(point.x) || 0)) * 1000,
+        y: Math.max(0, Math.min(1, Number(point.y) || 0)) * 1000
+      }));
+      const path = coordinates.map((point, index) =>
+        (index === 0 ? "M " : "L ") + point.x.toFixed(2) + " " + point.y.toFixed(2)
+      ).join(" ");
+      const color = /^#[0-9a-f]{3,8}$/i.test(stroke.color || "") ? stroke.color : "#ffffff";
+      const width = Math.max(1, Math.min(24, Number(stroke.width) || 4));
+      return '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="' + width + '" stroke-linecap="round" stroke-linejoin="round"></path>';
+    }).join("");
+    return paths ? '<svg class="viewer-drawing" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">' + paths + "</svg>" : "";
+  }
+
   async function openStoryViewer(storyId) {
     const story = state.stories.find(item => String(item.id) === String(storyId));
     if (!story) return;
@@ -925,7 +952,7 @@
     const media = isVideo
       ? '<video controls autoplay playsinline src="' + escapeHTML(storyMediaUrl) + '"></video>'
       : '<img src="' + escapeHTML(storyMediaUrl) + '" alt="Story">';
-    $("#storyViewerContent").innerHTML = media + (story.story_text ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
+    $("#storyViewerContent").innerHTML = '<div class="viewer-media-wrap">' + media + storyDrawingMarkup(story.drawing_data) + "</div>" + (story.story_text ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
     $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button><span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span><div class=\"story-viewer-list\" id=\"storyViewerList\"></div>";
     openDialog("storyViewer");
     const userId = currentUserId();
