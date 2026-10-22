@@ -55,7 +55,26 @@
       <section class="feed-section">
         <div class="section-heading feed-heading"><div><h2 id="feedTitle">Your feed</h2><p class="muted">Fresh from your community</p></div><button class="icon-button" id="refreshFeed" type="button" aria-label="Refresh feed">↻</button></div>
         <div class="feed-list" id="feed" aria-live="polite"><div class="panel loading-card">Loading your feed…</div></div>
-        <section class="panel empty-state hidden" id="feedEmpty"><span class="empty-icon">✦</span><h3>Your feed is waiting</h3><p class="muted">Follow people or share your first moment to get things moving.</p><button class="primary-button" data-open="postDialog" type="button">Create a post</button></section>
+        <section class="panel empty-state hidden" id="feedEmpty">
+          <span class="empty-icon">✦</span>
+          <h3>Your feed is waiting</h3>
+          <p class="muted">No new posts from your community yet. Explore these posts and accounts to get started.</p>
+          <button class="primary-button" data-open="postDialog" type="button">Create a post</button>
+          <div class="empty-recommendations">
+            <section class="suggested-block">
+              <h4>Suggested posts</h4>
+              <div class="feed-list" id="suggestedPostsEmpty">
+                <p class="muted">Finding posts for you…</p>
+              </div>
+            </section>
+            <section class="suggested-block">
+              <h4>Suggested accounts</h4>
+              <div class="suggested-users" id="suggestedUsersEmpty">
+                <p class="muted">Finding people…</p>
+              </div>
+            </section>
+          </div>
+        </section>
       </section>
     </main>
 
