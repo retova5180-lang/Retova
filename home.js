@@ -1215,6 +1215,8 @@
         target.classList.remove("hidden");
         $("#storyPreview").classList.remove("hidden");
         setStoryPreviewFilter();
+        updateStoryText();
+        drawStoryCanvas();
       } else if (error) {
         console.warn("Could not restore story draft media:", error.message);
       }
