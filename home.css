@@ -222,3 +222,93 @@ input:not([type="checkbox"]):not([type="color"]):not([type="file"]), select { wi
   .modal-actions .primary-button, .modal-actions .secondary-button { flex: 1; padding: 0 10px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+
+/* ARS reference-match pass: story editing layers and mobile navigation */
+.story-preview {
+  position: relative;
+  isolation: isolate;
+  touch-action: pan-y;
+}
+.story-preview img,
+.story-preview video {
+  position: relative;
+  z-index: 1;
+}
+.story-drawing-canvas {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  touch-action: none;
+}
+.story-drawing-canvas.drawing-active {
+  pointer-events: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+#storyTextOverlay {
+  z-index: 5;
+  pointer-events: none;
+}
+.editor-hint {
+  margin: 0 0 12px;
+  font-size: 11px;
+}
+.editor-tools {
+  align-items: center;
+}
+.editor-tools .tool-button,
+.editor-tools select {
+  min-height: 36px;
+}
+.bottom-nav {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.bottom-item small {
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .topbar {
+    width: 100%;
+    height: 62px;
+    padding: 0 14px;
+  }
+  .app-layout {
+    width: 100%;
+    padding: 0 8px;
+    margin-bottom: 105px;
+  }
+  .stories-panel {
+    padding: 8px 7px;
+  }
+  .bottom-nav {
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .bottom-item span {
+    font-size: 21px;
+  }
+  .bottom-item small {
+    font-size: 9px;
+  }
+  .floating-create {
+    right: 16px;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+    width: 48px;
+    height: 48px;
+  }
+  .story-preview {
+    height: min(62vh, 420px);
+  }
+  .editor-tools {
+    gap: 6px;
+  }
+  .editor-tools .tool-button,
+  .editor-tools select {
+    font-size: 10px;
+  }
+}
