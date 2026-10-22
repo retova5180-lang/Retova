@@ -18,6 +18,10 @@
     storyDraftMediaPath: "",
     storyRotation: 0,
     storyZoom: 1,
+    storyCropMode: false,
+    storyDrawingEnabled: false,
+    storyDrawingStrokes: [],
+    storyCurrentStroke: null,
     storyDraftTimer: null,
     likes: new Set(),
     comments: new Map()
@@ -613,7 +617,48 @@
     [image, video].forEach(element => {
       element.style.filter = filter === "none" ? "none" : filter;
       element.style.transform = "rotate(" + state.storyRotation + "deg) scale(" + state.storyZoom + ")";
+      element.style.objectFit = state.storyCropMode ? "cover" : "contain";
     });
+  }
+
+  function redrawStoryDrawing() {
+    const canvas = $("#storyDrawingCanvas");
+    if (!canvas) return;
+    const preview = $("#storyPreview");
+    const width = Math.max(1, preview.clientWidth);
+    const height = Math.max(1, preview.clientHeight);
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    state.storyDrawingStrokes.forEach(stroke => {
+      if (!Array.isArray(stroke.points) || stroke.points.length < 1) return;
+      context.strokeStyle = stroke.color || "#ffffff";
+      context.lineWidth = stroke.width || 4;
+      context.beginPath();
+      context.moveTo(stroke.points[0].x * canvas.width, stroke.points[0].y * canvas.height);
+      stroke.points.slice(1).forEach(point => context.lineTo(point.x * canvas.width, point.y * canvas.height));
+      if (stroke.points.length === 1) {
+        context.lineTo(stroke.points[0].x * canvas.width + 0.1, stroke.points[0].y * canvas.height + 0.1);
+      }
+      context.stroke();
+    });
+  }
+
+  function setStoryDrawingEnabled(enabled) {
+    state.storyDrawingEnabled = enabled;
+    const canvas = $("#storyDrawingCanvas");
+    const button = $("#storyDraw");
+    canvas.classList.toggle("drawing-active", enabled);
+    button.setAttribute("aria-pressed", String(enabled));
+    button.textContent = enabled ? "✓ Finish drawing" : "✎ Draw";
+    $("#storyEditorHint").textContent = enabled
+      ? "Draw directly on the photo with your finger or mouse."
+      : "Edits autosave to your account. Use Undo to remove the last drawing stroke.";
   }
 
   function updateStoryText() {
@@ -678,7 +723,9 @@
       mention: $("#storyMention").value,
       hashtags: $("#storyHashtags").value,
       rotation: state.storyRotation,
-      zoom: state.storyZoom
+      zoom: state.storyZoom,
+      cropMode: state.storyCropMode,
+      drawingStrokes: state.storyDrawingStrokes
     };
   }
 
@@ -719,6 +766,9 @@
     $("#storyHashtags").value = draft.hashtags || "";
     state.storyRotation = Number(draft.rotation || 0);
     state.storyZoom = Number(draft.zoom || 1);
+    state.storyCropMode = Boolean(draft.cropMode);
+    state.storyDrawingStrokes = Array.isArray(draft.drawingStrokes) ? draft.drawingStrokes : [];
+    redrawStoryDrawing();
     updateStoryText();
     setStoryPreviewFilter();
   }
@@ -823,6 +873,7 @@
         filter: $("#storyFilter").value,
         zoom: state.storyZoom,
         rotation_degrees: state.storyRotation,
+        drawing_data: state.storyDrawingStrokes,
         location: $("#storyLocation").value.trim() || null,
         mentions,
         hashtags,
@@ -1015,6 +1066,8 @@
     const destinations = {
       home: "home.html",
       search: "search.html",
+      trending: "trending.html",
+      messages: "messages.html",
       streak: "streak.html",
       profile: "profile.html",
       notifications: "notifications.html"
@@ -1066,6 +1119,59 @@
       setStoryPreviewFilter();
       scheduleStoryDraftSave();
     });
+    $("#storyCrop").addEventListener("click", () => {
+      state.storyCropMode = !state.storyCropMode;
+      $("#storyCrop").textContent = state.storyCropMode ? "□ Fit image" : "□ Crop";
+      setStoryPreviewFilter();
+      scheduleStoryDraftSave();
+    });
+    $("#storySticker").addEventListener("click", () => {
+      const sticker = window.prompt("Enter a sticker or emoji to add to your story", "💜");
+      if (sticker && sticker.trim()) {
+        $("#storyText").value = ($("#storyText").value + " " + sticker.trim()).trim();
+        updateStoryText();
+        scheduleStoryDraftSave();
+      }
+    });
+    $("#storyDraw").addEventListener("click", () => {
+      setStoryDrawingEnabled(!state.storyDrawingEnabled);
+    });
+    $("#storyUndo").addEventListener("click", () => {
+      if (state.storyCurrentStroke) state.storyCurrentStroke = null;
+      else state.storyDrawingStrokes.pop();
+      redrawStoryDrawing();
+      scheduleStoryDraftSave();
+    });
+    const drawingCanvas = $("#storyDrawingCanvas");
+    drawingCanvas.addEventListener("pointerdown", event => {
+      if (!state.storyDrawingEnabled) return;
+      event.preventDefault();
+      drawingCanvas.setPointerCapture(event.pointerId);
+      const bounds = drawingCanvas.getBoundingClientRect();
+      state.storyCurrentStroke = { color: $("#storyTextColor").value, width: 4, points: [{
+        x: (event.clientX - bounds.left) / bounds.width,
+        y: (event.clientY - bounds.top) / bounds.height
+      }] };
+      state.storyDrawingStrokes.push(state.storyCurrentStroke);
+      redrawStoryDrawing();
+    });
+    drawingCanvas.addEventListener("pointermove", event => {
+      if (!state.storyDrawingEnabled || !state.storyCurrentStroke) return;
+      const bounds = drawingCanvas.getBoundingClientRect();
+      state.storyCurrentStroke.points.push({
+        x: Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)),
+        y: Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height))
+      });
+      redrawStoryDrawing();
+    });
+    const finishDrawing = () => {
+      if (!state.storyCurrentStroke) return;
+      state.storyCurrentStroke = null;
+      scheduleStoryDraftSave();
+    };
+    drawingCanvas.addEventListener("pointerup", finishDrawing);
+    drawingCanvas.addEventListener("pointercancel", finishDrawing);
+    window.addEventListener("resize", redrawStoryDrawing);
     $("#storyZoom").addEventListener("click", () => {
       state.storyZoom = state.storyZoom >= 1.6 ? 1 : Math.round((state.storyZoom + .2) * 10) / 10;
       setStoryPreviewFilter();
