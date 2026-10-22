@@ -1747,6 +1747,11 @@
       setStoryStage("settings");
     });
     $("#storyBackToEditor").addEventListener("click", () => setStoryStage("editor"));
+    $("#saveStoryDraftClose").addEventListener("click", async () => {
+      await persistStoryDraft();
+      closeDialog("storyDialog");
+      toast("Story draft saved.");
+    });
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
