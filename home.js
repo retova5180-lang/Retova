@@ -1416,7 +1416,7 @@
     ).join("");
     $("#conversationMessages").scrollTop = $("#conversationMessages").scrollHeight;
 
-    $(".conversation-choice").forEach(button => {
+    $$(.conversation-choice").forEach(button => {
       button.classList.toggle("active", button.dataset.conversationId === conversationId);
     });
   }
@@ -1460,7 +1460,7 @@
   }
 
   function setActiveNavigation(section) {
-    $(".bottom-item, .nav-item").forEach(item => {
+    $$(.bottom-item, .nav-item").forEach(item => {
       item.classList.toggle("active", item.dataset.nav === section);
     });
   }
