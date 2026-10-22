@@ -11,6 +11,7 @@
     sessionUser: null,
     posts: [],
     stories: [],
+    followingIds: [],
     mediaFile: null,
     mediaUrl: "",
     storyFile: null,
@@ -203,9 +204,29 @@
       return;
     }
 
+    if (!currentUserId()) {
+      feed.innerHTML = "";
+      empty.classList.remove("hidden");
+      $("#feedEmpty p").textContent = "Sign in to see your community feed.";
+      return;
+    }
+
+    const { data: followRows, error: followError } = await supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", currentUserId());
+
+    if (followError) {
+      console.warn("Following list could not be loaded:", followError.message);
+    }
+
+    state.followingIds = [...new Set((followRows || []).map(row => row.following_id).filter(Boolean))];
+    const visibleAuthorIds = [...new Set([currentUserId(), ...state.followingIds])];
+
     const { data, error } = await supabase
       .from("posts")
       .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy, location, mentions, hashtags, allow_comments")
+      .in("user_id", visibleAuthorIds)
       .order(sortMode === "trending" ? "likes_count" : "created_at", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(40);
@@ -239,7 +260,11 @@
     if (!rows.length) {
       feed.innerHTML = "";
       empty.classList.remove("hidden");
-      $("#feedEmpty p").textContent = "Follow people or share your first moment to get things moving.";
+      $("#feedEmpty p").textContent = "No new posts from your community yet. Explore these public posts and accounts to get started.";
+      loadSuggestedPosts(sortMode).catch(error => {
+        console.warn("Suggested posts could not be loaded:", error);
+        $("#suggestedPostsEmpty").innerHTML = '<p class="muted">Suggested posts are unavailable right now.</p>';
+      });
       return;
     }
 
@@ -352,26 +377,89 @@
 
   async function loadSuggestions() {
     if (!supabase || !currentUserId()) return;
+
+    const { data: followingRows } = await supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", currentUserId());
+    const followedIds = new Set((followingRows || []).map(row => row.following_id));
     const { data, error } = await supabase.from("users")
       .select("id, username, display_name, avatar, verified")
       .neq("id", currentUserId())
-      .limit(5);
+      .limit(30);
+
+    const targets = [$("#suggestedUsers"), $("#suggestedUsersEmpty")].filter(Boolean);
+    const renderTargets = markup => targets.forEach(target => {
+      target.innerHTML = markup;
+    });
+
     if (error) {
-      $("#suggestedUsers").innerHTML = '<p class="muted">Suggestions are unavailable right now.</p>';
+      renderTargets('<p class="muted">Suggestions are unavailable right now.</p>');
       return;
     }
-    const users = data || [];
+
+    const users = (data || []).filter(user => !followedIds.has(user.id)).slice(0, 5);
     if (!users.length) {
-      $("#suggestedUsers").innerHTML = '<p class="muted">You’re all caught up.</p>';
+      renderTargets('<p class="muted">No suggested accounts yet.</p>');
       return;
     }
-    $("#suggestedUsers").innerHTML = users.map(user => {
+
+    renderTargets(users.map(user => {
       const title = user.display_name || user.username || "ARS member";
       const avatar = user.avatar
         ? '<img class="avatar" src="' + escapeHTML(user.avatar) + '" alt="">'
         : '<span class="avatar">' + escapeHTML(title.charAt(0).toUpperCase()) + "</span>";
       return '<div class="suggested-user">' + avatar + '<div class="suggested-info"><strong>' + escapeHTML(title) + '</strong><span>' + escapeHTML(user.username ? "@" + user.username : "ARS member") + '</span></div><button class="follow-button" data-follow="' + escapeHTML(user.id) + '" type="button">Follow</button></div>';
-    }).join("");
+    }).join(""));
+  }
+
+  async function loadSuggestedPosts(sortMode = "latest") {
+    if (!supabase || !currentUserId()) return;
+
+    const list = $("#suggestedPostsEmpty");
+    if (!list) return;
+    list.innerHTML = '<p class="muted">Finding public posts…</p>';
+
+    const excludedAuthors = [...new Set([currentUserId(), ...state.followingIds])];
+    const { data, error } = await supabase.from("posts")
+      .select("id, created_at, user_id, content, image, likes_count, comments_count, reposts_count, views_count, media_type, privacy, location, mentions, hashtags, allow_comments")
+      .eq("privacy", "public")
+      .order(sortMode === "trending" ? "likes_count" : "created_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error) throw error;
+
+    const suggestions = (data || [])
+      .filter(post => !excludedAuthors.includes(post.user_id))
+      .slice(0, 3);
+
+    if (!suggestions.length) {
+      list.innerHTML = '<p class="muted">No public suggested posts are available yet.</p>';
+      return;
+    }
+
+    const ids = [...new Set(suggestions.map(post => post.user_id).filter(Boolean))];
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, username, display_name, avatar, verified, plan")
+      .in("id", ids);
+    if (usersError) {
+      console.warn("Suggested post authors could not be loaded:", usersError.message);
+    }
+
+    const profiles = Object.fromEntries((users || []).map(user => [user.id, user]));
+    const displayRows = await Promise.all(suggestions.map(async post => ({
+      ...post,
+      image: await resolvePostMedia(post.image)
+    })));
+
+    state.posts = displayRows;
+    list.innerHTML = displayRows.map(post => renderPost(post, profiles[post.user_id] || {})).join("");
+    await Promise.allSettled([
+      loadComments(displayRows.map(post => post.id)),
+      loadLikeStates(displayRows.map(post => post.id))
+    ]);
   }
 
   async function loadStories() {
