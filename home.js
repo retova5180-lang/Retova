@@ -94,6 +94,10 @@
     return state.sessionUser?.id || state.user?.id || null;
   }
 
+  function storyDraftStorageKey() {
+    return "ars_story_draft:" + (currentUserId() || "guest");
+  }
+
   async function getSessionAndProfile() {
     if (!supabase) {
       toast("The ARS data service could not be loaded.");
@@ -314,7 +318,7 @@
       '<button class="post-menu" type="button" data-post-menu="' + escapeHTML(post.id) + '" aria-label="Post options">···</button></div>' +
       body + location + mediaMarkup(post) + tagMarkup +
       '<div class="post-stats"><span><b data-likes-count="' + escapeHTML(post.id) + '">' + Number(post.likes_count || 0) + '</b> likes</span><span>' + Number(post.comments_count || 0) + ' comments · ' + Number(post.views_count || 0) + ' views</span></div>' +
-      '<div class="post-actions"><button class="post-action" type="button" data-like="' + escapeHTML(post.id) + '">♡ Like</button><button class="post-action" type="button" data-comment-focus="' + escapeHTML(post.id) + '">▤ Comment</button><button class="post-action" type="button" data-share="' + escapeHTML(post.id) + '">↗ Share</button><button class="post-action" type="button" data-save="' + escapeHTML(post.id) + '">♧ Save</button></div>' +
+      '<div class="post-actions"><button class="post-action" type="button" data-like="' + escapeHTML(post.id) + '">♡ Like</button>' + (commentsEnabled ? '<button class="post-action" type="button" data-comment-focus="' + escapeHTML(post.id) + '">▤ Comment</button>' : "") + '<button class="post-action" type="button" data-share="' + escapeHTML(post.id) + '">↗ Share</button><button class="post-action" type="button" data-save="' + escapeHTML(post.id) + '">♧ Save</button></div>' +
       (commentsEnabled ? '<div class="post-comments"><div class="comment-list" id="comments-' + escapeHTML(post.id) + '"></div><form class="comment-form" data-comment-form="' + escapeHTML(post.id) + '"><input name="comment" maxlength="1000" placeholder="Write a comment…" aria-label="Write a comment"><button type="submit">Send</button></form></div>' : "") +
       "</article>";
   }
@@ -1126,7 +1130,7 @@
   async function persistStoryDraft() {
     const draft = readStoryDraftFields();
     try {
-      localStorage.setItem("ars_story_draft", JSON.stringify(draft));
+      localStorage.setItem(storyDraftStorageKey(), JSON.stringify(draft));
     } catch (error) {
       console.warn("Local story draft save warning:", error);
     }
@@ -1183,7 +1187,7 @@
     let draft = null;
     let mediaPath = "";
     try {
-      draft = JSON.parse(localStorage.getItem("ars_story_draft") || "null");
+      draft = JSON.parse(localStorage.getItem(storyDraftStorageKey()) || "null");
     } catch (error) {
       console.warn("Local story draft restore warning:", error);
     }
@@ -1315,7 +1319,7 @@
       };
       const { error } = await supabase.from("stories").insert(story);
       if (error) throw error;
-      localStorage.removeItem("ars_story_draft");
+      localStorage.removeItem(storyDraftStorageKey());
       if (state.storyDraftMediaPath) await supabase.storage.from("private-post-media").remove([state.storyDraftMediaPath]);
       await supabase.from("story_drafts").delete().eq("user_id", currentUserId());
       state.storyDraftMediaPath = "";
