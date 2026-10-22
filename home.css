@@ -515,8 +515,11 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
 
 
 /* Messages dialog */
-.messages-content {
+#messagesDialog {
   width: min(760px, calc(100vw - 24px));
+}
+.messages-content {
+  width: 100%;
 }
 .messages-layout {
   display: grid;
