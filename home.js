@@ -394,7 +394,7 @@
             : '<span class="avatar">' + escapeHTML(name.charAt(0).toUpperCase()) + "</span>";
           const suggestion = document.createElement("div");
           suggestion.className = "story-item suggested-story";
-          suggestion.innerHTML = '<span class="story-ring">' + avatar + '</span><span>' + escapeHTML(name) + '</span><button class="follow-button" data-follow="' + escapeHTML(user.id) + '" type="button">Follow</button>';
+          suggestion.innerHTML = '<span class="story-ring">' + avatar + '</span><span>' + escapeHTML(name) + '</span>';
           row.append(suggestion);
         });
       }
