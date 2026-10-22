@@ -1244,7 +1244,18 @@
       : '<img src="' + escapeHTML(storyMediaUrl) + '" alt="Story">';
     const showCaption = story.story_text && !(story.edit_metadata && story.edit_metadata.text_baked);
     $("#storyViewerContent").innerHTML = media + (showCaption ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
-    $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button><span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span><div class=\"story-viewer-list\" id=\"storyViewerList\"></div>";
+    const ownsStory = currentUserId() === story.user_id;
+    $("#storyViewerFooter").innerHTML =
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button>' +
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button>' +
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button>' +
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button>' +
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button>' +
+      '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button>' +
+      '<span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span>" +
+      (ownsStory
+        ? '<button type="button" class="story-delete-button" data-delete-story="' + escapeHTML(story.id) + '">Delete story</button><div class="story-viewer-list" id="storyViewerList"></div>'
+        : "");
     openDialog("storyViewer");
     const userId = currentUserId();
     if (userId && userId !== story.user_id) {
@@ -1272,6 +1283,38 @@
       } else {
         $("#storyViewerList").textContent = "No viewers yet.";
       }
+    }
+  }
+
+  async function deleteStory(storyId) {
+    const story = state.stories.find(item => String(item.id) === String(storyId));
+    if (!story || story.user_id !== currentUserId()) {
+      toast("You can only delete your own story.");
+      return;
+    }
+    if (!window.confirm("Delete this story? This cannot be undone.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("stories")
+        .delete()
+        .eq("id", story.id)
+        .eq("user_id", currentUserId());
+      if (error) throw error;
+
+      if (story.image && !/^https?:\/\//i.test(story.image)) {
+        const { error: storageError } = await supabase.storage.from("story-media").remove([story.image]);
+        if (storageError) {
+          console.warn("Story was deleted, but its media file could not be removed:", storageError.message);
+        }
+      }
+
+      closeDialog("storyViewer");
+      toast("Story deleted.");
+      await loadStories();
+    } catch (error) {
+      console.error("Story deletion failed:", error);
+      toast("Could not delete this story. Check your permissions and try again.");
     }
   }
 
@@ -1655,6 +1698,8 @@
       if (follow) return followUser(follow.dataset.follow, follow);
       const story = event.target.closest("[data-story-id]");
       if (story) return openStoryViewer(story.dataset.storyId);
+      const deleteStoryButton = event.target.closest("[data-delete-story]");
+      if (deleteStoryButton) return deleteStory(deleteStoryButton.dataset.deleteStory);
       const reaction = event.target.closest("[data-react-story]");
       if (reaction) return reactToStory(reaction.dataset.reactStory, reaction.dataset.emoji);
       const menu = event.target.closest("[data-post-menu]");
