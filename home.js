@@ -64,6 +64,23 @@
     element.className = "form-message" + (type ? " " + type : "");
   }
 
+  function setStoryStage(stage) {
+    const allowedStages = ["choose", "editor", "settings"];
+    const nextStage = allowedStages.includes(stage) ? stage : "choose";
+
+    allowedStages.forEach(name => {
+      const panel = $("#storyStage" + name.charAt(0).toUpperCase() + name.slice(1));
+      if (panel) panel.classList.toggle("hidden", name !== nextStage);
+    });
+
+    $("#storyDialog [data-story-step]").forEach(indicator => {
+      const active = indicator.dataset.storyStep === nextStage;
+      indicator.classList.toggle("active", active);
+      if (active) indicator.setAttribute("aria-current", "step");
+      else indicator.removeAttribute("aria-current");
+    });
+  }
+
   function openDialog(id) {
     const dialog = document.getElementById(id);
     if (!dialog) return;
@@ -1130,6 +1147,8 @@
     updateStoryText();
     drawStoryCanvas();
     state.storyEditorSnapshot = storyEditorSnapshot();
+    setStoryStage("editor");
+    setMessage("#storyMessage", "");
     scheduleStoryDraftSave();
     try {
       await uploadStoryDraftMedia(file);
@@ -1280,6 +1299,10 @@
 
   async function publishStory(event) {
     event.preventDefault();
+    if (!$("#storyStageSettings") || $("#storyStageSettings").classList.contains("hidden")) {
+      setStoryStage(state.storyFile ? "settings" : "choose");
+      return;
+    }
     if (!supabase || !currentUserId()) {
       setMessage("#storyMessage", "Your ARS session is not ready. Sign in again and retry.", "error");
       return;
@@ -1709,7 +1732,21 @@
     $("#openWheel").addEventListener("click", () => {
       window.location.href = "rewards.html";
     });
-    $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
+    $("#openStory").addEventListener("click", () => {
+      setStoryStage(state.storyFile ? "editor" : "choose");
+      openDialog("storyDialog");
+    });
+    $("#storyBackToChoose").addEventListener("click", () => setStoryStage("choose"));
+    $("#storyNextToSettings").addEventListener("click", () => {
+      if (!state.storyFile) {
+        setMessage("#storyMessage", "Choose a photo or video before continuing.", "error");
+        setStoryStage("choose");
+        return;
+      }
+      setMessage("#storyMessage", "");
+      setStoryStage("settings");
+    });
+    $("#storyBackToEditor").addEventListener("click", () => setStoryStage("editor"));
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
     $("#postForm").addEventListener("submit", publishPost);
@@ -1879,6 +1916,7 @@
     bindEvents();
     await getSessionAndProfile();
     await restoreStoryDraft();
+    setStoryStage(state.storyFile ? "editor" : "choose");
 
     if (window.location.hash === "#profile") {
       setActiveNavigation("profile");
