@@ -74,7 +74,7 @@
       if (panel) panel.classList.toggle("hidden", name !== nextStage);
     });
 
-    $("#storyDialog [data-story-step]").forEach(indicator => {
+    $$("#storyDialog [data-story-step]").forEach(indicator => {
       const active = indicator.dataset.storyStep === nextStage;
       indicator.classList.toggle("active", active);
       if (active) indicator.setAttribute("aria-current", "step");
@@ -1677,7 +1677,7 @@
   }
 
   function setActiveNavigation(section) {
-    $(".bottom-item, .nav-item, .rail-tool").forEach(item => {
+    $$(".bottom-item, .nav-item, .rail-tool").forEach(item => {
       item.classList.toggle("active", item.dataset.nav === section);
     });
   }
@@ -1724,7 +1724,7 @@
   function bindEvents() {
     $$("[data-open]").forEach(button => button.addEventListener("click", () => openDialog(button.dataset.open)));
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
-    $("[data-nav]").forEach(button => button.addEventListener("click", event => {
+    $$("[data-nav]").forEach(button => button.addEventListener("click", event => {
       event.preventDefault();
       navigate(button.dataset.nav);
     }));
