@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08070d">
+  <title>ΛRS — Home</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="avatar header-profile" id="headerAvatar" data-nav="profile" type="button" aria-label="Profile">A</button>
+    <a class="brand" href="home.html" aria-label="ARS Home">Λ<span>RS</span></a>
+    <button class="wheel-button" id="openWheel" type="button" aria-label="Rewards and Challenges" title="Rewards and Challenges">
+      <span aria-hidden="true">✦</span>
+    </button>
+    <input id="globalSearch" class="visually-hidden" type="search" aria-label="Search ARS" autocomplete="off">
+    <button class="icon-button header-notifications" data-nav="notifications" aria-label="Notifications" type="button">♧<i id="notificationDot"></i></button>
+  </header>
+
+  <div class="app-layout">
+    <aside class="left-panel panel">
+      <div class="profile-mini">
+        <button class="avatar" id="railAvatar" data-nav="profile" type="button" aria-label="Profile">A</button>
+        <div class="profile-label"><strong id="displayName">Your profile</strong><span id="username">@you</span></div>
+        <span class="vip-badge hidden" id="vipBadge">VIP</span>
+      </div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="home.html"><span>⌂</span>Home</a>
+        <button class="nav-item" data-nav="streak" type="button"><span>♨</span>Streak</button>
+        <button class="nav-item" data-nav="search" type="button"><span>⌕</span>Search</button>
+        <button class="nav-item" data-nav="profile" type="button"><span>◉</span>Profile</button>
+        <button class="nav-item" data-nav="notifications" type="button"><span>♧</span>Notifications</button>
+      </nav>
+      <button class="primary-button wide-button" data-open="postDialog" type="button">＋ Create post</button>
+      <p class="rail-caption"><span class="online-dot"></span> Your space. Your people.</p>
+    </aside>
+
+    <main class="main-column">
+      <section class="panel stories-panel">
+        <div class="section-heading"><div><h2>Stories</h2><p class="muted">Moments that disappear</p></div><button class="text-button" id="refreshStories" type="button">Refresh</button></div>
+        <div class="stories-row" id="storiesRow">
+          <button class="story-item add-story" id="openStory" type="button"><span class="story-ring"><span class="avatar" id="ownStoryAvatar">A</span><i>＋</i></span><span>Your story</span></button>
+          <p class="muted loading-inline" id="storiesLoading">Loading stories…</p>
+        </div>
+      </section>
+
+      <section class="panel composer">
+        <button class="avatar" id="composerAvatar" data-nav="profile" type="button" aria-label="Your profile">A</button>
+        <button class="composer-prompt" data-open="postDialog" type="button">What's happening in your world?</button>
+        <button class="composer-plus" data-open="postDialog" type="button" aria-label="Create post">＋</button>
+      </section>
+
+      <section class="feed-section">
+        <div class="section-heading feed-heading"><div><h2>Your feed</h2><p class="muted">Fresh from your community</p></div><button class="icon-button" id="refreshFeed" type="button" aria-label="Refresh feed">↻</button></div>
+        <div class="feed-list" id="feed" aria-live="polite"><div class="panel loading-card">Loading your feed…</div></div>
+        <section class="panel empty-state hidden" id="feedEmpty"><span class="empty-icon">✦</span><h3>Your feed is waiting</h3><p class="muted">Follow people or share your first moment to get things moving.</p><button class="primary-button" data-open="postDialog" type="button">Create a post</button></section>
+      </section>
+    </main>
+
+    <aside class="right-panel">
+      <section class="panel side-card"><div class="section-heading"><div><h2>Trending</h2><p class="muted">What people are talking about</p></div><span class="spark">✦</span></div><div id="trendingList" class="trending-list"><p class="muted">Discovering trends…</p></div><button class="text-button explore-button" data-nav="search" type="button">Explore search →</button></section>
+      <section class="panel side-card"><div class="section-heading"><div><h2>People to know</h2><p class="muted">Find your community</p></div></div><div id="suggestedUsers" class="suggested-users"><p class="muted">Finding people…</p></div></section>
+      <p class="footer-note">ΛRS · Share. Create. Connect.</p>
+    </aside>
+  </div>
+
+  <button class="floating-create" data-open="postDialog" type="button" aria-label="Create post">＋</button>
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <a class="bottom-item active" href="home.html"><span>⌂</span><small>Home</small></a>
+    <button class="bottom-item" data-nav="streak" type="button"><span>♨</span><small>Streak</small></button>
+    <button class="bottom-item" data-nav="search" type="button"><span>⌕</span><small>Search</small></button>
+    <button class="bottom-item" data-nav="profile" type="button"><span>◉</span><small>Profile</small></button>
+    <button class="bottom-item" data-nav="notifications" type="button"><span>♧</span><small>Notifications</small></button>
+  </nav>
+
+  <dialog class="modal" id="postDialog">
+    <form class="modal-content" id="postForm">
+      <div class="modal-heading"><div><p class="eyebrow">CREATE SOMETHING</p><h2>New post</h2></div><button class="close-button" data-close="postDialog" type="button" aria-label="Close">×</button></div>
+      <label class="field-label" for="postText">Your moment</label>
+      <textarea id="postText" rows="4" maxlength="5000" placeholder="Write something worth sharing…"></textarea>
+      <div class="media-preview hidden" id="postMediaPreview"><img id="postImagePreview" alt="Selected media"><video id="postVideoPreview" controls class="hidden"></video><audio id="postAudioPreview" controls class="hidden"></audio><button id="removePostMedia" type="button" class="remove-media">Remove media</button></div>
+      <div class="tool-row"><label class="tool-button" for="postMedia">▧ Add photo / video / audio</label><input class="visually-hidden" id="postMedia" type="file" accept="image/*,video/*,audio/*"><button class="tool-button" id="postToStory" type="button" aria-pressed="false">◉ Also to story</button></div>
+      <div class="field-grid">
+        <label><span class="field-label">Location</span><input id="postLocation" maxlength="160" placeholder="Add a place"></label>
+        <label><span class="field-label">Mention</span><input id="postMention" placeholder="@username"></label>
+        <label><span class="field-label">Hashtags</span><input id="postHashtags" placeholder="#life #ars"></label>
+        <label><span class="field-label">Who can see this?</span><select id="postPrivacy"><option value="public">Everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select></label>
+      </div>
+      <label class="check-row"><input id="allowComments" type="checkbox" checked><span>Allow comments on this post</span></label>
+      <p class="form-message" id="postMessage" role="status"></p>
+      <div class="modal-actions"><button class="secondary-button" data-close="postDialog" type="button">Cancel</button><button class="primary-button" id="publishPost" type="submit">Publish post</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="storyDialog">
+    <form class="modal-content story-content" id="storyForm">
+      <div class="modal-heading"><div><p class="eyebrow">SHARE A MOMENT</p><h2>Create story</h2></div><button class="close-button" data-close="storyDialog" type="button" aria-label="Close">×</button></div>
+      <label class="story-upload" for="storyMedia"><span class="upload-icon">＋</span><strong>Choose a photo or video</strong><span class="muted">Photos have editing tools; videos support preview and publish.</span></label>
+      <input class="visually-hidden" id="storyMedia" type="file" accept="image/*,video/*">
+      <div class="story-preview hidden" id="storyPreview">
+        <img id="storyImagePreview" alt="Story preview">
+        <video id="storyVideoPreview" class="hidden" controls playsinline></video>
+        <canvas id="storyDrawingCanvas" aria-label="Draw on your story"></canvas>
+        <span id="storyStickerOverlay" aria-hidden="true"></span>
+        <span id="storyTextOverlay" role="button" tabindex="0" aria-label="Drag to move story text"></span>
+      </div>
+      <div class="story-tool-groups">
+        <div class="tool-row editor-tools" aria-label="Photo editing tools">
+          <button class="tool-button" id="storyRotate" type="button">↻ Rotate</button>
+          <label class="tool-button range-tool">Zoom <input id="storyZoomRange" type="range" min="1" max="2.5" step="0.1" value="1" aria-label="Zoom photo"></label>
+          <label class="tool-button range-tool">Crop X <input id="storyCropX" type="range" min="0" max="100" step="1" value="50" aria-label="Horizontal crop"></label>
+          <label class="tool-button range-tool">Crop Y <input id="storyCropY" type="range" min="0" max="100" step="1" value="50" aria-label="Vertical crop"></label>
+          <select id="storyFilter" aria-label="Photo filter">
+            <option value="none">Original</option>
+            <option value="grayscale(1)">Mono</option>
+            <option value="sepia(.55) saturate(1.2)">Warm</option>
+            <option value="brightness(1.12) saturate(1.25)">Dream</option>
+            <option value="brightness(.75) contrast(1.15)">Night</option>
+          </select>
+          <label class="tool-button range-tool">Text size <input id="storyTextSize" type="range" min="14" max="48" step="1" value="24" aria-label="Story text size"></label>
+          <label class="tool-button">Text color <input id="storyTextColor" type="color" value="#ffffff" aria-label="Text color"></label>
+          <select id="storySticker" aria-label="Add a sticker">
+            <option value="">No sticker</option>
+            <option value="💜">💜 Purple heart</option>
+            <option value="✨">✨ Sparkles</option>
+            <option value="🔥">🔥 Fire</option>
+            <option value="🌙">🌙 Moon</option>
+            <option value="🌸">🌸 Flower</option>
+            <option value="⭐">⭐ Star</option>
+            <option value="🦋">🦋 Butterfly</option>
+            <option value="😂">😂 Laugh</option>
+          </select>
+          <label class="tool-button">Pen color <input id="storyPenColor" type="color" value="#ffffff" aria-label="Pen color"></label>
+          <button class="tool-button" id="storyPenToggle" type="button" aria-pressed="false">✎ Draw</button>
+          <button class="tool-button" id="storyUndo" type="button" disabled>↶ Undo</button>
+          <button class="tool-button" id="storyPreviewButton" type="button">Preview</button>
+        </div>
+      </div>
+      <label class="field-label" for="storyText">Story text (drag it on the photo to move)</label>
+      <input id="storyText" maxlength="240" placeholder="Add a caption">
+      <label class="tool-button duration-tool" for="storyDuration">Story duration
+        <select id="storyDuration" aria-label="Story duration">
+          <option value="24">24 hours</option>
+          <option value="12">12 hours</option>
+          <option value="6">6 hours</option>
+          <option value="1">1 hour</option>
+        </select>
+      </label>
+      <div class="field-grid">
+        <label><span class="field-label">Location</span><input id="storyLocation" maxlength="160" placeholder="Add a place"></label>
+        <label><span class="field-label">Mention</span><input id="storyMention" placeholder="@username"></label>
+        <label><span class="field-label">Hashtags</span><input id="storyHashtags" placeholder="#life #ars"></label>
+        <label><span class="field-label">Story privacy</span><select id="storyPrivacy"><option value="public">Everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select></label>
+      </div>
+      <p class="form-message" id="storyMessage" role="status"></p>
+      <div class="modal-actions"><button class="secondary-button" data-close="storyDialog" type="button">Cancel</button><button class="primary-button" id="publishStory" type="submit">Publish story</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal story-viewer" id="storyViewer"><div class="viewer-card"><button class="close-button viewer-close" data-close="storyViewer" type="button" aria-label="Close story">×</button><div id="storyViewerContent"></div><div id="storyViewerFooter" class="viewer-footer"></div></div></dialog>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="home.js" defer></script>
+</body>
+</html>
