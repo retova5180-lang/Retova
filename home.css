@@ -626,3 +626,18 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
     height: min(62vh, 420px);
   }
 }
+
+
+/* Keep the editor preview and exported story in the same portrait ratio. */
+.story-preview {
+  width: min(100%, 280px);
+  height: auto;
+  aspect-ratio: 9 / 16;
+}
+@media (max-width: 520px) {
+  .story-preview {
+    width: min(100%, 34vh);
+    height: auto;
+    aspect-ratio: 9 / 16;
+  }
+}
