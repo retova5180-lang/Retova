@@ -1075,16 +1075,18 @@
   }
 
   async function handleStoryFile(file) {
-    resetStoryPreview();
-    state.storyDraftMediaPath = "";
-    if (!file) {
-      scheduleStoryDraftSave();
-      return;
-    }
+    if (!file) return;
     if (!/^(image|video)\//.test(file.type)) {
       setMessage("#storyMessage", "Choose a photo or video for your story.", "error");
       return;
     }
+
+    const savedFields = readStoryDraftFields();
+    const previousDraftMediaPath = state.storyDraftMediaPath;
+    resetStoryPreview();
+    applyStoryDraftFields(savedFields);
+    state.storyDraftMediaPath = previousDraftMediaPath;
+
     state.storyFile = file;
     state.storyUrl = URL.createObjectURL(file);
     const isVideo = file.type.startsWith("video/");
@@ -1616,7 +1618,7 @@
   }
 
   function setActiveNavigation(section) {
-    $$(".bottom-item, .nav-item").forEach(item => {
+    $(".bottom-item, .nav-item, .rail-tool").forEach(item => {
       item.classList.toggle("active", item.dataset.nav === section);
     });
   }
