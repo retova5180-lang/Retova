@@ -18,6 +18,20 @@
     storyDraftMediaPath: "",
     storyRotation: 0,
     storyZoom: 1,
+    storyCropX: 50,
+    storyCropY: 50,
+    storyTextSize: 24,
+    storyTextPosition: { x: 50, y: 50 },
+    storySticker: "",
+    storyDrawing: [],
+    storyUndoStack: [],
+    storyDrawingEnabled: false,
+    storyDrawingColor: "#ffffff",
+    storyActiveStroke: null,
+    storyEditorSnapshot: null,
+    storyTextDragging: false,
+    previewFromEditor: false,
+    storyEditorPreviewUrl: "",
     storyDraftTimer: null,
     likes: new Set(),
     comments: new Map()
@@ -606,20 +620,301 @@
     }
   }
 
+  function storyEditorSnapshot() {
+    return {
+      text: $("#storyText").value,
+      textColor: $("#storyTextColor").value,
+      filter: $("#storyFilter").value,
+      rotation: state.storyRotation,
+      zoom: state.storyZoom,
+      cropX: state.storyCropX,
+      cropY: state.storyCropY,
+      textSize: state.storyTextSize,
+      textPosition: { ...state.storyTextPosition },
+      sticker: state.storySticker,
+      penColor: state.storyDrawingColor,
+      drawing: JSON.parse(JSON.stringify(state.storyDrawing))
+    };
+  }
+
+  function updateStoryUndoButton() {
+    const button = $("#storyUndo");
+    if (button) button.disabled = state.storyUndoStack.length === 0;
+  }
+
+  function commitStoryEditorChange() {
+    const next = storyEditorSnapshot();
+    const previous = state.storyEditorSnapshot;
+    if (previous && JSON.stringify(previous) !== JSON.stringify(next)) {
+      state.storyUndoStack.push(previous);
+      if (state.storyUndoStack.length > 30) state.storyUndoStack.shift();
+    }
+    state.storyEditorSnapshot = next;
+    updateStoryUndoButton();
+  }
+
+  function applyStoryEditorSnapshot(snapshot) {
+    if (!snapshot) return;
+    $("#storyText").value = snapshot.text || "";
+    $("#storyTextColor").value = snapshot.textColor || "#ffffff";
+    $("#storyFilter").value = snapshot.filter || "none";
+    $("#storyZoomRange").value = String(snapshot.zoom || 1);
+    $("#storyCropX").value = String(snapshot.cropX ?? 50);
+    $("#storyCropY").value = String(snapshot.cropY ?? 50);
+    $("#storyTextSize").value = String(snapshot.textSize || 24);
+    $("#storySticker").value = snapshot.sticker || "";
+    $("#storyPenColor").value = snapshot.penColor || "#ffffff";
+    state.storyRotation = Number(snapshot.rotation || 0);
+    state.storyZoom = Number(snapshot.zoom || 1);
+    state.storyCropX = Number(snapshot.cropX ?? 50);
+    state.storyCropY = Number(snapshot.cropY ?? 50);
+    state.storyTextSize = Number(snapshot.textSize || 24);
+    state.storyTextPosition = snapshot.textPosition || { x: 50, y: 50 };
+    state.storySticker = snapshot.sticker || "";
+    state.storyDrawingColor = snapshot.penColor || "#ffffff";
+    state.storyDrawing = Array.isArray(snapshot.drawing) ? JSON.parse(JSON.stringify(snapshot.drawing)) : [];
+    updateStoryText();
+    setStoryPreviewFilter();
+    drawStoryCanvas();
+  }
+
+  function undoStoryEdit() {
+    const previous = state.storyUndoStack.pop();
+    if (!previous) return;
+    applyStoryEditorSnapshot(previous);
+    state.storyEditorSnapshot = storyEditorSnapshot();
+    updateStoryUndoButton();
+    scheduleStoryDraftSave();
+  }
+
   function setStoryPreviewFilter() {
     const image = $("#storyImagePreview");
     const video = $("#storyVideoPreview");
     const filter = $("#storyFilter").value;
-    [image, video].forEach(element => {
-      element.style.filter = filter === "none" ? "none" : filter;
-      element.style.transform = "rotate(" + state.storyRotation + "deg) scale(" + state.storyZoom + ")";
+    const isVideo = Boolean(state.storyFile?.type.startsWith("video/"));
+    $("#storyPreview").classList.toggle("is-video", isVideo);
+    image.style.filter = filter === "none" ? "none" : filter;
+    image.style.transform = "rotate(" + state.storyRotation + "deg) scale(" + state.storyZoom + ")";
+    image.style.objectPosition = state.storyCropX + "% " + state.storyCropY + "%";
+    video.style.filter = "none";
+    video.style.transform = "none";
+    const photoControls = [
+      "#storyRotate", "#storyZoomRange", "#storyCropX", "#storyCropY",
+      "#storyFilter", "#storyTextSize", "#storyTextColor", "#storySticker",
+      "#storyPenColor", "#storyPenToggle"
+    ];
+    photoControls.forEach(selector => {
+      const control = $(selector);
+      if (control) control.disabled = isVideo;
     });
+    const canvas = $("#storyDrawingCanvas");
+    if (canvas) canvas.classList.toggle("is-drawing", state.storyDrawingEnabled && !isVideo);
   }
 
   function updateStoryText() {
     const overlay = $("#storyTextOverlay");
-    overlay.textContent = $("#storyText").value;
-    overlay.style.color = $("#storyTextColor").value;
+    const textInput = $("#storyText");
+    const colorInput = $("#storyTextColor");
+    const sizeInput = $("#storyTextSize");
+    const stickerInput = $("#storySticker");
+    if (sizeInput) state.storyTextSize = Number(sizeInput.value || 24);
+    if (colorInput) overlay.style.color = colorInput.value;
+    overlay.textContent = textInput.value;
+    overlay.style.fontSize = state.storyTextSize + "px";
+    overlay.style.left = state.storyTextPosition.x + "%";
+    overlay.style.top = state.storyTextPosition.y + "%";
+    if (stickerInput) state.storySticker = stickerInput.value;
+    $("#storyStickerOverlay").textContent = state.storySticker;
+  }
+
+  function drawStoryCanvas() {
+    const canvas = $("#storyDrawingCanvas");
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.clearRect(0, 0, width, height);
+    state.storyDrawing.forEach(stroke => {
+      const points = stroke.points || [];
+      if (!points.length) return;
+      context.beginPath();
+      context.strokeStyle = stroke.color || "#ffffff";
+      context.lineWidth = Number(stroke.width || 3);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.moveTo(points[0].x / 100 * width, points[0].y / 100 * height);
+      points.slice(1).forEach(point => {
+        context.lineTo(point.x / 100 * width, point.y / 100 * height);
+      });
+      context.stroke();
+    });
+  }
+
+  function addDrawingPoint(event) {
+    if (!state.storyActiveStroke) return;
+    const rect = $("#storyDrawingCanvas").getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    state.storyActiveStroke.points.push({
+      x: Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)),
+      y: Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100))
+    });
+    drawStoryCanvas();
+  }
+
+  function toggleStoryDrawing() {
+    state.storyDrawingEnabled = !state.storyDrawingEnabled;
+    const button = $("#storyPenToggle");
+    button.setAttribute("aria-pressed", String(state.storyDrawingEnabled));
+    button.textContent = state.storyDrawingEnabled ? "✎ Drawing on" : "✎ Draw";
+    setStoryPreviewFilter();
+  }
+
+  function previewStoryBeforePublish() {
+    if (!state.storyFile) {
+      toast("Choose a photo or video before previewing your story.");
+      return;
+    }
+    createEditedStoryFile(state.storyFile).then(previewFile => {
+      if (state.storyEditorPreviewUrl) URL.revokeObjectURL(state.storyEditorPreviewUrl);
+      state.storyEditorPreviewUrl = URL.createObjectURL(previewFile);
+      const isVideo = previewFile.type.startsWith("video/");
+      const media = isVideo
+        ? '<video controls autoplay playsinline src="' + escapeHTML(state.storyEditorPreviewUrl) + '"></video>'
+        : '<img src="' + escapeHTML(state.storyEditorPreviewUrl) + '" alt="Story preview">';
+      $("#storyViewerContent").innerHTML = media;
+      $("#storyViewerFooter").innerHTML = '<p class="muted">Preview only — this story has not been published.</p>';
+      state.previewFromEditor = true;
+      closeDialog("storyDialog");
+      openDialog("storyViewer");
+    }).catch(error => {
+      console.error("Story preview failed:", error);
+      toast("Could not prepare the preview. Please try again.");
+    });
+  }
+
+  async function createEditedStoryFile(file) {
+    if (!file || !file.type.startsWith("image/")) return file;
+    let image;
+    let temporaryUrl = "";
+    if (typeof createImageBitmap === "function") {
+      image = await createImageBitmap(file);
+    } else {
+      temporaryUrl = URL.createObjectURL(file);
+      image = await new Promise((resolve, reject) => {
+        const element = new Image();
+        element.onload = () => resolve(element);
+        element.onerror = () => reject(new Error("The selected image could not be opened."));
+        element.src = temporaryUrl;
+      });
+    }
+
+    try {
+      const output = document.createElement("canvas");
+      output.width = 1080;
+      output.height = 1920;
+      const context = output.getContext("2d");
+      if (!context) throw new Error("Image editing is unavailable in this browser.");
+
+      const sourceWidth = image.width || image.naturalWidth;
+      const sourceHeight = image.height || image.naturalHeight;
+      const quarterTurn = Math.abs(state.storyRotation) % 180 === 90;
+      const fitScale = Math.max(
+        output.width / (quarterTurn ? sourceHeight : sourceWidth),
+        output.height / (quarterTurn ? sourceWidth : sourceHeight)
+      );
+      context.fillStyle = "#08070d";
+      context.fillRect(0, 0, output.width, output.height);
+      context.filter = $("#storyFilter").value === "none" ? "none" : $("#storyFilter").value;
+      context.save();
+      context.translate(output.width / 2, output.height / 2);
+      context.rotate(state.storyRotation * Math.PI / 180);
+      context.scale(fitScale * state.storyZoom, fitScale * state.storyZoom);
+      context.translate(
+        (state.storyCropX - 50) / 50 * sourceWidth * 0.25,
+        (state.storyCropY - 50) / 50 * sourceHeight * 0.25
+      );
+      context.drawImage(image, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
+      context.restore();
+      context.filter = "none";
+
+      const previewRect = $("#storyPreview").getBoundingClientRect();
+      const widthScale = output.width / Math.max(1, previewRect.width);
+      const heightScale = output.height / Math.max(1, previewRect.height);
+      state.storyDrawing.forEach(stroke => {
+        const points = stroke.points || [];
+        if (!points.length) return;
+        context.beginPath();
+        context.strokeStyle = stroke.color || "#ffffff";
+        context.lineWidth = Number(stroke.width || 3) * widthScale;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.moveTo(points[0].x / 100 * output.width, points[0].y / 100 * output.height);
+        points.slice(1).forEach(point => {
+          context.lineTo(point.x / 100 * output.width, point.y / 100 * output.height);
+        });
+        context.stroke();
+      });
+
+      const storyText = $("#storyText").value.trim();
+      if (storyText) {
+        const fontSize = state.storyTextSize * widthScale;
+        context.font = "800 " + fontSize + "px system-ui, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = $("#storyTextColor").value;
+        context.shadowColor = "rgba(0, 0, 0, .85)";
+        context.shadowBlur = 12 * widthScale;
+        const maxWidth = output.width * 0.84;
+        const words = storyText.split(/\s+/);
+        const lines = [];
+        let line = "";
+        words.forEach(word => {
+          const candidate = line ? line + " " + word : word;
+          if (line && context.measureText(candidate).width > maxWidth) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = candidate;
+          }
+        });
+        if (line) lines.push(line);
+        const lineHeight = fontSize * 1.2;
+        const centerY = state.storyTextPosition.y / 100 * output.height;
+        lines.forEach((textLine, index) => {
+          context.fillText(
+            textLine,
+            state.storyTextPosition.x / 100 * output.width,
+            centerY + (index - (lines.length - 1) / 2) * lineHeight,
+            maxWidth
+          );
+        });
+        context.shadowBlur = 0;
+      }
+
+      if (state.storySticker) {
+        const stickerSize = 42 * widthScale;
+        context.font = stickerSize + "px system-ui, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(state.storySticker, output.width * 0.5, output.height * 0.25);
+      }
+
+      const blob = await new Promise((resolve, reject) => {
+        output.toBlob(result => result ? resolve(result) : reject(new Error("The edited image could not be exported.")), "image/jpeg", 0.92);
+      });
+      const name = (file.name || "story").replace(/\.[^.]+$/, "");
+      return new File([blob], name + "-edited.jpg", { type: "image/jpeg" });
+    } finally {
+      if (typeof image.close === "function") image.close();
+      if (temporaryUrl) URL.revokeObjectURL(temporaryUrl);
+    }
   }
 
   function resetStoryPreview() {
@@ -628,15 +923,40 @@
     state.storyUrl = "";
     state.storyRotation = 0;
     state.storyZoom = 1;
+    state.storyCropX = 50;
+    state.storyCropY = 50;
+    state.storyTextSize = 24;
+    state.storyTextPosition = { x: 50, y: 50 };
+    state.storySticker = "";
+    state.storyDrawing = [];
+    state.storyUndoStack = [];
+    state.storyDrawingEnabled = false;
+    state.storyDrawingColor = "#ffffff";
+    state.storyActiveStroke = null;
+    state.storyEditorSnapshot = null;
     $("#storyMedia").value = "";
     $("#storyPreview").classList.add("hidden");
+    $("#storyPreview").classList.remove("is-video");
     $("#storyImagePreview").classList.add("hidden");
     $("#storyVideoPreview").classList.add("hidden");
     $("#storyImagePreview").removeAttribute("src");
     $("#storyVideoPreview").removeAttribute("src");
     $("#storyText").value = "";
     $("#storyTextOverlay").textContent = "";
+    $("#storyStickerOverlay").textContent = "";
     $("#storyFilter").value = "none";
+    $("#storyZoomRange").value = "1";
+    $("#storyCropX").value = "50";
+    $("#storyCropY").value = "50";
+    $("#storyTextSize").value = "24";
+    $("#storySticker").value = "";
+    $("#storyPenColor").value = "#ffffff";
+    $("#storyPenToggle").setAttribute("aria-pressed", "false");
+    $("#storyPenToggle").textContent = "✎ Draw";
+    $("#storyDrawingCanvas").classList.remove("is-drawing");
+    drawStoryCanvas();
+    updateStoryUndoButton();
+    state.storyEditorSnapshot = storyEditorSnapshot();
   }
 
   async function handleStoryFile(file) {
@@ -658,6 +978,9 @@
     target.classList.remove("hidden");
     $("#storyPreview").classList.remove("hidden");
     setStoryPreviewFilter();
+    updateStoryText();
+    drawStoryCanvas();
+    state.storyEditorSnapshot = storyEditorSnapshot();
     scheduleStoryDraftSave();
     try {
       await uploadStoryDraftMedia(file);
@@ -678,7 +1001,14 @@
       mention: $("#storyMention").value,
       hashtags: $("#storyHashtags").value,
       rotation: state.storyRotation,
-      zoom: state.storyZoom
+      zoom: state.storyZoom,
+      cropX: state.storyCropX,
+      cropY: state.storyCropY,
+      textSize: state.storyTextSize,
+      textPosition: state.storyTextPosition,
+      sticker: state.storySticker,
+      penColor: state.storyDrawingColor,
+      drawing: state.storyDrawing
     };
   }
 
@@ -717,10 +1047,25 @@
     $("#storyLocation").value = draft.location || "";
     $("#storyMention").value = draft.mention || "";
     $("#storyHashtags").value = draft.hashtags || "";
+    $("#storyZoomRange").value = String(draft.zoom || 1);
+    $("#storyCropX").value = String(draft.cropX ?? 50);
+    $("#storyCropY").value = String(draft.cropY ?? 50);
+    $("#storyTextSize").value = String(draft.textSize || 24);
+    $("#storySticker").value = draft.sticker || "";
+    $("#storyPenColor").value = draft.penColor || "#ffffff";
     state.storyRotation = Number(draft.rotation || 0);
     state.storyZoom = Number(draft.zoom || 1);
+    state.storyCropX = Number(draft.cropX ?? 50);
+    state.storyCropY = Number(draft.cropY ?? 50);
+    state.storyTextSize = Number(draft.textSize || 24);
+    state.storyTextPosition = draft.textPosition || { x: 50, y: 50 };
+    state.storySticker = draft.sticker || "";
+    state.storyDrawingColor = draft.penColor || "#ffffff";
+    state.storyDrawing = Array.isArray(draft.drawing) ? draft.drawing : [];
     updateStoryText();
     setStoryPreviewFilter();
+    drawStoryCanvas();
+    state.storyEditorSnapshot = storyEditorSnapshot();
   }
 
   async function restoreStoryDraft() {
@@ -803,7 +1148,9 @@
         if (draftDownloadError) throw draftDownloadError;
         sourceFile = new File([draftBlob], state.storyFile.name || "story-media", { type: state.storyFile.type });
       }
-      const url = await uploadMedia(sourceFile, "story-media");
+      const isVideo = sourceFile.type.startsWith("video/");
+      const publishFile = await createEditedStoryFile(sourceFile);
+      const url = await uploadMedia(publishFile, "story-media");
       const hours = Number($("#storyDuration").value || 24);
       const mentionNames = $("#storyMention").value.trim().split(/[\s,]+/).map(value => value.replace(/^@/, "")).filter(Boolean);
       let mentions = [];
@@ -817,12 +1164,35 @@
         user_id: currentUserId(),
         image: url,
         original_image: url,
-        media_type: state.storyFile.type.startsWith("video/") ? "video" : "image",
+        media_type: isVideo ? "video" : "image",
         story_text: $("#storyText").value.trim(),
+        text_position: isVideo ? "center" : "custom",
         text_color: $("#storyTextColor").value,
-        filter: $("#storyFilter").value,
-        zoom: state.storyZoom,
-        rotation_degrees: state.storyRotation,
+        filter: isVideo ? "none" : $("#storyFilter").value,
+        sticker: isVideo ? null : state.storySticker || null,
+        zoom: isVideo ? 1 : state.storyZoom,
+        rotation_degrees: isVideo ? 0 : state.storyRotation,
+        crop_data: isVideo ? {} : { x: state.storyCropX, y: state.storyCropY, zoom: state.storyZoom },
+        drawing_data: isVideo ? [] : state.storyDrawing,
+        text_overlays: !isVideo && $("#storyText").value.trim() ? [{
+          text: $("#storyText").value.trim(),
+          color: $("#storyTextColor").value,
+          size: state.storyTextSize,
+          x: state.storyTextPosition.x,
+          y: state.storyTextPosition.y
+        }] : [],
+        sticker_data: !isVideo && state.storySticker ? [{
+          emoji: state.storySticker,
+          x: 50,
+          y: 25
+        }] : [],
+        edit_metadata: {
+          text_baked: !isVideo,
+          edited: !isVideo,
+          crop_x: state.storyCropX,
+          crop_y: state.storyCropY,
+          text_size: state.storyTextSize
+        },
         location: $("#storyLocation").value.trim() || null,
         mentions,
         hashtags,
@@ -868,7 +1238,8 @@
     const media = isVideo
       ? '<video controls autoplay playsinline src="' + escapeHTML(storyMediaUrl) + '"></video>'
       : '<img src="' + escapeHTML(storyMediaUrl) + '" alt="Story">';
-    $("#storyViewerContent").innerHTML = media + (story.story_text ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
+    const showCaption = story.story_text && !(story.edit_metadata && story.edit_metadata.text_baked);
+    $("#storyViewerContent").innerHTML = media + (showCaption ? '<div class="viewer-caption" style="color:' + escapeHTML(story.text_color || "#ffffff") + '">' + escapeHTML(story.story_text) + "</div>" : "");
     $("#storyViewerFooter").innerHTML = '<button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="💜">💜</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="🔥">🔥</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😂">😂</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😍">😍</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="👏">👏</button><button type="button" data-react-story="' + escapeHTML(story.id) + '" data-emoji="😮">😮</button><span class="muted" id="storyViewsCount">' + Number(story.viewers_count || 0) + " views</span><div class=\"story-viewer-list\" id=\"storyViewerList\"></div>";
     openDialog("storyViewer");
     const userId = currentUserId();
@@ -986,21 +1357,97 @@
       button.textContent = active ? "◉ Will also post to story" : "◉ Also to story";
     });
     $("#storyMedia").addEventListener("change", event => handleStoryFile(event.target.files?.[0]));
-    $("#storyText").addEventListener("input", () => { updateStoryText(); scheduleStoryDraftSave(); });
-    $("#storyTextColor").addEventListener("input", () => { updateStoryText(); scheduleStoryDraftSave(); });
-    ["#storyFilter", "#storyDuration", "#storyPrivacy", "#storyLocation", "#storyMention", "#storyHashtags"].forEach(selector => {
-      $(selector).addEventListener("input", () => { setStoryPreviewFilter(); scheduleStoryDraftSave(); });
-      $(selector).addEventListener("change", () => { setStoryPreviewFilter(); scheduleStoryDraftSave(); });
+    ["#storyText", "#storyTextColor", "#storyTextSize", "#storySticker", "#storyPenColor",
+      "#storyZoomRange", "#storyCropX", "#storyCropY", "#storyFilter", "#storyDuration",
+      "#storyPrivacy", "#storyLocation", "#storyMention", "#storyHashtags"].forEach(selector => {
+      const control = $(selector);
+      control.addEventListener("input", () => {
+        if (selector === "#storyZoomRange") state.storyZoom = Number(control.value || 1);
+        if (selector === "#storyCropX") state.storyCropX = Number(control.value || 50);
+        if (selector === "#storyCropY") state.storyCropY = Number(control.value || 50);
+        if (selector === "#storyTextSize") state.storyTextSize = Number(control.value || 24);
+        if (selector === "#storySticker") state.storySticker = control.value;
+        if (selector === "#storyPenColor") state.storyDrawingColor = control.value;
+        updateStoryText();
+        setStoryPreviewFilter();
+        drawStoryCanvas();
+        commitStoryEditorChange();
+        scheduleStoryDraftSave();
+      });
+      control.addEventListener("change", () => {
+        setStoryPreviewFilter();
+        scheduleStoryDraftSave();
+      });
     });
     $("#storyRotate").addEventListener("click", () => {
       state.storyRotation = (state.storyRotation + 90) % 360;
       setStoryPreviewFilter();
+      commitStoryEditorChange();
       scheduleStoryDraftSave();
     });
-    $("#storyZoom").addEventListener("click", () => {
-      state.storyZoom = state.storyZoom >= 1.6 ? 1 : Math.round((state.storyZoom + .2) * 10) / 10;
-      setStoryPreviewFilter();
+    $("#storyPenToggle").addEventListener("click", toggleStoryDrawing);
+    $("#storyUndo").addEventListener("click", undoStoryEdit);
+    $("#storyPreviewButton").addEventListener("click", previewStoryBeforePublish);
+
+    const drawingCanvas = $("#storyDrawingCanvas");
+    drawingCanvas.addEventListener("pointerdown", event => {
+      if (!state.storyDrawingEnabled || !state.storyFile || state.storyFile.type.startsWith("video/")) return;
+      event.preventDefault();
+      drawingCanvas.setPointerCapture(event.pointerId);
+      state.storyActiveStroke = {
+        color: state.storyDrawingColor,
+        width: 3,
+        points: []
+      };
+      state.storyDrawing.push(state.storyActiveStroke);
+      addDrawingPoint(event);
+    });
+    drawingCanvas.addEventListener("pointermove", event => {
+      if (state.storyActiveStroke) addDrawingPoint(event);
+    });
+    const finishDrawing = () => {
+      if (!state.storyActiveStroke) return;
+      state.storyActiveStroke = null;
+      commitStoryEditorChange();
       scheduleStoryDraftSave();
+    };
+    drawingCanvas.addEventListener("pointerup", finishDrawing);
+    drawingCanvas.addEventListener("pointercancel", finishDrawing);
+
+    const textOverlay = $("#storyTextOverlay");
+    textOverlay.addEventListener("pointerdown", event => {
+      if (!state.storyFile || state.storyFile.type.startsWith("video/") || !$("#storyText").value.trim()) return;
+      event.preventDefault();
+      state.storyTextDragging = true;
+      textOverlay.setPointerCapture(event.pointerId);
+    });
+    textOverlay.addEventListener("pointermove", event => {
+      if (!state.storyTextDragging) return;
+      const rect = $("#storyPreview").getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      state.storyTextPosition = {
+        x: Math.max(8, Math.min(92, (event.clientX - rect.left) / rect.width * 100)),
+        y: Math.max(8, Math.min(92, (event.clientY - rect.top) / rect.height * 100))
+      };
+      updateStoryText();
+    });
+    const finishTextMove = () => {
+      if (!state.storyTextDragging) return;
+      state.storyTextDragging = false;
+      commitStoryEditorChange();
+      scheduleStoryDraftSave();
+    };
+    textOverlay.addEventListener("pointerup", finishTextMove);
+    textOverlay.addEventListener("pointercancel", finishTextMove);
+    $("#storyViewer").addEventListener("close", () => {
+      if (state.storyEditorPreviewUrl) {
+        URL.revokeObjectURL(state.storyEditorPreviewUrl);
+        state.storyEditorPreviewUrl = "";
+      }
+      if (state.previewFromEditor) {
+        state.previewFromEditor = false;
+        openDialog("storyDialog");
+      }
     });
     $("#globalSearch").addEventListener("keydown", event => {
       if (event.key === "Enter") {
