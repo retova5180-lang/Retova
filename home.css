@@ -628,6 +628,59 @@ textarea { min-height: 100px; padding: 12px; resize: vertical; font-size: 11px; 
 }
 
 
+/* Tablet layout: keep the mobile feed composition without forcing desktop sidebars off-screen. */
+@media (min-width: 481px) and (max-width: 899px) {
+  .topbar {
+    width: min(100%, 680px);
+  }
+
+  .app-layout {
+    display: block;
+    width: min(100%, 680px);
+    margin: 0 auto 110px;
+    padding: 0 12px;
+  }
+
+  .left-panel,
+  .right-panel {
+    display: none !important;
+  }
+
+  .main-column {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stories-panel {
+    margin: 0;
+    padding: 10px 9px 9px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .stories-panel > .section-heading,
+  .feed-heading {
+    display: none;
+  }
+
+  .composer {
+    display: none !important;
+  }
+
+  .bottom-nav {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: min(100%, 680px);
+  }
+
+  .floating-create {
+    right: max(18px, calc((100vw - 680px) / 2 + 16px));
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Wide-screen layout: preserve the mobile composition while using available space. */
 @media (min-width: 900px) {
   .topbar {
