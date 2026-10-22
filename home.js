@@ -1686,11 +1686,29 @@
     bindEvents();
     await getSessionAndProfile();
     await restoreStoryDraft();
+
     if (currentUserId()) {
-      await Promise.allSettled([loadFeed(), loadStories(), loadSuggestions()]);
+      const showTrending = window.location.hash === "#trending";
+      await Promise.allSettled([
+        loadFeed(showTrending ? "trending" : "latest"),
+        loadStories(),
+        loadSuggestions()
+      ]);
+
+      if (showTrending) {
+        setActiveNavigation("trending");
+        $("#feedTitle").textContent = "Trending";
+      }
+
+      if (window.location.hash === "#messages") {
+        await openMessages();
+      }
     } else {
       $("#feed").innerHTML = '<div class="panel loading-card">Sign in to see your ARS feed.</div>';
       $("#storiesLoading").textContent = "Sign in to see stories.";
+      if (window.location.hash === "#messages") {
+        toast("Sign in to open your messages.");
+      }
     }
   }
 
