@@ -969,6 +969,9 @@
     $$("[data-open]").forEach(button => button.addEventListener("click", () => openDialog(button.dataset.open)));
     $$("[data-close]").forEach(button => button.addEventListener("click", () => closeDialog(button.dataset.close)));
     $$("[data-nav]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.nav)));
+    $("#openWheel").addEventListener("click", () => {
+      window.location.href = "rewards.html";
+    });
     $("#openStory").addEventListener("click", () => openDialog("storyDialog"));
     $("#refreshFeed").addEventListener("click", loadFeed);
     $("#refreshStories").addEventListener("click", loadStories);
