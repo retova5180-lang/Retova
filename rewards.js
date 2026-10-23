@@ -98,10 +98,10 @@
       return;
     }
 
-    const remaining = Math.max(0, 1 - used);
+    const remaining = Math.max(0, 2 - used);
     $("#spinAllowance").textContent = remaining + " free spin" + (remaining === 1 ? "" : "s") + " remaining today";
     $("#spinButton").disabled = remaining === 0;
-    if (!remaining) $("#wheelStatus").textContent = "Your free spin has been used today. Come back tomorrow or subscribe for unlimited spins.";
+    if (!remaining) $("#wheelStatus").textContent = "Your two free spins have been used today. Come back tomorrow or subscribe for unlimited spins.";
   }
 
   async function loadChallenges() {
