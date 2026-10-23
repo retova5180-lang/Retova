@@ -63,8 +63,8 @@ BEGIN
   WHERE ws.user_id = v_user_id
     AND ws.spin_date = (now() AT TIME ZONE 'UTC')::date;
 
-  IF NOT v_is_subscriber AND v_used_today >= 1 THEN
-    RAISE EXCEPTION 'Your free spin has been used today. Come back tomorrow or subscribe for unlimited spins.';
+  IF NOT v_is_subscriber AND v_used_today >= 2 THEN
+    RAISE EXCEPTION 'Your two free spins have been used today. Come back tomorrow or subscribe for unlimited spins.';
   END IF;
 
   SELECT *
