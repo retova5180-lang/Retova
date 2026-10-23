@@ -1660,7 +1660,7 @@
     document.body.classList.toggle("trending-mode", section === "trending");
 
     if (section === "profile") {
-      toast("The Profile page will be added after Home is complete.");
+      window.location.href = "profile.html";
       return;
     }
 
