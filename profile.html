@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08070d">
+  <title>Profile · ARS</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#08070d;--panel:#12101a;--line:rgba(192,138,255,.18);--text:#f8f5ff;--muted:#9e97ad;--purple:#9149f5;--light:#c08aff}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,rgba(95,27,180,.16),transparent 38%),var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:92px}
+    button,a,input,textarea{font:inherit}button,a{ -webkit-tap-highlight-color:transparent}a{color:inherit;text-decoration:none}
+    .topbar{height:66px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;max-width:760px;margin:auto;padding:0 16px;border-bottom:1px solid var(--line)}
+    .brand{text-align:center;font-size:26px;font-weight:850;letter-spacing:2px;background:linear-gradient(120deg,#9a42ff,#f1caff,#6c18ff);color:transparent;background-clip:text}
+    .icon-button{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:#100b1a;color:var(--light);font-size:20px;display:grid;place-items:center}
+    main{width:min(100% - 24px,680px);margin:20px auto;display:grid;gap:14px}
+    .panel{border:1px solid var(--line);background:linear-gradient(145deg,rgba(24,18,36,.96),rgba(12,10,17,.98));border-radius:20px;overflow:hidden}
+    .cover{height:160px;background:linear-gradient(135deg,#26064f,#090710 65%,#5a1ca0);background-position:center;background-size:cover}
+    .identity{padding:0 20px 20px}.avatar{width:88px;height:88px;margin-top:-42px;border:4px solid #100b18;border-radius:50%;background:linear-gradient(135deg,#b44cff,#5c12f0);object-fit:cover;display:grid;place-items:center;font-size:30px;font-weight:800}
+    .name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.name{font-size:22px;font-weight:750}.verified{color:#c08aff}.handle{color:var(--muted);margin-top:1px}.bio{white-space:pre-wrap;margin:14px 0 0}.meta{color:var(--muted);font-size:12px;margin-top:10px}
+    .stats{display:flex;gap:22px;margin-top:16px}.stats strong{color:var(--text)}.stats span{color:var(--muted);margin-left:4px}
+    .actions{display:flex;gap:8px;margin-top:18px}.button{border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:#191225;color:var(--text);font-weight:650;cursor:pointer}.primary{background:linear-gradient(110deg,#7616ff,#a12eff);border-color:transparent}.button:disabled{opacity:.6;cursor:wait}
+    .section-head{padding:17px 18px;border-bottom:1px solid var(--line);font-weight:750;font-size:16px}.posts{display:grid}.post{padding:17px 18px;border-bottom:1px solid rgba(255,255,255,.07)}.post:last-child{border-bottom:0}.post-meta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;margin-bottom:9px}.post-content{white-space:pre-wrap;overflow-wrap:anywhere}.post-media{display:block;max-width:100%;max-height:440px;object-fit:cover;border-radius:13px;margin-top:12px;border:1px solid var(--line)}.empty,.status{padding:24px 18px;color:var(--muted);text-align:center}.status.error{color:#ff9cae}
+    .bottom-nav{position:fixed;z-index:10;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:9px 6px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(9,7,14,.96);backdrop-filter:blur(18px)}.bottom-item{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:3px;color:#92899f;font-size:20px}.bottom-item small{font-size:10px}.bottom-item.active{color:var(--light);text-shadow:0 0 16px #8c36ff}
+    @media(min-width:700px){main{margin-top:28px}.cover{height:190px}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="icon-button" href="home.html" aria-label="Back to Home">‹</a><a class="brand" href="home.html">ARS</a><button class="icon-button" id="refreshProfile" type="button" aria-label="Refresh profile">↻</button></header>
+  <main>
+    <section class="panel" aria-labelledby="profileName">
+      <div class="cover" id="profileCover"></div>
+      <div class="identity">
+        <div class="avatar" id="profileAvatar" aria-hidden="true">A</div>
+        <div class="name-row"><span class="name" id="profileName">Your profile</span><span class="verified" id="verifiedMark" hidden aria-label="Verified account">✓</span><span class="verified" id="vipMark" hidden>VIP</span></div>
+        <div class="handle" id="profileHandle">@you</div>
+        <p class="bio" id="profileBio">Share your world with ARS.</p>
+        <div class="meta" id="profileJoined"></div>
+        <div class="stats"><div><strong id="postCount">0</strong><span>Posts</span></div><div><strong id="followerCount">0</strong><span>Followers</span></div><div><strong id="followingCount">0</strong><span>Following</span></div></div>
+        <div class="actions"><button class="button primary" id="editProfile" type="button">Edit profile</button><button class="button" id="shareProfile" type="button">Copy profile link</button></div>
+        <form id="editForm" hidden style="margin-top:16px;display:grid;gap:10px">
+          <label>Display name<input id="editName" maxlength="60" required style="display:block;width:100%;margin-top:5px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#090710;color:var(--text)"></label>
+          <label>Username<input id="editUsername" maxlength="30" pattern="[A-Za-z0-9_.]+" required style="display:block;width:100%;margin-top:5px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#090710;color:var(--text)"></label>
+          <label>Bio<textarea id="editBio" maxlength="240" rows="3" style="display:block;width:100%;margin-top:5px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#090710;color:var(--text);resize:vertical"></textarea></label>
+          <div class="actions"><button class="button primary" id="saveProfile" type="submit">Save changes</button><button class="button" id="cancelEdit" type="button">Cancel</button></div>
+        </form>
+        <p class="status" id="profileStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+    <section class="panel"><div class="section-head">Posts</div><div class="posts" id="profilePosts"><p class="empty">Loading posts…</p></div></section>
+  </main>
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <a class="bottom-item" href="home.html"><span aria-hidden="true">⌂</span><small>Home</small></a>
+    <a class="bottom-item" href="streak.html"><span aria-hidden="true">♨</span><small>Streak</small></a>
+    <a class="bottom-item" href="search.html"><span aria-hidden="true">⌕</span><small>Search</small></a>
+    <a class="bottom-item active" href="profile.html" aria-current="page"><span aria-hidden="true">◎</span><small>Profile</small></a>
+    <a class="bottom-item" href="notifications.html"><span aria-hidden="true">♧</span><small>Notifications</small></a>
+  </nav>
+<script>
+(() => {
+  "use strict";
+  const supabase = window.supabase?.createClient("https://bfqsqgfyyewnfxekirfv.supabase.co", "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-");
+  const $ = id => document.getElementById(id);
+  let user = null;
+  let profile = null;
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  }
+  function message(text, error = false) {
+    $("profileStatus").textContent = text;
+    $("profileStatus").className = "status" + (error ? " error" : "");
+  }
+  function initials(value) { return (String(value || "A").trim().charAt(0) || "A").toUpperCase(); }
+  function renderProfile() {
+    const name = profile.display_name || profile.username || "ARS Member";
+    $("profileName").textContent = name;
+    $("profileHandle").textContent = "@" + (profile.username || "member");
+    $("profileBio").textContent = profile.bio || "Share your world with ARS.";
+    $("profileAvatar").textContent = profile.avatar ? "" : initials(name);
+    if (profile.avatar) {
+      $("profileAvatar").style.background = "center / cover no-repeat url('" + String(profile.avatar).replace(/['"\\]/g, "") + "')";
+    } else {
+      $("profileAvatar").style.background = "linear-gradient(135deg,#b44cff,#5c12f0)";
+    }
+    $("profileCover").style.backgroundImage = profile.cover ? "url('" + String(profile.cover).replace(/['"\\]/g, "") + "')" : "";
+    $("verifiedMark").hidden = !profile.verified;
+    $("vipMark").hidden = !(profile.vip_badge_enabled && profile.plan && profile.plan !== "free");
+    $("profileJoined").textContent = profile.created_at ? "Joined " + new Date(profile.created_at).toLocaleDateString(undefined,{month:"long",year:"numeric"}) : "";
+    $("editName").value = profile.display_name || "";
+    $("editUsername").value = profile.username || "";
+    $("editBio").value = profile.bio || "";
+  }
+  function renderPosts(posts) {
+    $("postCount").textContent = String(posts.length);
+    if (!posts.length) {
+      $("profilePosts").innerHTML = '<p class="empty">No posts yet. Your posts will appear here.</p>';
+      return;
+    }
+    $("profilePosts").innerHTML = posts.map(post => {
+      const media = post.image ? '<img class="post-media" loading="lazy" src="' + escapeHTML(post.image) + '" alt="Post media">' : "";
+      return '<article class="post"><div class="post-meta"><span>' + escapeHTML(new Date(post.created_at).toLocaleString()) + '</span><span>' + escapeHTML(post.privacy || "public") + '</span></div><div class="post-content">' + escapeHTML(post.content || "") + '</div>' + media + '<div class="meta">♥ ' + Number(post.likes_count || 0) + '　◯ ' + Number(post.comments_count || 0) + '　↗ ' + Number(post.reposts_count || 0) + '</div></article>';
+    }).join("");
+  }
+  async function loadProfile() {
+    if (!supabase) throw new Error("ARS data service could not load. Please refresh the page.");
+    const {data:sessionData,error:sessionError} = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!sessionData.session) { location.replace("index.html"); return; }
+    user = sessionData.session.user;
+    const {data:userData,error:userError} = await supabase.from("users").select("id,username,display_name,bio,avatar,cover,verified,plan,vip_badge_enabled,created_at").eq("id",user.id).maybeSingle();
+    if (userError) throw userError;
+    profile = userData || {id:user.id,username:user.user_metadata?.username || user.email?.split("@")[0] || "member",display_name:user.user_metadata?.display_name || "",bio:"",avatar:"",cover:"",verified:false,plan:"free",vip_badge_enabled:false,created_at:null};
+    renderProfile();
+    const [{data:postsData,error:postsError},{count:followerCount,error:followerError},{count:followingCount,error:followingError}] = await Promise.all([
+      supabase.from("posts").select("id,content,image,created_at,likes_count,comments_count,reposts_count,privacy").eq("user_id",user.id).order("created_at",{ascending:false}).limit(50),
+      supabase.from("followers").select("id",{count:"exact",head:true}).eq("following_id",user.id),
+      supabase.from("followers").select("id",{count:"exact",head:true}).eq("follower_id",user.id)
+    ]);
+    if (postsError) throw postsError;
+    if (followerError) throw followerError;
+    if (followingError) throw followingError;
+    $("followerCount").textContent = String(followerCount || 0);
+    $("followingCount").textContent = String(followingCount || 0);
+    renderPosts(postsData || []);
+  }
+  $("refreshProfile").addEventListener("click", async () => { $("refreshProfile").disabled=true; message("Refreshing profile…"); try { await loadProfile(); message("Profile updated."); } catch(error) { message(error.message || "Could not load profile.",true); } finally { $("refreshProfile").disabled=false; } });
+  $("editProfile").addEventListener("click", () => { $("editForm").hidden = !$("editForm").hidden; });
+  $("cancelEdit").addEventListener("click", () => { $("editForm").hidden=true; renderProfile(); message(""); });
+  $("editForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!user || !profile) return;
+    const button = $("saveProfile"); button.disabled=true; message("Saving changes…");
+    const username = $("editUsername").value.trim().replace(/^@/,"");
+    const updates = {display_name:$("editName").value.trim(),username,bio:$("editBio").value.trim()};
+    try {
+      const {data,error} = await supabase.from("users").update(updates).eq("id",user.id).select("id,username,display_name,bio,avatar,cover,verified,plan,vip_badge_enabled,created_at").single();
+      if (error) throw error;
+      profile = data; renderProfile(); $("editForm").hidden=true; message("Profile saved.");
+    } catch(error) { message(error.message || "Could not save your profile.",true); }
+    finally { button.disabled=false; }
+  });
+  $("shareProfile").addEventListener("click", async () => {
+    const url = location.origin + location.pathname + "?user=" + encodeURIComponent(profile?.username || "");
+    try { await navigator.clipboard.writeText(url); message("Profile link copied."); }
+    catch { message(url); }
+  });
+  loadProfile().catch(error => { console.error("Profile load failed:",error); message(error.message || "Could not load your profile.",true); $("profilePosts").innerHTML='<p class="empty">Posts could not be loaded.</p>'; });
+})();
+</script>
+</body>
+</html>
