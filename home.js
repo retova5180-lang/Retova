@@ -99,16 +99,32 @@
     ]);
     const userMap = new Map((users || []).map(u => [u.id,u]));
     const liked = new Set((myLikes || []).map(x => x.post_id));
-    feed.innerHTML = posts.map(post => renderPost(post, userMap.get(post.user_id) || {}, liked.has(post.id))).join("");
+
+    // Resolve media paths at display time so private media URLs can expire safely.
+    const displayPosts = await Promise.all(posts.map(async post => {
+      if (!post.image) return post;
+      if (post.privacy === "public") {
+        const { data } = client.storage.from("post-media").getPublicUrl(post.image);
+        return { ...post, displayImage: data.publicUrl };
+      }
+      const { data, error: mediaError } = await client.storage
+        .from("private-post-media").createSignedUrl(post.image, 1800);
+      if (mediaError) {
+        console.warn("Private post media unavailable:", mediaError.message);
+        return { ...post, displayImage: "" };
+      }
+      return { ...post, displayImage: data.signedUrl };
+    }));
+    feed.innerHTML = displayPosts.map(post => renderPost(post, userMap.get(post.user_id) || {}, liked.has(post.id))).join("");
   }
   function renderPost(post, user, isLiked) {
     const name = user.display_name || user.username || "ARS member";
     const handle = user.username ? "@"+user.username : "member";
     const media = post.image ? (post.media_type === "video"
-      ? '<video class="post-media" src="'+escapeHTML(post.image)+'" controls playsinline preload="metadata"></video>'
+      ? '<video class="post-media" src="'+escapeHTML(post.displayImage || post.image)+'" controls playsinline preload="metadata"></video>'
       : post.media_type === "audio"
-        ? '<audio class="post-media" src="'+escapeHTML(post.image)+'" controls></audio>'
-        : '<img class="post-media" src="'+escapeHTML(post.image)+'" alt="Post media" loading="lazy">') : "";
+        ? '<audio class="post-media" src="'+escapeHTML(post.displayImage || post.image)+'" controls></audio>'
+        : '<img class="post-media" src="'+escapeHTML(post.displayImage || post.image)+'" alt="Post media" loading="lazy">') : "";
     const date = post.created_at ? new Date(post.created_at).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) : "";
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+avatarMarkup(user)+'<div class="post-author"><strong>'+escapeHTML(name)+(user.verified?' <span style="color:#c17bff">◆</span>':'')+'</strong><small>'+escapeHTML(handle)+' · '+escapeHTML(date)+'</small></div><button class="post-menu" data-action="menu" aria-label="Post options">⋯</button></div>'+
