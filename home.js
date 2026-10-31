@@ -134,12 +134,12 @@
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+avatarMarkup(user)+'<div class="post-author"><strong>'+escapeHTML(name)+(user.verified?' <span style="color:#c17bff">◆</span>':'')+'</strong><small>'+escapeHTML(handle)+' · '+escapeHTML(date)+'</small></div><button class="post-menu" data-action="menu" aria-label="Post options">⋯</button></div>'+
       (post.content?'<p class="post-content">'+escapeHTML(post.content)+'</p>':'')+media+
-      '<div class="post-actions"><button class="post-action '+(isLiked?'active':'')+'" data-action="like">♡ '+Number(post.likes_count||0)+'</button><button class="post-action" data-action="comment">▢ '+Number(post.comments_count||0)+'</button><button class="post-action" data-action="repost">⟳ '+Number(post.reposts_count||0)+'</button><button class="post-action" data-action="bookmark">♧ Save</button></div></article>';
+      '<div class="post-actions"><button class="post-action '+(isLiked?'active':'')+'" data-action="like">♡ '+Number(post.likes_count||0)+'</button><button class="post-action" data-action="comment" '+(post.allow_comments===false?'disabled aria-disabled="true" title="Comments are turned off"':'')+'>▢ '+Number(post.comments_count||0)+'</button><button class="post-action" data-action="repost">⟳ '+Number(post.reposts_count||0)+'</button><button class="post-action" data-action="bookmark">♧ Save</button></div></article>';
   }
   async function loadStories() {
     const row = $("#storiesRow");
     const {data,error} = await client.from("stories").select("id,user_id,image,media_type,story_text,created_at,expires_at").gt("expires_at",new Date().toISOString()).order("created_at",{ascending:true}).limit(50);
-    if (error) { console.warn("Stories:",error.message); row.innerHTML = '<button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Add story</small></button>'; return; }
+    if (error) { console.warn("Stories:",error.message); stories=[]; row.innerHTML = '<button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Add story</small></button><p class="story-empty">Stories could not be loaded.</p>'; return; }
     const items = data || [];
     stories = items;
     const ids = [...new Set(items.map(s=>s.user_id))];
@@ -156,7 +156,6 @@
         const thumb=user.avatar?'<img src="'+escapeHTML(user.avatar)+'" alt="">':'<span>'+escapeHTML(name[0]?.toUpperCase()||"A")+'</span>';
         return '<button class="story-item" data-story-index="'+index+'"><span class="story-ring">'+thumb+'</span><small>'+escapeHTML(name)+'</small></button>';
       }).join("");
-    $("#addStory").addEventListener("click",()=>openDialog("storyDialog"));
   }
   async function loadNotifications() {
     const {count,error}=await client.from("notifications").select("id",{count:"exact",head:true}).eq("user_id",currentUser.id).eq("is_read",false);
@@ -252,7 +251,7 @@
     finally{submit.disabled=false;}
   });
   $("#feed").addEventListener("click",async e=>{
-    const button=e.target.closest("[data-action]");if(!button)return;
+    const button=e.target.closest("[data-action]");if(!button||button.disabled)return;
     const card=button.closest("[data-post-id]");const id=card?.dataset.postId;if(!id)return;
     const action=button.dataset.action;
     try{
@@ -350,9 +349,10 @@
     const ids=[...new Set(data.map(c=>c.user_id).filter(Boolean))]; const {data:users}=ids.length?await client.from("users").select("id,username,display_name").in("id",ids):{data:[]}; const map=new Map((users||[]).map(u=>[u.id,u]));
     list.innerHTML=data.map(c=>{const u=map.get(c.user_id)||{};return '<article class="comment-item"><strong>'+escapeHTML(u.display_name||u.username||"ARS member")+'</strong><small>'+escapeHTML(new Date(c.created_at).toLocaleString())+'</small><p>'+escapeHTML(c.content)+'</p></article>';}).join("");
   }
-  $("#commentForm").addEventListener("submit",async e=>{e.preventDefault();const input=$("#commentInput"),message=$("#commentMessage"),button=e.submitter,content=input.value.trim();if(!activeCommentPostId||!content)return;button.disabled=true;message.textContent="Sending…";try{const {error}=await client.from("comments").insert({post_id:activeCommentPostId,user_id:currentUser.id,content});if(error)throw error;input.value="";message.textContent="";await loadComments(activeCommentPostId);await loadFeed();}catch(err){message.textContent=err.message||"Could not send comment.";}finally{button.disabled=false;}});
+  $("#commentForm").addEventListener("submit",async e=>{e.preventDefault();const input=$("#commentInput"),message=$("#commentMessage"),button=e.submitter,content=input.value.trim();if(!activeCommentPostId||!content)return;const {data:commentable,error:permissionError}=await client.from("posts").select("allow_comments").eq("id",activeCommentPostId).maybeSingle();if(permissionError||!commentable?.allow_comments){message.textContent="Comments are turned off for this post.";return;}button.disabled=true;message.textContent="Sending…";try{const {error}=await client.from("comments").insert({post_id:activeCommentPostId,user_id:currentUser.id,content});if(error)throw error;input.value="";message.textContent="";await loadComments(activeCommentPostId);await loadFeed();}catch(err){message.textContent=err.message||"Could not send comment.";}finally{button.disabled=false;}});
 
   $("#storiesRow").addEventListener("click",async e=>{
+    if(e.target.closest("#addStory")){openDialog("storyDialog");return;}
     const item=e.target.closest("[data-story-index]");if(!item)return;
     const story=stories[Number(item.dataset.storyIndex)];if(!story)return;
     const content=$("#storyViewerContent");
