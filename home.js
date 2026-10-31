@@ -271,7 +271,7 @@
       }else if(action==="comment"){
         activeCommentPostId=id; await loadComments(id); openDialog("commentsDialog");
       }else if(action==="menu"){
-        showMessage("Post options","Post privacy and reporting controls will be available from the post details page.");
+        await openPostOptions(id);
       }
     }catch(err){console.error(err);showMessage("Action failed",err.message||"Please try again.");}
   });
