@@ -11,6 +11,7 @@
   let selectedPostFile = null;
   let selectedStoryFile = null;
   let stories = [];
+  let activeCommentPostId = null;
 
   function readUser() {
     try { return JSON.parse(localStorage.getItem(STORAGE.user) || "{}"); }
@@ -149,9 +150,7 @@
       const {data:publicData}=client.storage.from(bucket).getPublicUrl(data.path);
       return publicData.publicUrl;
     }
-    const {data:signed,error:signedError}=await client.storage.from(bucket).createSignedUrl(data.path,60*60*24*7);
-    if(signedError) throw signedError;
-    return signed.signedUrl;
+    return data.path;
   }
   $("#createPost").addEventListener("click",()=>openDialog("postDialog"));
   $("#postMedia").addEventListener("change",e=>{
@@ -229,18 +228,30 @@
         if(existing){const {error}=await client.from("reposts").delete().eq("id",existing.id);if(error)throw error;button.classList.remove("active");}
         else {const {error}=await client.from("reposts").insert({post_id:id,user_id:currentUser.id});if(error)throw error;button.classList.add("active");}
       }else if(action==="comment"){
-        showMessage("Comments","The comments page will be connected when its page is added.");
+        activeCommentPostId=id; await loadComments(id); openDialog("commentsDialog");
       }else if(action==="menu"){
         showMessage("Post options","Post privacy and reporting controls will be available from the post details page.");
       }
     }catch(err){console.error(err);showMessage("Action failed",err.message||"Please try again.");}
   });
-  $("#storiesRow").addEventListener("click",e=>{
+
+  async function loadComments(postId) {
+    const list=$("#commentsList"); list.innerHTML='<p class="muted">Loading comments…</p>';
+    const {data,error}=await client.from("comments").select("id,user_id,content,created_at").eq("post_id",postId).order("created_at",{ascending:true}).limit(100);
+    if(error){list.textContent=error.message;return;} if(!data?.length){list.innerHTML='<p class="muted">No comments yet. Start the conversation.</p>';return;}
+    const ids=[...new Set(data.map(c=>c.user_id).filter(Boolean))]; const {data:users}=ids.length?await client.from("users").select("id,username,display_name").in("id",ids):{data:[]}; const map=new Map((users||[]).map(u=>[u.id,u]));
+    list.innerHTML=data.map(c=>{const u=map.get(c.user_id)||{};return '<article class="comment-item"><strong>'+escapeHTML(u.display_name||u.username||"ARS member")+'</strong><small>'+escapeHTML(new Date(c.created_at).toLocaleString())+'</small><p>'+escapeHTML(c.content)+'</p></article>';}).join("");
+  }
+  $("#commentForm").addEventListener("submit",async e=>{e.preventDefault();const input=$("#commentInput"),message=$("#commentMessage"),button=e.submitter,content=input.value.trim();if(!activeCommentPostId||!content)return;button.disabled=true;message.textContent="Sending…";try{const {error}=await client.from("comments").insert({post_id:activeCommentPostId,user_id:currentUser.id,content});if(error)throw error;input.value="";message.textContent="";await loadComments(activeCommentPostId);await loadFeed();}catch(err){message.textContent=err.message||"Could not send comment.";}finally{button.disabled=false;}});
+
+  $("#storiesRow").addEventListener("click",async e=>{
     const item=e.target.closest("[data-story-index]");if(!item)return;
     const story=stories[Number(item.dataset.storyIndex)];if(!story)return;
     const content=$("#storyViewerContent");
     const media=story.media_type==="video"?document.createElement("video"):document.createElement("img");
-    media.src=story.image;
+    const {data:signed,error:signedError}=await client.storage.from("story-media").createSignedUrl(story.image,1800);
+    if(signedError){showMessage("Story unavailable","This story media could not be opened.");return;}
+    media.src=signed.signedUrl;
     if(media.tagName==="VIDEO"){media.controls=true;media.autoplay=true;media.playsInline=true;}
     content.innerHTML="";content.appendChild(media);
     if(story.story_text){const caption=document.createElement("div");caption.className="story-caption";caption.textContent=story.story_text;content.appendChild(caption);}
