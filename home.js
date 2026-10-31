@@ -11,7 +11,7 @@
   let selectedPostFile = null;
   let selectedStoryFile = null;
   let stories = [];
-  let activeCommentPostId = null;
+  let activeCommentPostId = null;\n  let activePost = null;\n  const hiddenPostIds = new Set(JSON.parse(localStorage.getItem("ars_hidden_posts") || "[]"));
 
   function readUser() {
     try { return JSON.parse(localStorage.getItem(STORAGE.user) || "{}"); }
@@ -88,20 +88,20 @@
       feed.innerHTML = '<div class="empty-state">Could not load posts. Please refresh and try again.</div>';
       return;
     }
-    if (!posts?.length) {
+    const visiblePosts = (posts || []).filter(p => !hiddenPostIds.has(p.id));\n    if (!visiblePosts.length) {
       feed.innerHTML = '<div class="empty-state">Your feed is quiet for now.<br>Be the first to share something with ARS.</div>';
       return;
     }
-    const ids = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
+    const ids = [...new Set(visiblePosts.map(p => p.user_id).filter(Boolean))];
     const [{data: users}, {data: myLikes}] = await Promise.all([
       client.from("users").select("id,username,display_name,avatar,verified").in("id", ids),
-      client.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", posts.map(p => p.id))
+      client.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", visiblePosts.map(p => p.id))
     ]);
     const userMap = new Map((users || []).map(u => [u.id,u]));
     const liked = new Set((myLikes || []).map(x => x.post_id));
 
     // Resolve media paths at display time so private media URLs can expire safely.
-    const displayPosts = await Promise.all(posts.map(async post => {
+    const displayPosts = await Promise.all(visiblePosts.map(async post => {
       if (!post.image) return post;
       if (post.privacy === "public") {
         if (post.image.startsWith("http://") || post.image.startsWith("https://")) return { ...post, displayImage: post.image };
@@ -274,6 +274,69 @@
         showMessage("Post options","Post privacy and reporting controls will be available from the post details page.");
       }
     }catch(err){console.error(err);showMessage("Action failed",err.message||"Please try again.");}
+  });
+
+  async function openPostOptions(postId) {
+    const {data:post,error}=await client.from("posts").select("id,user_id,content,privacy,allow_comments").eq("id",postId).maybeSingle();
+    if(error)throw error;
+    if(!post){showMessage("Post unavailable","This post may have been deleted or is no longer visible.");return;}
+    activePost=post;
+    const own=post.user_id===currentUser.id;
+    const list=$("#postOptionsList");
+    const actions=own
+      ? [["edit","Edit post"],["toggle-comments",post.allow_comments?"Turn comments off":"Turn comments on"],["delete","Delete post"]]
+      : [["hide","Hide from my feed"],["report","Report account"],["block","Block account"],["copy","Copy post link"]];
+    list.innerHTML=actions.map(([action,label])=>'<button class="activity-item" data-post-option="'+action+'">'+label+'</button>').join("");
+    $("#postOptionsMessage").textContent="";
+    openDialog("postOptionsDialog");
+  }
+  $("#postOptionsList").addEventListener("click",async e=>{
+    const button=e.target.closest("[data-post-option]");
+    if(!button||!activePost)return;
+    const action=button.dataset.postOption, post=activePost;
+    const message=$("#postOptionsMessage");
+    button.disabled=true;message.textContent="Please wait…";
+    try{
+      if(action==="edit"){
+        const next=prompt("Edit your post text:",post.content||"");
+        if(next===null)return;
+        const privacy=prompt("Audience: public, followers, or private",post.privacy);
+        if(privacy===null)return;
+        if(!["public","followers","private"].includes(privacy)){message.textContent="Invalid audience.";return;}
+        const {error}=await client.from("posts").update({content:next.trim(),privacy}).eq("id",post.id).eq("user_id",currentUser.id);
+        if(error)throw error;
+        closeDialog("postOptionsDialog");await loadFeed();
+      }else if(action==="toggle-comments"){
+        const {error}=await client.from("posts").update({allow_comments:!post.allow_comments}).eq("id",post.id).eq("user_id",currentUser.id);
+        if(error)throw error;
+        closeDialog("postOptionsDialog");await loadFeed();
+      }else if(action==="delete"){
+        if(!confirm("Delete this post permanently?"))return;
+        const {error}=await client.from("posts").delete().eq("id",post.id).eq("user_id",currentUser.id);
+        if(error)throw error;
+        closeDialog("postOptionsDialog");await loadFeed();
+      }else if(action==="hide"){
+        hiddenPostIds.add(post.id);
+        localStorage.setItem("ars_hidden_posts",JSON.stringify([...hiddenPostIds]));
+        closeDialog("postOptionsDialog");await loadFeed();
+      }else if(action==="report"){
+        const reason=prompt("Why are you reporting this account? (spam, harassment, inappropriate content, other)","inappropriate content");
+        if(reason===null)return;
+        const {error}=await client.from("reports").insert({reporter_id:currentUser.id,reported_user_id:post.user_id,reason:reason.trim()||"other"});
+        if(error)throw error;
+        message.textContent="Report submitted. Thank you.";
+      }else if(action==="block"){
+        if(!confirm("Block this account? You will no longer see each other’s content."))return;
+        const {error}=await client.from("blocks").insert({blocker_id:currentUser.id,blocked_id:post.user_id});
+        if(error)throw error;
+        closeDialog("postOptionsDialog");await loadFeed();
+      }else if(action==="copy"){
+        const url=new URL("home.html",location.href);url.hash="post-"+post.id;
+        await navigator.clipboard.writeText(url.href);
+        message.textContent="Post link copied.";
+      }
+    }catch(err){console.error(err);message.textContent=err.message||"Could not complete this action.";}
+    finally{button.disabled=false;}
   });
 
   async function loadComments(postId) {
