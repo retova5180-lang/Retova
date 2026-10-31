@@ -100,6 +100,10 @@
 
   <dialog id="commentsDialog" class="modal"><section class="modal-card"><div class="modal-heading"><h2>Comments</h2><button type="button" class="close-btn" data-close="commentsDialog">×</button></div><div id="commentsList" class="comments-list"><p class="muted">Loading comments…</p></div><form id="commentForm" class="comment-form"><input id="commentInput" type="text" maxlength="2000" placeholder="Write a comment…" required><button class="primary-btn" type="submit">Send</button></form><p id="commentMessage" class="form-message" aria-live="polite"></p></section></dialog>
 
+  <dialog id="activityDialog" class="modal"><section class="modal-card"><div class="modal-heading"><h2>Activity</h2><button type="button" class="close-btn" data-close="activityDialog">×</button></div><div id="activityList" class="comments-list"><p class="muted">Loading activity…</p></div></section></dialog>
+
+  <dialog id="streakDialog" class="modal"><form id="streakInviteForm" class="modal-card"><div class="modal-heading"><h2>Start a streak</h2><button type="button" class="close-btn" data-close="streakDialog">×</button></div><p class="muted">Invite someone by their ARS username.</p><input id="streakUsername" type="text" maxlength="30" placeholder="Username" required><p id="streakMessage" class="form-message" aria-live="polite"></p><button class="primary-btn" type="submit">Send invitation</button></form></dialog>
+
   <dialog id="messageDialog" class="modal">
     <div class="modal-card">
       <div class="modal-heading"><h2 id="messageTitle">ARS</h2><button class="close-btn" data-close="messageDialog">×</button></div>
