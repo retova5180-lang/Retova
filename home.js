@@ -85,7 +85,7 @@
     feed.innerHTML = '<div class="empty-state">Loading your feed…</div>';
     const { data: posts, error } = await client.from("posts")
       .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments")
-      .in("privacy", ["public","followers"]).order("created_at", {ascending:false}).limit(30);
+      .or(`privacy.in.(public,followers),and(privacy.eq.private,user_id.eq.${currentUser.id})`).order("created_at", {ascending:false}).limit(30);
     if (error) {
       console.error("Feed error:", error);
       feed.innerHTML = '<div class="empty-state">Could not load posts. Please refresh and try again.</div>';
