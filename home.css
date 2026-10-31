@@ -170,3 +170,41 @@ main{padding:clamp(17px,3vw,30px) clamp(14px,3vw,30px) 34px}
 
 .post-action:disabled{opacity:.42;cursor:not-allowed;filter:saturate(.35)}
 .post-action:disabled:hover{background:transparent;transform:none}
+
+/* Reference-aligned home refinements */
+.welcome-row{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:14px}
+.profile-shortcut{min-height:104px;border-radius:25px;padding:15px 18px}
+.profile-shortcut .avatar{width:62px;height:62px;font-size:25px}
+.wheel-card{min-height:104px;border-radius:25px;padding:12px 15px;gap:13px}
+.wheel-art{
+  width:68px;height:68px;font-size:34px;position:relative;
+  background:radial-gradient(circle at 50% 50%,#f5d9ff 0 9%,#d18aff 10% 24%,#8f3bd0 25% 53%,#4d1b72 54% 68%,#c77aff 69% 76%,#61218d 77%);
+  border:4px solid rgba(246,218,255,.9);
+  box-shadow:0 0 0 4px rgba(180,91,255,.2),0 0 34px rgba(191,91,255,.58),inset 0 0 14px rgba(255,255,255,.28)
+}
+.wheel-art:before,.wheel-art:after{content:"";position:absolute;inset:7px;border-radius:50%;border:1px solid rgba(255,235,255,.7)}
+.wheel-art:after{inset:15px;border-style:dashed;opacity:.8}
+.wheel-card strong{font-size:15px}
+.wheel-card small{font-size:12px}
+.stories-section{margin-top:34px}
+.story-item{min-width:72px}
+.story-ring{width:68px;height:68px}
+.feed-section{margin-top:32px}
+.post-card{border-radius:24px;padding:19px}
+.post-head .avatar{width:48px;height:48px}
+.post-content{font-size:15px}
+.post-actions{padding-top:13px}
+@media(max-width:520px){
+  main{padding:24px 14px 34px}
+  .welcome-row{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:10px}
+  .profile-shortcut,.wheel-card{min-height:96px;border-radius:23px}
+  .profile-shortcut{padding:11px 12px;gap:10px}
+  .profile-shortcut .avatar{width:54px;height:54px}
+  .wheel-card{padding:10px 11px;gap:9px}
+  .wheel-art{width:58px;height:58px;font-size:29px}
+  .wheel-card strong{font-size:13px}
+  .wheel-card small{font-size:10px}
+  .wheel-arrow{font-size:23px}
+  .stories-section{margin-top:34px}
+  .post-card{padding:16px;border-radius:22px}
+}
