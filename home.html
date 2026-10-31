@@ -1,1 +1,112 @@
-j
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090710">
+  <title>ΛRS — Home</title>
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="home.html" aria-label="ARS Home">ΛRS</a>
+      <div class="top-actions">
+        <button class="icon-btn" id="openSearch" aria-label="Search">⌕</button>
+        <button class="icon-btn" id="openNotifications" aria-label="Notifications">♧<i id="notificationDot" class="dot hidden"></i></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="welcome-row">
+        <button class="profile-shortcut" id="profileShortcut" aria-label="Open profile">
+          <span class="avatar" id="myAvatar">R</span>
+          <span class="welcome-copy"><strong id="myName">Welcome</strong><small id="myHandle">@you</small></span>
+        </button>
+        <button class="wheel-card" id="spinWheel">
+          <span class="wheel-art">✦</span>
+          <span><strong>Challenge Wheel</strong><small id="wheelHint">Try your luck today</small></span>
+          <span class="wheel-arrow">›</span>
+        </button>
+      </section>
+
+      <section class="stories-section">
+        <div class="section-heading"><h2>Stories</h2><span>Disappears in 24 hours</span></div>
+        <div class="stories-row" id="storiesRow">
+          <button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Add story</small></button>
+          <div class="loading-inline">Loading stories…</div>
+        </div>
+      </section>
+
+      <section class="feed-section">
+        <div class="section-heading"><h2>For you</h2><button id="refreshFeed" class="text-btn">Refresh</button></div>
+        <div id="feed" class="feed">
+          <div class="empty-state">Loading your feed…</div>
+        </div>
+      </section>
+    </main>
+
+    <button class="compose-fab" id="createPost" aria-label="Create post">＋</button>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <a class="nav-item active" href="home.html"><span>⌂</span><small>Home</small></a>
+      <button class="nav-item" id="navSearch"><span>⌕</span><small>Search</small></button>
+      <button class="nav-item" id="navStreak"><span>♨</span><small>Streak</small></button>
+      <button class="nav-item" id="navNotifications"><span>♡</span><small>Activity</small></button>
+    </nav>
+  </div>
+
+  <dialog id="postDialog" class="modal">
+    <form id="postForm" class="modal-card">
+      <div class="modal-heading"><h2>Create post</h2><button type="button" class="close-btn" data-close="postDialog">×</button></div>
+      <textarea id="postContent" maxlength="5000" placeholder="What’s happening?" rows="5"></textarea>
+      <div class="composer-tools">
+        <label class="upload-label">＋ Add photo/video/audio<input id="postMedia" type="file" accept="image/*,video/*,audio/*"></label>
+        <select id="postPrivacy" aria-label="Post audience"><option value="public">Public</option><option value="followers">Followers</option><option value="private">Only me</option></select>
+      </div>
+      <div id="mediaPreview" class="media-preview"></div>
+      <label class="switch-line"><input id="allowComments" type="checkbox" checked> Allow comments</label>
+      <p id="postMessage" class="form-message" aria-live="polite"></p>
+      <button class="primary-btn" type="submit">Publish post</button>
+    </form>
+  </dialog>
+
+  <dialog id="storyDialog" class="modal">
+    <form id="storyForm" class="modal-card">
+      <div class="modal-heading"><h2>Add to your story</h2><button type="button" class="close-btn" data-close="storyDialog">×</button></div>
+      <label class="upload-drop">Choose an image or video<input id="storyMedia" type="file" accept="image/*,video/*" required></label>
+      <div id="storyPreview" class="media-preview"></div>
+      <input id="storyText" type="text" maxlength="180" placeholder="Add a caption (optional)">
+      <select id="storyPrivacy" aria-label="Story audience"><option value="public">Everyone</option><option value="followers">Followers</option><option value="private">Only me</option></select>
+      <p id="storyMessage" class="form-message" aria-live="polite"></p>
+      <button class="primary-btn" type="submit">Share story</button>
+    </form>
+  </dialog>
+
+  <dialog id="storyViewer" class="story-viewer">
+    <button class="viewer-close" data-close="storyViewer" aria-label="Close story">×</button>
+    <div id="storyViewerContent"></div>
+  </dialog>
+
+  <dialog id="wheelDialog" class="modal">
+    <div class="modal-card wheel-modal">
+      <div class="modal-heading"><h2>Challenge Wheel</h2><button class="close-btn" data-close="wheelDialog">×</button></div>
+      <div class="wheel-large">✦</div>
+      <p id="wheelResult">Complete a challenge and discover your reward.</p>
+      <button id="confirmSpin" class="primary-btn">Spin the wheel</button>
+      <small id="spinStatus" class="muted"></small>
+    </div>
+  </dialog>
+
+  <dialog id="messageDialog" class="modal">
+    <div class="modal-card">
+      <div class="modal-heading"><h2 id="messageTitle">ARS</h2><button class="close-btn" data-close="messageDialog">×</button></div>
+      <p id="messageBody"></p>
+      <button class="primary-btn" data-close="messageDialog">Got it</button>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="home.js" defer></script>
+</body>
+</html>
