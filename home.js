@@ -157,6 +157,30 @@
     const {count,error}=await client.from("notifications").select("id",{count:"exact",head:true}).eq("user_id",currentUser.id).eq("is_read",false);
     if(!error) $("#notificationDot").classList.toggle("hidden",!(count>0));
   }
+  async function openActivity() {
+    const list=$("#activityList");
+    list.innerHTML='<p class="muted">Loading activity…</p>';
+    openDialog("activityDialog");
+    const {data,error}=await client.from("notifications")
+      .select("id,sender_id,type,post_id,is_read,metadata,created_at")
+      .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50);
+    if(error){list.textContent=error.message;return;}
+    if(!data?.length){list.innerHTML='<p class="muted">You’re all caught up.</p>';return;}
+    const senderIds=[...new Set(data.map(n=>n.sender_id).filter(Boolean))];
+    const {data:senders}=senderIds.length?await client.from("users").select("id,username,display_name").in("id",senderIds):{data:[]};
+    const map=new Map((senders||[]).map(u=>[u.id,u]));
+    list.innerHTML=data.map(n=>{
+      const sender=map.get(n.sender_id)||{};
+      const label=sender.display_name||sender.username||"Someone";
+      const type=String(n.type||"activity").replace(/[_-]/g," ");
+      return '<button class="activity-item '+(n.is_read?'':'unread')+'" data-notification-id="'+escapeHTML(n.id)+'"><strong>'+escapeHTML(label)+'</strong> '+escapeHTML(type)+'<small>'+escapeHTML(new Date(n.created_at).toLocaleString())+'</small></button>';
+    }).join("");
+    const unread=data.filter(n=>!n.is_read).map(n=>n.id);
+    if(unread.length){
+      const {error:markError}=await client.from("notifications").update({is_read:true}).in("id",unread);
+      if(!markError) $("#notificationDot").classList.add("hidden");
+    }
+  }
   async function uploadMedia(file,bucket,folder) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
     const path = currentUser.id+"/"+folder+"/"+crypto.randomUUID()+"-"+safeName;
@@ -296,9 +320,23 @@
   $("#profileShortcut").addEventListener("click",()=>showMessage("Profile","Your profile page will open here when its page is added."));
   $("#openSearch").addEventListener("click",()=>location.href="search.html");
   $("#navSearch").addEventListener("click",()=>location.href="search.html");
-  $("#openNotifications").addEventListener("click",()=>showMessage("Activity","Your notifications are shown here when the activity page is connected."));
-  $("#navNotifications").addEventListener("click",()=>showMessage("Activity","Your notifications are shown here when the activity page is connected."));
-  $("#navStreak").addEventListener("click",()=>showMessage("Streak","Your streak activity will be connected to the Streak page."));
+  $("#openNotifications").addEventListener("click",openActivity);
+  $("#navNotifications").addEventListener("click",openActivity);
+  $("#navStreak").addEventListener("click",()=>openDialog("streakDialog"));
+  $("#streakInviteForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const input=$("#streakUsername"),message=$("#streakMessage"),button=e.submitter;
+    const username=input.value.trim().replace(/^@/,"");
+    if(!username)return;
+    button.disabled=true;message.textContent="Sending invitation…";
+    try{
+      const {data,error}=await client.rpc("send_streak_invite",{p_to_username:username});
+      if(error)throw error;
+      message.textContent=data?.message||"Invitation sent.";
+      input.value="";
+    }catch(err){message.textContent=err.message||"Could not send invitation.";}
+    finally{button.disabled=false;}
+  });
   async function start(){
     try{
       const user=await requireSession();if(!user)return;
