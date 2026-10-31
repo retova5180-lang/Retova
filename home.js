@@ -91,7 +91,8 @@
       feed.innerHTML = '<div class="empty-state">Could not load posts. Please refresh and try again.</div>';
       return;
     }
-    const visiblePosts = (posts || []).filter(p => !hiddenPostIds.has(p.id));\n    if (!visiblePosts.length) {
+    const visiblePosts = (posts || []).filter(p => !hiddenPostIds.has(p.id));
+    if (!visiblePosts.length) {
       feed.innerHTML = '<div class="empty-state">Your feed is quiet for now.<br>Be the first to share something with ARS.</div>';
       return;
     }
