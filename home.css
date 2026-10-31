@@ -167,3 +167,6 @@ main{padding:clamp(17px,3vw,30px) clamp(14px,3vw,30px) 34px}
   .wheel-card{padding:9px 12px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+.post-action:disabled{opacity:.42;cursor:not-allowed;filter:saturate(.35)}
+.post-action:disabled:hover{background:transparent;transform:none}
