@@ -104,6 +104,7 @@
     const displayPosts = await Promise.all(posts.map(async post => {
       if (!post.image) return post;
       if (post.privacy === "public") {
+        if (/^https?:\\/\\//i.test(post.image)) return { ...post, displayImage: post.image };
         const { data } = client.storage.from("post-media").getPublicUrl(post.image);
         return { ...post, displayImage: data.publicUrl };
       }
