@@ -11,7 +11,10 @@
   let selectedPostFile = null;
   let selectedStoryFile = null;
   let stories = [];
-  let activeCommentPostId = null;\n  let activePost = null;\n  const hiddenPostIds = new Set(JSON.parse(localStorage.getItem("ars_hidden_posts") || "[]"));
+  let activeCommentPostId = null;
+  let activePost = null;
+  let hiddenPostIds = new Set();
+  try { hiddenPostIds = new Set(JSON.parse(localStorage.getItem("ars_hidden_posts") || "[]")); } catch { hiddenPostIds = new Set(); }
 
   function readUser() {
     try { return JSON.parse(localStorage.getItem(STORAGE.user) || "{}"); }
