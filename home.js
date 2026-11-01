@@ -596,8 +596,9 @@
 
   $("#refreshFeed").addEventListener("click", () => loadFeed());
   $("#profileShortcut").addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
-  $("#openSearch").addEventListener("click", () => { location.href = "search.html"; });
-  $("#navSearch").addEventListener("click", () => { location.href = "search.html"; });
+  const openSearchUnavailable = () => showMessage("Search", "The Search page has not been added to this project yet.");
+  $("#openSearch").addEventListener("click", openSearchUnavailable);
+  $("#navSearch").addEventListener("click", openSearchUnavailable);
   $("#openNotifications").addEventListener("click", () => openActivity());
   $("#navNotifications").addEventListener("click", () => openActivity());
   $("#navStreak").addEventListener("click", () => openDialog("streakDialog"));
