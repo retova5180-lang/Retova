@@ -282,7 +282,7 @@
     previewUrls = [];
   }
 
-  $("#createPost").addEventListener("click", () => openDialog("postDialog"));
+  $("#createPost").addEventListener("click", () => { location.href = "create-post.html"; });
   $("#postMedia").addEventListener("change", event => {
     selectedPostFile = event.target.files?.[0] || null;
     previewFile(selectedPostFile, "mediaPreview");
@@ -534,7 +534,7 @@
   });
 
   $("#storiesRow").addEventListener("click", async event => {
-    if (event.target.closest("#addStory")) { openDialog("storyDialog"); return; }
+    if (event.target.closest("#addStory")) { location.href = "story-editor.html"; return; }
     const item = event.target.closest("[data-story-index]");
     if (!item) return;
     const story = stories[Number(item.dataset.storyIndex)];
@@ -596,7 +596,7 @@
 
   $("#refreshFeed").addEventListener("click", () => loadFeed());
   $("#profileShortcut").addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
-  const openSearchUnavailable = () => showMessage("Search", "The Search page has not been added to this project yet.");
+  const openSearchUnavailable = () => { location.href = "search.html"; };
   $("#openSearch").addEventListener("click", openSearchUnavailable);
   $("#navSearch").addEventListener("click", openSearchUnavailable);
   $("#openNotifications").addEventListener("click", () => openActivity());
