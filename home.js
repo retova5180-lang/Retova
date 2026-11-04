@@ -597,11 +597,10 @@
   $("#refreshFeed").addEventListener("click", () => loadFeed());
   $("#profileShortcut").addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
   const openSearchUnavailable = () => { location.href = "search.html"; };
-  $("#openSearch").addEventListener("click", openSearchUnavailable);
   $("#navSearch").addEventListener("click", openSearchUnavailable);
-  $("#openNotifications").addEventListener("click", () => openActivity());
   $("#navNotifications").addEventListener("click", () => openActivity());
-  $("#navStreak").addEventListener("click", () => openDialog("streakDialog"));
+  $("#navTrending").addEventListener("click", () => { location.href = "search.html?q=trending"; });
+  $("#navMessages").addEventListener("click", () => showMessage("Messages", "Direct messages are not enabled in this ARS release."));
 
   $("#streakInviteForm").addEventListener("submit", async event => {
     event.preventDefault();
