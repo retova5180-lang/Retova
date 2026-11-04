@@ -11,48 +11,16 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="home.html" aria-label="ARS Home">ARS<span>.</span>
-</a>
-      <div class="top-actions">
-        <button class="icon-btn" id="openSearch" aria-label="Search">
-<svg viewBox="0 0 24 24" aria-hidden="true">
-<circle cx="10.8" cy="10.8" r="6.8"/>
-<path d="m16 16 5 5"/>
-</svg>
-</button>
-        <button class="icon-btn notification-button" id="openNotifications" aria-label="Notifications">
-<svg viewBox="0 0 24 24" aria-hidden="true">
-<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
-</svg>
-<i id="notificationDot" class="dot hidden">
-</i>
-</button>
-      </div>
+    <header class="topbar reference-topbar">
+      <button class="profile-shortcut" id="profileShortcut" aria-label="Open profile">
+        <span class="avatar" id="myAvatar">R</span>
+        <span class="profile-hidden-copy"><strong id="myName">Welcome</strong><small id="myHandle">@you</small></span>
+      </button>
+      <a class="brand" href="home.html" aria-label="ARS Home">ARS</a>
+      <button class="header-wheel" id="spinWheel" aria-label="Open challenge wheel">✧</button>
     </header>
     <main>
-      <section class="hero-row" aria-label="Your ARS space">
-        <button class="profile-shortcut" id="profileShortcut" aria-label="Open profile">
-          <span class="avatar" id="myAvatar">R</span>
-          <span class="welcome-copy">
-<small>WELCOME BACK</small>
-<strong id="myName">Welcome</strong>
-<span id="myHandle">@you</span>
-</span>
-          <span class="profile-chevron">›</span>
-        </button>
-        <button class="wheel-card" id="spinWheel" aria-label="Open challenge wheel">
-          <span class="wheel-orbit">
-<span class="wheel-core">✦</span>
-</span>
-          <span class="wheel-copy">
-<small>DAILY REWARD</small>
-<strong>Challenge Wheel</strong>
-<em id="wheelHint">Your next reward awaits</em>
-</span>
-          <span class="wheel-arrow">↗</span>
-        </button>
-      </section>
+
       <section class="stories-section">
         <div class="section-heading">
 <div>
@@ -85,23 +53,12 @@
       </section>
     </main>
     <button class="compose-fab" id="createPost" aria-label="Create post">＋</button>
-    <nav class="bottom-nav" aria-label="Main navigation">
-      <a class="nav-item active" href="home.html" aria-current="page">
-<span>⌂</span>
-<small>Home</small>
-</a>
-      <button class="nav-item" id="navSearch">
-<span>⌕</span>
-<small>Search</small>
-</button>
-      <button class="nav-item" id="navStreak">
-<span>♨</span>
-<small>Streak</small>
-</button>
-      <button class="nav-item" id="navNotifications">
-<span>♡</span>
-<small>Activity</small>
-</button>
+    <nav class="bottom-nav reference-bottom-nav" aria-label="Main navigation">
+      <a class="nav-item active" href="home.html" aria-current="page"><span>⌂</span><small>Home</small></a>
+      <button class="nav-item" id="navSearch"><span>⌕</span><small>Search</small></button>
+      <button class="nav-item" id="navTrending"><span>♨</span><small>Trending</small></button>
+      <button class="nav-item notification-button" id="navNotifications"><span>♧</span><small>Notifications</small><i id="notificationDot" class="dot hidden"></i></button>
+      <button class="nav-item" id="navMessages"><span>✉</span><small>Messages</small></button>
     </nav>
   </div>
   <dialog id="postDialog" class="modal">
