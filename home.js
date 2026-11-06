@@ -108,19 +108,43 @@ function avatarMarkup(user, extra = "") {
     return currentUser;
   }
 
-  async function resolvePostMedia(post) {
-    if (!post.image) return "";
-    if (/^https?:\/\//i.test(post.image)) return post.image;
-    if (post.privacy === "public") {
-      const { data } = client.storage.from("post-media").getPublicUrl(post.image);
+  async function resolveSingleMediaUrl(url, privacy) {
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+    if (privacy === "public") {
+      const { data } = client.storage.from("post-media").getPublicUrl(url);
       return data?.publicUrl || "";
     }
-    const { data, error } = await client.storage.from("private-post-media").createSignedUrl(post.image, 1800);
+    const { data, error } = await client.storage.from("private-post-media").createSignedUrl(url, 1800);
     if (error) {
       console.warn("Private post media unavailable:", error.message);
       return "";
     }
     return data?.signedUrl || "";
+  }
+
+  async function resolvePostMediaItems(post) {
+    if (!post.image) return [];
+    const raw = String(post.image).trim();
+    let items = [];
+    if (raw.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          items = parsed.map(item => typeof item === "string"
+            ? { url: item, type: /^(data:video\/)|\.(mp4|webm|mov|ogg)(?:$|[?#])/i.test(item) ? "video" : (post.media_type === "video" ? "video" : "image") }
+            : { url: item?.url || item?.image || "", type: item?.type || item?.media_type || "image" }
+          ).filter(item => item.url);
+        }
+      } catch (error) {
+        console.warn("Could not parse post media list:", error);
+      }
+    }
+    if (!items.length) items = [{ url: raw, type: post.media_type || "image" }];
+    return Promise.all(items.map(async item => ({
+      url: await resolveSingleMediaUrl(item.url, post.privacy),
+      type: item.type
+    })));
   }
 
   async function loadFeed() {
@@ -156,7 +180,7 @@ function avatarMarkup(user, extra = "") {
     const saved = new Set((bookmarkResult.data || []).map(row => row.post_id));
     const reposted = new Set((repostResult.data || []).map(row => row.post_id));
     const displayPosts = await Promise.all(visible.map(async post => ({
-      ...post, displayImage: await resolvePostMedia(post)
+      ...post, displayMedia: await resolvePostMediaItems(post)
     })));
     feed.innerHTML = displayPosts.map(post => renderPost(
       post, userMap.get(post.user_id) || {}, liked.has(post.id), saved.has(post.id), reposted.has(post.id)
@@ -170,12 +194,14 @@ function avatarMarkup(user, extra = "") {
       month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
     }) : "";
     let media = "";
-    if (post.displayImage) {
-      if (post.media_type === "video") {
-        media = '<video class="post-media" src="'+escapeHTML(post.displayImage)+'" controls playsinline preload="metadata"></video>';
-      } else {
-        media = '<img class="post-media" src="'+escapeHTML(post.displayImage)+'" alt="Post media" loading="lazy">';
-      }
+    const mediaItems = (post.displayMedia || []).filter(item => item.url);
+    if (mediaItems.length) {
+      const gridClass = "grid-" + Math.min(4, mediaItems.length);
+      const itemsHtml = mediaItems.slice(0, 4).map(item => item.type === "video"
+        ? '<div class="grid-item"><video class="post-media" src="'+escapeHTML(item.url)+'" controls playsinline preload="metadata"></video></div>'
+        : '<div class="grid-item"><img class="post-media" src="'+escapeHTML(item.url)+'" alt="Post media" loading="lazy"></div>'
+      ).join("");
+      media = '<div class="post-media-grid '+gridClass+'">'+itemsHtml+'</div>';
     }
     const commentsDisabled = post.allow_comments === false;
     const verifiedBadge = user.verified
