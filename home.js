@@ -28,10 +28,8 @@
   }
 
   function showMessage(title, body) {
-    const t = $("#messageTitle");
-    const b = $("#messageBody");
-    if (t) t.textContent = title;
-    if (b) b.textContent = body;
+    $("#messageTitle").textContent = title;
+    $("#messageBody").textContent = body;
     openDialog("messageDialog");
   }
 
@@ -45,24 +43,15 @@
     if (dialog?.open) dialog.close();
   }
 
-  function formatCount(value) {
-    const num = Number(value || 0);
-    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-    return String(num);
+  
+  function formatCount(num) {
+    const n = Number(num || 0);
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    return n.toLocaleString();
   }
 
-  function formatTimeAgo(isoString) {
-    if (!isoString) return "";
-    const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
-    if (diff < 60) return "just now";
-    if (diff < 3600) return Math.floor(diff / 60) + "m";
-    if (diff < 86400) return Math.floor(diff / 3600) + "h";
-    if (diff < 604800) return Math.floor(diff / 86400) + "d";
-    return new Date(isoString).toLocaleDateString([], { month: "short", day: "numeric" });
-  }
-
-  function avatarMarkup(user, extra = "") {
+function avatarMarkup(user, extra = "") {
     const photo = typeof user?.avatar === "string" ? user.avatar : "";
     const letter = user?.letter || user?.username?.[0]?.toUpperCase() || "A";
     const color = user?.letterColor || "#ffffff";
@@ -75,22 +64,18 @@
 
   function setProfileHeader() {
     const name = currentUser.display_name || currentUser.displayName || currentUser.username || "Welcome";
-    const myNameEl = $("#myName");
-    const myHandleEl = $("#myHandle");
-    if (myNameEl) myNameEl.textContent = name;
-    if (myHandleEl) myHandleEl.textContent = currentUser.username ? "@"+currentUser.username : "@you";
+    $("#myName").textContent = name;
+    $("#myHandle").textContent = currentUser.username ? "@"+currentUser.username : "@you";
     const avatar = $("#myAvatar");
-    if (avatar) {
-      if (currentUser.avatar && /^https:\/\//i.test(currentUser.avatar)) {
-        avatar.textContent = "";
-        avatar.style.backgroundImage = 'url("'+currentUser.avatar.replace(/["\\]/g, "")+'")';
-        avatar.style.backgroundSize = "cover";
-        avatar.style.backgroundPosition = "center";
-      } else {
-        avatar.textContent = currentUser.letter || currentUser.username?.[0]?.toUpperCase() || "R";
-        avatar.style.color = currentUser.letterColor || "#ffffff";
-        avatar.style.background = currentUser.background || "linear-gradient(135deg,#8b3dff,#c54dff)";
-      }
+    if (currentUser.avatar && /^https:\/\//i.test(currentUser.avatar)) {
+      avatar.textContent = "";
+      avatar.style.backgroundImage = 'url("'+currentUser.avatar.replace(/["\\]/g, "")+'")';
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+    } else {
+      avatar.textContent = currentUser.letter || currentUser.username?.[0]?.toUpperCase() || "R";
+      avatar.style.color = currentUser.letterColor || "#ffffff";
+      avatar.style.background = currentUser.background || "linear-gradient(135deg,#8b3dff,#c54dff)";
     }
   }
 
@@ -140,7 +125,6 @@
 
   async function loadFeed() {
     const feed = $("#feed");
-    if (!feed) return;
     feed.innerHTML = '<div class="empty-state">Loading your feed…</div>';
     const { data: posts, error } = await client.from("posts")
       .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments")
@@ -153,7 +137,7 @@
     }
     const visible = (posts || []).filter(post => !hiddenPostIds.has(post.id));
     if (!visible.length) {
-      feed.innerHTML = '<div class="empty-state">Your feed is quiet for now.<br>Be the first to share something on ARS.</div>';
+      feed.innerHTML = '<div class="empty-state">Your feed is quiet for now.<br>Be the first to share something with ARS.</div>';
       return;
     }
     const postIds = visible.map(post => post.id);
@@ -182,54 +166,53 @@
   function renderPost(post, user, isLiked, isSaved, isReposted) {
     const name = user.display_name || user.username || "ARS member";
     const handle = user.username ? "@"+user.username : "member";
-    const timeAgo = formatTimeAgo(post.created_at);
+    const date = post.created_at ? new Date(post.created_at).toLocaleString([], {
+      month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
+    }) : "";
     let media = "";
     if (post.displayImage) {
       if (post.media_type === "video") {
-        media = '<div class="post-media-wrap"><video class="post-media" src="'+escapeHTML(post.displayImage)+'" controls playsinline preload="metadata"></video></div>';
+        media = '<video class="post-media" src="'+escapeHTML(post.displayImage)+'" controls playsinline preload="metadata"></video>';
       } else {
-        media = '<div class="post-media-wrap"><img class="post-media" src="'+escapeHTML(post.displayImage)+'" alt="Post media" loading="lazy"></div>';
+        media = '<img class="post-media" src="'+escapeHTML(post.displayImage)+'" alt="Post media" loading="lazy">';
       }
     }
     const commentsDisabled = post.allow_comments === false;
     const verifiedBadge = user.verified
-      ? '<span class="verified-badge" title="Verified"><svg viewBox="0 0 24 24" class="badge-svg"><path fill="#a855f7" d="M12 2l2.4 2.9 3.7-.4 1.4 3.4 3.4 1.4-.4 3.7 2.9 2.4-2.9 2.4.4 3.7-3.4 1.4-1.4 3.4-3.7-.4L12 22l-2.4-2.9-3.7.4-1.4-3.4-3.4-1.4.4-3.7L-1 12l2.9-2.4-.4-3.7 3.4-1.4 1.4-3.4 3.7.4L12 2z"/><path fill="#fff" d="M9.5 12.5l2 2 4.5-4.5"/></svg></span>'
+      ? '<span class="verified-badge" aria-label="Verified">◆</span>'
       : '';
+
+    const likesCount = formatCount(post.likes_count || 0);
+    const commentsCount = formatCount(post.comments_count || 0);
+    const repostsCount = formatCount(post.reposts_count || 0);
+    const viewsCount = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
 
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+
-        '<div class="post-author-row">'+
-          avatarMarkup(user, "post-avatar")+
-          '<div class="post-meta">'+
-            '<div class="post-name-line">'+
-              '<strong class="post-display-name">'+escapeHTML(name)+'</strong>'+
-              verifiedBadge+
-            '</div>'+
-            '<small class="post-handle-line">'+escapeHTML(handle)+' · '+escapeHTML(timeAgo)+'</small>'+
-          '</div>'+
+        avatarMarkup(user)+
+        '<div class="post-author">'+
+          '<div class="author-title"><strong>'+escapeHTML(name)+'</strong>'+verifiedBadge+'</div>'+
+          '<small class="author-meta">'+escapeHTML(handle)+' · '+escapeHTML(date)+'</small>'+
         '</div>'+
-        '<button class="post-menu-btn" data-action="menu" aria-label="Post options">⋯</button>'+
+        '<button class="post-menu" data-action="menu" aria-label="Post options">⋯</button>'+
       '</div>'+
       (post.content ? '<p class="post-content">'+escapeHTML(post.content)+'</p>' : '')+media+
       '<div class="post-actions">'+
-        '<button class="post-action '+(isLiked?'active liked':'')+'" data-action="like" aria-pressed="'+isLiked+'" aria-label="Like">'+
-          '<svg viewBox="0 0 24 24" class="action-svg"><path fill="'+(isLiked?'#e11d48':'none')+'" stroke="'+(isLiked?'#e11d48':'currentColor')+'" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'+
-          '<span class="count">'+formatCount(post.likes_count)+'</span>'+
+        '<button class="post-action like-btn '+(isLiked?'active':'')+'" data-action="like" aria-pressed="'+isLiked+'" title="Like">'+
+          '<svg class="act-icon heart-icon" viewBox="0 0 24 24" width="18" height="18" fill="'+(isLiked?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'+
+          '<span class="act-count">'+likesCount+'</span>'+
         '</button>'+
-        '<button class="post-action" data-action="comment" '+(commentsDisabled?'disabled aria-disabled="true" title="Comments disabled"':'')+' aria-label="Comment">'+
-          '<svg viewBox="0 0 24 24" class="action-svg"><path fill="none" stroke="currentColor" stroke-width="2" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+
-          '<span class="count">'+formatCount(post.comments_count)+'</span>'+
+        '<button class="post-action comment-btn" data-action="comment" '+(commentsDisabled?'disabled aria-disabled="true" title="Comments turned off"':'title="Comment"')+'>'+
+          '<svg class="act-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+
+          '<span class="act-count">'+commentsCount+'</span>'+
         '</button>'+
-        '<button class="post-action '+(isReposted?'active reposted':'')+'" data-action="repost" aria-pressed="'+isReposted+'" aria-label="Repost">'+
-          '<svg viewBox="0 0 24 24" class="action-svg"><path fill="none" stroke="'+(isReposted?'#10b981':'currentColor')+'" stroke-width="2" d="M17 1l4 4-4 4"/><path fill="none" stroke="'+(isReposted?'#10b981':'currentColor')+'" stroke-width="2" d="M3 11V9a4 4 0 0 1 4-4h14"/><path fill="none" stroke="'+(isReposted?'#10b981':'currentColor')+'" stroke-width="2" d="M7 23l-4-4 4-4"/><path fill="none" stroke="'+(isReposted?'#10b981':'currentColor')+'" stroke-width="2" d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+
-          '<span class="count">'+formatCount(post.reposts_count)+'</span>'+
+        '<button class="post-action repost-btn '+(isReposted?'active':'')+'" data-action="repost" aria-pressed="'+isReposted+'" title="Repost">'+
+          '<svg class="act-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+
+          '<span class="act-count">'+repostsCount+'</span>'+
         '</button>'+
-        '<div class="post-action views-action" aria-label="Views">'+
-          '<svg viewBox="0 0 24 24" class="action-svg"><path fill="none" stroke="currentColor" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>'+
-          '<span class="count">'+formatCount(post.views_count)+'</span>'+
-        '</div>'+
-        '<button class="post-action bookmark-action '+(isSaved?'active saved':'')+'" data-action="bookmark" aria-pressed="'+isSaved+'" aria-label="Save">'+
-          '<svg viewBox="0 0 24 24" class="action-svg"><path fill="'+(isSaved?'#a855f7':'none')+'" stroke="'+(isSaved?'#a855f7':'currentColor')+'" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+
+        '<button class="post-action bookmark-btn '+(isSaved?'active':'')+'" data-action="bookmark" aria-pressed="'+isSaved+'" title="Save">'+
+          '<svg class="act-icon" viewBox="0 0 24 24" width="18" height="18" fill="'+(isSaved?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+
+          '<span class="act-count">'+viewsCount+'</span>'+
         '</button>'+
       '</div>'+
     '</article>';
@@ -237,14 +220,13 @@
 
   async function loadStories() {
     const row = $("#storiesRow");
-    if (!row) return;
     const { data, error } = await client.from("stories")
       .select("id,user_id,image,media_type,story_text,created_at,expires_at,privacy")
       .gt("expires_at", new Date().toISOString()).order("created_at", { ascending: true }).limit(50);
     if (error) {
       console.warn("Stories load failed:", error.message);
       stories = [];
-      row.innerHTML = '<button class="story-item add-story" id="addStory" aria-label="Add story"><div class="story-avatar-wrap"><span class="story-avatar-self">＋</span></div><small>Your story</small></button>';
+      row.innerHTML = '<button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Your story</small></button><p class="story-empty">Stories could not be loaded.</p>';
       return;
     }
     stories = data || [];
@@ -254,42 +236,29 @@
       : { data: [], error: null };
     if (usersError) console.warn("Story profiles:", usersError.message);
     const userMap = new Map((users || []).map(user => [user.id, user]));
-
-    const selfAvatarUrl = currentUser?.avatar && /^https:\/\//i.test(currentUser.avatar) ? currentUser.avatar : '';
-    const selfThumb = selfAvatarUrl
-      ? '<img class="story-img" src="'+escapeHTML(selfAvatarUrl)+'" alt="">'
-      : '<span class="story-letter">'+escapeHTML(currentUser?.letter || "R")+'</span>';
-
-    row.innerHTML = '<button class="story-item add-story" id="addStory" aria-label="Add story">'+
-      '<div class="story-ring self-story-ring">'+selfThumb+'<span class="story-add-badge">＋</span></div>'+
-      '<small>You</small></button>'+
+    row.innerHTML = '<button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Your story</small></button>'+
       stories.map((story, index) => {
         const user = userMap.get(story.user_id) || {};
         const label = user.username || user.display_name || "Story";
         const thumb = user.avatar && /^https:\/\//i.test(user.avatar)
-          ? '<img class="story-img" src="'+escapeHTML(user.avatar)+'" alt="">'
-          : '<span class="story-letter">'+escapeHTML(label[0]?.toUpperCase() || "A")+'</span>';
-        return '<button class="story-item" data-story-index="'+index+'" aria-label="View '+escapeHTML(label)+' story">'+
-          '<div class="story-ring active-ring">'+thumb+'</div>'+
-          '<small>'+escapeHTML(label)+'</small></button>';
+          ? '<img src="'+escapeHTML(user.avatar)+'" alt="">'
+          : '<span>'+escapeHTML(label[0]?.toUpperCase() || "A")+'</span>';
+        return '<button class="story-item" data-story-index="'+index+'" aria-label="View '+escapeHTML(label)+' story"><span class="story-ring">'+thumb+'</span><small>'+escapeHTML(label)+'</small></button>';
       }).join("");
   }
 
   async function loadNotifications() {
-    if (!currentUser) return;
     const { count, error } = await client.from("notifications")
       .select("id", { count:"exact", head:true }).eq("user_id", currentUser.id).eq("is_read", false);
     if (error) {
       console.warn("Notifications count:", error.message);
       return;
     }
-    const dot = $("#notificationDot");
-    if (dot) dot.classList.toggle("hidden", !(count > 0));
+    $("#notificationDot").classList.toggle("hidden", !(count > 0));
   }
 
   async function openActivity() {
     const list = $("#activityList");
-    if (!list) return;
     list.innerHTML = '<p class="muted">Loading activity…</p>';
     openDialog("activityDialog");
     const { data, error } = await client.from("notifications")
@@ -311,10 +280,8 @@
     const unread = data.filter(item => !item.is_read).map(item => item.id);
     if (unread.length) {
       const { error: markError } = await client.from("notifications").update({ is_read:true }).in("id", unread);
-      if (!markError) {
-        const dot = $("#notificationDot");
-        if (dot) dot.classList.add("hidden");
-      }
+      if (!markError) $("#notificationDot").classList.add("hidden");
+      else console.warn("Could not mark notifications read:", markError.message);
     }
   }
 
@@ -338,7 +305,6 @@
 
   function previewFile(file, target) {
     const box = $("#"+target);
-    if (!box) return;
     box.replaceChildren();
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -354,90 +320,83 @@
     previewUrls = [];
   }
 
-  $("#createPost")?.addEventListener("click", () => { location.href = "create-post.html"; });
-  $("#postMedia")?.addEventListener("change", event => {
+  $("#createPost").addEventListener("click", () => { location.href = "create-post.html"; });
+  $("#postMedia").addEventListener("change", event => {
     selectedPostFile = event.target.files?.[0] || null;
     previewFile(selectedPostFile, "mediaPreview");
   });
-  $("#storyMedia")?.addEventListener("change", event => {
+  $("#storyMedia").addEventListener("change", event => {
     selectedStoryFile = event.target.files?.[0] || null;
     previewFile(selectedStoryFile, "storyPreview");
   });
 
-  $("#postForm")?.addEventListener("submit", async event => {
+  $("#postForm").addEventListener("submit", async event => {
     event.preventDefault();
     const message = $("#postMessage");
-    const content = $("#postContent")?.value.trim() || "";
-    if (!content && !selectedPostFile) {
-      if (message) message.textContent = "Write something or attach a photo or video first.";
-      return;
-    }
+    const content = $("#postContent").value.trim();
+    if (!content && !selectedPostFile) { message.textContent = "Write something or attach a photo or video first."; return; }
     const button = event.submitter;
-    if (button) button.disabled = true;
-    if (message) message.textContent = "Publishing…";
+    button.disabled = true;
+    message.textContent = "Publishing…";
     try {
       let image = null;
       let mediaType = "text";
       if (selectedPostFile) {
         mediaType = selectedPostFile.type.startsWith("video/") ? "video" : "image";
-        const bucket = $("#postPrivacy")?.value === "public" ? "post-media" : "private-post-media";
+        const bucket = $("#postPrivacy").value === "public" ? "post-media" : "private-post-media";
         image = await uploadMedia(selectedPostFile, bucket, "posts");
       }
       const hashtags = [...content.matchAll(/#([\p{L}\p{N}_]+)/gu)].map(match => match[1]);
       const { error } = await client.from("posts").insert({
         user_id:currentUser.id, content, image, media_type:mediaType,
-        privacy:$("#postPrivacy")?.value || "public",
-        allow_comments:$("#allowComments")?.checked ?? true,
+        privacy:$("#postPrivacy").value, allow_comments:$("#allowComments").checked,
         hashtags, mentions:[]
       });
       if (error) throw error;
-      if ($("#postContent")) $("#postContent").value = "";
-      if ($("#postMedia")) $("#postMedia").value = "";
-      $("#mediaPreview")?.replaceChildren();
+      $("#postContent").value = "";
+      $("#postMedia").value = "";
+      $("#mediaPreview").replaceChildren();
       selectedPostFile = null;
       releasePreviews();
       closeDialog("postDialog");
       await loadFeed();
     } catch (error) {
       console.error("Publish post:", error);
-      if (message) message.textContent = error.message || "Could not publish your post.";
-    } finally { if (button) button.disabled = false; }
+      message.textContent = error.message || "Could not publish your post.";
+    } finally { button.disabled = false; }
   });
 
-  $("#storyForm")?.addEventListener("submit", async event => {
+  $("#storyForm").addEventListener("submit", async event => {
     event.preventDefault();
     const message = $("#storyMessage");
-    if (!selectedStoryFile) {
-      if (message) message.textContent = "Choose an image or video first.";
-      return;
-    }
+    if (!selectedStoryFile) { message.textContent = "Choose an image or video first."; return; }
     const button = event.submitter;
-    if (button) button.disabled = true;
-    if (message) message.textContent = "Uploading story…";
+    button.disabled = true;
+    message.textContent = "Uploading story…";
     try {
-      const privacy = $("#storyPrivacy")?.value || "public";
+      const privacy = $("#storyPrivacy").value;
       const image = await uploadMedia(selectedStoryFile, "story-media", "stories");
       const mediaType = selectedStoryFile.type.startsWith("video/") ? "video" : "image";
       const { error } = await client.from("stories").insert({
         user_id:currentUser.id, image, media_type:mediaType,
-        story_text:$("#storyText")?.value.trim() || "", privacy,
+        story_text:$("#storyText").value.trim(), privacy,
         expires_at:new Date(Date.now()+86400000).toISOString()
       });
       if (error) throw error;
-      if ($("#storyText")) $("#storyText").value = "";
-      if ($("#storyMedia")) $("#storyMedia").value = "";
-      $("#storyPreview")?.replaceChildren();
+      $("#storyText").value = "";
+      $("#storyMedia").value = "";
+      $("#storyPreview").replaceChildren();
       selectedStoryFile = null;
       releasePreviews();
       closeDialog("storyDialog");
       await loadStories();
     } catch (error) {
       console.error("Publish story:", error);
-      if (message) message.textContent = error.message || "Could not share story.";
-    } finally { if (button) button.disabled = false; }
+      message.textContent = error.message || "Could not share story.";
+    } finally { button.disabled = false; }
   });
 
-  async function toggleRelation(table, postId, button) {
+  async function toggleRelation(table, postId, button, activeLabel, inactiveLabel) {
     const { data: existing, error: findError } = await client.from(table)
       .select("id").eq("post_id", postId).eq("user_id", currentUser.id).maybeSingle();
     if (findError) throw findError;
@@ -446,31 +405,80 @@
       if (error) throw error;
       button.classList.remove("active");
       button.setAttribute("aria-pressed", "false");
+      if (inactiveLabel) button.textContent = inactiveLabel;
     } else {
       const { error } = await client.from(table).insert({ post_id:postId, user_id:currentUser.id });
       if (error) throw error;
       button.classList.add("active");
       button.setAttribute("aria-pressed", "true");
+      if (activeLabel) button.textContent = activeLabel;
     }
   }
 
-  $("#feed")?.addEventListener("click", async event => {
+  $("#feed").addEventListener("click", async event => {
     const button = event.target.closest("[data-action]");
     if (!button || button.disabled) return;
     const card = button.closest("[data-post-id]");
     const postId = card?.dataset.postId;
     if (!postId) return;
     const action = button.dataset.action;
-    button.disabled = true;
+
     try {
       if (action === "like") {
-        await toggleRelation("likes", postId, button);
-        await loadFeed();
+        const wasLiked = button.classList.contains("active");
+        const countSpan = button.querySelector(".act-count");
+        const iconSvg = button.querySelector(".heart-icon");
+        const currentCount = parseInt(countSpan?.textContent.replace(/[^0-9]/g, "") || "0", 10);
+
+        // Optimistic toggle
+        button.classList.toggle("active", !wasLiked);
+        button.setAttribute("aria-pressed", String(!wasLiked));
+        if (iconSvg) iconSvg.setAttribute("fill", !wasLiked ? "currentColor" : "none");
+        if (countSpan) countSpan.textContent = formatCount(Math.max(0, currentCount + (!wasLiked ? 1 : -1)));
+
+        try {
+          await toggleRelation("likes", postId, button, null, null);
+        } catch (err) {
+          // Revert on failure
+          button.classList.toggle("active", wasLiked);
+          button.setAttribute("aria-pressed", String(wasLiked));
+          if (iconSvg) iconSvg.setAttribute("fill", wasLiked ? "currentColor" : "none");
+          if (countSpan) countSpan.textContent = formatCount(currentCount);
+          console.warn("Like sync failed:", err.message);
+        }
       } else if (action === "bookmark") {
-        await toggleRelation("bookmarks", postId, button);
+        const wasSaved = button.classList.contains("active");
+        const iconSvg = button.querySelector(".act-icon");
+
+        button.classList.toggle("active", !wasSaved);
+        button.setAttribute("aria-pressed", String(!wasSaved));
+        if (iconSvg) iconSvg.setAttribute("fill", !wasSaved ? "currentColor" : "none");
+
+        try {
+          await toggleRelation("bookmarks", postId, button, null, null);
+        } catch (err) {
+          button.classList.toggle("active", wasSaved);
+          button.setAttribute("aria-pressed", String(wasSaved));
+          if (iconSvg) iconSvg.setAttribute("fill", wasSaved ? "currentColor" : "none");
+          console.warn("Bookmark sync failed:", err.message);
+        }
       } else if (action === "repost") {
-        await toggleRelation("reposts", postId, button);
-        await loadFeed();
+        const wasReposted = button.classList.contains("active");
+        const countSpan = button.querySelector(".act-count");
+        const currentCount = parseInt(countSpan?.textContent.replace(/[^0-9]/g, "") || "0", 10);
+
+        button.classList.toggle("active", !wasReposted);
+        button.setAttribute("aria-pressed", String(!wasReposted));
+        if (countSpan) countSpan.textContent = formatCount(Math.max(0, currentCount + (!wasReposted ? 1 : -1)));
+
+        try {
+          await toggleRelation("reposts", postId, button, null, null);
+        } catch (err) {
+          button.classList.toggle("active", wasReposted);
+          button.setAttribute("aria-pressed", String(wasReposted));
+          if (countSpan) countSpan.textContent = formatCount(currentCount);
+          console.warn("Repost sync failed:", err.message);
+        }
       } else if (action === "comment") {
         activeCommentPostId = postId;
         await loadComments(postId);
@@ -481,7 +489,7 @@
     } catch (error) {
       console.error("Post action:", error);
       showMessage("Action failed", error.message || "Please try again.");
-    } finally { button.disabled = false; }
+    }
   });
 
   async function openPostOptions(postId) {
@@ -494,24 +502,20 @@
     const actions = own
       ? [["edit","Edit post"],["toggle-comments",post.allow_comments ? "Turn comments off" : "Turn comments on"],["delete","Delete post"]]
       : [["hide","Hide from my feed"],["report","Report account"],["block","Block account"],["copy","Copy post link"]];
-    const list = $("#postOptionsList");
-    if (list) {
-      list.innerHTML = actions.map(([action,label]) =>
-        '<button class="activity-item" data-post-option="'+action+'">'+label+'</button>').join("");
-    }
-    const msg = $("#postOptionsMessage");
-    if (msg) msg.textContent = "";
+    $("#postOptionsList").innerHTML = actions.map(([action,label]) =>
+      '<button class="activity-item" data-post-option="'+action+'">'+label+'</button>').join("");
+    $("#postOptionsMessage").textContent = "";
     openDialog("postOptionsDialog");
   }
 
-  $("#postOptionsList")?.addEventListener("click", async event => {
+  $("#postOptionsList").addEventListener("click", async event => {
     const button = event.target.closest("[data-post-option]");
     if (!button || !activePost) return;
     const action = button.dataset.postOption;
     const post = activePost;
     const message = $("#postOptionsMessage");
     button.disabled = true;
-    if (message) message.textContent = "Please wait…";
+    message.textContent = "Please wait…";
     try {
       if (action === "edit") {
         const nextContent = prompt("Edit your post text:", post.content || "");
@@ -548,7 +552,7 @@
           reporter_id:currentUser.id, reported_user_id:post.user_id, reason:reason.trim() || "other"
         });
         if (error) throw error;
-        if (message) message.textContent = "Report submitted. Thank you.";
+        message.textContent = "Report submitted. Thank you.";
       } else if (action === "block") {
         if (!confirm("Block this account? You will no longer see each other’s content.")) return;
         const { error } = await client.from("blocks").insert({
@@ -561,17 +565,16 @@
         const url = new URL("home.html", location.href);
         url.hash = "post-"+post.id;
         await navigator.clipboard.writeText(url.href);
-        if (message) message.textContent = "Post link copied.";
+        message.textContent = "Post link copied.";
       }
     } catch (error) {
       console.error("Post option:", error);
-      if (message) message.textContent = error.message || "Could not complete this action.";
+      message.textContent = error.message || "Could not complete this action.";
     } finally { button.disabled = false; }
   });
 
   async function loadComments(postId) {
     const list = $("#commentsList");
-    if (!list) return;
     list.innerHTML = '<p class="muted">Loading comments…</p>';
     const { data, error } = await client.from("comments")
       .select("id,user_id,content,created_at").eq("post_id", postId)
@@ -589,15 +592,15 @@
     }).join("");
   }
 
-  $("#commentForm")?.addEventListener("submit", async event => {
+  $("#commentForm").addEventListener("submit", async event => {
     event.preventDefault();
     const input = $("#commentInput");
     const message = $("#commentMessage");
     const button = event.submitter;
-    const content = input?.value.trim() || "";
+    const content = input.value.trim();
     if (!activeCommentPostId || !content) return;
-    if (button) button.disabled = true;
-    if (message) message.textContent = "Sending…";
+    button.disabled = true;
+    message.textContent = "Sending…";
     try {
       const { data: post, error: postError } = await client.from("posts")
         .select("allow_comments").eq("id", activeCommentPostId).maybeSingle();
@@ -607,16 +610,16 @@
         post_id:activeCommentPostId, user_id:currentUser.id, content
       });
       if (error) throw error;
-      if (input) input.value = "";
-      if (message) message.textContent = "";
+      input.value = "";
+      message.textContent = "";
       await loadComments(activeCommentPostId);
       await loadFeed();
     } catch (error) {
-      if (message) message.textContent = error.message || "Could not send comment.";
-    } finally { if (button) button.disabled = false; }
+      message.textContent = error.message || "Could not send comment.";
+    } finally { button.disabled = false; }
   });
 
-  $("#storiesRow")?.addEventListener("click", async event => {
+  $("#storiesRow").addEventListener("click", async event => {
     if (event.target.closest("#addStory")) { location.href = "story-editor.html"; return; }
     const item = event.target.closest("[data-story-index]");
     if (!item) return;
@@ -630,18 +633,16 @@
         mediaUrl = data.signedUrl;
       }
       const content = $("#storyViewerContent");
-      if (content) {
-        content.replaceChildren();
-        const media = document.createElement(story.media_type === "video" ? "video" : "img");
-        media.src = mediaUrl;
-        if (media.tagName === "VIDEO") { media.controls = true; media.autoplay = true; media.playsInline = true; }
-        content.appendChild(media);
-        if (story.story_text) {
-          const caption = document.createElement("div");
-          caption.className = "story-caption";
-          caption.textContent = story.story_text;
-          content.appendChild(caption);
-        }
+      content.replaceChildren();
+      const media = document.createElement(story.media_type === "video" ? "video" : "img");
+      media.src = mediaUrl;
+      if (media.tagName === "VIDEO") { media.controls = true; media.autoplay = true; media.playsInline = true; }
+      content.appendChild(media);
+      if (story.story_text) {
+        const caption = document.createElement("div");
+        caption.className = "story-caption";
+        caption.textContent = story.story_text;
+        content.appendChild(caption);
       }
       openDialog("storyViewer");
       const { error: viewError } = await client.from("story_views").insert({
@@ -654,31 +655,24 @@
     }
   });
 
-  $("#spinWheel")?.addEventListener("click", () => openDialog("wheelDialog"));
-  $("#confirmSpin")?.addEventListener("click", async event => {
+  $("#spinWheel").addEventListener("click", () => openDialog("wheelDialog"));
+  $("#confirmSpin").addEventListener("click", async event => {
     const button = event.currentTarget;
     const status = $("#spinStatus");
     const result = $("#wheelResult");
-    const wheelVisual = $("#wheelDiscVisual");
     button.disabled = true;
-    if (status) status.textContent = "Spinning…";
-    if (wheelVisual) wheelVisual.classList.add("spinning");
+    status.textContent = "Spinning…";
     try {
       const { data, error } = await client.rpc("spin_rewards_wheel");
       if (error) throw error;
       const reward = Array.isArray(data) ? data[0] : data;
-      await new Promise(r => setTimeout(r, 1600));
-      if (result) result.textContent = reward?.title || reward?.message || reward?.reward_code || "Your spin has been recorded! Check your rewards.";
-      if (status) status.textContent = "Reward unlocked!";
-      const hint = $("#wheelHint");
-      if (hint) hint.textContent = "Spin recorded";
+      result.textContent = reward?.title || reward?.message || reward?.reward_code || "Your spin has been recorded. Check your rewards.";
+      status.textContent = "Your wheel result was returned by ARS.";
+      $("#wheelHint").textContent = "Spin recorded";
     } catch (error) {
       console.error("Wheel:", error);
-      if (status) status.textContent = error.message || "Wheel is temporarily unavailable.";
-    } finally {
-      if (wheelVisual) wheelVisual.classList.remove("spinning");
-      button.disabled = false;
-    }
+      status.textContent = error.message || "Wheel is temporarily unavailable.";
+    } finally { button.disabled = false; }
   });
 
   document.addEventListener("click", event => {
@@ -686,33 +680,32 @@
     if (closer) closeDialog(closer.dataset.close);
   });
 
-  $("#refreshFeed")?.addEventListener("click", () => loadFeed());
-  $("#profileShortcut")?.addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
-  const openSearch = () => { location.href = "search.html"; };
-  $("#openSearch")?.addEventListener("click", openSearch);
-  $("#navSearch")?.addEventListener("click", openSearch);
-  $("#navTrending")?.addEventListener("click", () => { location.href = "search.html#trending"; });
-  $("#openNotifications")?.addEventListener("click", () => openActivity());
-  $("#navNotifications")?.addEventListener("click", () => openActivity());
-  $("#navStreak")?.addEventListener("click", () => openDialog("streakDialog"));
+  $("#refreshFeed").addEventListener("click", () => loadFeed());
+  $("#profileShortcut").addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
+  const openSearchUnavailable = () => { location.href = "search.html"; };
+  $("#openSearch").addEventListener("click", openSearchUnavailable);
+  $("#navSearch").addEventListener("click", openSearchUnavailable);
+  $("#openNotifications").addEventListener("click", () => openActivity());
+  $("#navNotifications").addEventListener("click", () => openActivity());
+  $("#navStreak").addEventListener("click", () => openDialog("streakDialog"));
 
-  $("#streakInviteForm")?.addEventListener("submit", async event => {
+  $("#streakInviteForm").addEventListener("submit", async event => {
     event.preventDefault();
     const input = $("#streakUsername");
     const message = $("#streakMessage");
     const button = event.submitter;
-    const username = input?.value.trim().replace(/^@/, "") || "";
+    const username = input.value.trim().replace(/^@/, "");
     if (!username) return;
-    if (button) button.disabled = true;
-    if (message) message.textContent = "Sending invitation…";
+    button.disabled = true;
+    message.textContent = "Sending invitation…";
     try {
       const { data, error } = await client.rpc("send_streak_invite", { p_to_username:username });
       if (error) throw error;
-      if (message) message.textContent = data?.message || "Invitation sent.";
-      if (input) input.value = "";
+      message.textContent = data?.message || "Invitation sent.";
+      input.value = "";
     } catch (error) {
-      if (message) message.textContent = error.message || "Could not send invitation.";
-    } finally { if (button) button.disabled = false; }
+      message.textContent = error.message || "Could not send invitation.";
+    } finally { button.disabled = false; }
   });
 
   async function start() {
