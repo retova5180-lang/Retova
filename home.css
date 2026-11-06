@@ -721,3 +721,96 @@ scroll-behavior:auto!important;
 animation-duration:.01ms!important;
 transition-duration:.01ms!important}
 }
+
+/* ARS Home visual refinement: presentation-only; all interaction hooks remain unchanged. */
+:root {
+  --bg: #080610;
+  --purple: #a855f7;
+  --bright: #d8a2ff;
+  --line: #ffffff20;
+  --line2: #c084fc80;
+  --text: #f8f3fc;
+  --muted: #a99bb5;
+  --shadow: 0 18px 60px #0009;
+}
+
+.app-shell {
+  width: min(100%, 760px);
+}
+
+main {
+  width: 100%;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.topbar {
+  border-bottom-color: #bd83ff20;
+  box-shadow: 0 10px 30px #05030a24;
+}
+
+.profile-shortcut,
+.wheel-card {
+  min-height: 98px;
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.profile-shortcut:hover,
+.wheel-card:hover {
+  transform: translateY(-2px);
+  border-color: #bd83ff75;
+  box-shadow: 0 12px 34px #8b3dff20;
+}
+
+.stories-row {
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+}
+
+.story-item {
+  scroll-snap-align: start;
+}
+
+.post-card {
+  border-color: #bd83ff30;
+  box-shadow: 0 12px 34px #0004, inset 0 1px 0 #ffffff08;
+}
+
+.post-media {
+  max-height: min(64vh, 570px);
+}
+
+.post-action:focus-visible,
+.nav-item:focus-visible,
+.refresh-btn:focus-visible,
+.compose-fab:focus-visible {
+  outline: 2px solid var(--bright);
+  outline-offset: 3px;
+}
+
+.bottom-nav {
+  box-shadow: 0 -12px 36px #05030a45;
+}
+
+@media (max-width: 620px) {
+  main {
+    padding-inline: 14px;
+  }
+
+  .profile-shortcut,
+  .wheel-card {
+    min-height: 88px;
+  }
+
+  .post-card {
+    box-shadow: 0 8px 26px #0004;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-shortcut,
+  .wheel-card {
+    transition: none;
+  }
+}
+
