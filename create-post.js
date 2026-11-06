@@ -216,6 +216,7 @@
     const pubButtons = [$("#publish"), $("#bottomPublish")].filter(Boolean);
     const content = $("#content")?.value?.trim() || "";
 
+    const uploadedStoragePaths = [];
     pubButtons.forEach(b => { b.disabled = true; });
     say(storyMode ? "Sharing story…" : "Publishing post…");
 
@@ -253,42 +254,38 @@
         throw new Error("Write something or attach a photo/video first.");
       }
 
-      const mediaUrls = [];
+      const mediaItems = [];
       const privacy = $("#privacy")?.value || "public";
       const bucket = privacy === "public" ? "post-media" : "private-post-media";
 
-      for (const f of files) {
-        let uploadedUrl = null;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        say(`Uploading media ${i + 1} of ${files.length}…`);
+        const path = user.id + "/posts/" + crypto.randomUUID() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        let uploadResult;
         try {
-          const path = user.id + "/posts/" + crypto.randomUUID() + "-" + f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const { data, error } = await client.storage
+          uploadResult = await client.storage
             .from(bucket)
-            .upload(path, f, { upsert: false, contentType: f.type, cacheControl: "3600" });
-
-          if (!error && data?.path) {
-            if (bucket === "post-media") {
-              const { data: pub } = client.storage.from(bucket).getPublicUrl(data.path);
-              uploadedUrl = pub.publicUrl;
-            } else {
-              uploadedUrl = data.path;
-            }
-          }
-        } catch (uploadErr) {
-          console.warn("Storage bucket upload notice:", uploadErr);
+            .upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+        } catch (uploadError) {
+          throw new Error(`Upload failed for "${file.name}": ${uploadError?.message || "Storage is unavailable."}`);
+        }
+        if (uploadResult?.error) {
+          throw new Error(`Upload failed for "${file.name}": ${uploadResult.error.message || "Storage rejected the file."}`);
+        }
+        if (!uploadResult?.data?.path) {
+          throw new Error(`Upload failed for "${file.name}": Storage did not return a file path.`);
         }
 
-        // If storage failed or bucket not accessible, fallback to Data URL for smaller images
-        if (!uploadedUrl) {
-          if (f.size <= 4 * 1024 * 1024) {
-            uploadedUrl = await fileToDataUrl(f);
-          } else {
-            throw new Error("Could not upload file to storage. Please ensure media is under 4MB or bucket is public.");
-          }
+        const storedPath = uploadResult.data.path;
+        uploadedStoragePaths.push({ bucket, path: storedPath });
+        let url = storedPath;
+        if (bucket === "post-media") {
+          const { data: publicData } = client.storage.from(bucket).getPublicUrl(storedPath);
+          url = publicData?.publicUrl || "";
+          if (!url) throw new Error(`Upload finished for "${file.name}", but its public URL could not be created.`);
         }
-
-        if (uploadedUrl) {
-          mediaUrls.push(uploadedUrl);
-        }
+        mediaItems.push({ url, type: file.type.startsWith("video/") ? "video" : "image" });
       }
 
       const hashtags = [...content.matchAll(/#([\p{L}\p{N}_]+)/gu)].map(x => x[1]);
@@ -300,8 +297,16 @@
       const postRecord = {
         user_id: user.id,
         content: content,
-        image: mediaUrls[0] || null,
-        media_type: files[0]?.type?.startsWith("video/") ? "video" : "image",
+        image: mediaItems.length === 0
+          ? null
+          : mediaItems.length === 1
+            ? mediaItems[0].url
+            : JSON.stringify(mediaItems),
+        media_type: mediaItems.length === 0
+          ? "text"
+          : mediaItems.length === 1
+            ? mediaItems[0].type
+            : mediaItems.every(item => item.type === mediaItems[0].type) ? mediaItems[0].type : "mixed",
         privacy: privacy,
         allow_comments: $("#comments") ? $("#comments").checked : true,
         location: $("#location")?.value?.trim() || null,
@@ -311,14 +316,15 @@
 
       const { error: postError } = await client.from("posts").insert(postRecord);
       if (postError) throw postError;
+      uploadedStoragePaths.length = 0;
 
       // Optional: share also to story
-      if ($("#toStory")?.checked && mediaUrls[0]) {
+      if ($("#toStory")?.checked && mediaItems[0]) {
         try {
           await client.from("stories").insert({
             user_id: user.id,
-            image: mediaUrls[0],
-            media_type: files[0]?.type?.startsWith("video/") ? "video" : "image",
+            image: mediaItems[0].url,
+            media_type: mediaItems[0].type,
             story_text: content.slice(0, 180),
             privacy: privacy,
             expires_at: new Date(Date.now() + 86400000).toISOString()
@@ -335,6 +341,12 @@
 
     } catch (e) {
       console.error(e);
+      if (uploadedStoragePaths.length) {
+        await Promise.all(uploadedStoragePaths.map(async item => {
+          const { error } = await client.storage.from(item.bucket).remove([item.path]);
+          if (error) console.warn("Could not clean up failed post upload:", error.message);
+        }));
+      }
       say(e.message || "Could not publish post.", true);
       pubButtons.forEach(b => { b.disabled = false; });
     }
