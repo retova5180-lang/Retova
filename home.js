@@ -217,7 +217,7 @@ function avatarMarkup(user, extra = "") {
   function renderSponsoredCard() {
     return '<article class="post-card sponsored-card">'+
       '<div class="post-head">'+
-        '<div class="avatar-circle" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;">✦</div>'+
+        '<div class="avatar-circle" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'+
         '<div class="post-author">'+
           '<div class="author-title"><strong>ARS Spotlight</strong><span class="sponsored-badge">Sponsored</span></div>'+
           '<small class="author-meta">Promoted · Official ARS Showcase</small>'+
@@ -226,7 +226,7 @@ function avatarMarkup(user, extra = "") {
       '<p class="post-content">Boost your reach, build daily Streaks, and unlock rare perks with the ARS Challenge Wheel.</p>'+
       '<div class="sponsored-media-banner">'+
         '<div class="sponsored-banner-content">'+
-          '<span>🔥 Join the Daily Creator Challenge</span>'+
+          '<span>Join the Daily Creator Challenge</span>'+
           '<small>Interact daily with friends to level up your profile</small>'+
         '</div>'+
       '</div>'+
@@ -259,7 +259,7 @@ function avatarMarkup(user, extra = "") {
     const repostsCount = formatCount(post.reposts_count || 0);
     const viewsCount = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
 
-    const pinnedBadge = post.is_pinned ? '<span class="pinned-badge" title="Pinned post">📌 Pinned</span>' : '';
+    const pinnedBadge = post.is_pinned ? '<span class="pinned-badge" title="Pinned post"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.5-6.5V4h-11v6.5z"/></svg> Pinned</span>' : '';
     const editedNotice = post.edited_at ? ' <small style="color:#7c8292;">(edited)</small>' : '';
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+
@@ -394,7 +394,7 @@ function avatarMarkup(user, extra = "") {
       const expired = !!row.broken_at || /broken|expired|inactive|ended/i.test(row.status || "") || (last && Date.now()-last >= 86400000);
       const action = expired ? '<div class="streak-status-bar"><span class="streak-status broken">Recovery may be available</span><button class="streak-recover-btn" type="button" data-request-recovery="'+escapeHTML(row.id)+'">Request recovery</button></div>' : '<div class="streak-status-bar"><span class="streak-status active">● Active</span><span class="muted">Last activity '+escapeHTML(row.last_activity_at ? new Date(row.last_activity_at).toLocaleString() : "not recorded")+'</span></div>';
       const avatar = peer.avatar && /^https?:\/\//i.test(peer.avatar) ? '<span class="activity-avatar"><img src="'+escapeHTML(peer.avatar)+'" alt=""></span>' : '<span class="activity-avatar">'+escapeHTML(name[0] || "A")+'</span>';
-      return '<article class="streak-card"><div class="streak-card-main">'+avatar+'<div class="streak-user-info"><strong>'+escapeHTML(name)+'</strong><small>@'+escapeHTML(peer.username || "member")+'</small></div><span class="streak-count-badge">🔥 '+count+' days</span></div>'+action+'</article>';
+      return '<article class="streak-card"><div class="streak-card-main">'+avatar+'<div class="streak-user-info"><strong>'+escapeHTML(name)+'</strong><small>@'+escapeHTML(peer.username || "member")+'</small></div><span class="streak-count-badge"> '+count+' days</span></div>'+action+'</article>';
     }).join("");
   }
 
@@ -677,19 +677,19 @@ function avatarMarkup(user, extra = "") {
 
       const actions = own
         ? [
-            { id: "edit", icon: "✏️", title: "Edit post", desc: "Update text, audience and comment settings" },
-            { id: "pin", icon: "📌", title: post.is_pinned ? "Unpin from profile" : "Pin to profile", desc: post.is_pinned ? "Remove pinned status" : "Keep this post highlighted at the top" },
-            { id: "comments", icon: "💬", title: post.allow_comments === false ? "Turn comments on" : "Turn comments off", desc: post.allow_comments === false ? "Allow members to reply" : "Disable replies on this post" },
-            { id: "insights", icon: "📊", title: "Post insights", desc: "See view counts, likes, comments and reposts" },
-            { id: "delete", icon: "🗑️", title: "Delete post", desc: "Permanently remove this post from ARS", danger: true }
+            { id: "edit", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', title: "Edit post", desc: "Update text, audience and comment settings" },
+            { id: "pin", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.5-6.5V4h-11v6.5z"/></svg>', title: post.is_pinned ? "Unpin from profile" : "Pin to profile", desc: post.is_pinned ? "Remove pinned status" : "Keep this post highlighted at the top" },
+            { id: "comments", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', title: post.allow_comments === false ? "Turn comments on" : "Turn comments off", desc: post.allow_comments === false ? "Allow members to reply" : "Disable replies on this post" },
+            { id: "insights", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>', title: "Post insights", desc: "See view counts, likes, comments and reposts" },
+            { id: "delete", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>', title: "Delete post", desc: "Permanently remove this post from ARS", danger: true }
           ]
         : [
-            { id: "save", icon: "🔖", title: isSaved ? "Remove from saved" : "Save post", desc: isSaved ? "Remove from your bookmarks" : "Save this post to your bookmarks" },
-            { id: "hide", icon: "👁️‍🗨️", title: "Hide from feed", desc: "Hide this post from your feed view" },
-            { id: "not-interested", icon: "👎", title: "Not interested", desc: "See fewer posts like this on ARS" },
-            { id: "report", icon: "🚩", title: "Report post", desc: "Flag spam, harassment or inappropriate content" },
-            { id: "block", icon: "🚫", title: "Block account", desc: "Block this account from interacting with you", danger: true },
-            { id: "copy", icon: "🔗", title: "Copy post link", desc: "Copy direct link to this post" }
+            { id: "save", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>', title: isSaved ? "Remove from saved" : "Save post", desc: isSaved ? "Remove from your bookmarks" : "Save this post to your bookmarks" },
+            { id: "hide", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>', title: "Hide from feed", desc: "Hide this post from your feed view" },
+            { id: "not-interested", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>', title: "Not interested", desc: "See fewer posts like this on ARS" },
+            { id: "report", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>', title: "Report post", desc: "Flag spam, harassment or inappropriate content" },
+            { id: "block", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>', title: "Block account", desc: "Block this account from interacting with you", danger: true },
+            { id: "copy", icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>', title: "Copy post link", desc: "Copy direct link to this post" }
           ];
 
       list.innerHTML = actions.map(act =>
@@ -1089,7 +1089,7 @@ function avatarMarkup(user, extra = "") {
     const btn = $("#storyHeartBtn");
     btn.style.transform = "scale(1.4)";
     setTimeout(() => { btn.style.transform = ""; }, 250);
-    showMessage("Reaction sent", "Your reaction ❤️ was sent to this story.");
+    showMessage("Reaction sent", "Your reaction was sent to this story.");
   });
 
   $("#storyQuickReply").addEventListener("keydown", event => {
@@ -1133,11 +1133,11 @@ function avatarMarkup(user, extra = "") {
   });
 
   $("#refreshFeed").addEventListener("click", () => loadFeed());
-  $("#profileShortcut").addEventListener("click", () => openDialog("profileMenuDialog"));
-  $("#menuOpenStreaks").addEventListener("click", () => openStreakCenter("list"));
+  $("#profileShortcut")?.addEventListener("click", (e) => { e.preventDefault(); location.href = "profile.html"; });
+  $("#menuOpenStreaks")?.addEventListener("click", () => openStreakCenter("list"));
   $("#openStreaksFromActivity").addEventListener("click", () => openStreakCenter("list"));
-  $("#menuOpenNotifications").addEventListener("click", () => { closeDialog("profileMenuDialog"); openActivity(); });
-  $("#menuSignOut").addEventListener("click", async () => { try { await client.auth.signOut(); } finally { localStorage.setItem(STORAGE.loggedIn,"false"); localStorage.removeItem(STORAGE.user); location.replace("index.html"); } });
+  $("#menuOpenNotifications")?.addEventListener("click", () => { closeDialog("profileMenuDialog"); openActivity(); });
+  $("#menuSignOut")?.addEventListener("click", async () => { try { await client.auth.signOut(); } finally { localStorage.setItem(STORAGE.loggedIn,"false"); localStorage.removeItem(STORAGE.user); location.replace("index.html"); } });
   const openSearchUnavailable = () => { location.href = "search.html"; };
   $("#openSearch").addEventListener("click", openSearchUnavailable);
   $("#navSearch").addEventListener("click", openSearchUnavailable);

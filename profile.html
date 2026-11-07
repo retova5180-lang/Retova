@@ -20,13 +20,13 @@
         </svg>
       </a>
       <h1 class="topbar-brand">ARS</h1>
-      <button type="button" class="top-action-btn" id="profileOptionsBtn" aria-label="Profile options">
+      <a href="settings.html" class="top-action-btn" id="profileOptionsBtn" aria-label="Settings">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
           <circle cx="5" cy="12" r="2"/>
           <circle cx="12" cy="12" r="2"/>
           <circle cx="19" cy="12" r="2"/>
         </svg>
-      </button>
+      </a>
     </header>
 
     <main class="profile-main">
@@ -67,7 +67,18 @@
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6 1.4 1.4-7 7z"/>
               </svg>
             </span>
-            <span class="crown-badge hidden" id="premiumCrownBadge" title="ARS Premium Member">👑</span>
+            <span class="ars-premium-badge hidden" id="premiumCrownBadge" title="ARS Premium Verified">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <circle cx="12" cy="12" r="10" fill="url(#arsPremGrad)"/>
+                <path d="M8.5 12.5l2.5 2.5 5-5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="arsPremGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c084fc"/>
+                    <stop offset="100%" stop-color="#790ce2"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
           </div>
 
           <div class="username-row">
@@ -91,7 +102,7 @@
                     <!-- Pending Follow Requests Banner for Private Account Owner -->
           <div class="pending-requests-banner hidden" id="pendingRequestsBanner">
             <div class="pending-banner-left">
-              <span class="pending-badge-icon">👥</span>
+              <span class="pending-badge-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
               <div class="pending-badge-text">
                 <strong class="pending-count" id="pendingRequestsCount">0</strong>
                 <span class="pending-label">Follow Requests</span>
@@ -103,7 +114,7 @@
             <!-- Owner Actions -->
             <div class="owner-actions" id="ownerActions">
               <a href="settings.html?section=premium" class="premium-cta-btn" id="premiumCtaBtn">
-                <span class="crown-icon">👑</span>
+                <span class="crown-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
                 <span id="premiumBtnLabel">Upgrade to Premium</span>
               </a>
               <a href="settings.html" class="settings-square-btn" id="settingsSquareBtn" aria-label="Settings">
@@ -164,6 +175,14 @@
             </svg>
             <span>Posts</span>
           </button>
+          <button class="profile-tab" data-tab="media" role="tab" aria-selected="false" id="tabMedia">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>Media</span>
+          </button>
           <button class="profile-tab" data-tab="bookmarks" role="tab" aria-selected="false" id="tabBookmarks">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -192,7 +211,7 @@
       <section class="profile-feed-section">
         <!-- Private Account Locked Notice -->
         <div class="private-account-notice hidden" id="privateLockNotice">
-          <div class="lock-icon-wrap">🔒</div>
+          <div class="lock-icon-wrap"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <h3>This Account is Private</h3>
           <p>Follow this account to see their photos and videos.</p>
         </div>
@@ -202,7 +221,7 @@
 
         <!-- Empty State -->
         <div class="empty-profile-state hidden" id="emptyProfileState">
-          <div class="empty-icon-wrap">📸</div>
+          <div class="empty-icon-wrap"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
           <h3 id="emptyStateTitle">No Posts Yet</h3>
           <p id="emptyStateDesc">Share your first photo or video with the ARS community.</p>
           <a href="create-post.html" class="create-first-post-btn" id="createFirstPostBtn">＋ Create Post</a>
@@ -277,33 +296,6 @@
       <div class="lightbox-card">
         <button type="button" class="close-lightbox-btn" data-close="coverLightboxDialog" aria-label="Close">×</button>
         <img id="lightboxCoverImg" src="" alt="Enlarged Cover">
-      </div>
-    </dialog>
-
-    <!-- Dialog: Profile Options Menu -->
-    <dialog id="profileOptionsMenuDialog" class="modal">
-      <div class="modal-card options-modal-card">
-        <div class="modal-heading">
-          <h3>Options</h3>
-          <button type="button" class="close-btn" data-close="profileOptionsMenuDialog" aria-label="Close">×</button>
-        </div>
-        <div class="options-list">
-          <a href="settings.html" class="option-item">
-            <span class="option-icon">⚙</span>
-            <div><strong>Settings</strong><small>Account, privacy and app preferences</small></div>
-            <span class="option-arrow">›</span>
-          </a>
-          <button type="button" class="option-item" id="optShareProfile">
-            <span class="option-icon">📤</span>
-            <div><strong>Share Profile</strong><small>Copy link or share via other apps</small></div>
-            <span class="option-arrow">›</span>
-          </button>
-          <button type="button" class="option-item hidden" id="optBlockUser">
-            <span class="option-icon danger">🚫</span>
-            <div><strong class="danger">Block User</strong><small>Block this account from interacting with you</small></div>
-            <span class="option-arrow">›</span>
-          </button>
-        </div>
       </div>
     </dialog>
 
@@ -394,7 +386,7 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3 id="followRequestsModalTitle">Follow Requests</h3>
-          <button type="button" class="close-modal-btn" data-close="followRequestsModal">✕</button>
+          <button type="button" class="close-modal-btn" data-close="followRequestsModal">&times;</button>
         </div>
         <div class="requests-list" id="requestsListContainer">
           <p class="empty-requests-msg" id="emptyRequestsMsg">No pending follow requests.</p>

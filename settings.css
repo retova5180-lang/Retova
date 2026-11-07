@@ -33,7 +33,7 @@
 
 .settings-main {
   padding: 16px;
-  max-width: 600px;
+  max-width: min(100%, 680px); width: 100%;
   margin: 0 auto;
 }
 
@@ -759,4 +759,22 @@ input:checked + .slider:before {
   background: rgba(168, 85, 247, 0.15);
   border: 1px solid rgba(168, 85, 247, 0.4);
   color: #e9d5ff;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 640px) {
+  .settings-main {
+    padding: 12px;
+  }
+  .settings-account-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  .setting-item {
+    padding: 14px 12px;
+  }
+  .modal-card {
+    width: 95%;
+    max-height: 90vh;
+  }
 }

@@ -1115,3 +1115,43 @@
   padding: 24px 0;
   font-size: 14px;
 }
+
+/* ARS Premium Glowing Badge */
+.ars-premium-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.85));
+  animation: arsBadgePulse 3s ease-in-out infinite;
+}
+
+@keyframes arsBadgePulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)); }
+  50% { filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.95)); }
+}
+
+/* Mobile & Full Width Responsive Adjustments */
+@media (max-width: 640px) {
+  .profile-header-card {
+    padding: 0 14px 16px;
+  }
+  .profile-stats-grid {
+    gap: 8px;
+    padding: 12px 6px;
+  }
+  .stat-num {
+    font-size: 16px;
+  }
+  .stat-label {
+    font-size: 11px;
+  }
+  .profile-tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .profile-tab {
+    padding: 12px 10px;
+    font-size: 12px;
+  }
+}

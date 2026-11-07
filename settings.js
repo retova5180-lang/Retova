@@ -131,7 +131,7 @@
     const badgeEl = $("#premiumStatusBadge");
 
     if (isPremium) {
-      statusEl.textContent = "👑 Premium Member";
+      statusEl.textContent = "Premium Member";
       badgeEl?.classList.remove("hidden");
     } else {
       statusEl.textContent = "Free Member";
@@ -189,13 +189,18 @@
   }
 
   function setupEventListeners() {
-    // Menu item clicks to open dialogs
-    $$(".settings-item[data-dialog]").forEach(item => {
+    // Menu item clicks to open dialogs (supporting data-section and data-dialog)
+    $$(".setting-item[data-section], .settings-item[data-dialog]").forEach(item => {
       item.addEventListener("click", () => {
-        const dialogId = item.dataset.dialog;
-        const dialog = document.getElementById(dialogId);
+        const sec = item.dataset.section || item.dataset.dialog?.replace("Dialog", "");
+        const dialog = document.getElementById(sec + "Dialog") || document.getElementById(item.dataset.dialog);
         if (dialog) dialog.showModal();
       });
+    });
+
+    // Account card clicks open account dialog
+    $("#settingsAccountCard")?.addEventListener("click", () => {
+      $("#accountDialog")?.showModal();
     });
 
     // Close buttons on all modals
@@ -258,6 +263,7 @@
 
     // Logout Item
     $("#logoutItem")?.addEventListener("click", handleLogout);
+    $("#logoutBtn")?.addEventListener("click", handleLogout);
   }
 
   async function handleAccountUpdate(e) {
@@ -593,6 +599,34 @@
     sessionStorage.clear();
     window.location.href = "index.html";
   }
+
+
+    // Premium activation / management
+    $("#togglePremiumBtn")?.addEventListener("click", async () => {
+      if (!client || !currentAuthUser) return;
+      const isPrem = activeProfile.plan === "premium" || activeProfile.plan === "pro";
+      const newPlan = isPrem ? "free" : "premium";
+      const btn = $("#togglePremiumBtn");
+      btn.disabled = true;
+
+      try {
+        const { error } = await client.from("users").update({
+          plan: newPlan,
+          updated_at: new Date().toISOString()
+        }).eq("id", currentAuthUser.id);
+        if (error) throw error;
+
+        activeProfile.plan = newPlan;
+        renderProfileCard();
+        showToast(newPlan === "premium" ? "ARS Premium activated!" : "Subscription updated to Free plan.");
+        $("#premiumDialog")?.close();
+      } catch (err) {
+        console.error("Premium toggle error:", err);
+        showToast("Could not update subscription.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

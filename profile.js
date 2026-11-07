@@ -227,7 +227,11 @@
       // Premium button label
       const premiumLabel = $("#premiumBtnLabel");
       if (premiumLabel) {
-        premiumLabel.textContent = isPremium ? "👑 Manage Premium" : "👑 Upgrade to Premium";
+        premiumLabel.textContent = isPremium ? "Manage Subscription" : "Upgrade to Premium";
+      const premBadge = $("#premiumCrownBadge");
+      if (premBadge) {
+        premBadge.classList.toggle("hidden", !isPremium);
+      }
       }
     } else {
       ownerActions.classList.add("hidden");
@@ -364,6 +368,13 @@
             .order("is_pinned", { ascending: false })
             .order("created_at", { ascending: false });
           posts = data || [];
+        } else if (tab === "media") {
+          const { data } = await client.from("posts")
+            .select("id, user_id, content, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
+            .eq("user_id", activeProfile.id)
+            .not("media_urls", "is", null)
+            .order("created_at", { ascending: false });
+          posts = (data || []).filter(p => Array.isArray(p.media_urls) && p.media_urls.length > 0);
         } else if (tab === "bookmarks" && isOwnProfile) {
           const { data } = await client.from("bookmarks")
             .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
@@ -390,7 +401,10 @@
 
     if (!posts || posts.length === 0) {
       emptyState.classList.remove("hidden");
-      if (tab === "bookmarks") {
+      if (tab === "media") {
+        $("#emptyStateTitle").textContent = "No Media Yet";
+        $("#emptyStateDesc").textContent = isOwnProfile ? "Photos and videos you post will show here." : "This user hasn't posted any media yet.";
+      } else if (tab === "bookmarks") {
         $("#emptyStateTitle").textContent = "No Bookmarks Yet";
         $("#emptyStateDesc").textContent = "Saved posts will appear here privately.";
       } else if (tab === "likes") {
@@ -413,7 +427,7 @@
 
       return `
         <article class="post-grid-tile" data-post-id="${post.id}">
-          ${post.is_pinned ? `<span class="pinned-badge" title="Pinned post">📌</span>` : ""}
+          ${post.is_pinned ? `<span class="pinned-badge" title="Pinned post"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="6"/></svg> Pinned</span>` : ""}
           ${media ? (
             isVideo
               ? `<video src="${escapeHTML(media)}" class="tile-media" preload="metadata"></video><span class="video-indicator">▶</span>`
@@ -665,7 +679,7 @@
       $("#editDisplayName").value = activeProfile.display_name || "";
       $("#editUsername").value = activeProfile.username || "";
       $("#editBio").value = activeProfile.bio || "";
-      $("#editProfileModal")?.showModal();
+      $("#editProfileDialog")?.showModal();
     });
 
     // Edit Profile form submission
@@ -708,7 +722,7 @@
 
         activeProfile = { ...activeProfile, ...updates };
         renderProfileHeader();
-        $("#editProfileModal")?.close();
+        $("#editProfileDialog")?.close();
         showToast("Profile updated successfully!");
       } catch (err) {
         console.error("Save error:", err);
@@ -723,8 +737,8 @@
       if (e.target.closest("#changeCoverBtn")) return;
       const src = $("#profileCoverImg").src;
       if (src) {
-        $("#lightboxImg").src = src;
-        $("#imageLightbox")?.showModal();
+        $("#lightboxCoverImg").src = src;
+        $("#coverLightboxDialog")?.showModal();
       }
     });
   }

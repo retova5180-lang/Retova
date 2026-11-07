@@ -68,7 +68,7 @@
       if (result.error) { html += `<p class="muted">Could not load ${result.kind} results. Please try again.</p>`; continue; }
       if (result.kind === "people") {
         html += '<h3>People</h3>';
-        html += result.data.length ? result.data.map(user => `<article class="result-card person-result">${avatar(user)}<div><b>${escapeHTML(user.display_name || user.username || "ARS member")}</b> ${user.verified ? '<span class="verified" aria-label="Verified">✦</span>' : ""}<br><small>@${escapeHTML(user.username || "member")}</small>${user.bio ? `<p>${escapeHTML(user.bio)}</p>` : ""}</div></article>`).join("") : '<p class="muted">No matching accounts.</p>';
+        html += result.data.length ? result.data.map(user => `<article class="result-card person-result">${avatar(user)}<div><b>${escapeHTML(user.display_name || user.username || "ARS member")}</b> ${user.verified ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="#a855f7" style="vertical-align:middle;margin-left:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : ""}<br><small>@${escapeHTML(user.username || "member")}</small>${user.bio ? `<p>${escapeHTML(user.bio)}</p>` : ""}</div></article>`).join("") : '<p class="muted">No matching accounts.</p>';
       } else {
         const ids = [...new Set((result.data || []).map(post => post.user_id).filter(Boolean))];
         const profileResult = ids.length ? await client.from("users").select("id,username,display_name,avatar,verified").in("id", ids) : { data:[] };
@@ -102,7 +102,7 @@
   }
   function renderAccounts(accounts) {
     const visible = showAllAccounts ? accounts : accounts.slice(0, 3);
-    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<a href="profile.html?user=${encodeURIComponent(user.username || "")}" class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<span class="verified" aria-label="Verified">✦</span>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></div>`).join("") : '<p class="muted">New creators will appear here.</p>';
+    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<a href="profile.html?user=${encodeURIComponent(user.username || "")}" class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="#a855f7" style="vertical-align:middle;margin-left:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></div>`).join("") : '<p class="muted">New creators will appear here.</p>';
     const button = $("#seeAccounts");
     if (button) { button.classList.toggle("hidden", accounts.length <= 3); button.textContent = showAllAccounts ? "Show Less ‹" : "See More ›"; }
   }
