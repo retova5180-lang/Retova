@@ -1,323 +1,312 @@
-(() => {
+/**
+ * ARS — User Profile Logic
+ * Handles Profile loading, Avatar/Cover updates, Stats, Tabs, Post Grid,
+ * Strict RLS & Privacy enforcement for Visitor, Non-Follower, Accepted Follower, and Owner.
+ */
+
+(function () {
   "use strict";
 
   const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
   const SUPABASE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-  const STORAGE = { user: "ars_user", loggedIn: "ars_logged_in" };
 
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-
-  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[char]);
-
-  const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  let client = null;
   let currentAuthUser = null;
   let activeProfile = null;
-  let isOwnProfile = true;
-  let activeTab = "posts";
-  let loadedPosts = [];
-  let avatarFileToUpload = null;
-  let coverFileToUpload = null;
+  let isOwnProfile = false;
+  let followRecord = null;
+  let isAcceptedFollower = false;
+  let isPendingFollower = false;
+  let targetPreferences = null;
+  let currentTab = "posts";
+
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => document.querySelectorAll(selector);
+
+  function showToast(message, type = "info") {
+    const toast = document.createElement("div");
+    toast.className = `ars-toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 20);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    }, 3200);
+  }
 
   function formatCount(num) {
-    const n = Number(num) || 0;
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-    return String(n);
+    if (!num || isNaN(num) || num < 0) return "0";
+    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(num);
   }
 
-  function showToast(msg) {
-    const toast = $("#toastNotification");
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.classList.remove("hidden");
-    clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => toast.classList.add("hidden"), 3000);
+  function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
-  function openDialog(id) {
-    const d = $("#" + id);
-    if (d && typeof d.showModal === "function") d.showModal();
-  }
-
-  function closeDialog(id) {
-    const d = $("#" + id);
-    if (d && typeof d.close === "function") d.close();
-  }
-
-  async function getSessionUser() {
-    try {
-      if (client?.auth) {
-        const { data: { user } } = await client.auth.getUser();
-        if (user) return user;
-      }
-    } catch (e) {
-      console.warn("Auth check failed:", e);
-    }
-    try {
-      const local = JSON.parse(localStorage.getItem(STORAGE.user) || "null");
-      if (local && (local.id || local.username)) return local;
-    } catch {}
-    return null;
-  }
-
-  async function loadProfile() {
-    currentAuthUser = await getSessionUser();
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramUsername = urlParams.get("username");
-    const paramId = urlParams.get("id");
-
-    let query = client?.from("users").select("*");
-
-    if (paramUsername) {
-      query = query.eq("username", paramUsername.replace(/^@/, ""));
-    } else if (paramId) {
-      query = query.eq("id", paramId);
-    } else if (currentAuthUser?.id) {
-      query = query.eq("id", currentAuthUser.id);
-    } else if (currentAuthUser?.username) {
-      query = query.eq("username", currentAuthUser.username);
-    } else {
-      // Default fallback demo user
-      query = query.limit(1);
-    }
-
-    let profileData = null;
-    try {
-      if (query) {
-        const { data, error } = await query.maybeSingle();
-        if (!error && data) profileData = data;
-      }
-    } catch (e) {
-      console.warn("Profile fetch error:", e);
-    }
-
-    if (!profileData) {
-      profileData = {
-        id: currentAuthUser?.id || "demo-user",
-        display_name: currentAuthUser?.user_metadata?.display_name || currentAuthUser?.displayName || "Tia",
-        username: currentAuthUser?.user_metadata?.username || currentAuthUser?.username || "bluegangst9",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        cover: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
-        bio: "أغلب الجامعات اللي ما ادخولها مو بجمادش وجيلسون. 💜",
-        verified: true,
-        plan: "premium",
-        is_private: false,
-        account_type: "Personal",
-        profile_accent_color: "#a855f7"
-      };
-    }
-
-    activeProfile = profileData;
-    isOwnProfile = !paramUsername && !paramId ? true : (currentAuthUser?.id === activeProfile.id || currentAuthUser?.username === activeProfile.username);
-
-    renderProfileHeader();
-    renderStats();
-    loadProfileLinks();
-    loadTabContent(activeTab);
-
-    // Record profile view if visitor
-    if (!isOwnProfile && currentAuthUser?.id && client) {
-      recordProfileView(activeProfile.id, currentAuthUser.id);
-    }
-  }
-
-  async function recordProfileView(profileUserId, viewerId) {
-    try {
-      await client.from("profile_views").insert({
-        profile_user_id: profileUserId,
-        viewer_user_id: viewerId
+  async function init() {
+    if (window.supabase) {
+      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
       });
+    }
+
+    if (client) {
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        currentAuthUser = session?.user || null;
+      } catch (err) {
+        console.warn("Auth session check error:", err);
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const targetUserId = params.get("id");
+    const targetUsername = params.get("user");
+
+    await loadProfileData(targetUserId, targetUsername);
+    setupEventListeners();
+  }
+
+  async function loadProfileData(targetUserId, targetUsername) {
+    if (!client) {
+      showToast("Could not connect to ARS service.", "error");
+      return;
+    }
+
+    try {
+      let query = client.from("users");
+
+      if (targetUserId) {
+        // Viewing specific user by ID
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, account_status, online_status_visible").eq("id", targetUserId);
+      } else if (targetUsername) {
+        // Viewing specific user by username
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, account_status, online_status_visible").eq("username", targetUsername);
+      } else if (currentAuthUser) {
+        // Viewing own profile
+        query = query.select("*").eq("id", currentAuthUser.id);
+      } else {
+        // Visitor with no target specified -> redirect to login
+        window.location.href = "index.html";
+        return;
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error || !data) {
+        $("#displayName").textContent = "User Not Found";
+        $("#usernameHandle").textContent = "@unknown";
+        $("#bioText").textContent = "This profile does not exist or has been removed.";
+        $("#postsGrid").innerHTML = "";
+        $("#emptyProfileState").classList.remove("hidden");
+        $("#emptyStateTitle").textContent = "User Not Found";
+        $("#emptyStateDesc").textContent = "The account you are looking for does not exist.";
+        return;
+      }
+
+      activeProfile = data;
+      isOwnProfile = currentAuthUser && currentAuthUser.id === activeProfile.id;
+
+      // Check follow relationship if viewing someone else
+      if (!isOwnProfile && currentAuthUser) {
+        const { data: rec } = await client.from("followers")
+          .select("id, status")
+          .eq("follower_id", currentAuthUser.id)
+          .eq("following_id", activeProfile.id)
+          .maybeSingle();
+
+        followRecord = rec;
+        isAcceptedFollower = rec?.status === "Accepted";
+        isPendingFollower = rec?.status === "Pending";
+      } else {
+        followRecord = null;
+        isAcceptedFollower = false;
+        isPendingFollower = false;
+      }
+
+      // Check privacy preferences of target user
+      if (!isOwnProfile) {
+        const { data: pref } = await client.from("user_preferences")
+          .select("show_likes, show_followers, show_following")
+          .eq("user_id", activeProfile.id)
+          .maybeSingle();
+        targetPreferences = pref;
+      }
+
+      renderProfileHeader();
+      await loadProfileStats();
+      await loadTabContent(currentTab);
+
+      // Check pending follow requests if own private profile
+      if (isOwnProfile && activeProfile.is_private) {
+        loadPendingFollowRequests();
+      }
+
     } catch (e) {
-      // Ignore views recording error
+      console.error("Error loading profile:", e);
+      showToast("Failed to load profile data.", "error");
     }
   }
 
   function renderProfileHeader() {
     const p = activeProfile;
-    $("#displayName").textContent = p.display_name || "User";
-    $("#usernameHandle").textContent = "@" + (p.username || "user");
-    $("#bioText").textContent = p.bio || "";
+    if (!p) return;
 
-    if (p.bio && p.bio.length > 80) {
-      $("#bioSeeMore").classList.remove("hidden");
+    // Display Name
+    $("#displayName").textContent = p.display_name || p.username || "User";
+
+    // Verified badge
+    const isVerified = Boolean(p.verified);
+    $("#verifiedBadge").classList.toggle("hidden", !isVerified);
+
+    // Premium Crown badge
+    const isPremium = p.plan === "premium" || p.plan === "pro";
+    $("#premiumCrownBadge").classList.toggle("hidden", !isPremium);
+
+    // Username Handle
+    $("#usernameHandle").textContent = "@" + (p.username || "user");
+
+    // Account type tag
+    if (p.account_type && p.account_type !== "Personal") {
+      $("#accountTypeTag").textContent = p.account_type;
+      $("#accountTypeTag").classList.remove("hidden");
     } else {
+      $("#accountTypeTag").classList.add("hidden");
+    }
+
+    // Avatar
+    const avatarEl = $("#profileAvatarImg");
+    if (p.avatar) {
+      avatarEl.src = p.avatar;
+    } else {
+      avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.display_name || p.username || "User")}&background=790ce2&color=fff&size=200`;
+    }
+
+    // Cover
+    const coverEl = $("#profileCoverImg");
+    if (p.cover) {
+      coverEl.src = p.cover;
+    } else {
+      coverEl.src = "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80";
+    }
+
+    // Bio
+    const bioEl = $("#bioText");
+    if (p.bio) {
+      bioEl.textContent = p.bio;
+      bioEl.style.display = "block";
+      if (p.bio.length > 120) {
+        $("#bioSeeMore").classList.remove("hidden");
+      }
+    } else {
+      bioEl.textContent = "";
+      bioEl.style.display = "none";
       $("#bioSeeMore").classList.add("hidden");
     }
 
-    if (p.avatar) {
-      $("#profileAvatarImg").src = p.avatar;
-    }
-    if (p.cover) {
-      $("#profileCoverImg").src = p.cover;
-    }
+    // Actions Row Configuration
+    const ownerActions = $("#ownerActions");
+    const visitorActions = $("#visitorActions");
+    const changeCoverBtn = $("#changeCoverBtn");
+    const avatarCameraBtn = $("#avatarCameraBtn");
 
-    // Verified badge
-    if (p.verified || p.plan === "premium") {
-      $("#verifiedBadge").classList.remove("hidden");
-    } else {
-      $("#verifiedBadge").classList.add("hidden");
-    }
-
-    // Premium status & CTA
-    const isPremium = p.plan === "premium";
-    if (isPremium) {
-      $("#premiumCrownBadge").classList.remove("hidden");
-      $("#premiumBtnLabel").textContent = "Manage Subscription";
-      $("#premiumCtaBtn").href = "settings.html?section=premium";
-    } else {
-      $("#premiumCrownBadge").classList.add("hidden");
-      $("#premiumBtnLabel").textContent = "Upgrade to Premium";
-      $("#premiumCtaBtn").href = "settings.html?section=premium";
-    }
-
-    // Owner vs Visitor buttons
     if (isOwnProfile) {
-      $("#ownerActions").classList.remove("hidden");
-      $("#visitorActions").classList.add("hidden");
-      $("#avatarCameraBtn").classList.remove("hidden");
-      $("#changeCoverBtn").classList.remove("hidden");
+      ownerActions.classList.remove("hidden");
+      visitorActions.classList.add("hidden");
+      changeCoverBtn?.classList.remove("hidden");
+      avatarCameraBtn?.classList.remove("hidden");
+
+      // Premium button label
+      const premiumLabel = $("#premiumBtnLabel");
+      if (premiumLabel) {
+        premiumLabel.textContent = isPremium ? "👑 Manage Premium" : "👑 Upgrade to Premium";
+      }
     } else {
-      $("#ownerActions").classList.add("hidden");
-      $("#visitorActions").classList.remove("hidden");
-      $("#avatarCameraBtn").classList.add("hidden");
-      $("#changeCoverBtn").classList.add("hidden");
-      checkFollowStatus();
-    }
+      ownerActions.classList.add("hidden");
+      visitorActions.classList.remove("hidden");
+      changeCoverBtn?.classList.add("hidden");
+      avatarCameraBtn?.classList.add("hidden");
 
-    // Accent color
-    if (p.profile_accent_color) {
-      document.documentElement.style.setProperty("--purple", p.profile_accent_color);
+      updateFollowButtonUI();
     }
   }
 
-  async function checkFollowStatus() {
-    if (!client || !currentAuthUser?.id) return;
-    try {
-      const { data } = await client.from("followers")
-        .select("status")
-        .eq("follower_id", currentAuthUser.id)
-        .eq("following_id", activeProfile.id)
-        .maybeSingle();
+  function updateFollowButtonUI() {
+    const followBtn = $("#followBtn");
+    if (!followBtn) return;
 
-      const btn = $("#followBtn");
-      if (!btn) return;
-      if (data?.status === "Accepted") {
-        btn.textContent = "Following";
-        btn.classList.add("following");
-      } else if (data?.status === "Pending") {
-        btn.textContent = "Requested";
-        btn.classList.add("following");
-      } else {
-        btn.textContent = "Follow";
-        btn.classList.remove("following");
-      }
-    } catch {}
-  }
+    followBtn.classList.remove("btn-following", "btn-pending");
 
-  async function toggleFollow() {
-    if (!currentAuthUser?.id) {
-      showToast("Please log in to follow");
-      return;
-    }
-    const btn = $("#followBtn");
-    const isCurrentlyFollowing = btn.classList.contains("following");
-
-    try {
-      if (isCurrentlyFollowing) {
-        await client.from("followers")
-          .delete()
-          .eq("follower_id", currentAuthUser.id)
-          .eq("following_id", activeProfile.id);
-        btn.textContent = "Follow";
-        btn.classList.remove("following");
-        showToast("Unfollowed @" + activeProfile.username);
-      } else {
-        const status = activeProfile.is_private ? "Pending" : "Accepted";
-        await client.from("followers").insert({
-          follower_id: currentAuthUser.id,
-          following_id: activeProfile.id,
-          status: status
-        });
-        btn.textContent = status === "Pending" ? "Requested" : "Following";
-        btn.classList.add("following");
-        showToast(status === "Pending" ? "Follow request sent" : "Following @" + activeProfile.username);
-      }
-      renderStats();
-    } catch (e) {
-      showToast("Could not update follow status");
+    if (!currentAuthUser) {
+      followBtn.textContent = "Sign In to Follow";
+    } else if (isPendingFollower) {
+      followBtn.textContent = "Requested";
+      followBtn.classList.add("btn-pending");
+    } else if (isAcceptedFollower) {
+      followBtn.textContent = "Following";
+      followBtn.classList.add("btn-following");
+    } else {
+      followBtn.textContent = "+ Follow";
     }
   }
 
-  async function renderStats() {
+  async function loadProfileStats() {
+    if (!client || !activeProfile?.id) return;
+
     let postsCount = 0;
     let followersCount = 0;
     let followingCount = 0;
     let likesCount = 0;
 
-    if (client && activeProfile?.id) {
-      try {
-        const [postsRes, followersRes, followingRes] = await Promise.all([
-          client.from("posts").select("id, likes_count", { count: "exact" }).eq("user_id", activeProfile.id),
-          client.from("followers").select("id", { count: "exact" }).eq("following_id", activeProfile.id).eq("status", "Accepted"),
-          client.from("followers").select("id", { count: "exact" }).eq("follower_id", activeProfile.id).eq("status", "Accepted")
-        ]);
+    try {
+      const [postsRes, followersRes, followingRes, likesRes] = await Promise.all([
+        client.from("posts").select("id", { count: "exact", head: true }).eq("user_id", activeProfile.id),
+        client.from("followers").select("id", { count: "exact", head: true }).eq("following_id", activeProfile.id).eq("status", "Accepted"),
+        client.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", activeProfile.id).eq("status", "Accepted"),
+        client.from("likes").select("id", { count: "exact", head: true }).eq("post_user_id", activeProfile.id)
+      ]);
 
-        postsCount = postsRes.count || (postsRes.data?.length || 0);
-        followersCount = followersRes.count || (followersRes.data?.length || 0);
-        followingCount = followingRes.count || (followingRes.data?.length || 0);
-
-        if (postsRes.data) {
-          likesCount = postsRes.data.reduce((acc, curr) => acc + (Number(curr.likes_count) || 0), 0);
-        }
-      } catch (e) {
-        console.warn("Stats fetch failed:", e);
-      }
-    }
-
-    // Default sample figures matching reference image if empty
-    if (!postsCount && !followersCount && !followingCount && !likesCount) {
-      postsCount = 124;
-      followersCount = 2300;
-      followingCount = 188;
-      likesCount = 56;
+      postsCount = postsRes.count || 0;
+      followersCount = followersRes.count || 0;
+      followingCount = followingRes.count || 0;
+      likesCount = likesRes.count || 0;
+    } catch (e) {
+      console.warn("Error counting stats:", e);
     }
 
     $("#statPostsCount").textContent = formatCount(postsCount);
-    $("#statFollowersCount").textContent = formatCount(followersCount);
-    $("#statFollowingCount").textContent = formatCount(followingCount);
-    $("#statLikesCount").textContent = formatCount(likesCount);
-  }
 
-  async function loadProfileLinks() {
-    const list = $("#profileLinksList");
-    list.innerHTML = "";
-    if (!client || !activeProfile?.id) return;
-    try {
-      const { data } = await client.from("profile_links")
-        .select("label, url")
-        .eq("user_id", activeProfile.id)
-        .order("sort_order", { ascending: true });
+    // Apply privacy visibility settings
+    if (!isOwnProfile && targetPreferences?.show_followers === false) {
+      $("#statFollowersCount").textContent = "—";
+    } else {
+      $("#statFollowersCount").textContent = formatCount(followersCount);
+    }
 
-      if (data && data.length) {
-        data.forEach(link => {
-          const a = document.createElement("a");
-          a.href = link.url;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.className = "profile-link-chip";
-          a.innerHTML = "<span>🔗</span>" + escapeHTML(link.label || link.url);
-          list.appendChild(a);
-        });
-      }
-    } catch {}
+    if (!isOwnProfile && targetPreferences?.show_following === false) {
+      $("#statFollowingCount").textContent = "—";
+    } else {
+      $("#statFollowingCount").textContent = formatCount(followingCount);
+    }
+
+    if (!isOwnProfile && targetPreferences?.show_likes === false) {
+      $("#statLikesCount").textContent = "—";
+    } else {
+      $("#statLikesCount").textContent = formatCount(likesCount);
+    }
   }
 
   async function loadTabContent(tab) {
-    activeTab = tab;
+    currentTab = tab;
+
     $$(".profile-tab").forEach(btn => {
       const isSel = btn.dataset.tab === tab;
       btn.classList.toggle("active", isSel);
@@ -331,16 +320,38 @@
     grid.innerHTML = "";
     emptyState.classList.add("hidden");
 
-    // Check privacy
-    if (!isOwnProfile && activeProfile.is_private) {
-      const btn = $("#followBtn");
-      const isFollowing = btn?.textContent === "Following";
-      if (!isFollowing) {
-        lockNotice.classList.remove("hidden");
+    // Strict Privacy enforcement
+    const isPrivate = Boolean(activeProfile?.is_private);
+    if (!isOwnProfile && isPrivate && !isAcceptedFollower) {
+      lockNotice.classList.remove("hidden");
+      grid.style.display = "none";
+      emptyState.classList.add("hidden");
+      return;
+    }
+
+    lockNotice.classList.add("hidden");
+    grid.style.display = "grid";
+
+    // Bookmarks tab is strictly private to the profile owner
+    const tabBookmarks = $("#tabBookmarks");
+    if (tabBookmarks) {
+      tabBookmarks.style.display = isOwnProfile ? "inline-flex" : "none";
+    }
+    if (tab === "bookmarks" && !isOwnProfile) {
+      loadTabContent("posts");
+      return;
+    }
+
+    // Likes tab respect target preference
+    const tabLikes = $("#tabLikes");
+    if (tabLikes) {
+      const hideLikes = !isOwnProfile && targetPreferences?.show_likes === false;
+      tabLikes.style.display = hideLikes ? "none" : "inline-flex";
+      if (tab === "likes" && hideLikes) {
+        loadTabContent("posts");
         return;
       }
     }
-    lockNotice.classList.add("hidden");
 
     let posts = [];
 
@@ -348,26 +359,26 @@
       try {
         if (tab === "posts") {
           const { data } = await client.from("posts")
-            .select("*")
+            .select("id, user_id, content, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
             .eq("user_id", activeProfile.id)
             .order("is_pinned", { ascending: false })
             .order("created_at", { ascending: false });
           posts = data || [];
-        } else if (tab === "bookmarks") {
+        } else if (tab === "bookmarks" && isOwnProfile) {
           const { data } = await client.from("bookmarks")
-            .select("post_id, posts(*)")
+            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(b => b.posts).filter(Boolean);
         } else if (tab === "reposts") {
           const { data } = await client.from("reposts")
-            .select("post_id, posts(*)")
+            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(r => r.posts).filter(Boolean);
         } else if (tab === "likes") {
           const { data } = await client.from("likes")
-            .select("post_id, posts(*)")
+            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(l => l.posts).filter(Boolean);
@@ -377,384 +388,351 @@
       }
     }
 
-    // If no posts in DB, supply default visual posts matching the reference image!
-    if (!posts.length && tab === "posts") {
-      posts = [
-        {
-          id: "demo-1",
-          image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=600&q=80",
-          content: "Night lights in the city skyline 🏙️",
-          likes_count: 56,
-          comments_count: 8,
-          is_pinned: true,
-          media_type: "image"
-        },
-        {
-          id: "demo-2",
-          image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-          content: "Golden sunset over the ocean balcony 🌊",
-          likes_count: 142,
-          comments_count: 14,
-          media_type: "image"
-        },
-        {
-          id: "demo-3",
-          image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80",
-          content: "Mountain valley terrace retreat 🏔️",
-          likes_count: 89,
-          comments_count: 5,
-          media_type: "image"
-        },
-        {
-          id: "demo-4",
-          image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80",
-          content: "Paris rooftops & the Eiffel tower ✨",
-          likes_count: 210,
-          comments_count: 19,
-          media_type: "image"
-        }
-      ];
-    }
-
-    loadedPosts = posts;
-
-    if (!posts.length) {
+    if (!posts || posts.length === 0) {
       emptyState.classList.remove("hidden");
       if (tab === "bookmarks") {
         $("#emptyStateTitle").textContent = "No Bookmarks Yet";
-        $("#emptyStateDesc").textContent = "Posts you save will appear here privately.";
-        $("#createFirstPostBtn").classList.add("hidden");
+        $("#emptyStateDesc").textContent = "Saved posts will appear here privately.";
       } else if (tab === "likes") {
         $("#emptyStateTitle").textContent = "No Likes Yet";
-        $("#emptyStateDesc").textContent = "Posts you like will show up here.";
-        $("#createFirstPostBtn").classList.add("hidden");
+        $("#emptyStateDesc").textContent = "Posts you like will be collected here.";
       } else if (tab === "reposts") {
-        $("#emptyStateTitle").textContent = "No Reposts Yet";
-        $("#emptyStateDesc").textContent = "Posts you share will appear here.";
-        $("#createFirstPostBtn").classList.add("hidden");
+        $("#emptyStateTitle").textContent = "No Reposts";
+        $("#emptyStateDesc").textContent = "Reposted content will show here.";
       } else {
         $("#emptyStateTitle").textContent = "No Posts Yet";
-        $("#emptyStateDesc").textContent = "Share your first photo or video with the ARS community.";
-        $("#createFirstPostBtn").classList.remove("hidden");
+        $("#emptyStateDesc").textContent = isOwnProfile ? "Share your first photo or video with ARS." : "This user hasn't posted anything yet.";
       }
       return;
     }
 
-    renderGridCards(posts);
-  }
+    // Render Posts Grid matching reference image
+    grid.innerHTML = posts.map(post => {
+      const media = (post.media_urls && post.media_urls.length > 0) ? post.media_urls[0] : null;
+      const isVideo = media && (media.includes(".mp4") || media.includes(".webm") || media.includes("video"));
 
-  function renderGridCards(posts) {
-    const grid = $("#postsGrid");
-    grid.innerHTML = "";
-
-    posts.forEach(post => {
-      let mediaUrl = post.image;
-      if (!mediaUrl && post.media_urls) {
-        try {
-          const parsed = typeof post.media_urls === "string" ? JSON.parse(post.media_urls) : post.media_urls;
-          if (Array.isArray(parsed) && parsed.length) mediaUrl = parsed[0];
-        } catch {}
-      }
-      if (!mediaUrl) mediaUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80";
-
-      const isVideo = post.media_type === "video" || /\.(mp4|webm|mov)$/i.test(mediaUrl);
-      const isPinned = Boolean(post.is_pinned);
-
-      const card = document.createElement("article");
-      card.className = "post-card-thumb";
-      card.setAttribute("tabindex", "0");
-      card.setAttribute("role", "button");
-      card.setAttribute("aria-label", "View post");
-
-      card.innerHTML = `
-        <img class="thumb-image" src="${escapeHTML(mediaUrl)}" alt="Post thumbnail" loading="lazy">
-        <div class="thumb-gradient"></div>
-        ${isPinned ? `<span class="pinned-badge">📌 Pinned</span>` : ""}
-        ${isVideo ? `<span class="video-indicator">▶</span>` : ""}
-        <div class="thumb-overlay">
-          <span class="thumb-likes">♥ ${formatCount(post.likes_count || 0)}</span>
-          ${post.comments_count ? `<span>💬 ${formatCount(post.comments_count)}</span>` : ""}
-        </div>
+      return `
+        <article class="post-grid-tile" data-post-id="${post.id}">
+          ${post.is_pinned ? `<span class="pinned-badge" title="Pinned post">📌</span>` : ""}
+          ${media ? (
+            isVideo
+              ? `<video src="${escapeHTML(media)}" class="tile-media" preload="metadata"></video><span class="video-indicator">▶</span>`
+              : `<img src="${escapeHTML(media)}" alt="Post image" class="tile-media" loading="lazy">`
+          ) : `
+            <div class="tile-text-fallback">
+              <p>${escapeHTML(post.content || "")}</p>
+            </div>
+          `}
+          <div class="tile-overlay">
+            <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${formatCount(post.likes_count || 0)}</span>
+            <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${formatCount(post.comments_count || 0)}</span>
+          </div>
+        </article>
       `;
+    }).join("");
 
-      card.addEventListener("click", () => openPostDetail(post, mediaUrl));
-      card.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openPostDetail(post, mediaUrl);
-        }
+    // Click to view post
+    $$(".post-grid-tile").forEach(tile => {
+      tile.addEventListener("click", () => {
+        const id = tile.dataset.postId;
+        if (id) window.location.href = `home.html#post-${id}`;
       });
-
-      grid.appendChild(card);
     });
   }
 
-  function openPostDetail(post, mediaUrl) {
-    $("#detailAvatar").src = activeProfile.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
-    $("#detailAuthor").textContent = activeProfile.display_name || "User";
-    $("#detailTime").textContent = post.created_at ? new Date(post.created_at).toLocaleDateString() : "Featured";
-    $("#detailCaption").textContent = post.content || "";
-    $("#detailLikesCount").textContent = `${formatCount(post.likes_count || 0)} Likes`;
-    $("#detailCommentsCount").textContent = `${formatCount(post.comments_count || 0)} Comments`;
-
-    const wrap = $("#detailMediaWrap");
-    wrap.innerHTML = "";
-    if (post.media_type === "video") {
-      const vid = document.createElement("video");
-      vid.src = mediaUrl;
-      vid.controls = true;
-      vid.autoplay = true;
-      vid.className = "post-dialog-media";
-      wrap.appendChild(vid);
-    } else {
-      const img = document.createElement("img");
-      img.src = mediaUrl;
-      img.className = "post-dialog-media";
-      wrap.appendChild(img);
+  async function handleFollowToggle() {
+    if (!currentAuthUser) {
+      window.location.href = "index.html";
+      return;
     }
 
-    openDialog("postDetailDialog");
+    if (!activeProfile?.id) return;
+
+    const followBtn = $("#followBtn");
+    followBtn.disabled = true;
+
+    try {
+      if (isAcceptedFollower) {
+        if (!confirm(`Unfollow @${activeProfile.username || "user"}?`)) {
+          followBtn.disabled = false;
+          return;
+        }
+
+        const { error } = await client.from("followers")
+          .delete()
+          .eq("follower_id", currentAuthUser.id)
+          .eq("following_id", activeProfile.id);
+
+        if (error) throw error;
+
+        isAcceptedFollower = false;
+        followRecord = null;
+        showToast(`Unfollowed @${activeProfile.username}`);
+        await loadProfileStats();
+        updateFollowButtonUI();
+
+        // If private, relock
+        if (activeProfile.is_private) {
+          loadTabContent(currentTab);
+        }
+
+      } else if (isPendingFollower) {
+        if (!confirm("Cancel follow request?")) {
+          followBtn.disabled = false;
+          return;
+        }
+
+        const { error } = await client.from("followers")
+          .delete()
+          .eq("follower_id", currentAuthUser.id)
+          .eq("following_id", activeProfile.id);
+
+        if (error) throw error;
+
+        isPendingFollower = false;
+        followRecord = null;
+        showToast("Follow request cancelled.");
+        updateFollowButtonUI();
+
+      } else {
+        // Create new follow request
+        const status = activeProfile.is_private ? "Pending" : "Accepted";
+
+        const { data, error } = await client.from("followers").insert({
+          follower_id: currentAuthUser.id,
+          following_id: activeProfile.id,
+          status: status
+        }).select().single();
+
+        if (error) throw error;
+
+        followRecord = data;
+
+        if (status === "Pending") {
+          isPendingFollower = true;
+          showToast("Follow request sent.");
+        } else {
+          isAcceptedFollower = true;
+          showToast(`Following @${activeProfile.username}`);
+          await loadProfileStats();
+          await loadTabContent(currentTab);
+        }
+
+        updateFollowButtonUI();
+      }
+    } catch (e) {
+      console.error("Follow error:", e);
+      showToast("Could not update follow status.", "error");
+    } finally {
+      followBtn.disabled = false;
+    }
+  }
+
+  async function loadPendingFollowRequests() {
+    if (!client || !isOwnProfile) return;
+
+    try {
+      const { data, error } = await client.from("followers")
+        .select("id, follower_id, created_at, users!follower_id(id, username, display_name, avatar)")
+        .eq("following_id", activeProfile.id)
+        .eq("status", "Pending");
+
+      const banner = $("#pendingRequestsBanner");
+      if (!banner) return;
+
+      if (data && data.length > 0) {
+        banner.classList.remove("hidden");
+        $("#pendingRequestsCount").textContent = String(data.length);
+        renderPendingRequestsList(data);
+      } else {
+        banner.classList.add("hidden");
+      }
+    } catch (e) {
+      console.warn("Could not check pending follow requests:", e);
+    }
+  }
+
+  function renderPendingRequestsList(requests) {
+    const list = $("#requestsListContainer");
+    if (!list) return;
+
+    if (!requests || requests.length === 0) {
+      list.innerHTML = `<p class="empty-requests-msg">No pending follow requests.</p>`;
+      return;
+    }
+
+    list.innerHTML = requests.map(req => {
+      const u = req.users || {};
+      const av = u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.display_name || u.username || "User")}&background=790ce2&color=fff`;
+
+      return `
+        <div class="request-item-card" data-req-id="${req.id}">
+          <img src="${escapeHTML(av)}" class="request-avatar" alt="User avatar">
+          <div class="request-meta">
+            <strong>${escapeHTML(u.display_name || u.username || "User")}</strong>
+            <span>@${escapeHTML(u.username || "user")}</span>
+          </div>
+          <div class="request-actions">
+            <button type="button" class="accept-req-btn" data-action="accept" data-id="${req.id}">Accept</button>
+            <button type="button" class="decline-req-btn" data-action="decline" data-id="${req.id}">Decline</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    list.querySelectorAll("button[data-action]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        btn.disabled = true;
+
+        try {
+          if (action === "accept") {
+            await client.from("followers").update({
+              status: "Accepted",
+              responded_at: new Date().toISOString()
+            }).eq("id", id);
+            showToast("Follow request accepted.");
+          } else {
+            await client.from("followers").update({
+              status: "Declined",
+              responded_at: new Date().toISOString()
+            }).eq("id", id);
+            showToast("Follow request declined.");
+          }
+
+          await loadPendingFollowRequests();
+          await loadProfileStats();
+        } catch (err) {
+          showToast("Failed to process request.", "error");
+        }
+      });
+    });
   }
 
   function setupEventListeners() {
-    // Topbar back
-    $("#backBtn").addEventListener("click", e => {
-      if (window.history.length > 1) {
-        e.preventDefault();
-        window.history.back();
-      }
+    // Tabs navigation
+    $$(".profile-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        loadTabContent(btn.dataset.tab);
+      });
     });
-
-    // Profile options
-    $("#profileOptionsBtn").addEventListener("click", () => openDialog("profileOptionsMenuDialog"));
-
-    // Cover click lightbox
-    $("#coverContainer").addEventListener("click", () => {
-      const src = $("#profileCoverImg").src;
-      if (src) {
-        $("#lightboxCoverImg").src = src;
-        openDialog("coverLightboxDialog");
-      }
-    });
-
-    // Change cover button
-    $("#changeCoverBtn").addEventListener("click", e => {
-      e.stopPropagation();
-      openDialog("editProfileDialog");
-    });
-
-    // Avatar camera button
-    $("#avatarCameraBtn").addEventListener("click", () => openDialog("editProfileDialog"));
-
-    // Username click to copy
-    $("#usernameCopyBtn").addEventListener("click", async () => {
-      const handle = $("#usernameHandle").textContent;
-      try {
-        await navigator.clipboard.writeText(handle);
-        const hint = $("#copyHint");
-        hint.classList.add("show");
-        showToast("Copied " + handle + " to clipboard");
-        setTimeout(() => hint.classList.remove("show"), 2000);
-      } catch (e) {
-        showToast("Failed to copy username");
-      }
-    });
-
-    // Bio See More toggle
-    $("#bioSeeMore").addEventListener("click", () => {
-      const bio = $("#bioText");
-      bio.classList.toggle("expanded");
-      $("#bioSeeMore").textContent = bio.classList.contains("expanded") ? "See Less" : "See More";
-    });
-
-    // Edit Profile button
-    $("#editProfileBtn")?.addEventListener("click", () => populateAndOpenEditForm());
 
     // Follow button
-    $("#followBtn")?.addEventListener("click", toggleFollow);
+    $("#followBtn")?.addEventListener("click", handleFollowToggle);
 
-    // Share buttons
-    $("#shareBtn")?.addEventListener("click", shareProfile);
-    $("#optShareProfile")?.addEventListener("click", () => {
-      closeDialog("profileOptionsMenuDialog");
-      shareProfile();
-    });
+    // Copy username
+    $("#usernameCopyBtn")?.addEventListener("click", () => {
+      const handle = activeProfile?.username ? `@${activeProfile.username}` : "";
+      if (!handle) return;
 
-    // Tabs navigation
-    $$(".profile-tab").forEach(tabBtn => {
-      tabBtn.addEventListener("click", () => loadTabContent(tabBtn.dataset.tab));
-    });
-
-    // Close buttons for dialogs
-    $$("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => closeDialog(btn.dataset.close));
-    });
-
-    // Color swatches in edit form
-    $$(".color-swatch").forEach(swatch => {
-      swatch.addEventListener("click", () => {
-        $$(".color-swatch").forEach(s => s.classList.remove("active"));
-        swatch.classList.add("active");
-        $("#editAccentColor").value = swatch.dataset.color;
+      navigator.clipboard.writeText(handle).then(() => {
+        const hint = $("#copyHint");
+        hint.classList.add("visible");
+        showToast(`Copied ${handle} to clipboard!`);
+        setTimeout(() => hint.classList.remove("visible"), 2000);
       });
     });
 
-    // Bio character counter
-    $("#editBio").addEventListener("input", e => {
-      $("#bioCharCount").textContent = e.target.value.length;
+    // Open Pending Requests modal
+    $("#openRequestsModalBtn")?.addEventListener("click", () => {
+      $("#followRequestsModal")?.showModal();
     });
 
-    // Avatar file input change
-    $("#avatarFileInput").addEventListener("change", e => {
-      const file = e.target.files?.[0];
-      if (file) {
-        avatarFileToUpload = file;
-        const reader = new FileReader();
-        reader.onload = ev => {
-          $("#editAvatarPreview").src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // Edit form submission
-    $("#editProfileForm").addEventListener("submit", handleEditProfileSubmit);
-  }
-
-  function shareProfile() {
-    const url = window.location.href;
-    const title = activeProfile?.display_name || "ARS Profile";
-    if (navigator.share) {
-      navigator.share({ title, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
+    // Share profile
+    $("#shareBtn")?.addEventListener("click", () => {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: `ARS — @${activeProfile?.username}`, url: url });
+      } else {
+        navigator.clipboard.writeText(url);
         showToast("Profile link copied to clipboard!");
-      }).catch(() => {
-        showToast("Share URL: " + url);
+      }
+    });
+
+    // Close modals
+    $$("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.close;
+        const dialog = document.getElementById(id);
+        dialog?.close();
       });
-    }
-  }
+    });
 
-  function populateAndOpenEditForm() {
-    if (!activeProfile) return;
-    $("#editDisplayName").value = activeProfile.display_name || "";
-    $("#editUsername").value = activeProfile.username || "";
-    $("#editBio").value = activeProfile.bio || "";
-    $("#bioCharCount").textContent = (activeProfile.bio || "").length;
-    $("#editAvatarPreview").src = activeProfile.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+    // Edit Profile Modal
+    $("#editProfileBtn")?.addEventListener("click", () => {
+      if (!activeProfile) return;
+      $("#editDisplayName").value = activeProfile.display_name || "";
+      $("#editUsername").value = activeProfile.username || "";
+      $("#editBio").value = activeProfile.bio || "";
+      $("#editProfileModal")?.showModal();
+    });
 
-    if (activeProfile.profile_accent_color) {
-      $("#editAccentColor").value = activeProfile.profile_accent_color;
-      $$(".color-swatch").forEach(sw => {
-        sw.classList.toggle("active", sw.dataset.color === activeProfile.profile_accent_color);
-      });
-    }
+    // Edit Profile form submission
+    $("#editProfileForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!client || !isOwnProfile) return;
 
-    $("#editFormError").classList.add("hidden");
-    openDialog("editProfileDialog");
-  }
+      const dName = $("#editDisplayName").value.trim();
+      const uName = $("#editUsername").value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
+      const bio = $("#editBio").value.trim();
 
-  async function handleEditProfileSubmit(e) {
-    e.preventDefault();
-    const saveBtn = $("#saveProfileBtn");
-    const errorMsg = $("#editFormError");
-    errorMsg.classList.add("hidden");
+      const submitBtn = $("#saveProfileBtn");
+      submitBtn.disabled = true;
 
-    const newName = $("#editDisplayName").value.trim();
-    const newUsername = $("#editUsername").value.trim().toLowerCase();
-    const newBio = $("#editBio").value.trim();
-    const newColor = $("#editAccentColor").value;
+      try {
+        const updates = {
+          display_name: dName,
+          bio: bio,
+          updated_at: new Date().toISOString()
+        };
 
-    if (!newName || !newUsername) {
-      errorMsg.textContent = "Name and Username are required.";
-      errorMsg.classList.remove("hidden");
-      return;
-    }
+        if (uName && uName !== activeProfile.username) {
+          // Check 14-day restriction
+          if (activeProfile.username_changed_at) {
+            const last = new Date(activeProfile.username_changed_at).getTime();
+            const daysDiff = (Date.now() - last) / (1000 * 60 * 60 * 24);
+            if (daysDiff < 14) {
+              const rem = Math.ceil(14 - daysDiff);
+              showToast(`You can only change username every 14 days (${rem} days left).`, "warning");
+              submitBtn.disabled = false;
+              return;
+            }
+          }
+          updates.username = uName;
+          updates.username_changed_at = new Date().toISOString();
+        }
 
-    // Check 14-day rule on username change
-    if (newUsername !== activeProfile.username && activeProfile.username_changed_at) {
-      const lastChanged = new Date(activeProfile.username_changed_at).getTime();
-      const daysDiff = (Date.now() - lastChanged) / (1000 * 60 * 60 * 24);
-      if (daysDiff < 14) {
-        const remainingDays = Math.ceil(14 - daysDiff);
-        errorMsg.textContent = `You can only change your username once every 14 days. Please wait ${remainingDays} more day(s).`;
-        errorMsg.classList.remove("hidden");
-        return;
-      }
-    }
-
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving…";
-
-    try {
-      let avatarUrl = activeProfile.avatar;
-      let coverUrl = activeProfile.cover;
-
-      if (avatarFileToUpload) {
-        avatarUrl = await uploadMedia(avatarFileToUpload, "avatars");
-      }
-
-      const coverFile = $("#coverFileInput").files?.[0];
-      if (coverFile) {
-        coverUrl = await uploadMedia(coverFile, "covers");
-      }
-
-      const updates = {
-        display_name: newName,
-        bio: newBio,
-        profile_accent_color: newColor,
-        avatar: avatarUrl,
-        cover: coverUrl
-      };
-
-      if (newUsername !== activeProfile.username) {
-        updates.username = newUsername;
-        updates.username_changed_at = new Date().toISOString();
-      }
-
-      if (client && activeProfile?.id) {
-        const { error } = await client.from("users")
-          .update(updates)
-          .eq("id", activeProfile.id);
-
+        const { error } = await client.from("users").update(updates).eq("id", currentAuthUser.id);
         if (error) throw error;
+
+        activeProfile = { ...activeProfile, ...updates };
+        renderProfileHeader();
+        $("#editProfileModal")?.close();
+        showToast("Profile updated successfully!");
+      } catch (err) {
+        console.error("Save error:", err);
+        showToast(err.message || "Failed to update profile.", "error");
+      } finally {
+        submitBtn.disabled = false;
       }
+    });
 
-      Object.assign(activeProfile, updates);
-      renderProfileHeader();
-      closeDialog("editProfileDialog");
-      showToast("Profile updated successfully!");
-    } catch (err) {
-      errorMsg.textContent = "Could not save profile: " + (err.message || err);
-      errorMsg.classList.remove("hidden");
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Save Changes";
-    }
-  }
-
-  async function uploadMedia(file, folder) {
-    if (!client) return URL.createObjectURL(file);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const filename = `${folder}/${activeProfile.id}_${Date.now()}.${ext}`;
-      const { data, error } = await client.storage.from("media").upload(filename, file, { upsert: true });
-      if (!error && data?.path) {
-        const { data: { publicUrl } } = client.storage.from("media").getPublicUrl(data.path);
-        if (publicUrl) return publicUrl;
+    // Lightbox Cover Image view
+    $("#coverContainer")?.addEventListener("click", (e) => {
+      if (e.target.closest("#changeCoverBtn")) return;
+      const src = $("#profileCoverImg").src;
+      if (src) {
+        $("#lightboxImg").src = src;
+        $("#imageLightbox")?.showModal();
       }
-    } catch {}
-
-    // Fallback data URL
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.readAsDataURL(file);
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    setupEventListeners();
-    loadProfile();
-  });
+  // Run on DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
