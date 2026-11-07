@@ -1,29 +1,397 @@
 (() => {
 "use strict";
-const SUPABASE_URL="https://bfqsqgfyyewnfxekirfv.supabase.co",SUPABASE_KEY="sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-",client=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY),$=s=>document.querySelector(s);
-let user=null,file=null,objectUrl="",filter="none",zoom=1,rotation=0,drawMode="draw",drawing=false,paths=[],activePath=null,overlays=[],soundFile=null;
-const filters={none:"none",vivid:"saturate(1.45) contrast(1.08)",moody:"brightness(.72) saturate(1.2) contrast(1.2)",dreamy:"brightness(1.15) saturate(1.25) blur(.2px)",bw:"grayscale(1)",neon:"saturate(2) contrast(1.25) hue-rotate(8deg)"};
-function msg(t){$("#editorMessage").textContent=t}
-async function auth(){const {data,error}=await client.auth.getSession();if(error)throw error;if(!data.session?.user){location.replace("index.html");return null}return data.session.user}
-function showFile(f){if(!f)return;file=f;if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(f);$("#emptyPreview").classList.add("hidden");const image=$("#storyImage"),video=$("#storyVideo");image.classList.toggle("hidden",f.type.startsWith("video/"));video.classList.toggle("hidden",!f.type.startsWith("video/"));if(f.type.startsWith("video/")){video.src=objectUrl;video.load()}else image.src=objectUrl;applyFilter();resizeCanvas()}
-function applyFilter(){const el=file?.type.startsWith("video/")?$("#storyVideo"):$("#storyImage");el.style.filter=filters[filter]||"none";el.style.transform="scale("+zoom+") rotate("+rotation+"deg)";$("#zoomLabel").textContent=zoom.toFixed(1)+"x"}
-function resizeCanvas(){const c=$("#drawCanvas"),r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;c.width=Math.max(1,r.width*d);c.height=Math.max(1,r.height*d);const x=c.getContext("2d");x.scale(d,d);redraw()}
-function redraw(){const c=$("#drawCanvas"),x=c.getContext("2d"),d=window.devicePixelRatio||1;x.clearRect(0,0,c.width/d,c.height/d);for(const p of paths){x.save();x.globalCompositeOperation=p.erase?"destination-out":"source-over";x.strokeStyle=p.color;x.lineWidth=p.width;x.lineCap="round";x.beginPath();p.points.forEach((pt,i)=>i?x.lineTo(pt.x,pt.y):x.moveTo(pt.x,pt.y));x.stroke();x.restore()}}
-function point(e){const r=$("#drawCanvas").getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
-function addText(){const value=prompt("Write your story text:");if(value===null||!value.trim())return;const item={text:value.trim(),x:50,y:50,color:"#ffffff"};overlays.push(item);renderText()}
-function renderText(){$("#textLayer").innerHTML=overlays.map((o,i)=>'<div class="overlay-text" data-overlay="'+i+'" style="left:'+o.x+'%;top:'+o.y+'%;color:'+o.color+'">'+o.text.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))+'</div>').join("")}
-async function upload(){if(!file)throw new Error("Choose a photo or video first.");const path=user.id+"/stories/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const {data,error}=await client.storage.from("story-media").upload(path,file,{upsert:false,contentType:file.type,cacheControl:"3600"});if(error)throw error;return data.path}
-function draftData(path){return{filter,zoom,rotation,paths,overlays,mediaPath:path,mediaType:file?.type.startsWith("video/")?"video":"image",soundName:soundFile?.name||null}}
-$("#storyFile").addEventListener("change",e=>{msg("");showFile(e.target.files?.[0])});document.querySelectorAll("[data-tool]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-tool]").forEach(x=>x.classList.remove("active"));b.classList.add("active");const tool=b.dataset.tool;drawMode=tool;switch(tool){case"text":addText();break;case"stickers":{const s=prompt("Sticker: ✨ ❤️ 🔥 🌙 ⭐");if(s){overlays.push({text:s,x:50,y:40,color:"#ffffff"});renderText()}break}case"emoji":overlays.push({text:"💜",x:50,y:50,color:"#ffffff"});renderText();break;case"crop":rotation=(rotation+90)%360;zoom=Math.min(2,zoom+.1);applyFilter();msg("Rotated 90° and zoomed in. Use the tool again to adjust.");break;case"sound":$("#soundPicker").click();break;case"erase":msg("Erase mode: draw over marks to remove them.");break;case"draw":msg("Draw mode: draw directly on your story.");break;case"filters":$("#toolPanel").scrollIntoView({behavior:"smooth",block:"nearest"});break}}));
-document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));applyFilter()}));
-const canvas=$("#drawCanvas");canvas.addEventListener("pointerdown",e=>{if(!file)return;drawing=true;canvas.setPointerCapture(e.pointerId);activePath={color:"#c875ff",width:5,erase:drawMode==="erase",points:[point(e)]};paths.push(activePath);redraw()});canvas.addEventListener("pointermove",e=>{if(!drawing||!activePath)return;activePath.points.push(point(e));redraw()});["pointerup","pointercancel"].forEach(n=>canvas.addEventListener(n,()=>{drawing=false;activePath=null}));
-$("#soundPicker").addEventListener("change",e=>{soundFile=e.target.files?.[0]||null;msg(soundFile?"Selected audio: "+soundFile.name+". Separate story audio isn’t stored by the current stories schema yet.":"")});
-$("#playPreview").addEventListener("click",()=>{if($("#storyVideo").classList.contains("hidden")){msg("Preview ready.");return}const v=$("#storyVideo");v.paused?v.play():v.pause()});
-$("#soundToggle").addEventListener("click",()=>{const v=$("#storyVideo");v.muted=!v.muted;$("#soundToggle").textContent=v.muted?"◖×":"◖))"});
-$("#saveDraft").addEventListener("click",async()=>{const b=$("#saveDraft");b.disabled=true;let uploadedPath=null;try{if(!user)throw new Error("Sign in to save drafts.");if(file)uploadedPath=await upload();const {error}=await client.from("story_drafts").insert({user_id:user.id,media_url:uploadedPath,media_type:file?.type.startsWith("video/")?"video":"image",draft_data:draftData(uploadedPath)});if(error)throw error;msg("Draft saved to your ARS account.")}catch(e){if(uploadedPath){await client.storage.from("story-media").remove([uploadedPath]).catch(()=>{});}msg(e.message||"Could not save draft.")}finally{b.disabled=false}});
-$("#nextStory").addEventListener("click",async()=>{const b=$("#nextStory");b.disabled=true;let uploadedPath=null;try{if(!user)throw new Error("Sign in to continue.");if(!file)throw new Error("Choose a photo or video first.");uploadedPath=await upload();sessionStorage.setItem("ars_story_composer",JSON.stringify({path:uploadedPath,mediaType:file.type.startsWith("video/")?"video":"image",filter,zoom,rotation,paths,overlays,soundName:soundFile?.name||null}));location.href="create-post.html?mode=story"}catch(e){if(uploadedPath){await client.storage.from("story-media").remove([uploadedPath]).catch(()=>{});}msg(e.message||"Could not continue.")}finally{b.disabled=false}});
-$("#closeEditor").addEventListener("click",()=>{if(confirm("Discard this story edit?"))location.href="home.html"});window.addEventListener("resize",resizeCanvas);
-const stage=$("#previewWrap");stage.addEventListener("dragover",e=>{e.preventDefault();stage.classList.add("dragging")});stage.addEventListener("dragleave",()=>stage.classList.remove("dragging"));stage.addEventListener("drop",e=>{e.preventDefault();stage.classList.remove("dragging");const f=e.dataTransfer.files?.[0];if(f&&(/^(image|video)\//).test(f.type)){showFile(f);msg("")}else msg("Choose a photo or video file.")});
 
-(async()=>{try{if(!client)throw new Error("ARS connection unavailable.");user=await auth();const params=new URLSearchParams(location.search);if(params.has("file")){} }catch(e){msg(e.message)}})();
+const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
+const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+
+let user = null;
+let file = null;
+let objectUrl = "";
+let filter = "none";
+let zoom = 1;
+let rotation = 0;
+let drawMode = "filters";
+let drawColor = "#b45cff";
+let drawing = false;
+let paths = [];
+let activePath = null;
+let overlays = [];
+let soundFile = null;
+
+const filters = {
+  none: "none",
+  vivid: "saturate(1.45) contrast(1.08)",
+  moody: "brightness(.72) saturate(1.2) contrast(1.2)",
+  dreamy: "brightness(1.15) saturate(1.25) blur(.2px)",
+  bw: "grayscale(1)",
+  neon: "saturate(2) contrast(1.25) hue-rotate(8deg)"
+};
+
+function msg(text, isError = false) {
+  const message = $("#editorMessage");
+  message.textContent = text;
+  message.classList.toggle("error", isError);
+}
+
+async function auth() {
+  if (!client) throw new Error("ARS connection unavailable. Reload and try again.");
+  const { data, error } = await client.auth.getSession();
+  if (error) throw error;
+  if (!data.session?.user) {
+    location.replace("index.html");
+    return null;
+  }
+  return data.session.user;
+}
+
+function showFile(nextFile) {
+  if (!nextFile) return;
+  if (!/^(image|video)\//.test(nextFile.type)) {
+    msg("Choose a valid photo or video file.", true);
+    return;
+  }
+  if (nextFile.size > 100 * 1024 * 1024) {
+    msg("This file is larger than 100 MB. Choose a smaller file.", true);
+    return;
+  }
+
+  file = nextFile;
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+  $("#emptyPreview").classList.add("hidden");
+  $("#changeMediaBtn").classList.remove("hidden");
+  $("#undoBtn").classList.remove("hidden");
+
+  const image = $("#storyImage");
+  const video = $("#storyVideo");
+  const isVideo = file.type.startsWith("video/");
+  image.classList.toggle("hidden", isVideo);
+  video.classList.toggle("hidden", !isVideo);
+
+  if (isVideo) {
+    video.src = objectUrl;
+    video.load();
+  } else {
+    image.src = objectUrl;
+  }
+
+  paths = [];
+  overlays = [];
+  renderText();
+  redraw();
+  applyFilter();
+  resizeCanvas();
+  updateTools();
+  msg("Media ready. Choose a tool to edit your story.");
+}
+
+function applyFilter() {
+  const element = file?.type.startsWith("video/") ? $("#storyVideo") : $("#storyImage");
+  if (element) {
+    element.style.filter = filters[filter] || "none";
+    element.style.transform = `scale(${zoom}) rotate(${rotation}deg)`;
+  }
+  $("#zoomLabel").textContent = `${zoom.toFixed(1)}x`;
+}
+
+function resizeCanvas() {
+  const canvas = $("#drawCanvas");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  const context = canvas.getContext("2d");
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
+}
+
+function redraw() {
+  const canvas = $("#drawCanvas");
+  const context = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  context.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+
+  for (const path of paths) {
+    if (!path.points.length) continue;
+    context.save();
+    context.globalCompositeOperation = path.erase ? "destination-out" : "source-over";
+    context.strokeStyle = path.color;
+    context.lineWidth = path.width;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.beginPath();
+    path.points.forEach((point, index) => index ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y));
+    if (path.points.length === 1) context.lineTo(path.points[0].x + 0.1, path.points[0].y + 0.1);
+    context.stroke();
+    context.restore();
+  }
+}
+
+function canvasPoint(event) {
+  const rect = $("#drawCanvas").getBoundingClientRect();
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+function renderText() {
+  const layer = $("#textLayer");
+  layer.replaceChildren();
+  overlays.forEach((overlay, index) => {
+    const node = document.createElement("div");
+    node.className = "overlay-text";
+    node.dataset.overlay = String(index);
+    node.textContent = overlay.text;
+    node.style.left = `${overlay.x}%`;
+    node.style.top = `${overlay.y}%`;
+    node.style.color = overlay.color || "#fff";
+    layer.appendChild(node);
+  });
+}
+
+function addText(value = null) {
+  const text = value ?? prompt("Write your story text:");
+  if (text === null || !text.trim()) return;
+  overlays.push({ text: text.trim(), x: 50, y: 50, color: "#ffffff" });
+  renderText();
+  msg("Text added to your story preview.");
+}
+
+function updateTools() {
+  const hasFile = !!file;
+  $$("[data-tool]").forEach(button => {
+    button.disabled = !hasFile && !["filters", "sound"].includes(button.dataset.tool);
+  });
+  $("#nextStory").disabled = !hasFile;
+  $("#saveDraft").disabled = !hasFile;
+}
+
+function activateTool(tool) {
+  drawMode = tool;
+  $("#drawCanvas").classList.toggle("drawing", tool === "draw" || tool === "erase");
+
+  const panels = [
+    ["filters", "#filterList"],
+    ["stickers", "#stickerList"],
+    ["emoji", "#emojiList"],
+    ["draw", "#drawOptions"],
+    ["crop", "#cropOptions"]
+  ];
+  for (const [name, selector] of panels) {
+    const show = name === "draw" ? ["draw", "erase"].includes(tool) : name === tool;
+    $(selector).classList.toggle("hidden", !show);
+  }
+
+  if (tool === "draw") msg("Draw with your finger or mouse on the story. Tap Undo to remove the latest stroke.");
+  if (tool === "erase") msg("Erase mode is on. Draw over marks to erase them.");
+  if (tool === "stickers") msg("Tap a sticker to add it to your story.");
+  if (tool === "emoji") msg("Tap an emoji to add it to your story.");
+  if (tool === "filters") msg(file ? "Choose a filter for your story." : "Choose a photo or video first.");
+  if (tool === "crop") msg("Rotate or zoom the preview with the controls below.");
+}
+
+async function upload() {
+  if (!file) throw new Error("Choose a photo or video first.");
+  if (!user) throw new Error("Sign in to upload a story.");
+
+  const path = `${user.id}/stories/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "story-upload"}`;
+  const { data, error } = await client.storage.from("story-media").upload(path, file, {
+    upsert: false,
+    contentType: file.type,
+    cacheControl: "3600"
+  });
+
+  if (error) {
+    const reason = error.message || "Supabase rejected the upload.";
+    if (/bucket|not.?found/i.test(reason)) {
+      throw new Error("Image upload is unavailable: Supabase Storage bucket ‘story-media’ does not exist. Create that bucket and its authenticated upload/read policies, then retry.");
+    }
+    if (/policy|permission|row.level.security|unauthorized/i.test(reason)) {
+      throw new Error(`Image upload was blocked by the story-media Storage permissions: ${reason}`);
+    }
+    throw new Error(`Image/video upload failed: ${reason}`);
+  }
+  if (!data?.path) throw new Error("Upload finished, but Supabase did not return a storage path.");
+  return data.path;
+}
+
+function draftData(path) {
+  return {
+    filter,
+    zoom,
+    rotation,
+    paths,
+    overlays,
+    mediaPath: path || null,
+    mediaType: file?.type.startsWith("video/") ? "video" : "image",
+    soundName: soundFile?.name || null
+  };
+}
+
+async function cleanupUpload(path) {
+  if (!path) return;
+  const { error } = await client.storage.from("story-media").remove([path]);
+  if (error) console.warn("Could not clean up failed story upload:", error.message);
+}
+
+$("#storyFile").addEventListener("change", event => {
+  const selected = event.target.files?.[0];
+  if (selected) showFile(selected);
+  event.target.value = "";
+});
+$("#browseMediaBtn").addEventListener("click", () => $("#storyFile").click());
+$("#changeMediaBtn").addEventListener("click", () => $("#storyFile").click());
+
+$$("[data-tool]").forEach(button => button.addEventListener("click", () => {
+  $$("[data-tool]").forEach(item => item.classList.toggle("active", item === button));
+  const tool = button.dataset.tool;
+  activateTool(tool);
+  if (tool === "text") addText();
+  if (tool === "sound") $("#soundPicker").click();
+}));
+
+$$("[data-filter]").forEach(button => button.addEventListener("click", () => {
+  filter = button.dataset.filter;
+  $$("[data-filter]").forEach(item => item.classList.toggle("active", item === button));
+  applyFilter();
+  msg(`${button.textContent.trim()} filter applied.`);
+}));
+$$("[data-sticker]").forEach(button => button.addEventListener("click", () => addText(button.dataset.sticker)));
+$$("[data-emoji]").forEach(button => button.addEventListener("click", () => addText(button.dataset.emoji)));
+
+$$("[data-color]").forEach(button => button.addEventListener("click", () => {
+  drawColor = button.dataset.color;
+  $$("[data-color]").forEach(item => item.classList.toggle("active", item === button));
+  msg("Brush color updated.");
+}));
+
+$("#rotateBtn").addEventListener("click", () => { rotation = (rotation + 90) % 360; applyFilter(); msg("Rotated 90 degrees."); });
+$("#zoomInBtn").addEventListener("click", () => { zoom = Math.min(2, +(zoom + 0.1).toFixed(1)); applyFilter(); msg("Zoomed in."); });
+$("#zoomOutBtn").addEventListener("click", () => { zoom = Math.max(0.5, +(zoom - 0.1).toFixed(1)); applyFilter(); msg("Zoomed out."); });
+$("#resetTransformBtn").addEventListener("click", () => { zoom = 1; rotation = 0; applyFilter(); msg("Transform reset."); });
+
+$("#undoBtn").addEventListener("click", () => {
+  if (paths.length) { paths.pop(); redraw(); msg("Last drawing action removed."); return; }
+  if (overlays.length) { overlays.pop(); renderText(); msg("Last sticker or text removed."); return; }
+  msg("Nothing to undo.");
+});
+
+const canvas = $("#drawCanvas");
+canvas.addEventListener("pointerdown", event => {
+  if (!file || !["draw", "erase"].includes(drawMode)) return;
+  drawing = true;
+  canvas.setPointerCapture(event.pointerId);
+  activePath = { color: drawColor, width: 5, erase: drawMode === "erase", points: [canvasPoint(event)] };
+  paths.push(activePath);
+  redraw();
+});
+canvas.addEventListener("pointermove", event => {
+  if (!drawing || !activePath) return;
+  activePath.points.push(canvasPoint(event));
+  redraw();
+});
+["pointerup", "pointercancel", "lostpointercapture"].forEach(type => canvas.addEventListener(type, () => { drawing = false; activePath = null; }));
+
+$("#soundPicker").addEventListener("change", event => {
+  soundFile = event.target.files?.[0] || null;
+  msg(soundFile ? `Selected audio: ${soundFile.name}. Separate story audio is not included in the final story.` : "No audio selected.");
+  event.target.value = "";
+});
+
+$("#playPreview").addEventListener("click", async () => {
+  const video = $("#storyVideo");
+  if (!file || !file.type.startsWith("video/")) { msg(file ? "Photo preview is ready." : "Choose a photo or video first."); return; }
+  try { if (video.paused) await video.play(); else video.pause(); }
+  catch (error) { msg(error.message || "Video playback could not start.", true); }
+});
+$("#soundToggle").addEventListener("click", () => {
+  const video = $("#storyVideo");
+  if (!file || !file.type.startsWith("video/")) { msg("Video sound is available after selecting a video."); return; }
+  video.muted = !video.muted;
+  $("#soundToggle").textContent = video.muted ? "◖×" : "◖))";
+});
+
+$("#saveDraft").addEventListener("click", async () => {
+  const button = $("#saveDraft");
+  button.disabled = true;
+  let uploadedPath = null;
+  try {
+    if (!user) throw new Error("Sign in to save a story draft.");
+    if (!file) throw new Error("Choose a photo or video first.");
+    button.textContent = "Uploading…";
+    uploadedPath = await upload();
+    const draft = draftData(uploadedPath);
+    const { error } = await client.from("story_drafts").insert({
+      user_id: user.id,
+      media_url: uploadedPath,
+      media_type: draft.mediaType,
+      draft_data: draft
+    });
+    if (error) throw new Error(`Upload worked, but saving the draft failed: ${error.message}`);
+    msg("Draft saved to your ARS account.");
+  } catch (error) {
+    await cleanupUpload(uploadedPath);
+    msg(error.message || "Could not save this draft.", true);
+  } finally {
+    button.textContent = "⇩ Save Draft";
+    button.disabled = !file;
+  }
+});
+
+$("#nextStory").addEventListener("click", async () => {
+  const button = $("#nextStory");
+  button.disabled = true;
+  let uploadedPath = null;
+  try {
+    if (!user) throw new Error("Sign in to continue.");
+    if (!file) throw new Error("Choose a photo or video first.");
+    button.textContent = "Uploading…";
+    uploadedPath = await upload();
+    const draft = draftData(uploadedPath);
+    sessionStorage.setItem("ars_story_composer", JSON.stringify({
+      path: uploadedPath,
+      mediaType: draft.mediaType,
+      filter,
+      zoom,
+      rotation,
+      paths,
+      overlays,
+      soundName: soundFile?.name || null
+    }));
+    location.href = "create-post.html?mode=story";
+  } catch (error) {
+    await cleanupUpload(uploadedPath);
+    msg(error.message || "Could not continue to story publishing.", true);
+  } finally {
+    button.textContent = "Next ›";
+    button.disabled = !file;
+  }
+});
+
+$("#closeEditor").addEventListener("click", () => {
+  if (confirm("Discard this story edit?")) location.href = "home.html";
+});
+window.addEventListener("resize", resizeCanvas);
+
+const stage = $("#previewWrap");
+stage.addEventListener("dragover", event => { event.preventDefault(); stage.classList.add("dragging"); });
+stage.addEventListener("dragleave", () => stage.classList.remove("dragging"));
+stage.addEventListener("drop", event => {
+  event.preventDefault();
+  stage.classList.remove("dragging");
+  const droppedFile = event.dataTransfer.files?.[0];
+  if (droppedFile && /^(image|video)\//.test(droppedFile.type)) showFile(droppedFile);
+  else msg("Choose a photo or video file.", true);
+});
+
+(async () => {
+  try {
+    user = await auth();
+    updateTools();
+    if (!user) return;
+  } catch (error) {
+    msg(error.message || "Could not connect to ARS.", true);
+  }
+})();
 })();
