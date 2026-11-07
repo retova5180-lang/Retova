@@ -1165,6 +1165,51 @@ function avatarMarkup(user, extra = "") {
     } finally { button.disabled = false; }
   });
 
+  
+  // Full-screen media viewer for posts
+  feed.addEventListener("click", event => {
+    const mediaEl = event.target.closest(".post-media");
+    if (mediaEl && (mediaEl.tagName === "IMG" || mediaEl.tagName === "VIDEO")) {
+      const src = mediaEl.src;
+      if (src) {
+        const body = $("#mediaViewerBody");
+        if (body) {
+          if (mediaEl.tagName === "VIDEO") {
+            body.innerHTML = "<video src=\"" + escapeHTML(src) + "\" controls autoplay playsinline></video>";
+          } else {
+            body.innerHTML = "<img src=\"" + escapeHTML(src) + "\" alt=\"Full size media\">";
+          }
+          openDialog("mediaViewerDialog");
+        }
+      }
+    }
+  });
+
+  const closeMediaBtn = $("#closeMediaViewer");
+  if (closeMediaBtn) {
+    closeMediaBtn.addEventListener("click", () => {
+      const body = $("#mediaViewerBody");
+      if (body) {
+        const vid = body.querySelector("video");
+        if (vid) { vid.pause(); vid.src = ""; }
+        body.replaceChildren();
+      }
+      closeDialog("mediaViewerDialog");
+    });
+  }
+
+  const mediaViewerDialog = $("#mediaViewerDialog");
+  if (mediaViewerDialog) {
+    mediaViewerDialog.addEventListener("close", () => {
+      const body = $("#mediaViewerBody");
+      if (body) {
+        const vid = body.querySelector("video");
+        if (vid) { vid.pause(); vid.src = ""; }
+        body.replaceChildren();
+      }
+    });
+  }
+
   async function start() {
     try {
       const user = await requireSession();
