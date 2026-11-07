@@ -1,339 +1,358 @@
-(() => {
+/**
+ * ARS — Settings & Preferences Logic
+ * Manages Account information, Privacy, Security, Devices, Notifications,
+ * Theme, and Secure Account Lifecycle operations (Email Change, Deactivation, Deletion).
+ */
+
+(function () {
   "use strict";
 
   const SUPABASE_URL = "https://bfqsqgfyyewnfxekirfv.supabase.co";
   const SUPABASE_KEY = "sb_publishable_OM-LGm9LZCtmzkGYmpyA8A_jnvgmH1-";
-  const STORAGE = { user: "ars_user", loggedIn: "ars_logged_in" };
 
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-
-  const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  let client = null;
   let currentAuthUser = null;
   let activeProfile = null;
-  let userPrefs = null;
-  let notifPrefs = null;
+  let activePreferences = null;
 
-  function showToast(msg) {
-    const toast = $("#toastNotification");
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.classList.remove("hidden");
-    clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => toast.classList.add("hidden"), 3000);
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => document.querySelectorAll(selector);
+
+  function showToast(message, type = "info") {
+    const toast = document.createElement("div");
+    toast.className = `ars-toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 20);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    }, 3200);
   }
 
-  function openDialog(id) {
-    const d = $("#" + id);
-    if (d && typeof d.showModal === "function") d.showModal();
+  function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
-  function closeDialog(id) {
-    const d = $("#" + id);
-    if (d && typeof d.close === "function") d.close();
-  }
-
-  async function getSessionUser() {
-    try {
-      if (client?.auth) {
-        const { data: { user } } = await client.auth.getUser();
-        if (user) return user;
-      }
-    } catch {}
-    try {
-      const local = JSON.parse(localStorage.getItem(STORAGE.user) || "null");
-      if (local && (local.id || local.username)) return local;
-    } catch {}
-    return null;
-  }
-
-  async function initSettings() {
-    currentAuthUser = await getSessionUser();
-    if (!currentAuthUser) {
-      console.warn("No active session, running in guest/demo mode.");
+  async function init() {
+    if (window.supabase) {
+      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
     }
 
-    await loadUserData();
-    setupEventListeners();
+    if (!client) {
+      showToast("Could not connect to ARS service.", "error");
+      return;
+    }
 
-    // Check if opened with ?section=xyz
-    const params = new URLSearchParams(window.location.search);
-    const sec = params.get("section");
-    if (sec) {
-      const dialogMap = {
-        account: "accountDialog",
-        privacy: "privacyDialog",
-        security: "securityDialog",
-        devices: "devicesDialog",
-        premium: "premiumDialog",
-        notifications: "notificationsDialog",
-        appearance: "appearanceDialog",
-        language: "languageDialog",
-        activity: "activityDialog",
-        legal: "legalDialog"
-      };
-      if (dialogMap[sec]) {
-        openDialog(dialogMap[sec]);
+    try {
+      const { data: { session } } = await client.auth.getSession();
+      currentAuthUser = session?.user || null;
+
+      if (!currentAuthUser) {
+        // Must be logged in to view settings
+        window.location.href = "index.html";
+        return;
       }
+
+      await loadUserData();
+      setupEventListeners();
+      checkDeepLinkSection();
+    } catch (e) {
+      console.error("Settings initialization error:", e);
     }
   }
 
   async function loadUserData() {
-    let profile = null;
-    if (client && currentAuthUser?.id) {
-      try {
-        const { data } = await client.from("users")
-          .select("*")
-          .eq("id", currentAuthUser.id)
-          .maybeSingle();
-        profile = data;
-      } catch (e) {
-        console.warn("Failed loading user in settings:", e);
-      }
-    }
+    try {
+      // 1. Load users table data
+      const { data: userProfile, error: uErr } = await client
+        .from("users")
+        .select("*")
+        .eq("id", currentAuthUser.id)
+        .maybeSingle();
 
-    if (!profile) {
-      profile = {
-        id: currentAuthUser?.id || "demo-user",
-        email: currentAuthUser?.email || "retova5180@gmail.com",
-        display_name: currentAuthUser?.user_metadata?.display_name || "Tia",
-        username: currentAuthUser?.user_metadata?.username || "bluegangst9",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-        verified: true,
-        plan: "premium",
-        is_private: false,
-        account_type: "Personal",
-        account_status: "Active",
-        online_status_visible: true,
-        profile_accent_color: "#a855f7"
+      if (uErr) throw uErr;
+
+      activeProfile = userProfile || {
+        id: currentAuthUser.id,
+        email: currentAuthUser.email,
+        display_name: currentAuthUser.user_metadata?.display_name || "User",
+        username: currentAuthUser.user_metadata?.username || "user",
+        account_status: "active"
       };
+
+      // 2. Load preferences
+      const { data: prefData } = await client
+        .from("user_preferences")
+        .select("*")
+        .eq("user_id", currentAuthUser.id)
+        .maybeSingle();
+
+      activePreferences = prefData || {};
+
+      // Render UI
+      renderProfileCard();
+      populateFormFields();
+      checkScheduledDeletionStatus();
+
+    } catch (err) {
+      console.error("Failed loading user settings:", err);
+      showToast("Failed to load settings data.", "error");
     }
-
-    activeProfile = profile;
-    renderAccountCard();
-    renderAccountModal();
-
-    // Load preferences
-    if (client && activeProfile.id) {
-      try {
-        const [prefsRes, notifRes] = await Promise.all([
-          client.from("user_preferences").select("*").eq("user_id", activeProfile.id).maybeSingle(),
-          client.from("notification_preferences").select("*").eq("user_id", activeProfile.id).maybeSingle()
-        ]);
-        userPrefs = prefsRes.data;
-        notifPrefs = notifRes.data;
-      } catch {}
-    }
-
-    renderPrivacyModal();
-    renderNotificationsModal();
   }
 
-  function renderAccountCard() {
+  function renderProfileCard() {
     const p = activeProfile;
-    $("#settingsDisplayName").textContent = p.display_name || "User";
-    $("#settingsUsername").textContent = "@" + (p.username || "user");
-    if (p.avatar) $("#settingsAvatarImg").src = p.avatar;
+    if (!p) return;
 
-    const isPremium = p.plan === "premium";
+    // Avatar
+    const avEl = $("#settingsAvatarImg");
+    if (avEl) {
+      avEl.src = p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.display_name || "User")}&background=790ce2&color=fff`;
+    }
+
+    // Name & verified
+    $("#settingsDisplayName").textContent = p.display_name || p.username || "User";
+    $("#settingsVerifiedBadge").classList.toggle("hidden", !p.verified);
+
+    // Username
+    $("#settingsUsername").textContent = "@" + (p.username || "user");
+
+    // Premium status in card
+    const isPremium = p.plan === "premium" || p.plan === "pro";
     const statusEl = $("#settingsPremiumStatus");
     const badgeEl = $("#premiumStatusBadge");
 
     if (isPremium) {
       statusEl.textContent = "👑 Premium Member";
-      badgeEl.textContent = "Active";
-      badgeEl.classList.remove("hidden");
+      badgeEl?.classList.remove("hidden");
     } else {
       statusEl.textContent = "Free Member";
-      badgeEl.textContent = "Upgrade";
+      badgeEl?.classList.add("hidden");
     }
 
-    $("#premiumStatusText").textContent = isPremium ? "ARS Premium Active" : "Free Plan";
-    $("#togglePremiumBtn").textContent = isPremium ? "Manage Subscription" : "Activate ARS Premium";
+    // Modal card Premium text
+    const premiumModalText = $("#premiumStatusText");
+    if (premiumModalText) {
+      premiumModalText.textContent = isPremium ? "ARS Premium Active" : "Free Plan";
+    }
   }
 
-  function renderAccountModal() {
+  function populateFormFields() {
     const p = activeProfile;
-    $("#accEmail").value = p.email || currentAuthUser?.email || "";
+    const pref = activePreferences;
+
+    // Account Form
+    $("#accEmail").value = currentAuthUser?.email || p.email || "";
     $("#accName").value = p.display_name || "";
     $("#accUsername").value = p.username || "";
-    $("#accType").value = p.account_type || "Personal";
+    $("#accTypeSelect").value = p.account_type || "Personal";
     $("#accStatusBadge").textContent = p.account_status || "Active";
-  }
 
-  function renderPrivacyModal() {
-    const p = activeProfile;
-    const prefs = userPrefs || {};
-
+    // Privacy Form
     $("#togglePrivateAccount").checked = Boolean(p.is_private);
     $("#toggleOnlineVisibility").checked = p.online_status_visible !== false;
-    $("#toggleShowLikes").checked = prefs.show_likes !== false;
-    $("#toggleShowFollowers").checked = prefs.show_followers !== false;
-    $("#toggleShowFollowing").checked = prefs.show_following !== false;
+    $("#toggleShowLikes").checked = pref.show_likes !== false;
+    $("#toggleShowFollowers").checked = pref.show_followers !== false;
+    $("#toggleShowFollowing").checked = pref.show_following !== false;
   }
 
-  function renderNotificationsModal() {
-    const n = notifPrefs || {};
-    $("#notifLikes").checked = n.likes_enabled !== false;
-    $("#notifComments").checked = n.comments_enabled !== false;
-    $("#notifReplies").checked = n.replies_enabled !== false;
-    $("#notifFollowers").checked = n.new_followers_enabled !== false;
-    $("#notifRequests").checked = n.follow_requests_enabled !== false;
-    $("#notifReposts").checked = n.reposts_enabled !== false;
-    $("#notifStories").checked = n.stories_enabled !== false;
-    $("#notifStreaks").checked = n.streaks_enabled !== false;
-    $("#notifPremium").checked = n.premium_enabled !== false;
-    $("#notifSystem").checked = n.system_enabled !== false;
+  function checkScheduledDeletionStatus() {
+    const banner = $("#scheduledDeletionBanner");
+    if (!banner || !activeProfile) return;
+
+    if (activeProfile.account_status === "Deletion Pending") {
+      banner.classList.remove("hidden");
+      const dateText = activeProfile.deletion_requested_at 
+        ? new Date(activeProfile.deletion_requested_at).toLocaleDateString()
+        : "recently";
+      $("#deletionBannerDate").textContent = `Deletion requested on ${dateText}. Account is in a 30-day grace period.`;
+    } else {
+      banner.classList.add("hidden");
+    }
+  }
+
+  function checkDeepLinkSection() {
+    const params = new URLSearchParams(window.location.search);
+    const sec = params.get("section");
+    if (sec) {
+      const dialog = document.getElementById(sec + "Dialog");
+      if (dialog) dialog.showModal();
+    }
   }
 
   function setupEventListeners() {
-    // Topbar back
-    $("#settingsBackBtn").addEventListener("click", e => {
-      if (window.history.length > 1) {
-        e.preventDefault();
-        window.history.back();
-      }
+    // Menu item clicks to open dialogs
+    $$(".settings-item[data-dialog]").forEach(item => {
+      item.addEventListener("click", () => {
+        const dialogId = item.dataset.dialog;
+        const dialog = document.getElementById(dialogId);
+        if (dialog) dialog.showModal();
+      });
     });
 
-    // Account card click -> open Account modal
-    $("#settingsAccountCard").addEventListener("click", () => openDialog("accountDialog"));
-
-    // Menu items
-    $$(".setting-item").forEach(item => {
-      const section = item.dataset.section;
-      if (section) {
-        item.addEventListener("click", () => {
-          const map = {
-            account: "accountDialog",
-            privacy: "privacyDialog",
-            security: "securityDialog",
-            devices: "devicesDialog",
-            premium: "premiumDialog",
-            notifications: "notificationsDialog",
-            appearance: "appearanceDialog",
-            language: "languageDialog",
-            activity: "activityDialog",
-            legal: "legalDialog"
-          };
-          if (map[section]) openDialog(map[section]);
-        });
-      }
-    });
-
-    // Close buttons
+    // Close buttons on all modals
     $$("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => closeDialog(btn.dataset.close));
+      btn.addEventListener("click", () => {
+        const dialogId = btn.dataset.close;
+        const dialog = document.getElementById(dialogId);
+        if (dialog) dialog.close();
+      });
     });
 
     // Save Account Form
-    $("#accountForm").addEventListener("submit", handleAccountSave);
+    $("#accountForm")?.addEventListener("submit", handleAccountUpdate);
 
     // Save Privacy Form
-    $("#savePrivacyBtn").addEventListener("click", handlePrivacySave);
+    $("#savePrivacyBtn")?.addEventListener("click", handlePrivacyUpdate);
 
-    // Update Password Form
-    $("#securityForm").addEventListener("submit", handlePasswordUpdate);
+    // Security Form (Password update)
+    $("#securityForm")?.addEventListener("submit", handlePasswordUpdate);
 
-    // Save Notifications
-    $("#saveNotifBtn").addEventListener("click", handleNotifSave);
-
-    // Toggle Premium
-    $("#togglePremiumBtn").addEventListener("click", handleTogglePremium);
-
-    // Log Out button
-    $("#logoutBtn").addEventListener("click", handleSignOut);
-
-    // Log Out other devices
-    $("#logoutOtherDevicesBtn")?.addEventListener("click", () => {
-      showToast("Signed out from all other active sessions.");
-      closeDialog("devicesDialog");
+    // Change Email Dialog triggers
+    $("#openChangeEmailBtn")?.addEventListener("click", () => {
+      $("#currentEmailVal").value = currentAuthUser.email;
+      $("#newEmailInput").value = "";
+      $("#confirmPassForEmail").value = "";
+      const msg = $("#changeEmailStatusMsg");
+      msg.className = "modal-status-msg hidden";
+      msg.textContent = "";
+      $("#changeEmailDialog")?.showModal();
     });
 
-    // Deactivate button
+    $("#changeEmailForm")?.addEventListener("submit", handleEmailChange);
+
+    // Deactivate Dialog triggers
     $("#deactivateBtn")?.addEventListener("click", () => {
-      if (confirm("Are you sure you want to deactivate your ARS account? You can reactivate anytime by logging in.")) {
-        showToast("Account deactivated. Logging out…");
-        setTimeout(handleSignOut, 1500);
-      }
+      $("#deactivatePasswordInput").value = "";
+      $("#deactivateAgreeCheck").checked = false;
+      const msg = $("#deactivateStatusMsg");
+      msg.className = "modal-status-msg hidden";
+      msg.textContent = "";
+      $("#deactivateDialog")?.showModal();
     });
 
-    // Delete button
+    $("#deactivateForm")?.addEventListener("submit", handleDeactivateAccount);
+
+    // Delete Account Dialog triggers
     $("#deleteAccountBtn")?.addEventListener("click", () => {
-      if (confirm("Request permanent account deletion? This will initiate the scheduled deletion process.")) {
-        showToast("Deletion request recorded. An email confirmation has been sent.");
-      }
+      $("#deletePasswordInput").value = "";
+      $("#deleteConfirmWordInput").value = "";
+      const msg = $("#deleteAccountStatusMsg");
+      msg.className = "modal-status-msg hidden";
+      msg.textContent = "";
+      $("#deleteAccountDialog")?.showModal();
     });
+
+    $("#deleteAccountForm")?.addEventListener("submit", handleDeleteAccount);
+
+    // Cancel Scheduled Deletion button
+    $("#cancelDeletionBtn")?.addEventListener("click", handleCancelDeletion);
+
+    // Logout Item
+    $("#logoutItem")?.addEventListener("click", handleLogout);
   }
 
-  async function handleAccountSave(e) {
+  async function handleAccountUpdate(e) {
     e.preventDefault();
-    const newName = $("#accName").value.trim();
-    const newUsername = $("#accUsername").value.trim().toLowerCase();
-    const newType = $("#accType").value;
+    if (!client || !currentAuthUser) return;
 
-    const updates = {
-      display_name: newName,
-      account_type: newType
-    };
+    const dName = $("#accName").value.trim();
+    const uName = $("#accUsername").value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
+    const accType = $("#accTypeSelect").value;
 
-    if (newUsername !== activeProfile.username) {
-      if (activeProfile.username_changed_at) {
-        const lastChanged = new Date(activeProfile.username_changed_at).getTime();
-        const daysDiff = (Date.now() - lastChanged) / (1000 * 60 * 60 * 24);
-        if (daysDiff < 14) {
-          showToast(`Username can only be changed once every 14 days. (${Math.ceil(14 - daysDiff)} days remaining)`);
-          return;
-        }
-      }
-      updates.username = newUsername;
-      updates.username_changed_at = new Date().toISOString();
-    }
+    const saveBtn = $("#saveAccountBtn");
+    saveBtn.disabled = true;
 
     try {
-      if (client && activeProfile.id) {
-        const { error } = await client.from("users").update(updates).eq("id", activeProfile.id);
-        if (error) throw error;
+      const updates = {
+        display_name: dName,
+        account_type: accType,
+        updated_at: new Date().toISOString()
+      };
+
+      if (uName && uName !== activeProfile.username) {
+        if (activeProfile.username_changed_at) {
+          const last = new Date(activeProfile.username_changed_at).getTime();
+          const daysDiff = (Date.now() - last) / (1000 * 60 * 60 * 24);
+          if (daysDiff < 14) {
+            const rem = Math.ceil(14 - daysDiff);
+            showToast(`Username can only be changed every 14 days (${rem} days left).`, "warning");
+            saveBtn.disabled = false;
+            return;
+          }
+        }
+        updates.username = uName;
+        updates.username_changed_at = new Date().toISOString();
       }
-      Object.assign(activeProfile, updates);
-      renderAccountCard();
-      closeDialog("accountDialog");
+
+      const { error } = await client.from("users").update(updates).eq("id", currentAuthUser.id);
+      if (error) throw error;
+
+      activeProfile = { ...activeProfile, ...updates };
+      renderProfileCard();
+      $("#accountDialog")?.close();
       showToast("Account details updated successfully!");
     } catch (err) {
-      showToast("Could not update account: " + (err.message || err));
+      console.error("Account update error:", err);
+      showToast(err.message || "Failed to update account.", "error");
+    } finally {
+      saveBtn.disabled = false;
     }
   }
 
-  async function handlePrivacySave() {
+  async function handlePrivacyUpdate() {
+    if (!client || !currentAuthUser) return;
+
     const isPrivate = $("#togglePrivateAccount").checked;
     const onlineVisible = $("#toggleOnlineVisibility").checked;
     const showLikes = $("#toggleShowLikes").checked;
     const showFollowers = $("#toggleShowFollowers").checked;
     const showFollowing = $("#toggleShowFollowing").checked;
 
-    try {
-      if (client && activeProfile.id) {
-        await Promise.all([
-          client.from("users").update({
-            is_private: isPrivate,
-            online_status_visible: onlineVisible
-          }).eq("id", activeProfile.id),
+    const saveBtn = $("#savePrivacyBtn");
+    saveBtn.disabled = true;
 
-          client.from("user_preferences").upsert({
-            user_id: activeProfile.id,
-            show_likes: showLikes,
-            show_followers: showFollowers,
-            show_following: showFollowing,
-            updated_at: new Date().toISOString()
-          })
-        ]);
-      }
+    try {
+      // 1. Update users table
+      const { error: userErr } = await client.from("users").update({
+        is_private: isPrivate,
+        online_status_visible: onlineVisible,
+        updated_at: new Date().toISOString()
+      }).eq("id", currentAuthUser.id);
+
+      if (userErr) throw userErr;
+
+      // 2. Upsert user_preferences
+      const { error: prefErr } = await client.from("user_preferences").upsert({
+        user_id: currentAuthUser.id,
+        show_likes: showLikes,
+        show_followers: showFollowers,
+        show_following: showFollowing,
+        online_visibility: onlineVisible ? "everyone" : "nobody",
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id" });
+
+      if (prefErr) throw prefErr;
+
       activeProfile.is_private = isPrivate;
       activeProfile.online_status_visible = onlineVisible;
-      closeDialog("privacyDialog");
-      showToast("Privacy settings saved.");
+      activePreferences = { ...activePreferences, show_likes: showLikes, show_followers: showFollowers, show_following: showFollowing };
+
+      $("#privacyDialog")?.close();
+      showToast("Privacy settings saved!");
     } catch (err) {
-      showToast("Failed saving privacy preferences.");
+      console.error("Privacy update error:", err);
+      showToast("Failed to save privacy settings.", "error");
+    } finally {
+      saveBtn.disabled = false;
     }
   }
 
@@ -344,80 +363,240 @@
     const msg = $("#securityMsg");
 
     if (p1 !== p2) {
+      msg.className = "form-msg error";
       msg.textContent = "Passwords do not match.";
-      msg.className = "form-message error";
+      msg.classList.remove("hidden");
+      return;
+    }
+
+    if (p1.length < 8) {
+      msg.className = "form-msg error";
+      msg.textContent = "Password must be at least 8 characters.";
+      msg.classList.remove("hidden");
       return;
     }
 
     try {
-      if (client?.auth) {
-        const { error } = await client.auth.updateUser({ password: p1 });
-        if (error) throw error;
-      }
+      const { error } = await client.auth.updateUser({ password: p1 });
+      if (error) throw error;
+
+      msg.className = "form-msg success";
       msg.textContent = "Password updated successfully.";
-      msg.className = "form-message success";
+      msg.classList.remove("hidden");
+      $("#newPassword").value = "";
+      $("#confirmPassword").value = "";
       showToast("Password updated!");
-      setTimeout(() => closeDialog("securityDialog"), 1500);
+      setTimeout(() => $("#securityDialog")?.close(), 1200);
     } catch (err) {
-      msg.textContent = "Password update failed: " + (err.message || err);
-      msg.className = "form-message error";
+      msg.className = "form-msg error";
+      msg.textContent = err.message || "Failed to update password.";
+      msg.classList.remove("hidden");
     }
   }
 
-  async function handleNotifSave() {
-    const notifs = {
-      likes_enabled: $("#notifLikes").checked,
-      comments_enabled: $("#notifComments").checked,
-      replies_enabled: $("#notifReplies").checked,
-      new_followers_enabled: $("#notifFollowers").checked,
-      follow_requests_enabled: $("#notifRequests").checked,
-      reposts_enabled: $("#notifReposts").checked,
-      stories_enabled: $("#notifStories").checked,
-      streaks_enabled: $("#notifStreaks").checked,
-      premium_enabled: $("#notifPremium").checked,
-      system_enabled: $("#notifSystem").checked,
-      updated_at: new Date().toISOString()
-    };
+  async function handleEmailChange(e) {
+    e.preventDefault();
+    const newEmail = $("#newEmailInput").value.trim();
+    const password = $("#confirmPassForEmail").value;
+    const msg = $("#changeEmailStatusMsg");
+    const submitBtn = $("#submitChangeEmailBtn");
 
-    try {
-      if (client && activeProfile.id) {
-        await client.from("notification_preferences").upsert({
-          user_id: activeProfile.id,
-          ...notifs
-        });
-      }
-      closeDialog("notificationsDialog");
-      showToast("Notification preferences updated.");
-    } catch {
-      showToast("Could not save notification preferences.");
+    if (!newEmail || !password) return;
+
+    if (newEmail === currentAuthUser.email) {
+      msg.className = "modal-status-msg error";
+      msg.textContent = "New email must be different from current email.";
+      msg.classList.remove("hidden");
+      return;
     }
-  }
 
-  async function handleTogglePremium() {
-    const nextPlan = activeProfile.plan === "premium" ? "free" : "premium";
+    submitBtn.disabled = true;
+    msg.className = "modal-status-msg info";
+    msg.textContent = "Verifying identity…";
+    msg.classList.remove("hidden");
+
     try {
-      if (client && activeProfile.id) {
-        await client.from("users").update({ plan: nextPlan }).eq("id", activeProfile.id);
+      // 1. Verify identity by re-authenticating with password
+      const { error: signInErr } = await client.auth.signInWithPassword({
+        email: currentAuthUser.email,
+        password: password
+      });
+
+      if (signInErr) {
+        msg.className = "modal-status-msg error";
+        msg.textContent = "Identity verification failed: Incorrect current password.";
+        submitBtn.disabled = false;
+        return;
       }
-      activeProfile.plan = nextPlan;
-      renderAccountCard();
-      closeDialog("premiumDialog");
-      showToast(nextPlan === "premium" ? "🎉 Welcome to ARS Premium!" : "Subscription set to Free.");
+
+      // 2. Call Supabase Auth to request email update
+      const { data, error: updateErr } = await client.auth.updateUser(
+        { email: newEmail },
+        { emailRedirectTo: window.location.origin + "/settings.html" }
+      );
+
+      if (updateErr) throw updateErr;
+
+      msg.className = "modal-status-msg success";
+      msg.textContent = `A verification link has been sent to ${newEmail}. Please click the link in your inbox to complete the change.`;
+      
+      $("#accEmailHint").textContent = `Verification pending for: ${newEmail}`;
+      $("#accEmailHint").style.color = "#c084fc";
+      
+      showToast("Verification link sent! Check your email.");
+      setTimeout(() => $("#changeEmailDialog")?.close(), 3000);
+
     } catch (err) {
-      showToast("Could not update plan status.");
+      msg.className = "modal-status-msg error";
+      msg.textContent = err.message || "Failed to initiate email change.";
+    } finally {
+      submitBtn.disabled = false;
     }
   }
 
-  async function handleSignOut() {
+  async function handleDeactivateAccount(e) {
+    e.preventDefault();
+    const password = $("#deactivatePasswordInput").value;
+    const agree = $("#deactivateAgreeCheck").checked;
+    const msg = $("#deactivateStatusMsg");
+    const submitBtn = $("#confirmDeactivateBtn");
+
+    if (!password || !agree) return;
+
+    submitBtn.disabled = true;
+    msg.className = "modal-status-msg info";
+    msg.textContent = "Verifying credentials…";
+    msg.classList.remove("hidden");
+
     try {
-      if (client?.auth) {
-        await client.auth.signOut();
+      // Verify password
+      const { error: authErr } = await client.auth.signInWithPassword({
+        email: currentAuthUser.email,
+        password: password
+      });
+
+      if (authErr) {
+        msg.className = "modal-status-msg error";
+        msg.textContent = "Identity verification failed: Incorrect password.";
+        submitBtn.disabled = false;
+        return;
       }
-    } catch {}
-    localStorage.removeItem(STORAGE.user);
-    localStorage.removeItem(STORAGE.loggedIn);
+
+      // Update Supabase users table
+      const now = new Date().toISOString();
+      const { error: dbErr } = await client.from("users").update({
+        account_status: "Deactivated",
+        deactivated_at: now
+      }).eq("id", currentAuthUser.id);
+
+      if (dbErr) throw dbErr;
+
+      // Sign out
+      await client.auth.signOut();
+      localStorage.clear();
+
+      alert("Your ARS account has been deactivated. You can reactivate anytime simply by logging back in.");
+      window.location.href = "index.html";
+
+    } catch (err) {
+      msg.className = "modal-status-msg error";
+      msg.textContent = err.message || "Failed to deactivate account.";
+      submitBtn.disabled = false;
+    }
+  }
+
+  async function handleDeleteAccount(e) {
+    e.preventDefault();
+    const password = $("#deletePasswordInput").value;
+    const confirmWord = $("#deleteConfirmWordInput").value.trim().toUpperCase();
+    const msg = $("#deleteAccountStatusMsg");
+    const submitBtn = $("#confirmDeleteAccountBtn");
+
+    if (confirmWord !== "DELETE") {
+      msg.className = "modal-status-msg error";
+      msg.textContent = "Please type DELETE to confirm.";
+      msg.classList.remove("hidden");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    msg.className = "modal-status-msg info";
+    msg.textContent = "Verifying identity…";
+    msg.classList.remove("hidden");
+
+    try {
+      // Verify password
+      const { error: authErr } = await client.auth.signInWithPassword({
+        email: currentAuthUser.email,
+        password: password
+      });
+
+      if (authErr) {
+        msg.className = "modal-status-msg error";
+        msg.textContent = "Identity verification failed: Incorrect password.";
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Update Supabase users table to initiate 30-day grace period
+      const now = new Date().toISOString();
+      const { error: dbErr } = await client.from("users").update({
+        account_status: "Deletion Pending",
+        deletion_requested_at: now
+      }).eq("id", currentAuthUser.id);
+
+      if (dbErr) throw dbErr;
+
+      // Sign out
+      await client.auth.signOut();
+      localStorage.clear();
+
+      alert("Your account deletion request has been submitted. Your account is now in a 30-day grace period. You can cancel deletion anytime during this period by logging in.");
+      window.location.href = "index.html";
+
+    } catch (err) {
+      msg.className = "modal-status-msg error";
+      msg.textContent = err.message || "Failed to process deletion request.";
+      submitBtn.disabled = false;
+    }
+  }
+
+  async function handleCancelDeletion() {
+    if (!client || !currentAuthUser) return;
+
+    if (!confirm("Cancel account deletion request and restore account to active?")) return;
+
+    try {
+      const { error } = await client.from("users").update({
+        account_status: "active",
+        deletion_requested_at: null
+      }).eq("id", currentAuthUser.id);
+
+      if (error) throw error;
+
+      activeProfile.account_status = "active";
+      activeProfile.deletion_requested_at = null;
+      $("#scheduledDeletionBanner")?.classList.add("hidden");
+      $("#accStatusBadge").textContent = "Active";
+      showToast("Deletion request cancelled. Account is now active!");
+    } catch (err) {
+      showToast("Failed to cancel deletion request.", "error");
+    }
+  }
+
+  async function handleLogout() {
+    if (!confirm("Are you sure you want to log out of ARS?")) return;
+    if (client) {
+      await client.auth.signOut();
+    }
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = "index.html";
   }
 
-  document.addEventListener("DOMContentLoaded", initSettings);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
