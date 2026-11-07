@@ -125,8 +125,34 @@
     </dialog>
 
     <dialog id="storyViewerDialog" class="modal story-viewer-modal">
-      <button type="button" class="close-btn story-close" data-close="storyViewerDialog" aria-label="Close story">×</button>
-      <div id="storyViewerContent"></div>
+      <div class="story-viewer-card">
+        <div class="story-progress-container" id="storyProgressContainer">
+          <div class="story-progress-bar"><div class="story-progress-fill" id="storyProgressFill"></div></div>
+        </div>
+        <div class="story-viewer-head">
+          <div class="story-author-info">
+            <span class="avatar-circle story-viewer-avatar" id="storyViewerAvatar">R</span>
+            <div class="story-author-meta">
+              <strong id="storyViewerName">Story</strong>
+              <small id="storyViewerTime">Just now</small>
+            </div>
+          </div>
+          <div class="story-viewer-actions">
+            <button type="button" class="story-action-btn" id="storyPauseBtn" aria-label="Pause/Resume" title="Pause / Resume">⏸</button>
+            <button type="button" class="close-btn story-close-btn" data-close="storyViewerDialog" aria-label="Close story">×</button>
+          </div>
+        </div>
+        <div class="story-media-stage" id="storyMediaStage">
+          <button type="button" class="story-touch-nav prev" id="storyPrevBtn" aria-label="Previous story">‹</button>
+          <div id="storyViewerContent" class="story-viewer-media-wrap"></div>
+          <button type="button" class="story-touch-nav next" id="storyNextBtn" aria-label="Next story">›</button>
+        </div>
+        <div class="story-caption-bar" id="storyCaptionBar"></div>
+        <div class="story-interaction-bar">
+          <input type="text" id="storyQuickReply" class="story-reply-input" placeholder="Send a reply…" maxlength="200" autocomplete="off">
+          <button type="button" class="story-react-btn" id="storyHeartBtn" title="Send like">❤️</button>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="wheelDialog" class="modal">
@@ -182,6 +208,73 @@
         <div id="postOptionsList" class="activity-list"></div>
         <p id="postOptionsMessage" class="form-message" aria-live="polite"></p>
       </section>
+    </dialog>
+
+    <dialog id="editPostDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <h2>Edit post</h2>
+          <button type="button" class="close-btn" data-close="editPostDialog" aria-label="Close">×</button>
+        </div>
+        <form id="editPostForm" class="dialog-form">
+          <textarea id="editPostContent" rows="4" maxlength="2000" placeholder="What’s on your mind?"></textarea>
+          <div class="form-row">
+            <label for="editPostPrivacy">Audience</label>
+            <select id="editPostPrivacy">
+              <option value="public">Public (all ARS members)</option>
+              <option value="followers">Followers only</option>
+              <option value="private">Private (just you)</option>
+            </select>
+          </div>
+          <label class="checkbox-row" for="editPostComments">
+            <input type="checkbox" id="editPostComments">
+            <span>Allow comments on this post</span>
+          </label>
+          <button class="primary-btn" type="submit">Save changes</button>
+          <p id="editPostMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="postInsightsDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <div>
+            <span class="eyebrow">ARS ANALYTICS</span>
+            <h2>Post Insights</h2>
+          </div>
+          <button type="button" class="close-btn" data-close="postInsightsDialog" aria-label="Close">×</button>
+        </div>
+        <div class="insights-grid">
+          <div class="insight-box"><span class="insight-icon">👁️</span><strong id="statViews">0</strong><small>Views</small></div>
+          <div class="insight-box"><span class="insight-icon">❤️</span><strong id="statLikes">0</strong><small>Likes</small></div>
+          <div class="insight-box"><span class="insight-icon">💬</span><strong id="statComments">0</strong><small>Comments</small></div>
+          <div class="insight-box"><span class="insight-icon">🔁</span><strong id="statReposts">0</strong><small>Reposts</small></div>
+        </div>
+        <p id="insightMeta" class="modal-copy muted" style="margin-top:14px;font-size:12px;"></p>
+      </div>
+    </dialog>
+
+    <dialog id="reportPostDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <h2>Report post</h2>
+          <button type="button" class="close-btn" data-close="reportPostDialog" aria-label="Close">×</button>
+        </div>
+        <form id="reportPostForm" class="dialog-form">
+          <p class="modal-copy">Help us keep ARS safe and authentic. Reports are reviewed by platform moderators.</p>
+          <div class="report-options">
+            <label class="report-radio"><input type="radio" name="reportReason" value="spam" checked><span>Spam or scam</span></label>
+            <label class="report-radio"><input type="radio" name="reportReason" value="harassment"><span>Harassment or hate speech</span></label>
+            <label class="report-radio"><input type="radio" name="reportReason" value="inappropriate"><span>Inappropriate or adult content</span></label>
+            <label class="report-radio"><input type="radio" name="reportReason" value="violence"><span>Violence or dangerous content</span></label>
+            <label class="report-radio"><input type="radio" name="reportReason" value="other"><span>Other reason</span></label>
+          </div>
+          <textarea id="reportDetails" rows="2" maxlength="280" placeholder="Optional details..."></textarea>
+          <button class="primary-btn danger-btn" type="submit">Submit report</button>
+          <p id="reportPostMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
     </dialog>
 
     <dialog id="postDialog" class="modal">
