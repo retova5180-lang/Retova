@@ -595,3 +595,168 @@ input:checked + .slider:before {
   font-size: 11px;
   color: #6b7280;
 }
+
+/* ========================================================
+   Lifecycle Operations UI: Deletion Banner, Email Change, Modals
+   ======================================================== */
+.scheduled-deletion-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(185, 28, 28, 0.28));
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 16px;
+  gap: 12px;
+}
+.banner-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.banner-icon {
+  font-size: 24px;
+}
+.banner-body strong {
+  display: block;
+  color: #fca5a5;
+  font-size: 14px;
+}
+.banner-body p {
+  color: #e2e8f0;
+  font-size: 12px;
+  margin: 2px 0 0;
+}
+.cancel-deletion-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.cancel-deletion-btn:hover {
+  background: #ef4444;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+.input-with-button .form-input {
+  flex: 1;
+}
+.inline-action-btn {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.inline-action-btn:hover {
+  background: #a855f7;
+  color: #fff;
+}
+
+.security-callout {
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #e9d5ff;
+  line-height: 1.4;
+  margin: 8px 0;
+}
+.danger-warning-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.danger-warning-box strong {
+  display: block;
+  color: #f87171;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.danger-warning-box ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+.confirm-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #e2e8f0;
+  margin: 12px 0;
+  cursor: pointer;
+}
+.warning-heading {
+  color: #fbbf24 !important;
+}
+.danger-heading {
+  color: #f87171 !important;
+}
+.warning-btn {
+  background: #f59e0b;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.warning-btn:hover {
+  background: #d97706;
+}
+.danger-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.danger-btn:hover {
+  background: #dc2626;
+}
+.modal-status-msg {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+.modal-status-msg.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.modal-status-msg.success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+.modal-status-msg.info {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+}
