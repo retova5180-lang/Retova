@@ -28,6 +28,19 @@
       </button>
     </header>
 
+    <!-- Scheduled Deletion Banner -->
+    <div class="scheduled-deletion-banner hidden" id="scheduledDeletionBanner">
+      <div class="banner-body">
+        <span class="banner-icon">⚠️</span>
+        <div>
+          <strong>Account Scheduled for Deletion</strong>
+          <p id="deletionBannerDate">Your account has entered a 30-day grace period.</p>
+        </div>
+      </div>
+      <button type="button" class="cancel-deletion-btn" id="cancelDeletionBtn">Cancel Deletion</button>
+    </div>
+
+
     <main class="settings-main">
       <!-- Top Account Card matching reference image -->
       <section class="settings-account-card" id="settingsAccountCard" role="button" tabindex="0">
@@ -226,8 +239,11 @@
         <form id="accountForm" class="settings-form">
           <div class="form-group">
             <label for="accEmail">Email Address</label>
-            <input type="email" id="accEmail" class="form-input" readonly disabled>
-            <small class="field-hint">Email is linked to your login session.</small>
+            <div class="input-with-button">
+              <input type="email" id="accEmail" class="form-input" readonly disabled>
+              <button type="button" class="inline-action-btn" id="openChangeEmailBtn">Change</button>
+            </div>
+            <small class="field-hint" id="accEmailHint">Email is linked to your login session.</small>
           </div>
 
           <div class="form-group">
@@ -611,5 +627,100 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="settings.js"></script>
+
+    <!-- Change Email Dialog -->
+    <dialog id="changeEmailDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <h3>Change Email Address</h3>
+          <button type="button" class="close-btn" data-close="changeEmailDialog">×</button>
+        </div>
+        <form id="changeEmailForm" class="settings-form">
+          <div class="form-group">
+            <label>Current Email</label>
+            <input type="email" id="currentEmailVal" class="form-input" readonly disabled>
+          </div>
+          <div class="form-group">
+            <label for="newEmailInput">New Email Address</label>
+            <input type="email" id="newEmailInput" class="form-input" required placeholder="new.email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="confirmPassForEmail">Current Password (Verify Identity)</label>
+            <input type="password" id="confirmPassForEmail" class="form-input" required placeholder="Enter current password">
+          </div>
+          <div class="security-callout">
+            🔒 A confirmation email will be sent to the new address. Your email will be updated once you click the link.
+          </div>
+          <div class="modal-status-msg hidden" id="changeEmailStatusMsg"></div>
+          <div class="form-actions-row">
+            <button type="button" class="secondary-btn" data-close="changeEmailDialog">Cancel</button>
+            <button type="submit" class="primary-btn" id="submitChangeEmailBtn">Send Confirmation Link</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Temporarily Deactivate Account Dialog -->
+    <dialog id="deactivateDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <h3 class="warning-heading">Temporarily Deactivate Account</h3>
+          <button type="button" class="close-btn" data-close="deactivateDialog">×</button>
+        </div>
+        <form id="deactivateForm" class="settings-form">
+          <p class="dialog-desc">
+            Deactivating your account will immediately hide your profile, posts, and comments on ARS. You can easily reactivate anytime simply by signing back in.
+          </p>
+          <div class="form-group">
+            <label for="deactivatePasswordInput">Confirm Current Password</label>
+            <input type="password" id="deactivatePasswordInput" class="form-input" required placeholder="Enter password to verify identity">
+          </div>
+          <label class="confirm-checkbox-label">
+            <input type="checkbox" id="deactivateAgreeCheck" required>
+            <span>I understand that my profile will be hidden until I log in again.</span>
+          </label>
+          <div class="modal-status-msg hidden" id="deactivateStatusMsg"></div>
+          <div class="form-actions-row">
+            <button type="button" class="secondary-btn" data-close="deactivateDialog">Cancel</button>
+            <button type="submit" class="warning-btn" id="confirmDeactivateBtn">Deactivate Account</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Request Permanent Account Deletion Dialog -->
+    <dialog id="deleteAccountDialog" class="modal">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <h3 class="danger-heading">Request Permanent Account Deletion</h3>
+          <button type="button" class="close-btn" data-close="deleteAccountDialog">×</button>
+        </div>
+        <form id="deleteAccountForm" class="settings-form">
+          <div class="danger-warning-box">
+            <strong>⚠️ Scheduled Deletion Notice</strong>
+            <ul>
+              <li>Your account enters a <strong>30-day grace period</strong>.</li>
+              <li>Your profile and posts are hidden from everyone.</li>
+              <li>You can cancel deletion anytime by logging back in.</li>
+              <li>After 30 days, all account data, posts, and followers are permanently wiped.</li>
+            </ul>
+          </div>
+          <div class="form-group">
+            <label for="deletePasswordInput">Confirm Current Password</label>
+            <input type="password" id="deletePasswordInput" class="form-input" required placeholder="Enter password to verify identity">
+          </div>
+          <div class="form-group">
+            <label for="deleteConfirmWordInput">Type <strong>DELETE</strong> to confirm</label>
+            <input type="text" id="deleteConfirmWordInput" class="form-input" required placeholder="DELETE">
+          </div>
+          <div class="modal-status-msg hidden" id="deleteAccountStatusMsg"></div>
+          <div class="form-actions-row">
+            <button type="button" class="secondary-btn" data-close="deleteAccountDialog">Cancel</button>
+            <button type="submit" class="danger-btn" id="confirmDeleteAccountBtn">Permanently Request Deletion</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
 </body>
 </html>
