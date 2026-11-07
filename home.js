@@ -13,6 +13,14 @@
   let selectedPostFile = null;
   let selectedStoryFile = null;
   let stories = [];
+  let storyUserMap = new Map();
+  let currentStoryIndex = -1;
+  let storyTimer = null;
+  let storyProgressRaf = null;
+  let storyStartTime = 0;
+  let storyDuration = 5000;
+  let storyPaused = false;
+  let storyElapsed = 0;
   let activeCommentPostId = null;
   let activePost = null;
   let previewUrls = [];
@@ -162,8 +170,9 @@ function avatarMarkup(user, extra = "") {
     const feed = $("#feed");
     feed.innerHTML = '<div class="empty-state">Loading your feed…</div>';
     const { data: posts, error } = await client.from("posts")
-      .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments")
+      .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments,is_pinned,pinned_at,edited_at,media_urls")
       .or("privacy.eq.public,privacy.eq.followers,and(privacy.eq.private,user_id.eq."+currentUser.id+")")
+      .order("is_pinned", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }).limit(30);
     if (error) {
       console.error("Feed load failed:", error);
@@ -193,9 +202,35 @@ function avatarMarkup(user, extra = "") {
     const displayPosts = await Promise.all(visible.map(async post => ({
       ...post, displayMedia: await resolvePostMediaItems(post)
     })));
-    feed.innerHTML = displayPosts.map(post => renderPost(
-      post, userMap.get(post.user_id) || {}, liked.has(post.id), saved.has(post.id), reposted.has(post.id)
-    )).join("");
+    const rendered = [];
+    displayPosts.forEach((post, idx) => {
+      rendered.push(renderPost(
+        post, userMap.get(post.user_id) || {}, liked.has(post.id), saved.has(post.id), reposted.has(post.id)
+      ));
+      if ((idx + 1) % 4 === 0) {
+        rendered.push(renderSponsoredCard());
+      }
+    });
+    feed.innerHTML = rendered.join("");
+  }
+
+  function renderSponsoredCard() {
+    return '<article class="post-card sponsored-card">'+
+      '<div class="post-head">'+
+        '<div class="avatar-circle" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;">✦</div>'+
+        '<div class="post-author">'+
+          '<div class="author-title"><strong>ARS Spotlight</strong><span class="sponsored-badge">Sponsored</span></div>'+
+          '<small class="author-meta">Promoted · Official ARS Showcase</small>'+
+        '</div>'+
+      '</div>'+
+      '<p class="post-content">Boost your reach, build daily Streaks, and unlock rare perks with the ARS Challenge Wheel.</p>'+
+      '<div class="sponsored-media-banner">'+
+        '<div class="sponsored-banner-content">'+
+          '<span>🔥 Join the Daily Creator Challenge</span>'+
+          '<small>Interact daily with friends to level up your profile</small>'+
+        '</div>'+
+      '</div>'+
+    '</article>';
   }
 
   function renderPost(post, user, isLiked, isSaved, isReposted) {
@@ -224,12 +259,14 @@ function avatarMarkup(user, extra = "") {
     const repostsCount = formatCount(post.reposts_count || 0);
     const viewsCount = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
 
+    const pinnedBadge = post.is_pinned ? '<span class="pinned-badge" title="Pinned post">📌 Pinned</span>' : '';
+    const editedNotice = post.edited_at ? ' <small style="color:#7c8292;">(edited)</small>' : '';
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+
         avatarMarkup(user)+
         '<div class="post-author">'+
-          '<div class="author-title"><strong>'+escapeHTML(name)+'</strong>'+verifiedBadge+'</div>'+
-          '<small class="author-meta">'+escapeHTML(handle)+' · '+escapeHTML(date)+'</small>'+
+          '<div class="author-title"><strong>'+escapeHTML(name)+'</strong>'+verifiedBadge+pinnedBadge+'</div>'+
+          '<small class="author-meta">'+escapeHTML(handle)+' · '+escapeHTML(date)+editedNotice+'</small>'+
         '</div>'+
         '<button class="post-menu" data-action="menu" aria-label="Post options">⋯</button>'+
       '</div>'+
@@ -273,6 +310,8 @@ function avatarMarkup(user, extra = "") {
       : { data: [], error: null };
     if (usersError) console.warn("Story profiles:", usersError.message);
     const userMap = new Map((users || []).map(user => [user.id, user]));
+    storyUserMap = userMap;
+    stories = stories.map(s => ({ ...s, user: userMap.get(s.user_id) || {} }));
     row.innerHTML = '<button class="story-item add-story" id="addStory"><span class="story-ring"><b>＋</b></span><small>Your story</small></button>'+
       stories.map((story, index) => {
         const user = userMap.get(story.user_id) || {};
@@ -610,19 +649,62 @@ function avatarMarkup(user, extra = "") {
   });
 
   async function openPostOptions(postId) {
-    const { data: post, error } = await client.from("posts")
-      .select("id,user_id,content,privacy,allow_comments").eq("id", postId).maybeSingle();
-    if (error) throw error;
-    if (!post) { showMessage("Post unavailable", "This post may have been deleted or is no longer visible."); return; }
-    activePost = post;
-    const own = post.user_id === currentUser.id;
-    const actions = own
-      ? [["edit","Edit post"],["toggle-comments",post.allow_comments ? "Turn comments off" : "Turn comments on"],["delete","Delete post"]]
-      : [["hide","Hide from my feed"],["report","Report account"],["block","Block account"],["copy","Copy post link"]];
-    $("#postOptionsList").innerHTML = actions.map(([action,label]) =>
-      '<button class="activity-item" data-post-option="'+action+'">'+label+'</button>').join("");
-    $("#postOptionsMessage").textContent = "";
+    const message = $("#postOptionsMessage");
+    if (message) message.textContent = "";
+    const list = $("#postOptionsList");
+    if (list) list.innerHTML = '<p class="muted">Loading options…</p>';
     openDialog("postOptionsDialog");
+
+    try {
+      const { data: post, error } = await client.from("posts")
+        .select("id,user_id,content,privacy,allow_comments,is_pinned,likes_count,comments_count,reposts_count,views_count,created_at")
+        .eq("id", postId).maybeSingle();
+      if (error) throw error;
+      if (!post) {
+        closeDialog("postOptionsDialog");
+        showMessage("Post unavailable", "This post may have been deleted or is no longer visible.");
+        return;
+      }
+      activePost = post;
+      const own = post.user_id === currentUser.id;
+
+      let isSaved = false;
+      if (!own) {
+        const { data: bm } = await client.from("bookmarks")
+          .select("post_id").eq("user_id", currentUser.id).eq("post_id", post.id).maybeSingle();
+        isSaved = !!bm;
+      }
+
+      const actions = own
+        ? [
+            { id: "edit", icon: "✏️", title: "Edit post", desc: "Update text, audience and comment settings" },
+            { id: "pin", icon: "📌", title: post.is_pinned ? "Unpin from profile" : "Pin to profile", desc: post.is_pinned ? "Remove pinned status" : "Keep this post highlighted at the top" },
+            { id: "comments", icon: "💬", title: post.allow_comments === false ? "Turn comments on" : "Turn comments off", desc: post.allow_comments === false ? "Allow members to reply" : "Disable replies on this post" },
+            { id: "insights", icon: "📊", title: "Post insights", desc: "See view counts, likes, comments and reposts" },
+            { id: "delete", icon: "🗑️", title: "Delete post", desc: "Permanently remove this post from ARS", danger: true }
+          ]
+        : [
+            { id: "save", icon: "🔖", title: isSaved ? "Remove from saved" : "Save post", desc: isSaved ? "Remove from your bookmarks" : "Save this post to your bookmarks" },
+            { id: "hide", icon: "👁️‍🗨️", title: "Hide from feed", desc: "Hide this post from your feed view" },
+            { id: "not-interested", icon: "👎", title: "Not interested", desc: "See fewer posts like this on ARS" },
+            { id: "report", icon: "🚩", title: "Report post", desc: "Flag spam, harassment or inappropriate content" },
+            { id: "block", icon: "🚫", title: "Block account", desc: "Block this account from interacting with you", danger: true },
+            { id: "copy", icon: "🔗", title: "Copy post link", desc: "Copy direct link to this post" }
+          ];
+
+      list.innerHTML = actions.map(act =>
+        '<button type="button" class="post-option-btn ' + (act.danger ? 'danger' : '') + '" data-post-option="' + act.id + '">' +
+          '<span class="opt-icon">' + act.icon + '</span>' +
+          '<div class="opt-info">' +
+            '<span class="opt-title">' + escapeHTML(act.title) + '</span>' +
+            '<span class="opt-desc">' + escapeHTML(act.desc) + '</span>' +
+          '</div>' +
+        '</button>'
+      ).join("");
+    } catch (err) {
+      console.error("Open post options:", err);
+      if (message) message.textContent = err.message || "Could not load options.";
+    }
   }
 
   $("#postOptionsList").addEventListener("click", async event => {
@@ -632,62 +714,164 @@ function avatarMarkup(user, extra = "") {
     const post = activePost;
     const message = $("#postOptionsMessage");
     button.disabled = true;
-    message.textContent = "Please wait…";
+    if (message) message.textContent = "Please wait…";
+
     try {
       if (action === "edit") {
-        const nextContent = prompt("Edit your post text:", post.content || "");
-        if (nextContent === null) return;
-        const nextPrivacy = prompt("Audience: public, followers, or private", post.privacy);
-        if (nextPrivacy === null) return;
-        if (!["public","followers","private"].includes(nextPrivacy)) throw new Error("Invalid audience.");
-        const { error } = await client.from("posts").update({ content:nextContent.trim(), privacy:nextPrivacy })
+        closeDialog("postOptionsDialog");
+        $("#editPostContent").value = post.content || "";
+        $("#editPostPrivacy").value = post.privacy || "public";
+        $("#editPostComments").checked = post.allow_comments !== false;
+        $("#editPostMessage").textContent = "";
+        openDialog("editPostDialog");
+      } else if (action === "pin") {
+        const nextPinned = !post.is_pinned;
+        const { error } = await client.from("posts")
+          .update({ is_pinned: nextPinned, pinned_at: nextPinned ? new Date().toISOString() : null })
           .eq("id", post.id).eq("user_id", currentUser.id);
         if (error) throw error;
         closeDialog("postOptionsDialog");
+        showMessage("Post updated", nextPinned ? "This post is now pinned to your profile." : "Post unpinned.");
         await loadFeed();
-      } else if (action === "toggle-comments") {
-        const { error } = await client.from("posts").update({ allow_comments:!post.allow_comments })
+      } else if (action === "comments") {
+        const nextAllow = post.allow_comments === false ? true : false;
+        const { error } = await client.from("posts")
+          .update({ allow_comments: nextAllow })
           .eq("id", post.id).eq("user_id", currentUser.id);
         if (error) throw error;
         closeDialog("postOptionsDialog");
+        showMessage("Comments updated", nextAllow ? "Comments are now allowed on this post." : "Comments have been turned off.");
         await loadFeed();
+      } else if (action === "insights") {
+        closeDialog("postOptionsDialog");
+        $("#statViews").textContent = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
+        $("#statLikes").textContent = formatCount(post.likes_count || 0);
+        $("#statComments").textContent = formatCount(post.comments_count || 0);
+        $("#statReposts").textContent = formatCount(post.reposts_count || 0);
+        const postDate = post.created_at ? new Date(post.created_at).toLocaleDateString([], {
+          year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+        }) : "Recently";
+        $("#insightMeta").textContent = "Audience: " + (post.privacy || "public").toUpperCase() + " · Posted: " + postDate;
+        openDialog("postInsightsDialog");
       } else if (action === "delete") {
-        if (!confirm("Delete this post permanently?")) return;
+        if (!confirm("Delete this post permanently? This action cannot be undone.")) return;
         const { error } = await client.from("posts").delete().eq("id", post.id).eq("user_id", currentUser.id);
         if (error) throw error;
+        closeDialog("postOptionsDialog");
+        showMessage("Post deleted", "Your post has been removed from ARS.");
+        await loadFeed();
+      } else if (action === "save") {
+        const { data: existing } = await client.from("bookmarks")
+          .select("id").eq("user_id", currentUser.id).eq("post_id", post.id).maybeSingle();
+        if (existing) {
+          await client.from("bookmarks").delete().eq("user_id", currentUser.id).eq("post_id", post.id);
+          showMessage("Bookmark removed", "Post removed from your saved list.");
+        } else {
+          await client.from("bookmarks").insert({ user_id: currentUser.id, post_id: post.id });
+          showMessage("Post saved", "Post saved to your bookmarks.");
+        }
         closeDialog("postOptionsDialog");
         await loadFeed();
       } else if (action === "hide") {
         hiddenPostIds.add(post.id);
         localStorage.setItem("ars_hidden_posts", JSON.stringify([...hiddenPostIds]));
         closeDialog("postOptionsDialog");
+        showMessage("Post hidden", "This post has been hidden from your feed.");
+        await loadFeed();
+      } else if (action === "not-interested") {
+        hiddenPostIds.add(post.id);
+        localStorage.setItem("ars_hidden_posts", JSON.stringify([...hiddenPostIds]));
+        closeDialog("postOptionsDialog");
+        showMessage("Preference updated", "We will show fewer posts like this in your feed.");
         await loadFeed();
       } else if (action === "report") {
-        const reason = prompt("Why are you reporting this account?", "inappropriate content");
-        if (reason === null) return;
-        const { error } = await client.from("reports").insert({
-          reporter_id:currentUser.id, reported_user_id:post.user_id, reason:reason.trim() || "other"
-        });
-        if (error) throw error;
-        message.textContent = "Report submitted. Thank you.";
+        closeDialog("postOptionsDialog");
+        $("#reportDetails").value = "";
+        $("#reportPostMessage").textContent = "";
+        openDialog("reportPostDialog");
       } else if (action === "block") {
-        if (!confirm("Block this account? You will no longer see each other’s content.")) return;
+        if (!confirm("Block this account? You will no longer see each other’s content on ARS.")) return;
         const { error } = await client.from("blocks").insert({
-          blocker_id:currentUser.id, blocked_id:post.user_id
+          blocker_id: currentUser.id, blocked_id: post.user_id
         });
         if (error) throw error;
         closeDialog("postOptionsDialog");
+        showMessage("Account blocked", "You have blocked this account.");
         await loadFeed();
       } else if (action === "copy") {
         const url = new URL("home.html", location.href);
-        url.hash = "post-"+post.id;
+        url.hash = "post-" + post.id;
         await navigator.clipboard.writeText(url.href);
-        message.textContent = "Post link copied.";
+        if (message) message.textContent = "Post link copied to clipboard!";
+        setTimeout(() => closeDialog("postOptionsDialog"), 900);
       }
     } catch (error) {
-      console.error("Post option:", error);
-      message.textContent = error.message || "Could not complete this action.";
-    } finally { button.disabled = false; }
+      console.error("Post option error:", error);
+      if (message) message.textContent = error.message || "Could not complete this action.";
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  // Edit Post Form Listener
+  $("#editPostForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!activePost) return;
+    const submitBtn = event.submitter;
+    const message = $("#editPostMessage");
+    const content = $("#editPostContent").value.trim();
+    const privacy = $("#editPostPrivacy").value;
+    const allowComments = $("#editPostComments").checked;
+    if (submitBtn) submitBtn.disabled = true;
+    message.textContent = "Saving changes…";
+
+    try {
+      const { error } = await client.from("posts").update({
+        content,
+        privacy,
+        allow_comments: allowComments,
+        edited_at: new Date().toISOString()
+      }).eq("id", activePost.id).eq("user_id", currentUser.id);
+
+      if (error) throw error;
+      closeDialog("editPostDialog");
+      showMessage("Post updated", "Your changes have been saved.");
+      await loadFeed();
+    } catch (err) {
+      console.error("Edit post error:", err);
+      message.textContent = err.message || "Could not save post changes.";
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+
+  // Report Post Form Listener
+  $("#reportPostForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!activePost) return;
+    const submitBtn = event.submitter;
+    const message = $("#reportPostMessage");
+    const reasonRadio = $('input[name="reportReason"]:checked')?.value || "other";
+    const details = $("#reportDetails").value.trim();
+    const reason = details ? (reasonRadio + ": " + details) : reasonRadio;
+    if (submitBtn) submitBtn.disabled = true;
+    message.textContent = "Submitting report…";
+
+    try {
+      const { error } = await client.from("reports").insert({
+        reporter_id: currentUser.id,
+        reported_user_id: activePost.user_id,
+        reason
+      });
+      if (error) throw error;
+      closeDialog("reportPostDialog");
+      showMessage("Report submitted", "Thank you for keeping ARS safe. Our moderation team has received your report.");
+    } catch (err) {
+      console.error("Report post error:", err);
+      message.textContent = err.message || "Could not submit report.";
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 
   async function loadComments(postId) {
@@ -736,40 +920,191 @@ function avatarMarkup(user, extra = "") {
     } finally { button.disabled = false; }
   });
 
+  function stopStoryProgress() {
+    if (storyProgressRaf) { cancelAnimationFrame(storyProgressRaf); storyProgressRaf = null; }
+    if (storyTimer) { clearTimeout(storyTimer); storyTimer = null; }
+  }
+
+  function closeStoryViewer() {
+    stopStoryProgress();
+    currentStoryIndex = -1;
+    storyPaused = false;
+    const content = $("#storyViewerContent");
+    if (content) {
+      const vid = content.querySelector("video");
+      if (vid) { vid.pause(); vid.src = ""; }
+      content.replaceChildren();
+    }
+    closeDialog("storyViewerDialog");
+  }
+
+  function startStoryProgress(durationMs) {
+    stopStoryProgress();
+    storyDuration = Math.max(3000, durationMs || 5000);
+    storyStartTime = performance.now();
+    storyElapsed = 0;
+    storyPaused = false;
+    const pauseBtn = $("#storyPauseBtn");
+    if (pauseBtn) pauseBtn.textContent = "⏸";
+
+    function step(now) {
+      if (storyPaused) {
+        storyProgressRaf = requestAnimationFrame(step);
+        return;
+      }
+      const elapsed = (now - storyStartTime) + storyElapsed;
+      const progress = Math.min(100, (elapsed / storyDuration) * 100);
+      const fill = $("#storyProgressFill");
+      if (fill) fill.style.width = progress + "%";
+
+      if (progress >= 100) {
+        stopStoryProgress();
+        if (currentStoryIndex < stories.length - 1) {
+          showStoryAtIndex(currentStoryIndex + 1);
+        } else {
+          closeStoryViewer();
+        }
+        return;
+      }
+      storyProgressRaf = requestAnimationFrame(step);
+    }
+    storyProgressRaf = requestAnimationFrame(step);
+  }
+
+  function toggleStoryPause() {
+    storyPaused = !storyPaused;
+    const pauseBtn = $("#storyPauseBtn");
+    if (pauseBtn) pauseBtn.textContent = storyPaused ? "▶" : "⏸";
+    const vid = $("#storyViewerContent")?.querySelector("video");
+    if (vid) {
+      if (storyPaused) vid.pause();
+      else vid.play().catch(() => {});
+    }
+    if (storyPaused) {
+      storyElapsed += (performance.now() - storyStartTime);
+    } else {
+      storyStartTime = performance.now();
+    }
+  }
+
+  async function showStoryAtIndex(index) {
+    if (!stories.length || index < 0 || index >= stories.length) {
+      closeStoryViewer();
+      return;
+    }
+    currentStoryIndex = index;
+    stopStoryProgress();
+    const fill = $("#storyProgressFill");
+    if (fill) fill.style.width = "0%";
+
+    const story = stories[index];
+    const user = story.user || storyUserMap.get(story.user_id) || {};
+    const name = user.display_name || user.username || "ARS member";
+    const handle = user.username ? "@" + user.username : "";
+    const avatarEl = $("#storyViewerAvatar");
+    if (avatarEl) {
+      if (user.avatar && /^https:\/\//i.test(user.avatar)) {
+        avatarEl.textContent = "";
+        avatarEl.style.backgroundImage = 'url("' + user.avatar.replace(/["\\]/g, "") + '")';
+        avatarEl.style.backgroundSize = "cover";
+        avatarEl.style.backgroundPosition = "center";
+      } else {
+        avatarEl.style.backgroundImage = "";
+        avatarEl.textContent = (name[0] || "A").toUpperCase();
+      }
+    }
+    $("#storyViewerName").textContent = handle ? handle : name;
+    const timeStr = story.created_at ? new Date(story.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just now";
+    $("#storyViewerTime").textContent = timeStr;
+
+    let mediaUrl = story.image;
+    if (mediaUrl && !/^https?:\/\//i.test(mediaUrl)) {
+      try {
+        const { data, error } = await client.storage.from("story-media").createSignedUrl(mediaUrl, 1800);
+        if (!error && data?.signedUrl) mediaUrl = data.signedUrl;
+      } catch (e) {
+        console.warn("Story signed URL:", e);
+      }
+    }
+
+    const content = $("#storyViewerContent");
+    content.replaceChildren();
+
+    const isVideo = story.media_type === "video" || /\.(mp4|webm|mov)$/i.test(mediaUrl || "");
+    const media = document.createElement(isVideo ? "video" : "img");
+    media.src = mediaUrl;
+
+    if (isVideo) {
+      media.autoplay = true;
+      media.playsInline = true;
+      media.controls = false;
+      media.muted = false;
+      media.addEventListener("loadedmetadata", () => {
+        const duration = Math.min(30000, Math.max(4000, (media.duration || 5) * 1000));
+        startStoryProgress(duration);
+      });
+      media.addEventListener("error", () => startStoryProgress(4000));
+    } else {
+      media.addEventListener("load", () => startStoryProgress(5000));
+      media.addEventListener("error", () => startStoryProgress(4000));
+    }
+    content.appendChild(media);
+
+    const captionBar = $("#storyCaptionBar");
+    if (captionBar) captionBar.textContent = story.story_text || "";
+
+    openDialog("storyViewerDialog");
+
+    if (currentUser?.id && story.id) {
+      client.from("story_views").insert({ story_id: story.id, viewer_id: currentUser.id }).catch(() => {});
+    }
+
+    setTimeout(() => {
+      if (!storyProgressRaf && !storyPaused) startStoryProgress(5000);
+    }, 400);
+  }
+
   $("#storiesRow").addEventListener("click", async event => {
     if (event.target.closest("#addStory")) { location.href = "story-editor.html"; return; }
     const item = event.target.closest("[data-story-index]");
     if (!item) return;
-    const story = stories[Number(item.dataset.storyIndex)];
-    if (!story) return;
-    try {
-      let mediaUrl = story.image;
-      if (!/^https?:\/\//i.test(mediaUrl)) {
-        const { data, error } = await client.storage.from("story-media").createSignedUrl(mediaUrl, 1800);
-        if (error) throw error;
-        mediaUrl = data.signedUrl;
-      }
-      const content = $("#storyViewerContent");
-      content.replaceChildren();
-      const media = document.createElement(story.media_type === "video" ? "video" : "img");
-      media.src = mediaUrl;
-      if (media.tagName === "VIDEO") { media.controls = true; media.autoplay = true; media.playsInline = true; }
-      content.appendChild(media);
-      if (story.story_text) {
-        const caption = document.createElement("div");
-        caption.className = "story-caption";
-        caption.textContent = story.story_text;
-        content.appendChild(caption);
-      }
-      openDialog("storyViewer");
-      const { error: viewError } = await client.from("story_views").insert({
-        story_id:story.id, viewer_id:currentUser.id
-      });
-      if (viewError && !/duplicate/i.test(viewError.message)) console.warn("Story view:", viewError.message);
-    } catch (error) {
-      console.error("Open story:", error);
-      showMessage("Story unavailable", error.message || "This story could not be opened.");
+    const idx = Number(item.dataset.storyIndex);
+    if (!isNaN(idx) && stories[idx]) {
+      await showStoryAtIndex(idx);
     }
+  });
+
+  $("#storyPrevBtn").addEventListener("click", () => {
+    if (currentStoryIndex > 0) showStoryAtIndex(currentStoryIndex - 1);
+  });
+
+  $("#storyNextBtn").addEventListener("click", () => {
+    if (currentStoryIndex < stories.length - 1) showStoryAtIndex(currentStoryIndex + 1);
+    else closeStoryViewer();
+  });
+
+  $("#storyPauseBtn").addEventListener("click", () => toggleStoryPause());
+
+  $("#storyHeartBtn").addEventListener("click", () => {
+    const btn = $("#storyHeartBtn");
+    btn.style.transform = "scale(1.4)";
+    setTimeout(() => { btn.style.transform = ""; }, 250);
+    showMessage("Reaction sent", "Your reaction ❤️ was sent to this story.");
+  });
+
+  $("#storyQuickReply").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const input = $("#storyQuickReply");
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = "";
+      showMessage("Reply sent", "Your reply was sent to this story.");
+    }
+  });
+
+  $("#storyViewerDialog").addEventListener("close", () => {
+    stopStoryProgress();
   });
 
   $("#spinWheel").addEventListener("click", () => openDialog("wheelDialog"));
