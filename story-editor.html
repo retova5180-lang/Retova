@@ -1,7 +1,123 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#05040b"><title>ARS — Story Editor</title><link rel="stylesheet" href="story-editor.css"></head><body><header class="brandbar"><a href="home.html">ARS</a></header><main class="editor">
-<section class="stage"><button class="close" id="closeEditor" aria-label="Close">×</button><div class="preview-wrap" id="previewWrap"><div id="emptyPreview" class="empty-preview"><label for="storyFile">＋<b>Choose photo or video</b><small>Tap or drop media here to start your story</small></label></div><img id="storyImage" class="story-image hidden" alt="Story preview"><video id="storyVideo" class="story-image hidden" controls playsinline></video><canvas id="drawCanvas"></canvas><div id="textLayer"></div><span class="zoom-label" id="zoomLabel">1.0x</span></div>
-<aside class="tools"><button data-tool="filters"><i>✧</i><span>Filters</span></button><button data-tool="text"><i>Aa</i><span>Text</span></button><button data-tool="stickers"><i>☻</i><span>Stickers</span></button><button data-tool="emoji"><i>☺</i><span>Emoji</span></button><button data-tool="draw"><i>〰</i><span>Draw</span></button><button data-tool="crop"><i>⌗</i><span>Crop &amp; Rotate</span></button><button data-tool="sound"><i>◖))</i><span>Sound</span></button><button data-tool="erase"><i>⌫</i><span>Erase</span></button></aside></section>
-<section class="controls"><input id="storyFile" type="file" accept="image/*,video/*" hidden><input id="soundPicker" type="file" accept="audio/*" hidden><div class="tool-panel" id="toolPanel"><div class="filter-list"><button data-filter="none" class="active">None</button><button data-filter="vivid">Vivid</button><button data-filter="moody">Moody</button><button data-filter="dreamy">Dreamy</button><button data-filter="bw">B&amp;W</button><button data-filter="neon">Neon</button></div></div>
-<div class="timeline"><button id="playPreview" aria-label="Play preview">▷</button><div class="track"><span></span></div><button id="soundToggle" aria-label="Toggle sound">◖))</button></div>
-<div class="bottom-actions"><button id="saveDraft" class="outline">⇩　Save Draft</button><button id="nextStory" class="primary">Next　›</button></div><p id="editorMessage" role="status"></p></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="story-editor.js" defer></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#05040b">
+  <title>ARS — Story Editor</title>
+  <link rel="stylesheet" href="story-editor.css">
+</head>
+<body>
+  <header class="brandbar"><a href="home.html">ARS</a></header>
+  <main class="editor">
+    <section class="stage">
+      <button class="close" id="closeEditor" aria-label="Close">×</button>
+      <button class="undo-btn hidden" id="undoBtn" aria-label="Undo" title="Undo">↶</button>
+      <button class="change-btn hidden" id="changeMediaBtn" aria-label="Change Media" title="Change photo or video">⟳ Change</button>
+
+      <div class="preview-wrap" id="previewWrap">
+        <div id="emptyPreview" class="empty-preview">
+          <div class="empty-icon">＋</div>
+          <b>Choose photo or video</b>
+          <small>Tap, click, or drop media here to start your story</small>
+          <button type="button" id="browseMediaBtn" class="browse-btn">Browse Files</button>
+        </div>
+        <img id="storyImage" class="story-image hidden" alt="Story preview">
+        <video id="storyVideo" class="story-image hidden" controls playsinline></video>
+        <canvas id="drawCanvas"></canvas>
+        <div id="textLayer"></div>
+        <span class="zoom-label" id="zoomLabel">1.0x</span>
+      </div>
+
+      <aside class="tools">
+        <button data-tool="filters" class="active"><i>✧</i><span>Filters</span></button>
+        <button data-tool="text"><i>Aa</i><span>Text</span></button>
+        <button data-tool="stickers"><i>☻</i><span>Stickers</span></button>
+        <button data-tool="emoji"><i>☺</i><span>Emoji</span></button>
+        <button data-tool="draw"><i>〰</i><span>Draw</span></button>
+        <button data-tool="crop"><i>⌗</i><span>Crop &amp; Rotate</span></button>
+        <button data-tool="sound"><i>◖))</i><span>Sound</span></button>
+        <button data-tool="erase"><i>⌫</i><span>Erase</span></button>
+      </aside>
+    </section>
+
+    <section class="controls">
+      <input id="storyFile" type="file" accept="image/*,video/*" hidden>
+      <input id="soundPicker" type="file" accept="audio/*" hidden>
+
+      <div class="tool-panel" id="toolPanel">
+        <!-- Filter list (default) -->
+        <div class="filter-list" id="filterList">
+          <button data-filter="none" class="active">None</button>
+          <button data-filter="vivid">Vivid</button>
+          <button data-filter="moody">Moody</button>
+          <button data-filter="dreamy">Dreamy</button>
+          <button data-filter="bw">B&amp;W</button>
+          <button data-filter="neon">Neon</button>
+        </div>
+
+        <!-- Sticker list panel -->
+        <div class="sticker-list hidden" id="stickerList">
+          <button type="button" data-sticker="✨">✨</button>
+          <button type="button" data-sticker="❤️">❤️</button>
+          <button type="button" data-sticker="🔥">🔥</button>
+          <button type="button" data-sticker="🌙">🌙</button>
+          <button type="button" data-sticker="⭐">⭐</button>
+          <button type="button" data-sticker="🚀">🚀</button>
+          <button type="button" data-sticker="👑">👑</button>
+          <button type="button" data-sticker="⚡">⚡</button>
+          <button type="button" data-sticker="💯">💯</button>
+          <button type="button" data-sticker="💜">💜</button>
+        </div>
+
+        <!-- Emoji list panel -->
+        <div class="emoji-list hidden" id="emojiList">
+          <button type="button" data-emoji="😂">😂</button>
+          <button type="button" data-emoji="💜">💜</button>
+          <button type="button" data-emoji="😍">😍</button>
+          <button type="button" data-emoji="🔥">🔥</button>
+          <button type="button" data-emoji="👏">👏</button>
+          <button type="button" data-emoji="🎉">🎉</button>
+          <button type="button" data-emoji="🥳">🥳</button>
+          <button type="button" data-emoji="😎">😎</button>
+          <button type="button" data-emoji="🤩">🤩</button>
+          <button type="button" data-emoji="👻">👻</button>
+        </div>
+
+        <!-- Draw options panel -->
+        <div class="draw-options hidden" id="drawOptions">
+          <button type="button" class="color-btn active" data-color="#b45cff" style="--c:#b45cff" aria-label="Purple"></button>
+          <button type="button" class="color-btn" data-color="#ffffff" style="--c:#ffffff" aria-label="White"></button>
+          <button type="button" class="color-btn" data-color="#ff3366" style="--c:#ff3366" aria-label="Pink"></button>
+          <button type="button" class="color-btn" data-color="#ffcc00" style="--c:#ffcc00" aria-label="Yellow"></button>
+          <button type="button" class="color-btn" data-color="#00f2fe" style="--c:#00f2fe" aria-label="Cyan"></button>
+          <button type="button" class="color-btn" data-color="#43e97b" style="--c:#43e97b" aria-label="Green"></button>
+          <span class="brush-label" id="brushLabel">Brush: 5px</span>
+        </div>
+
+        <!-- Crop & Rotate panel -->
+        <div class="crop-options hidden" id="cropOptions">
+          <button type="button" id="rotateBtn" class="panel-action">⟳ Rotate 90°</button>
+          <button type="button" id="zoomInBtn" class="panel-action">＋ Zoom In</button>
+          <button type="button" id="zoomOutBtn" class="panel-action">－ Zoom Out</button>
+          <button type="button" id="resetTransformBtn" class="panel-action">↺ Reset</button>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <button id="playPreview" aria-label="Play preview">▷</button>
+        <div class="track"><span id="trackProgress"></span></div>
+        <button id="soundToggle" aria-label="Toggle sound">◖))</button>
+      </div>
+
+      <div class="bottom-actions">
+        <button id="saveDraft" class="outline">⇩ Save Draft</button>
+        <button id="nextStory" class="primary">Next ›</button>
+      </div>
+      <p id="editorMessage" role="status"></p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="story-editor.js" defer></script>
+</body>
+</html>
