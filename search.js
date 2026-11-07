@@ -102,7 +102,7 @@
   }
   function renderAccounts(accounts) {
     const visible = showAllAccounts ? accounts : accounts.slice(0, 3);
-    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<div class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<span class="verified" aria-label="Verified">✦</span>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></div>`).join("") : '<p class="muted">New creators will appear here.</p>';
+    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<a href="profile.html?user=${encodeURIComponent(user.username || "")}" class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<span class="verified" aria-label="Verified">✦</span>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></div>`).join("") : '<p class="muted">New creators will appear here.</p>';
     const button = $("#seeAccounts");
     if (button) { button.classList.toggle("hidden", accounts.length <= 3); button.textContent = showAllAccounts ? "Show Less ‹" : "See More ›"; }
   }
