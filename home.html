@@ -117,12 +117,10 @@
     <dialog id="activityDialog" class="modal">
       <div class="modal-card">
         <div class="modal-heading">
-          <h2>Notifications</h2>
+          <div class="heading-with-action"><h2>Notifications</h2><button type="button" class="streak-pill-btn" id="openStreaksFromActivity">🔥 Streaks</button></div>
           <button type="button" class="close-btn" data-close="activityDialog" aria-label="Close">×</button>
         </div>
-        <div id="activityList" class="activity-list">
-          <p class="muted">Loading notifications…</p>
-        </div>
+        <div id="activityList" class="activity-list"><p class="muted">Loading notifications…</p></div>
       </div>
     </dialog>
 
@@ -243,18 +241,23 @@
       </div>
     </dialog>
 
-    <dialog id="streakDialog" class="modal">
-      <div class="modal-card">
-        <div class="modal-heading">
-          <h2>Start a Streak</h2>
-          <button type="button" class="close-btn" data-close="streakDialog" aria-label="Close">×</button>
+    <dialog id="profileMenuDialog" class="modal">
+      <div class="modal-card profile-menu-card">
+        <div class="modal-heading"><div class="profile-menu-user"><span class="avatar-circle" id="menuAvatar">R</span><div><strong id="menuName">User</strong><small id="menuHandle">@user</small></div></div><button type="button" class="close-btn" data-close="profileMenuDialog" aria-label="Close">×</button></div>
+        <div class="profile-menu-items">
+          <button type="button" class="menu-action-item" id="menuOpenStreaks"><span>🔥</span><div><strong>Streaks & Recoveries</strong><small>View Streaks and manage recovery requests</small></div><span>›</span></button>
+          <button type="button" class="menu-action-item" id="menuOpenNotifications"><span>🔔</span><div><strong>Notifications</strong><small>Likes, comments, reposts and activity</small></div><span>›</span></button>
+          <button type="button" class="menu-action-item danger" id="menuSignOut"><span>↪</span><div><strong>Sign Out</strong><small>Log out of your ARS account</small></div><span>›</span></button>
         </div>
-        <p class="modal-copy">Streaks unlock after 6 continuous days of shared interactions on ARS.</p>
-        <form id="streakInviteForm" class="dialog-form">
-          <input type="text" id="streakUsername" placeholder="Friend's @username" required>
-          <button class="primary-btn" type="submit">Send streak invite</button>
-          <p id="streakMessage" class="form-message" aria-live="polite"></p>
-        </form>
+      </div>
+    </dialog>
+    <dialog id="streakDialog" class="modal">
+      <div class="modal-card streak-modal-card">
+        <div class="modal-heading"><div><h2>Streaks 🔥</h2><span class="eyebrow">MUTUAL DAILY INTERACTIONS</span></div><button type="button" class="close-btn" data-close="streakDialog" aria-label="Close">×</button></div>
+        <div class="streak-tabs"><button type="button" class="streak-tab-btn active" data-streak-tab="list">Active</button><button type="button" class="streak-tab-btn" data-streak-tab="restores">Recoveries <span id="restoresBadge" class="tab-badge hidden">0</span></button><button type="button" class="streak-tab-btn" data-streak-tab="invite">Invite</button></div>
+        <section class="streak-tab-view" id="streakViewList"><div id="streaksListContainer" class="streaks-list"><p class="muted">Loading Streaks…</p></div></section>
+        <section class="streak-tab-view hidden" id="streakViewRestores"><div id="restoresListContainer" class="streaks-list"><p class="muted">Loading recovery requests…</p></div></section>
+        <section class="streak-tab-view hidden" id="streakViewInvite"><p class="modal-copy">Interact with each other daily to keep your Streak alive. The activity window is 24 hours.</p><form id="streakInviteForm" class="dialog-form"><input type="text" id="streakUsername" placeholder="Friend's @username" required autocomplete="off"><button class="primary-btn" type="submit">Send Streak invite</button><p id="streakMessage" class="form-message" aria-live="polite"></p></form></section>
       </div>
     </dialog>
   </div>

@@ -77,6 +77,17 @@ function avatarMarkup(user, extra = "") {
       avatar.style.color = currentUser.letterColor || "#ffffff";
       avatar.style.background = currentUser.background || "linear-gradient(135deg,#8b3dff,#c54dff)";
     }
+    const menuAvatar = $("#menuAvatar");
+    if (menuAvatar) {
+      menuAvatar.textContent = currentUser.avatar && /^https:\/\//i.test(currentUser.avatar) ? "" : (currentUser.letter || currentUser.username?.[0]?.toUpperCase() || "R");
+      if (currentUser.avatar && /^https:\/\//i.test(currentUser.avatar)) {
+        menuAvatar.style.backgroundImage = 'url("'+currentUser.avatar.replace(/["\\]/g, "")+'")';
+        menuAvatar.style.backgroundSize = "cover";
+        menuAvatar.style.backgroundPosition = "center";
+      }
+    }
+    $("#menuName").textContent = name;
+    $("#menuHandle").textContent = currentUser.username ? "@"+currentUser.username : "";
   }
 
   async function requireSession() {
@@ -283,33 +294,113 @@ function avatarMarkup(user, extra = "") {
     $("#notificationDot").classList.toggle("hidden", !(count > 0));
   }
 
+  function activityDescription(item) {
+    const type = String(item.type || "activity").toLowerCase().replace(/[_-]/g, " ");
+    const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    if (metadata.message || metadata.text) return String(metadata.message || metadata.text);
+    const phrases = { like:"liked your post", comment:"commented on your post", repost:"reposted your post", follow:"started following you", streak_invite:"invited you to start a Streak", streak_recovery:"requested a Streak recovery", streak_recovery_request:"requested a Streak recovery" };
+    return phrases[type] || (type + " on your account");
+  }
+
   async function openActivity() {
     const list = $("#activityList");
-    list.innerHTML = '<p class="muted">Loading activity…</p>';
+    list.innerHTML = '<p class="muted">Loading notifications…</p>';
     openDialog("activityDialog");
     const { data, error } = await client.from("notifications")
       .select("id,sender_id,type,post_id,is_read,metadata,created_at")
       .eq("user_id", currentUser.id).order("created_at", { ascending:false }).limit(50);
     if (error) { list.textContent = "Could not load activity: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">You’re all caught up.</p>'; return; }
-    const senderIds = [...new Set(data.map(item => item.sender_id).filter(Boolean))];
-    const { data: senders } = senderIds.length
-      ? await client.from("users").select("id,username,display_name").in("id", senderIds)
-      : { data: [] };
-    const senderMap = new Map((senders || []).map(user => [user.id, user]));
+    const ids = [...new Set(data.map(item => item.sender_id).filter(Boolean))];
+    const { data: senders } = ids.length ? await client.from("users").select("id,username,display_name,avatar").in("id", ids) : { data:[] };
+    const userMap = new Map((senders || []).map(user => [user.id, user]));
     list.innerHTML = data.map(item => {
-      const sender = senderMap.get(item.sender_id) || {};
-      const label = sender.display_name || sender.username || "Someone";
-      const type = String(item.type || "activity").replace(/[_-]/g, " ");
-      return '<button class="activity-item '+(item.is_read?'':'unread')+'" data-notification-id="'+escapeHTML(item.id)+'"><strong>'+escapeHTML(label)+'</strong> '+escapeHTML(type)+'<small>'+escapeHTML(new Date(item.created_at).toLocaleString())+'</small></button>';
+      const user = userMap.get(item.sender_id) || {};
+      const name = user.display_name || user.username || "ARS member";
+      const avatar = user.avatar && /^https?:\/\//i.test(user.avatar) ? '<span class="activity-avatar"><img src="'+escapeHTML(user.avatar)+'" alt=""></span>' : '<span class="activity-avatar">'+escapeHTML(name[0] || "A")+'</span>';
+      return '<article class="activity-item '+(item.is_read ? "" : "unread")+'"><div class="activity-header-line">'+avatar+'<div class="activity-info"><p><strong>'+escapeHTML(name)+'</strong> '+escapeHTML(activityDescription(item))+'</p><small class="activity-time">'+escapeHTML(new Date(item.created_at).toLocaleString())+'</small></div></div></article>';
     }).join("");
     const unread = data.filter(item => !item.is_read).map(item => item.id);
     if (unread.length) {
-      const { error: markError } = await client.from("notifications").update({ is_read:true }).in("id", unread);
-      if (!markError) $("#notificationDot").classList.add("hidden");
+      const { error: markError } = await client.from("notifications").update({ is_read:true }).eq("user_id", currentUser.id).in("id", unread);
+      if (!markError) { $("#notificationDot").classList.add("hidden"); list.querySelectorAll(".unread").forEach(row => row.classList.remove("unread")); }
       else console.warn("Could not mark notifications read:", markError.message);
     }
   }
+
+  function selectStreakTab(tab) {
+    ["list", "restores", "invite"].forEach(name => {
+      const button = document.querySelector('[data-streak-tab="'+name+'"]');
+      const view = $("#streakView"+name[0].toUpperCase()+name.slice(1));
+      button?.classList.toggle("active", name === tab);
+      view?.classList.toggle("hidden", name !== tab);
+    });
+  }
+
+  async function loadStreaks() {
+    const list = $("#streaksListContainer");
+    list.innerHTML = '<p class="muted">Loading Streaks…</p>';
+    const { data, error } = await client.from("streaks").select("id,user_a_id,user_b_id,count,streak_count,status,last_activity_at,last_activity_user_a,last_activity_user_b,broken_at,created_at,updated_at").or("user_a_id.eq."+currentUser.id+",user_b_id.eq."+currentUser.id).order("updated_at", { ascending:false }).limit(100);
+    if (error) { list.textContent = "Could not load Streaks: "+error.message; return; }
+    if (!data?.length) { list.innerHTML = '<p class="muted">No Streaks yet. Invite someone to start one together.</p>'; return; }
+    const peerIds = [...new Set(data.map(row => row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id).filter(Boolean))];
+    const { data: peers } = peerIds.length ? await client.from("users").select("id,username,display_name,avatar").in("id", peerIds) : { data:[] };
+    const users = new Map((peers || []).map(user => [user.id, user]));
+    list.innerHTML = data.map(row => {
+      const peerId = row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id;
+      const peer = users.get(peerId) || {};
+      const name = peer.display_name || peer.username || "ARS member";
+      const count = Number(row.streak_count ?? row.count ?? 0);
+      const last = row.last_activity_at ? new Date(row.last_activity_at).getTime() : 0;
+      const expired = !!row.broken_at || /broken|expired|inactive|ended/i.test(row.status || "") || (last && Date.now()-last >= 86400000);
+      const action = expired ? '<div class="streak-status-bar"><span class="streak-status broken">Recovery may be available</span><button class="streak-recover-btn" type="button" data-request-recovery="'+escapeHTML(row.id)+'">Request recovery</button></div>' : '<div class="streak-status-bar"><span class="streak-status active">● Active</span><span class="muted">Last activity '+escapeHTML(row.last_activity_at ? new Date(row.last_activity_at).toLocaleString() : "not recorded")+'</span></div>';
+      const avatar = peer.avatar && /^https?:\/\//i.test(peer.avatar) ? '<span class="activity-avatar"><img src="'+escapeHTML(peer.avatar)+'" alt=""></span>' : '<span class="activity-avatar">'+escapeHTML(name[0] || "A")+'</span>';
+      return '<article class="streak-card"><div class="streak-card-main">'+avatar+'<div class="streak-user-info"><strong>'+escapeHTML(name)+'</strong><small>@'+escapeHTML(peer.username || "member")+'</small></div><span class="streak-count-badge">🔥 '+count+' days</span></div>'+action+'</article>';
+    }).join("");
+  }
+
+  async function loadRecoveries() {
+    const list = $("#restoresListContainer");
+    list.innerHTML = '<p class="muted">Loading recovery requests…</p>';
+    const { data, error } = await client.from("streak_restores").select("id,streak_id,status,approved_by,requested_at,expires_at,count,created_at").order("created_at", { ascending:false }).limit(50);
+    if (error) { list.textContent = "Could not load recovery requests: "+error.message; return; }
+    if (!data?.length) { list.innerHTML = '<p class="muted">No recovery requests right now.</p>'; $("#restoresBadge").classList.add("hidden"); return; }
+    const pending=data.filter(row=>String(row.status||"pending").toLowerCase()==="pending");
+    $("#restoresBadge").textContent=String(pending.length); $("#restoresBadge").classList.toggle("hidden",!pending.length);
+    const ids=[...new Set(data.map(row=>row.streak_id).filter(Boolean))];
+    const { data: streaks }=ids.length?await client.from("streaks").select("id,user_a_id,user_b_id").in("id",ids):{data:[]};
+    const partners=[...new Set((streaks||[]).flatMap(row=>[row.user_a_id,row.user_b_id]).filter(Boolean))];
+    const { data: people }=partners.length?await client.from("users").select("id,username,display_name").in("id",partners):{data:[]};
+    const userMap=new Map((people||[]).map(user=>[user.id,user]));
+    const streakMap=new Map((streaks||[]).map(row=>[row.id,row]));
+    list.innerHTML=data.map(row=>{
+      const pair=streakMap.get(row.streak_id)||{}; const partnerId=pair.user_a_id===currentUser.id?pair.user_b_id:pair.user_a_id;
+      const person=userMap.get(partnerId)||{}; const name=person.display_name||person.username||"your Streak partner";
+      const pendingRow=String(row.status||"pending").toLowerCase()==="pending"; const expired=row.expires_at&&new Date(row.expires_at).getTime()<=Date.now();
+      const actions=pendingRow&&!expired?'<div class="activity-action-row"><button type="button" class="btn-approve-recovery" data-recovery-id="'+escapeHTML(row.id)+'" data-approve="true">Approve</button><button type="button" class="btn-decline-recovery" data-recovery-id="'+escapeHTML(row.id)+'" data-approve="false">Decline</button></div>':'';
+      return '<article class="streak-card"><div class="streak-user-info"><strong>Recovery request from '+escapeHTML(name)+'</strong><small>'+escapeHTML(expired?'Request expired':(row.status||"Pending"))+'</small></div>'+actions+'<small class="activity-time">Requested '+escapeHTML(new Date(row.requested_at||row.created_at).toLocaleString())+'</small></article>';
+    }).join("");
+  }
+
+  async function openStreakCenter(tab="list") {
+    closeDialog("profileMenuDialog"); closeDialog("activityDialog"); openDialog("streakDialog"); selectStreakTab(tab);
+    await Promise.allSettled([loadStreaks(),loadRecoveries()]);
+  }
+
+  $("#streaksListContainer").addEventListener("click", async event => {
+    const button=event.target.closest("[data-request-recovery]"); if(!button)return;
+    button.disabled=true; button.textContent="Requesting…";
+    try { const {data,error}=await client.rpc("recover_streak",{p_streak_id:button.dataset.requestRecovery}); if(error)throw error; showMessage("Recovery requested",data?.message||"Your request was sent to your Streak partner."); await Promise.allSettled([loadStreaks(),loadRecoveries()]); }
+    catch(error){showMessage("Could not request recovery",error.message||"Please try again.");button.disabled=false;button.textContent="Request recovery";}
+  });
+  $("#restoresListContainer").addEventListener("click",async event=>{
+    const button=event.target.closest("[data-recovery-id]");if(!button)return;
+    const card=button.closest(".streak-card");card?.querySelectorAll("button").forEach(item=>item.disabled=true);
+    const approve=button.dataset.approve==="true";
+    try{const {data,error}=await client.rpc("respond_streak_recovery",{p_restore_id:button.dataset.recoveryId,p_approve:approve});if(error)throw error;showMessage(approve?"Recovery approved":"Request declined",data?.message||(approve?"The Streak recovery was approved.":"The request was declined."));await Promise.allSettled([loadStreaks(),loadRecoveries()]);}
+    catch(error){showMessage("Could not update recovery",error.message||"Please try again.");card?.querySelectorAll("button").forEach(item=>item.disabled=false);}
+  });
+  $(".streak-tabs").addEventListener("click",event=>{const button=event.target.closest("[data-streak-tab]");if(button)selectStreakTab(button.dataset.streakTab);});
 
   async function uploadMedia(file, bucket, folder) {
     if (!file) throw new Error("Choose a file first.");
@@ -707,13 +798,17 @@ function avatarMarkup(user, extra = "") {
   });
 
   $("#refreshFeed").addEventListener("click", () => loadFeed());
-  $("#profileShortcut").addEventListener("click", () => showMessage("Profile", "The profile page is not being changed in this stage."));
+  $("#profileShortcut").addEventListener("click", () => openDialog("profileMenuDialog"));
+  $("#menuOpenStreaks").addEventListener("click", () => openStreakCenter("list"));
+  $("#openStreaksFromActivity").addEventListener("click", () => openStreakCenter("list"));
+  $("#menuOpenNotifications").addEventListener("click", () => { closeDialog("profileMenuDialog"); openActivity(); });
+  $("#menuSignOut").addEventListener("click", async () => { try { await client.auth.signOut(); } finally { localStorage.setItem(STORAGE.loggedIn,"false"); localStorage.removeItem(STORAGE.user); location.replace("index.html"); } });
   const openSearchUnavailable = () => { location.href = "search.html"; };
   $("#openSearch").addEventListener("click", openSearchUnavailable);
   $("#navSearch").addEventListener("click", openSearchUnavailable);
-  $("#openNotifications").addEventListener("click", () => openActivity());
-  $("#navNotifications").addEventListener("click", () => openActivity());
-  $("#navStreak").addEventListener("click", () => openDialog("streakDialog"));
+  $("#openNotifications").addEventListener("click", event => { event.preventDefault(); openActivity(); });
+  $("#navNotifications").addEventListener("click", event => { event.preventDefault(); openActivity(); });
+  $("#navStreak").addEventListener("click", () => openStreakCenter("list"));
 
   $("#streakInviteForm").addEventListener("submit", async event => {
     event.preventDefault();
@@ -729,6 +824,7 @@ function avatarMarkup(user, extra = "") {
       if (error) throw error;
       message.textContent = data?.message || "Invitation sent.";
       input.value = "";
+      await loadStreaks();
     } catch (error) {
       message.textContent = error.message || "Could not send invitation.";
     } finally { button.disabled = false; }
@@ -740,6 +836,7 @@ function avatarMarkup(user, extra = "") {
       if (!user) return;
       setProfileHeader();
       const results = await Promise.allSettled([loadFeed(), loadStories(), loadNotifications()]);
+      client.channel("ars-notifications-"+currentUser.id).on("postgres_changes", { event:"*", schema:"public", table:"notifications", filter:"user_id=eq."+currentUser.id }, () => { loadNotifications(); if ($("#activityDialog")?.open) openActivity(); }).subscribe();
       results.forEach((result, index) => {
         if (result.status === "rejected") console.error("Home section failed:", index, result.reason);
       });
