@@ -968,3 +968,150 @@
 .hidden {
   display: none !important;
 }
+
+/* ========================================================
+   Follow States & Private Account Follow Requests UI
+   ======================================================== */
+.follow-action-btn.btn-following {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+.follow-action-btn.btn-following:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+.follow-action-btn.btn-pending {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+}
+
+.pending-requests-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(88, 28, 135, 0.28));
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 12px 0 16px;
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
+}
+.pending-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pending-badge-icon {
+  font-size: 22px;
+}
+.pending-badge-text {
+  display: flex;
+  flex-direction: column;
+}
+.pending-count {
+  font-weight: 700;
+  color: #fff;
+  font-size: 15px;
+}
+.pending-label {
+  font-size: 12px;
+  color: #c084fc;
+}
+.view-requests-btn {
+  background: #a855f7;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.view-requests-btn:hover {
+  background: #9333ea;
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.request-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  gap: 12px;
+}
+.request-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #a855f7;
+}
+.request-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.request-meta strong {
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.request-meta span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.request-actions {
+  display: flex;
+  gap: 8px;
+}
+.accept-req-btn {
+  background: #a855f7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.accept-req-btn:hover {
+  background: #9333ea;
+}
+.decline-req-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.decline-req-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+.empty-requests-msg {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px 0;
+  font-size: 14px;
+}
