@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08070f">
+  <meta name="description" content="ARS — User Profile">
+  <title>ARS — Profile</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body class="profile-page">
+  <div class="app-shell">
+    <!-- Top Navigation Bar -->
+    <header class="profile-topbar">
+      <a href="home.html" class="top-action-btn" id="backBtn" aria-label="Go back">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+      <h1 class="topbar-brand">ARS</h1>
+      <button type="button" class="top-action-btn" id="profileOptionsBtn" aria-label="Profile options">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <circle cx="5" cy="12" r="2"/>
+          <circle cx="12" cy="12" r="2"/>
+          <circle cx="19" cy="12" r="2"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="profile-main">
+      <!-- Cover Banner -->
+      <section class="profile-cover-section">
+        <div class="cover-container" id="coverContainer" role="button" tabindex="0" aria-label="View cover image">
+          <img id="profileCoverImg" class="cover-image" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80" alt="Cover photo">
+          <div class="cover-gradient-overlay"></div>
+          <button type="button" class="edit-cover-btn hidden" id="changeCoverBtn" aria-label="Change cover photo">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span>Edit Cover</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Profile Header & User Info -->
+      <section class="profile-header-card">
+        <div class="profile-avatar-row">
+          <div class="avatar-wrapper">
+            <img id="profileAvatarImg" class="profile-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="User Avatar">
+            <button type="button" class="avatar-camera-btn" id="avatarCameraBtn" aria-label="Change profile picture">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-details">
+          <div class="name-badge-row">
+            <h2 class="display-name" id="displayName">Tia</h2>
+            <span class="verified-badge" id="verifiedBadge" title="Verified Account">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="#a855f7">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6 1.4 1.4-7 7z"/>
+              </svg>
+            </span>
+            <span class="crown-badge hidden" id="premiumCrownBadge" title="ARS Premium Member">👑</span>
+          </div>
+
+          <div class="username-row">
+            <button type="button" class="username-btn" id="usernameCopyBtn" title="Click to copy username">
+              <span id="usernameHandle">@bluegangst9</span>
+              <span class="copy-hint" id="copyHint">copied</span>
+            </button>
+            <span class="account-type-tag hidden" id="accountTypeTag">Creator</span>
+          </div>
+
+          <!-- Bio -->
+          <div class="bio-container">
+            <p class="bio-text" id="bioText">أغلب الجامعات اللي ما ادخولها مو بجمادش وجيلسون. 💜</p>
+            <button type="button" class="see-more-btn hidden" id="bioSeeMore">See More</button>
+          </div>
+
+          <!-- Links -->
+          <div class="profile-links-list" id="profileLinksList"></div>
+
+          <!-- Action Buttons Row matching reference image -->
+          <div class="profile-actions-row">
+            <!-- Owner Actions -->
+            <div class="owner-actions" id="ownerActions">
+              <a href="settings.html?section=premium" class="premium-cta-btn" id="premiumCtaBtn">
+                <span class="crown-icon">👑</span>
+                <span id="premiumBtnLabel">Upgrade to Premium</span>
+              </a>
+              <a href="settings.html" class="settings-square-btn" id="settingsSquareBtn" aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </a>
+              <button type="button" class="edit-profile-btn" id="editProfileBtn">Edit Profile</button>
+            </div>
+
+            <!-- Visitor Actions -->
+            <div class="visitor-actions hidden" id="visitorActions">
+              <button type="button" class="follow-action-btn" id="followBtn">Follow</button>
+              <button type="button" class="share-action-btn" id="shareBtn" aria-label="Share Profile">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Bar: Posts / Followers / Following / Likes -->
+        <div class="profile-stats-grid">
+          <div class="stat-col" id="statPostsCol">
+            <strong class="stat-num" id="statPostsCount">124</strong>
+            <span class="stat-label">Posts</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-col" id="statFollowersCol">
+            <strong class="stat-num" id="statFollowersCount">2.3K</strong>
+            <span class="stat-label">Followers</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-col" id="statFollowingCol">
+            <strong class="stat-num" id="statFollowingCount">188</strong>
+            <span class="stat-label">Following</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-col" id="statLikesCol">
+            <strong class="stat-num" id="statLikesCount">56</strong>
+            <span class="stat-label">Likes</span>
+          </div>
+        </div>
+
+        <!-- Profile Tabs matching reference image: Posts, Bookmarks, Reposts, Likes -->
+        <div class="profile-tabs-nav" role="tablist">
+          <button class="profile-tab active" data-tab="posts" role="tab" aria-selected="true" id="tabPosts">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <span>Posts</span>
+          </button>
+          <button class="profile-tab" data-tab="bookmarks" role="tab" aria-selected="false" id="tabBookmarks">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Bookmarks</span>
+          </button>
+          <button class="profile-tab" data-tab="reposts" role="tab" aria-selected="false" id="tabReposts">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="17 1 21 5 17 9"></polyline>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+              <polyline points="7 23 3 19 7 15"></polyline>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+            </svg>
+            <span>Reposts</span>
+          </button>
+          <button class="profile-tab" data-tab="likes" role="tab" aria-selected="false" id="tabLikes">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span>Likes</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Content Grid Section -->
+      <section class="profile-feed-section">
+        <!-- Private Account Locked Notice -->
+        <div class="private-account-notice hidden" id="privateLockNotice">
+          <div class="lock-icon-wrap">🔒</div>
+          <h3>This Account is Private</h3>
+          <p>Follow this account to see their photos and videos.</p>
+        </div>
+
+        <!-- Posts Grid -->
+        <div class="posts-masonry-grid" id="postsGrid"></div>
+
+        <!-- Empty State -->
+        <div class="empty-profile-state hidden" id="emptyProfileState">
+          <div class="empty-icon-wrap">📸</div>
+          <h3 id="emptyStateTitle">No Posts Yet</h3>
+          <p id="emptyStateDesc">Share your first photo or video with the ARS community.</p>
+          <a href="create-post.html" class="create-first-post-btn" id="createFirstPostBtn">＋ Create Post</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+      <a class="nav-item" href="home.html" id="navHome" aria-label="Home">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a class="nav-item" href="search.html" id="navSearch" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>Search</span>
+      </a>
+      <a class="nav-item" href="home.html#trending" id="navTrending" aria-label="Trending">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+        <span>Trending</span>
+      </a>
+      <a class="nav-item notification-button" href="home.html#activity" id="navNotifications" aria-label="Notifications">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <i id="notificationDot" class="dot hidden"></i>
+        </div>
+        <span>Notifications</span>
+      </a>
+      <a class="nav-item active" href="profile.html" id="navProfile" aria-label="Profile" aria-current="page">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <!-- Dialog: Post Detail Viewer -->
+    <dialog id="postDetailDialog" class="modal">
+      <div class="modal-card post-detail-card">
+        <div class="modal-heading">
+          <div class="post-dialog-user">
+            <img id="detailAvatar" class="avatar-circle-sm" src="" alt="">
+            <div>
+              <strong id="detailAuthor">Author</strong>
+              <small id="detailTime">Just now</small>
+            </div>
+          </div>
+          <button type="button" class="close-btn" data-close="postDetailDialog" aria-label="Close">×</button>
+        </div>
+        <div class="post-dialog-media-container" id="detailMediaWrap"></div>
+        <p class="post-dialog-caption" id="detailCaption"></p>
+        <div class="post-dialog-stats-row">
+          <span id="detailLikesCount">0 Likes</span>
+          <span id="detailCommentsCount">0 Comments</span>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Dialog: Cover Lightbox Viewer -->
+    <dialog id="coverLightboxDialog" class="modal lightbox-modal">
+      <div class="lightbox-card">
+        <button type="button" class="close-lightbox-btn" data-close="coverLightboxDialog" aria-label="Close">×</button>
+        <img id="lightboxCoverImg" src="" alt="Enlarged Cover">
+      </div>
+    </dialog>
+
+    <!-- Dialog: Profile Options Menu -->
+    <dialog id="profileOptionsMenuDialog" class="modal">
+      <div class="modal-card options-modal-card">
+        <div class="modal-heading">
+          <h3>Options</h3>
+          <button type="button" class="close-btn" data-close="profileOptionsMenuDialog" aria-label="Close">×</button>
+        </div>
+        <div class="options-list">
+          <a href="settings.html" class="option-item">
+            <span class="option-icon">⚙</span>
+            <div><strong>Settings</strong><small>Account, privacy and app preferences</small></div>
+            <span class="option-arrow">›</span>
+          </a>
+          <button type="button" class="option-item" id="optShareProfile">
+            <span class="option-icon">📤</span>
+            <div><strong>Share Profile</strong><small>Copy link or share via other apps</small></div>
+            <span class="option-arrow">›</span>
+          </button>
+          <button type="button" class="option-item hidden" id="optBlockUser">
+            <span class="option-icon danger">🚫</span>
+            <div><strong class="danger">Block User</strong><small>Block this account from interacting with you</small></div>
+            <span class="option-arrow">›</span>
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Dialog: Edit Profile Modal -->
+    <dialog id="editProfileDialog" class="modal">
+      <div class="modal-card edit-profile-card">
+        <div class="modal-heading">
+          <h3>Edit Profile</h3>
+          <button type="button" class="close-btn" data-close="editProfileDialog" aria-label="Close">×</button>
+        </div>
+        <form id="editProfileForm" class="edit-form">
+          <!-- Avatar Preview & Input -->
+          <div class="edit-media-row">
+            <div class="avatar-edit-preview-wrap">
+              <img id="editAvatarPreview" class="avatar-preview-img" src="" alt="Avatar preview">
+              <label for="avatarFileInput" class="avatar-upload-overlay" title="Upload new photo">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </label>
+              <input type="file" id="avatarFileInput" accept="image/*" class="sr-only">
+            </div>
+            <div class="avatar-edit-info">
+              <strong>Profile Photo</strong>
+              <small>Click to change your photo.</small>
+            </div>
+          </div>
+
+          <!-- Cover Image Input -->
+          <div class="form-group">
+            <label for="coverFileInput">Cover Banner</label>
+            <input type="file" id="coverFileInput" accept="image/*" class="form-input-file">
+            <small class="field-hint">Upload a panoramic landscape image</small>
+          </div>
+
+          <!-- Display Name -->
+          <div class="form-group">
+            <label for="editDisplayName">Name</label>
+            <input type="text" id="editDisplayName" class="form-input" required maxlength="50" placeholder="Your name">
+          </div>
+
+          <!-- Username -->
+          <div class="form-group">
+            <label for="editUsername">Username</label>
+            <input type="text" id="editUsername" class="form-input" required maxlength="30" placeholder="username" pattern="^[a-zA-Z0-9_.]+$">
+            <small class="field-hint" id="usernameRuleHint">You can only change your username once every 14 days.</small>
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group">
+            <label for="editBio">Bio</label>
+            <textarea id="editBio" class="form-textarea" rows="3" maxlength="200" placeholder="Write a short bio..."></textarea>
+            <div class="bio-char-counter"><span id="bioCharCount">0</span>/200</div>
+          </div>
+
+          <!-- Accent Color (Premium feature or standard) -->
+          <div class="form-group">
+            <label>Profile Accent Color</label>
+            <div class="color-picker-row">
+              <button type="button" class="color-swatch active" data-color="#a855f7" style="background:#a855f7;" title="ARS Purple"></button>
+              <button type="button" class="color-swatch" data-color="#ec4899" style="background:#ec4899;" title="Pink Glow"></button>
+              <button type="button" class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;" title="Blue Neon"></button>
+              <button type="button" class="color-swatch" data-color="#10b981" style="background:#10b981;" title="Emerald"></button>
+              <button type="button" class="color-swatch" data-color="#f59e0b" style="background:#f59e0b;" title="Amber"></button>
+            </div>
+            <input type="hidden" id="editAccentColor" value="#a855f7">
+          </div>
+
+          <p id="editFormError" class="form-error-msg hidden"></p>
+
+          <div class="form-actions-row">
+            <button type="button" class="secondary-btn" data-close="editProfileDialog">Cancel</button>
+            <button type="submit" class="primary-btn" id="saveProfileBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Global Toast Notification -->
+    <div id="toastNotification" class="toast hidden" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="profile.js"></script>
+</body>
+</html>
