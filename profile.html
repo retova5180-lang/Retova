@@ -61,7 +61,7 @@
 
         <div class="profile-details">
           <div class="name-badge-row">
-            <h2 class="display-name" id="displayName">Tia</h2>
+            <h2 class="display-name" id="displayName">—</h2>
             <span class="verified-badge" id="verifiedBadge" title="Verified Account">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="#a855f7">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6 1.4 1.4-7 7z"/>
@@ -72,7 +72,7 @@
 
           <div class="username-row">
             <button type="button" class="username-btn" id="usernameCopyBtn" title="Click to copy username">
-              <span id="usernameHandle">@bluegangst9</span>
+              <span id="usernameHandle">@—</span>
               <span class="copy-hint" id="copyHint">copied</span>
             </button>
             <span class="account-type-tag hidden" id="accountTypeTag">Creator</span>
@@ -80,7 +80,7 @@
 
           <!-- Bio -->
           <div class="bio-container">
-            <p class="bio-text" id="bioText">أغلب الجامعات اللي ما ادخولها مو بجمادش وجيلسون. 💜</p>
+            <p class="bio-text" id="bioText"></p>
             <button type="button" class="see-more-btn hidden" id="bioSeeMore">See More</button>
           </div>
 
@@ -88,6 +88,17 @@
           <div class="profile-links-list" id="profileLinksList"></div>
 
           <!-- Action Buttons Row matching reference image -->
+                    <!-- Pending Follow Requests Banner for Private Account Owner -->
+          <div class="pending-requests-banner hidden" id="pendingRequestsBanner">
+            <div class="pending-banner-left">
+              <span class="pending-badge-icon">👥</span>
+              <div class="pending-badge-text">
+                <strong class="pending-count" id="pendingRequestsCount">0</strong>
+                <span class="pending-label">Follow Requests</span>
+              </div>
+            </div>
+            <button type="button" class="view-requests-btn" id="openRequestsModalBtn">Review</button>
+          </div>
           <div class="profile-actions-row">
             <!-- Owner Actions -->
             <div class="owner-actions" id="ownerActions">
@@ -122,22 +133,22 @@
         <!-- Stats Bar: Posts / Followers / Following / Likes -->
         <div class="profile-stats-grid">
           <div class="stat-col" id="statPostsCol">
-            <strong class="stat-num" id="statPostsCount">124</strong>
+            <strong class="stat-num" id="statPostsCount">0</strong>
             <span class="stat-label">Posts</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-col" id="statFollowersCol">
-            <strong class="stat-num" id="statFollowersCount">2.3K</strong>
+            <strong class="stat-num" id="statFollowersCount">0</strong>
             <span class="stat-label">Followers</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-col" id="statFollowingCol">
-            <strong class="stat-num" id="statFollowingCount">188</strong>
+            <strong class="stat-num" id="statFollowingCount">0</strong>
             <span class="stat-label">Following</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-col" id="statLikesCol">
-            <strong class="stat-num" id="statLikesCount">56</strong>
+            <strong class="stat-num" id="statLikesCount">0</strong>
             <span class="stat-label">Likes</span>
           </div>
         </div>
@@ -378,5 +389,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="profile.js"></script>
+    <!-- Follow Requests Modal -->
+    <dialog id="followRequestsModal" class="profile-modal" aria-labelledby="followRequestsModalTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="followRequestsModalTitle">Follow Requests</h3>
+          <button type="button" class="close-modal-btn" data-close="followRequestsModal">✕</button>
+        </div>
+        <div class="requests-list" id="requestsListContainer">
+          <p class="empty-requests-msg" id="emptyRequestsMsg">No pending follow requests.</p>
+        </div>
+      </div>
+    </dialog>
 </body>
 </html>
