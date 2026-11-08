@@ -82,7 +82,7 @@
         $("#mediaGrid").innerHTML = `
           <div class="preview-box">
             <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#c084fc;font-weight:700;font-size:13px;text-align:center;padding:12px;">
-              Story Media Ready ✓
+              Story Media Ready
             </div>
           </div>
         `;

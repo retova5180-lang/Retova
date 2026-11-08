@@ -191,14 +191,89 @@ function activateTool(tool) {
   if (tool === "crop") msg("Rotate or zoom the preview with the controls below.");
 }
 
+async function bakeMediaBlob() {
+  if (!file) return null;
+  if (file.type && file.type.startsWith('video/')) {
+    return file;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const bakeCanvas = document.createElement('canvas');
+        const ctx = bakeCanvas.getContext('2d');
+        const w = img.naturalWidth || 1080;
+        const h = img.naturalHeight || 1920;
+        bakeCanvas.width = w;
+        bakeCanvas.height = h;
+
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.scale(zoom, zoom);
+
+        if (filter && filter !== 'none') {
+          const filterMap = {
+            warm: 'sepia(0.3) saturate(1.3) contrast(1.05)',
+            cool: 'hue-rotate(180deg) saturate(1.1)',
+            vintage: 'sepia(0.6) contrast(1.2)',
+            dramatic: 'contrast(1.4) brightness(0.9)',
+            mono: 'grayscale(1)'
+          };
+          ctx.filter = filterMap[filter] || 'none';
+        }
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+
+        const dc = document.getElementById('drawCanvas');
+        if (dc) {
+          ctx.drawImage(dc, 0, 0, w, h);
+        }
+
+        if (overlays && overlays.length) {
+          ctx.font = 'bold ' + Math.max(24, Math.round(w * 0.05)) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          overlays.forEach(ov => {
+            const px = (ov.x / 100) * w;
+            const py = (ov.y / 100) * h;
+            ctx.fillStyle = ov.color || '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,0.85)';
+            ctx.shadowBlur = 8;
+            ctx.fillText(ov.text, px, py);
+          });
+        }
+
+        bakeCanvas.toBlob((blob) => {
+          if (blob) {
+            const cleanName = file.name.replace(/\.[^.]+$/, '') + '-baked.jpg';
+            const bakedFile = new File([blob], cleanName, { type: 'image/jpeg' });
+            resolve(bakedFile);
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.92);
+      } catch (err) {
+        console.warn('Could not bake canvas, falling back to original file:', err);
+        resolve(file);
+      }
+    };
+    img.onerror = () => resolve(file);
+    img.src = preview.src;
+  });
+}
+
 async function upload() {
   if (!file) throw new Error("Choose a photo or video first.");
   if (!user) throw new Error("Sign in to upload a story.");
 
-  const path = `${user.id}/stories/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "story-upload"}`;
-  const { data, error } = await client.storage.from("story-media").upload(path, file, {
+  const mediaToUpload = (await bakeMediaBlob()) || file;
+  const safeName = (mediaToUpload.name || file.name || "story").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+  const path = `${user.id}/stories/${crypto.randomUUID()}-${safeName}`;
+  const { data, error } = await client.storage.from("story-media").upload(path, mediaToUpload, {
     upsert: false,
-    contentType: file.type,
+    contentType: mediaToUpload.type || file.type || "image/jpeg",
     cacheControl: "3600"
   });
 

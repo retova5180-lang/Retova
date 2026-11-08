@@ -673,6 +673,38 @@
       });
     });
 
+    // Direct clicks on avatar camera button and change cover button open edit modal
+    $("#avatarCameraBtn")?.addEventListener("click", () => {
+      $("#editProfileBtn")?.click();
+    });
+    $("#changeCoverBtn")?.addEventListener("click", () => {
+      $("#editProfileBtn")?.click();
+    });
+
+    // Handle avatar preview and file upload
+    let pendingAvatarFile = null;
+    let pendingCoverFile = null;
+
+    $("#avatarFileInput")?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        pendingAvatarFile = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const previewImg = $("#editAvatarPreview");
+          if (previewImg) previewImg.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    $("#coverFileInput")?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        pendingCoverFile = file;
+      }
+    });
+
     // Edit Profile Modal
     $("#editProfileBtn")?.addEventListener("click", () => {
       if (!activeProfile) return;
@@ -700,6 +732,37 @@
           bio: bio,
           updated_at: new Date().toISOString()
         };
+
+        // Handle avatar upload if selected
+        if (pendingAvatarFile && client.storage) {
+          try {
+            const ext = pendingAvatarFile.name.split('.').pop() || 'jpg';
+            const path = `${currentAuthUser.id}/avatar-${Date.now()}.${ext}`;
+            const { data: upData, error: upErr } = await client.storage.from("avatars").upload(path, pendingAvatarFile, { upsert: true });
+            if (!upErr && upData?.path) {
+              const { data: pubData } = client.storage.from("avatars").getPublicUrl(upData.path);
+              if (pubData?.publicUrl) updates.avatar = pubData.publicUrl;
+            }
+          } catch (stErr) {
+            console.warn("Avatar upload storage error:", stErr);
+          }
+        }
+
+        // Handle cover upload if selected
+        if (pendingCoverFile && client.storage) {
+          try {
+            const ext = pendingCoverFile.name.split('.').pop() || 'jpg';
+            const path = `${currentAuthUser.id}/cover-${Date.now()}.${ext}`;
+            const { data: upData, error: upErr } = await client.storage.from("covers").upload(path, pendingCoverFile, { upsert: true });
+            if (!upErr && upData?.path) {
+              const { data: pubData } = client.storage.from("covers").getPublicUrl(upData.path);
+              if (pubData?.publicUrl) updates.cover = pubData.publicUrl;
+            }
+          } catch (stErr) {
+            console.warn("Cover upload storage error:", stErr);
+          }
+        }
+
 
         if (uName && uName !== activeProfile.username) {
           // Check 14-day restriction
