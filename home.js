@@ -207,31 +207,10 @@ function avatarMarkup(user, extra = "") {
       rendered.push(renderPost(
         post, userMap.get(post.user_id) || {}, liked.has(post.id), saved.has(post.id), reposted.has(post.id)
       ));
-      if ((idx + 1) % 4 === 0) {
-        rendered.push(renderSponsoredCard());
-      }
     });
     feed.innerHTML = rendered.join("");
   }
 
-  function renderSponsoredCard() {
-    return '<article class="post-card sponsored-card">'+
-      '<div class="post-head">'+
-        '<div class="avatar-circle" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'+
-        '<div class="post-author">'+
-          '<div class="author-title"><strong>ARS Spotlight</strong><span class="sponsored-badge">Sponsored</span></div>'+
-          '<small class="author-meta">Promoted · Official ARS Showcase</small>'+
-        '</div>'+
-      '</div>'+
-      '<p class="post-content">Boost your reach, build daily Streaks, and unlock rare perks with the ARS Challenge Wheel.</p>'+
-      '<div class="sponsored-media-banner">'+
-        '<div class="sponsored-banner-content">'+
-          '<span>Join the Daily Creator Challenge</span>'+
-          '<small>Interact daily with friends to level up your profile</small>'+
-        '</div>'+
-      '</div>'+
-    '</article>';
-  }
 
   function renderPost(post, user, isLiked, isSaved, isReposted) {
     const name = user.display_name || user.username || "ARS member";
@@ -251,13 +230,12 @@ function avatarMarkup(user, extra = "") {
     }
     const commentsDisabled = post.allow_comments === false;
     const verifiedBadge = user.verified
-      ? '<span class="verified-badge" aria-label="Verified">◆</span>'
+      ? '<span class="verified-badge" aria-label="Verified" title="Verified"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2.5 14.6 4l3-.2 1 2.8 2.4 1.8-.8 2.9.8 2.9-2.4 1.8-1 2.8-3-.2L12 20l-2.6-1.5-3 .2-1-2.8L3 14.1l.8-2.9L3 8.3l2.4-1.8 1-2.8 3 .2L12 2.5Zm-1.1 12.9 5.6-5.6-1.4-1.4-4.2 4.2-2-2-1.4 1.4 3.4 3.4Z"/></svg></span>'
       : '';
 
     const likesCount = formatCount(post.likes_count || 0);
     const commentsCount = formatCount(post.comments_count || 0);
     const repostsCount = formatCount(post.reposts_count || 0);
-    const viewsCount = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
 
     const pinnedBadge = post.is_pinned ? '<span class="pinned-badge" title="Pinned post"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.5-6.5V4h-11v6.5z"/></svg> Pinned</span>' : '';
     const editedNotice = post.edited_at ? ' <small style="color:#7c8292;">(edited)</small>' : '';
@@ -268,7 +246,7 @@ function avatarMarkup(user, extra = "") {
           '<div class="author-title"><strong>'+escapeHTML(name)+'</strong>'+verifiedBadge+pinnedBadge+'</div>'+
           '<small class="author-meta">'+escapeHTML(handle)+' · '+escapeHTML(date)+editedNotice+'</small>'+
         '</div>'+
-        '<button class="post-menu" data-action="menu" aria-label="Post options">⋯</button>'+
+        '<button class="post-menu" data-action="menu" aria-label="Post options"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg></button>'+
       '</div>'+
       (post.content ? '<p class="post-content">'+escapeHTML(post.content)+'</p>' : '')+media+
       '<div class="post-actions">'+
@@ -286,7 +264,6 @@ function avatarMarkup(user, extra = "") {
         '</button>'+
         '<button class="post-action bookmark-btn '+(isSaved?'active':'')+'" data-action="bookmark" aria-pressed="'+isSaved+'" title="Save">'+
           '<svg class="act-icon" viewBox="0 0 24 24" width="18" height="18" fill="'+(isSaved?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+
-          '<span class="act-count">'+viewsCount+'</span>'+
         '</button>'+
       '</div>'+
     '</article>';
@@ -744,10 +721,10 @@ function avatarMarkup(user, extra = "") {
         await loadFeed();
       } else if (action === "insights") {
         closeDialog("postOptionsDialog");
-        $("#statViews").textContent = formatCount(post.views_count || Math.max(12, Math.round((post.likes_count || 0) * 8.4)));
-        $("#statLikes").textContent = formatCount(post.likes_count || 0);
-        $("#statComments").textContent = formatCount(post.comments_count || 0);
-        $("#statReposts").textContent = formatCount(post.reposts_count || 0);
+        $("#statViews").textContent = post.views_count == null ? "—" : formatCount(post.views_count);
+        $("#statLikes").textContent = post.likes_count == null ? "—" : formatCount(post.likes_count);
+        $("#statComments").textContent = post.comments_count == null ? "—" : formatCount(post.comments_count);
+        $("#statReposts").textContent = post.reposts_count == null ? "—" : formatCount(post.reposts_count);
         const postDate = post.created_at ? new Date(post.created_at).toLocaleDateString([], {
           year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
         }) : "Recently";
