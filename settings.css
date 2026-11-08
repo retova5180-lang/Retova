@@ -778,3 +778,15 @@ input:checked + .slider:before {
     max-height: 90vh;
   }
 }
+
+/* Settings responsive shell update */
+.settings-shell, .app-shell, main {
+  max-width: min(100%, 760px) !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+.bottom-nav {
+  max-width: min(100%, 760px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}

@@ -42,6 +42,51 @@
     return String(num);
   }
 
+  
+  async function checkActivePremium(userId, plan) {
+    if (!userId) return false;
+    try {
+      if (client) {
+        const { data: sub } = await client
+          .from("subscriptions")
+          .select("status, expires_at, current_period_end")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (sub) {
+          const now = new Date();
+          const expiry = sub.expires_at ? new Date(sub.expires_at) : (sub.current_period_end ? new Date(sub.current_period_end) : null);
+          const isActive = sub.status === "active" || sub.status === "trialing";
+          return Boolean(isActive && (!expiry || expiry > now));
+        }
+      }
+    } catch (e) {
+      console.warn("Subscription check notice:", e);
+    }
+    return plan === "premium" || plan === "pro";
+  }
+
+  function getSvgAvatar(letter, color, bg) {
+    letter = (letter || "R").toUpperCase();
+    color = color || "#ffffff";
+    bg = bg || "linear-gradient(135deg, #8b3dff, #c54dff)";
+    let fill = bg;
+    let defs = "";
+    if (bg.indexOf("linear-gradient") !== -1) {
+      const matches = bg.match(/#(?:[0-9a-fA-F]{3,8})/g);
+      if (matches && matches.length >= 2) {
+        defs = '<defs><linearGradient id="pAvGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="' + matches[0] + '"/><stop offset="100%" stop-color="' + matches[1] + '"/></linearGradient></defs>';
+        fill = "url(#pAvGrad)";
+      } else {
+        fill = "#8b3dff";
+      }
+    }
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + defs + '<circle cx="50" cy="50" r="50" fill="' + fill + '"/><text x="50" y="50" dy=".36em" text-anchor="middle" fill="' + color + '" font-size="44" font-weight="900" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">' + letter + '</text></svg>';
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+
   function escapeHTML(str) {
     if (!str) return "";
     return String(str)
@@ -156,7 +201,7 @@
     }
   }
 
-  function renderProfileHeader() {
+  async function renderProfileHeader() {
     const p = activeProfile;
     if (!p) return;
 
@@ -167,8 +212,8 @@
     const isVerified = Boolean(p.verified);
     $("#verifiedBadge").classList.toggle("hidden", !isVerified);
 
-    // Premium Crown badge
-    const isPremium = p.plan === "premium" || p.plan === "pro";
+    // Premium status verification from subscriptions / plan
+    const isPremium = await checkActivePremium(p.id, p.plan);
     $("#premiumCrownBadge").classList.toggle("hidden", !isPremium);
 
     // Username Handle
@@ -184,18 +229,26 @@
 
     // Avatar
     const avatarEl = $("#profileAvatarImg");
-    if (p.avatar) {
+    if (p.avatar && isPremium) {
       avatarEl.src = p.avatar;
     } else {
-      avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.display_name || p.username || "User")}&background=790ce2&color=fff&size=200`;
+      const l = localStorage.getItem("ars_letter") || p.letter || (p.display_name || p.username || "R")[0];
+      const c = localStorage.getItem("ars_letter_color") || p.letterColor || p.profile_accent_color || "#ffffff";
+      const bg = localStorage.getItem("ars_background") || p.background || "linear-gradient(135deg, #8b3dff, #c54dff)";
+      avatarEl.src = getSvgAvatar(l, c, bg);
     }
 
-    // Cover
+    // Cover: blank black space if none
     const coverEl = $("#profileCoverImg");
-    if (p.cover) {
+    const coverContainer = $("#coverContainer");
+    if (p.cover && typeof p.cover === "string" && p.cover.trim() !== "") {
       coverEl.src = p.cover;
+      coverEl.style.display = "block";
+      coverContainer?.classList.remove("cover-empty");
     } else {
-      coverEl.src = "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80";
+      coverEl.src = "";
+      coverEl.style.display = "none";
+      coverContainer?.classList.add("cover-empty");
     }
 
     // Bio
@@ -577,7 +630,7 @@
 
     list.innerHTML = requests.map(req => {
       const u = req.users || {};
-      const av = u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.display_name || u.username || "User")}&background=790ce2&color=fff`;
+      const av = u.avatar || `"User")}&background=790ce2&color=fff`;
 
       return `
         <div class="request-item-card" data-req-id="${req.id}">

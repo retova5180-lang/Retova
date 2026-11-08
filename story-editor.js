@@ -108,6 +108,27 @@ function resizeCanvas() {
   redraw();
 }
 
+
+  // Erase tool overlay deletion handler
+  overlayLayer.addEventListener("click", event => {
+    if (drawMode !== "erase") return;
+    const target = event.target.closest(".overlay-text");
+    if (!target) return;
+    const idx = parseInt(target.dataset.index, 10);
+    if (!isNaN(idx) && idx >= 0 && idx < overlays.length) {
+      overlays.splice(idx, 1);
+      renderText();
+      msg("Item deleted by eraser.");
+    }
+  });
+
+  $("#clearDrawingsBtn")?.addEventListener("click", () => {
+    paths = [];
+    activePath = null;
+    redraw();
+    msg("All drawings cleared.");
+  });
+
 function redraw() {
   const canvas = $("#drawCanvas");
   const context = canvas.getContext("2d");
@@ -193,16 +214,19 @@ function activateTool(tool) {
 
 async function bakeMediaBlob() {
   if (!file) return null;
-  if (file.type && file.type.startsWith('video/')) {
+  if (file.type && file.type.startsWith("video/")) {
+    if (overlays.length || paths.length) {
+      msg("Notice: Overlays bake into photos. Video published in original stream.");
+    }
     return file;
   }
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       try {
-        const bakeCanvas = document.createElement('canvas');
-        const ctx = bakeCanvas.getContext('2d');
+        const bakeCanvas = document.createElement("canvas");
+        const ctx = bakeCanvas.getContext("2d");
         const w = img.naturalWidth || 1080;
         const h = img.naturalHeight || 1920;
         bakeCanvas.width = w;
@@ -213,49 +237,46 @@ async function bakeMediaBlob() {
         ctx.rotate((rotation * Math.PI) / 180);
         ctx.scale(zoom, zoom);
 
-        if (filter && filter !== 'none') {
-          const filterMap = {
-            warm: 'sepia(0.3) saturate(1.3) contrast(1.05)',
-            cool: 'hue-rotate(180deg) saturate(1.1)',
-            vintage: 'sepia(0.6) contrast(1.2)',
-            dramatic: 'contrast(1.4) brightness(0.9)',
-            mono: 'grayscale(1)'
-          };
-          ctx.filter = filterMap[filter] || 'none';
+        // Unified filters with exact CSS preview
+        if (filter && filter !== "none" && filters[filter]) {
+          ctx.filter = filters[filter];
         }
+
         ctx.drawImage(img, -w / 2, -h / 2, w, h);
         ctx.restore();
 
-        const dc = document.getElementById('drawCanvas');
-        if (dc) {
+        // Draw drawing paths onto baked image
+        const dc = document.getElementById("drawCanvas");
+        if (dc && paths.length) {
           ctx.drawImage(dc, 0, 0, w, h);
         }
 
+        // Draw text and stickers onto baked image
         if (overlays && overlays.length) {
-          ctx.font = 'bold ' + Math.max(24, Math.round(w * 0.05)) + 'px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          ctx.font = "bold " + Math.max(26, Math.round(w * 0.055)) + "px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
           overlays.forEach(ov => {
             const px = (ov.x / 100) * w;
             const py = (ov.y / 100) * h;
-            ctx.fillStyle = ov.color || '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.85)';
-            ctx.shadowBlur = 8;
+            ctx.fillStyle = ov.color || "#ffffff";
+            ctx.shadowColor = "rgba(0,0,0,0.85)";
+            ctx.shadowBlur = Math.round(w * 0.015);
             ctx.fillText(ov.text, px, py);
           });
         }
 
         bakeCanvas.toBlob((blob) => {
           if (blob) {
-            const cleanName = file.name.replace(/\.[^.]+$/, '') + '-baked.jpg';
-            const bakedFile = new File([blob], cleanName, { type: 'image/jpeg' });
+            const cleanName = (file.name || "story").replace(/\.[^.]+$/, "") + "-baked.jpg";
+            const bakedFile = new File([blob], cleanName, { type: "image/jpeg" });
             resolve(bakedFile);
           } else {
             resolve(file);
           }
-        }, 'image/jpeg', 0.92);
+        }, "image/jpeg", 0.94);
       } catch (err) {
-        console.warn('Could not bake canvas, falling back to original file:', err);
+        console.warn("Could not bake canvas, falling back to original file:", err);
         resolve(file);
       }
     };

@@ -83,3 +83,10 @@ body { background: radial-gradient(ellipse at 50% 8%, #160a24 0, transparent 42%
   .tools { top: 66px; bottom: 54px; }
   .tools i { width: 33px; height: 33px; }
 }
+
+/* Story editor responsive shell */
+.editor-shell {
+  max-width: min(100%, 760px) !important;
+  margin-left: auto;
+  margin-right: auto;
+}

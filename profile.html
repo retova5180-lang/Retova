@@ -33,7 +33,7 @@
       <!-- Cover Banner -->
       <section class="profile-cover-section">
         <div class="cover-container" id="coverContainer" role="button" tabindex="0" aria-label="View cover image">
-          <img id="profileCoverImg" class="cover-image" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80" alt="Cover photo">
+          <img id="profileCoverImg" class="cover-image" src="" alt="Cover photo" style="display:none;">
           <div class="cover-gradient-overlay"></div>
           <button type="button" class="edit-cover-btn hidden" id="changeCoverBtn" aria-label="Change cover photo">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -49,7 +49,7 @@
       <section class="profile-header-card">
         <div class="profile-avatar-row">
           <div class="avatar-wrapper">
-            <img id="profileAvatarImg" class="profile-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="User Avatar">
+            <img id="profileAvatarImg" class="profile-avatar" src="" alt="User Avatar">
             <button type="button" class="avatar-camera-btn" id="avatarCameraBtn" aria-label="Change profile picture">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -251,7 +251,7 @@
         </svg>
         <span>Trending</span>
       </a>
-      <a class="nav-item notification-button" href="home.html#activity" id="navNotifications" aria-label="Notifications">
+      <a class="nav-item notification-button" href="notifications.html" id="navNotifications" aria-label="Notifications">
         <div class="nav-icon-wrap">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -324,6 +324,29 @@
               <small>Click to change your photo.</small>
             </div>
           </div>
+          <!-- Free Account Avatar Customizer -->
+          <div class="setup-group avatar-customizer-section" id="avatarCustomizerSection">
+            <label class="form-label">Profile Avatar (Free &amp; Custom)</label>
+            <div class="modal-avatar-wrap">
+              <div id="largeAvatarPreview" class="large-avatar-preview">R</div>
+            </div>
+
+            <div class="customizer-subgroup">
+              <span class="customizer-subtitle">Profile Letter</span>
+              <div id="letterGrid" class="letter-grid"></div>
+            </div>
+
+            <div class="customizer-subgroup">
+              <span class="customizer-subtitle">Letter Color</span>
+              <div id="letterColors" class="color-grid"></div>
+            </div>
+
+            <div class="customizer-subgroup">
+              <span class="customizer-subtitle">Background Gradient</span>
+              <div id="backgroundColors" class="gradient-grid"></div>
+            </div>
+          </div>
+    
 
           <!-- Cover Image Input -->
           <div class="form-group">

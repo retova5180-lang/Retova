@@ -672,3 +672,15 @@ input:checked + .slider:before {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Create post responsive shell update */
+.compose-shell, .app-shell, main {
+  max-width: min(100%, 760px) !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+.bottom-nav {
+  max-width: min(100%, 760px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
