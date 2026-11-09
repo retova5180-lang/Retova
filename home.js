@@ -169,17 +169,44 @@ function avatarMarkup(user, extra = "") {
   async function loadFeed() {
     const feed = $("#feed");
     feed.innerHTML = '<div class="empty-state">Loading your feed…</div>';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetPostId = urlParams.get("post");
+    let targetPost = null;
+
+    if (targetPostId) {
+      try {
+        const { data: sp, error: spErr } = await client.from("posts")
+          .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments,is_pinned,pinned_at,edited_at,media_urls")
+          .eq("id", targetPostId)
+          .maybeSingle();
+
+        if (spErr || !sp) {
+          showMessage("Post Notice", "The requested post could not be found or may have been deleted.");
+        } else {
+          targetPost = sp;
+        }
+      } catch (tpErr) {
+        console.warn("Target post lookup notice:", tpErr);
+      }
+    }
+
     const { data: posts, error } = await client.from("posts")
       .select("id,created_at,user_id,content,image,media_type,privacy,likes_count,comments_count,reposts_count,views_count,allow_comments,is_pinned,pinned_at,edited_at,media_urls")
       .or("privacy.eq.public,privacy.eq.followers,and(privacy.eq.private,user_id.eq."+currentUser.id+")")
       .order("is_pinned", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }).limit(30);
-    if (error) {
+
+    if (error && !targetPost) {
       console.error("Feed load failed:", error);
       feed.innerHTML = '<div class="empty-state">We couldn’t load the feed. Please try again.</div>';
       return;
     }
-    const visible = (posts || []).filter(post => !hiddenPostIds.has(post.id));
+
+    let visible = (posts || []).filter(post => !hiddenPostIds.has(post.id));
+    if (targetPost) {
+      visible = [targetPost, ...visible.filter(p => p.id !== targetPost.id)];
+    }
     if (!visible.length) {
       feed.innerHTML = '<div class="empty-state">Your feed is quiet for now.<br>Be the first to share something with ARS.</div>';
       return;
@@ -209,6 +236,18 @@ function avatarMarkup(user, extra = "") {
       ));
     });
     feed.innerHTML = rendered.join("");
+
+    if (targetPostId) {
+      setTimeout(() => {
+        const postCard = document.querySelector(`[data-post-id="${targetPostId}"]`);
+        if (postCard) {
+          postCard.scrollIntoView({ behavior: "smooth", block: "center" });
+          postCard.style.outline = "2px solid #a855f7";
+          postCard.style.borderRadius = "16px";
+          postCard.style.boxShadow = "0 0 24px rgba(168, 85, 247, 0.4)";
+        }
+      }, 350);
+    }
   }
 
 
@@ -1084,7 +1123,12 @@ function avatarMarkup(user, extra = "") {
     stopStoryProgress();
   });
 
-  $("#spinWheel").addEventListener("click", () => openDialog("wheelDialog"));
+  $("#spinWheel").addEventListener("click", () => {
+    $("#wheelResult").textContent = "";
+    $("#spinStatus").textContent = "Spin the wheel for verified daily rewards.";
+    openDialog("wheelDialog");
+  });
+
   let totalWheelRotation = 0;
   $("#confirmSpin").addEventListener("click", async event => {
     const button = event.currentTarget;
@@ -1093,33 +1137,45 @@ function avatarMarkup(user, extra = "") {
     const disk = $("#wheelDisk");
 
     button.disabled = true;
-    status.textContent = "Spinning wheel…";
-
-    // Smooth random physical spin
-    const extraSpins = 5 + Math.floor(Math.random() * 4);
-    const randomStop = Math.floor(Math.random() * 360);
-    totalWheelRotation += extraSpins * 360 + randomStop;
-    if (disk) {
-      disk.style.transform = `rotate(${totalWheelRotation}deg)`;
-    }
+    result.textContent = "";
+    status.textContent = "Verifying reward with ARS server…";
 
     try {
       const { data, error } = await client.rpc("spin_rewards_wheel");
       if (error) throw error;
       const reward = Array.isArray(data) ? data[0] : data;
+
+      const rewardCode = (reward?.reward_code || reward?.title || reward?.type || "").toLowerCase();
+      let targetOffset = 330; // VIP
+      if (rewardCode.includes("badge")) targetOffset = 270;
+      else if (rewardCode.includes("streak")) targetOffset = 210;
+      else if (rewardCode.includes("avatar")) targetOffset = 150;
+      else if (rewardCode.includes("premium")) targetOffset = 90;
+      else if (rewardCode.includes("rare")) targetOffset = 30;
+      else targetOffset = 330;
+
+      const fullRotations = 6 * 360;
+      const currentMod = totalWheelRotation % 360;
+      const delta = (targetOffset - currentMod + 360) % 360;
+      totalWheelRotation += fullRotations + delta;
+
+      status.textContent = "Spinning wheel…";
+      if (disk) {
+        disk.style.transition = "transform 3.8s cubic-bezier(0.15, 0.9, 0.25, 1)";
+        disk.style.transform = `rotate(${totalWheelRotation}deg)`;
+      }
+
       setTimeout(() => {
-        result.textContent = reward?.title || reward?.message || reward?.reward_code || "Spin complete! ARS perk unlocked.";
+        result.textContent = reward?.title || reward?.message || reward?.reward_code || "Spin complete! Perk claimed.";
         status.textContent = "Your reward has been safely recorded by ARS.";
-        $("#wheelHint").textContent = "Spun today";
-        button.disabled = false;
+        const hint = $("#wheelHint");
+        if (hint) hint.textContent = "Spun today";
       }, 3800);
     } catch (error) {
-      setTimeout(() => {
-        console.error("Wheel error:", error);
-        result.textContent = "Challenge wheel result: perk record processed.";
-        status.textContent = error.message || "Daily spin recorded.";
-        button.disabled = false;
-      }, 3800);
+      console.warn("Rewards wheel failure:", error);
+      status.textContent = error.message || "Wheel spin failed. You may have already spun today.";
+      result.textContent = "Unable to process spin.";
+      button.disabled = false;
     }
   });
 

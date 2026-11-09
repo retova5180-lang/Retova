@@ -58,14 +58,85 @@
         if (sub) {
           const now = new Date();
           const expiry = sub.expires_at ? new Date(sub.expires_at) : (sub.current_period_end ? new Date(sub.current_period_end) : null);
-          const isActive = sub.status === "active" || sub.status === "trialing";
+          const isActive = sub.status === "active" || sub.status === "trialing" || sub.status === "paid";
           return Boolean(isActive && (!expiry || expiry > now));
         }
       }
     } catch (e) {
-      console.warn("Subscription check notice:", e);
+      console.warn("Fail-closed subscription check notice:", e);
     }
-    return plan === "premium" || plan === "pro";
+    return false;
+  }
+
+  
+  let selectedLetter = "R";
+  let selectedLetterColor = "#ffffff";
+  let selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+
+  function initAvatarCustomizer(p) {
+    const preview = $("#largeAvatarPreview");
+    const letterGrid = $("#letterGrid");
+    const colorGrid = $("#letterColors");
+    const gradGrid = $("#backgroundColors");
+
+    selectedLetter = (p?.display_name?.[0] || p?.username?.[0] || "R").toUpperCase();
+    selectedLetterColor = "#ffffff";
+    selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+
+    if (preview) {
+      preview.textContent = selectedLetter;
+      preview.style.color = selectedLetterColor;
+      preview.style.background = selectedBgGradient;
+    }
+
+    if (letterGrid) {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
+      letterGrid.innerHTML = letters.map(l => '<button type="button" class="letter-option ' + (l === selectedLetter ? 'selected' : '') + '" data-letter="' + l + '">' + l + '</button>').join("");
+
+      letterGrid.querySelectorAll(".letter-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          letterGrid.querySelectorAll(".letter-option").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedLetter = btn.dataset.letter;
+          if (preview) preview.textContent = selectedLetter;
+        });
+      });
+    }
+
+    if (colorGrid) {
+      const colors = ["#ffffff", "#c084fc", "#a855f7", "#ec4899", "#38bdf8", "#4ade80", "#facc15", "#f97316"];
+      colorGrid.innerHTML = colors.map(c => '<button type="button" class="color-option ' + (c === selectedLetterColor ? 'selected' : '') + '" data-color="' + c + '" style="background:' + c + ';" aria-label="Color ' + c + '"></button>').join("");
+
+      colorGrid.querySelectorAll(".color-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          colorGrid.querySelectorAll(".color-option").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedLetterColor = btn.dataset.color;
+          if (preview) preview.style.color = selectedLetterColor;
+        });
+      });
+    }
+
+    if (gradGrid) {
+      const gradients = [
+        "linear-gradient(135deg, #8b3dff, #c54dff)",
+        "linear-gradient(135deg, #4c1d95, #7c3aed)",
+        "linear-gradient(135deg, #581c87, #c026d3)",
+        "linear-gradient(135deg, #1e1b4b, #4338ca)",
+        "linear-gradient(135deg, #831843, #db2777)",
+        "linear-gradient(135deg, #0f172a, #334155)"
+      ];
+      gradGrid.innerHTML = gradients.map((g, idx) => '<button type="button" class="gradient-option ' + (idx === 0 ? 'selected' : '') + '" data-gradient="' + g + '" style="background:' + g + ';" aria-label="Gradient ' + (idx+1) + '"></button>').join("");
+
+      gradGrid.querySelectorAll(".gradient-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+          gradGrid.querySelectorAll(".gradient-option").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedBgGradient = btn.dataset.gradient;
+          if (preview) preview.style.background = selectedBgGradient;
+        });
+      });
+    }
   }
 
   function getSvgAvatar(letter, color, bg) {
@@ -764,6 +835,7 @@
       $("#editDisplayName").value = activeProfile.display_name || "";
       $("#editUsername").value = activeProfile.username || "";
       $("#editBio").value = activeProfile.bio || "";
+      initAvatarCustomizer(activeProfile);
       $("#editProfileDialog")?.showModal();
     });
 
@@ -786,36 +858,62 @@
           updated_at: new Date().toISOString()
         };
 
-        // Handle avatar upload if selected
-        if (pendingAvatarFile && client.storage) {
-          try {
-            const ext = pendingAvatarFile.name.split('.').pop() || 'jpg';
-            const path = `${currentAuthUser.id}/avatar-${Date.now()}.${ext}`;
-            const { data: upData, error: upErr } = await client.storage.from("avatars").upload(path, pendingAvatarFile, { upsert: true });
-            if (!upErr && upData?.path) {
-              const { data: pubData } = client.storage.from("avatars").getPublicUrl(upData.path);
-              if (pubData?.publicUrl) updates.avatar = pubData.publicUrl;
-            }
-          } catch (stErr) {
-            console.warn("Avatar upload storage error:", stErr);
+        // Handle avatar: enforce Premium verification and strict error handling
+        const userHasPremium = await checkActivePremium(currentAuthUser.id, activeProfile.plan);
+
+        if (pendingAvatarFile) {
+          if (!userHasPremium) {
+            showToast("Custom photo avatars are exclusively for active ARS Premium subscribers. Free accounts use customizable letter avatars.", "error");
+            submitBtn.disabled = false;
+            return;
           }
+          if (client.storage) {
+            try {
+              const ext = pendingAvatarFile.name.split(".").pop() || "jpg";
+              const path = `${currentAuthUser.id}/avatar-${Date.now()}.${ext}`;
+              const { data: upData, error: upErr } = await client.storage.from("avatars").upload(path, pendingAvatarFile, { upsert: true });
+              if (upErr) {
+                showToast("Avatar photo upload failed: " + upErr.message, "error");
+                submitBtn.disabled = false;
+                return;
+              }
+              if (upData?.path) {
+                const { data: pubData } = client.storage.from("avatars").getPublicUrl(upData.path);
+                if (pubData?.publicUrl) updates.avatar = pubData.publicUrl;
+              }
+            } catch (stErr) {
+              console.error("Avatar upload storage exception:", stErr);
+              showToast("Avatar photo upload failed. Changes were not saved.", "error");
+              submitBtn.disabled = false;
+              return;
+            }
+          }
+        } else if (!userHasPremium) {
+          updates.avatar = getSvgAvatar(selectedLetter, selectedLetterColor, selectedBgGradient);
         }
 
-        // Handle cover upload if selected
+        // Handle cover upload with strict error handling
         if (pendingCoverFile && client.storage) {
           try {
-            const ext = pendingCoverFile.name.split('.').pop() || 'jpg';
+            const ext = pendingCoverFile.name.split(".").pop() || "jpg";
             const path = `${currentAuthUser.id}/cover-${Date.now()}.${ext}`;
             const { data: upData, error: upErr } = await client.storage.from("covers").upload(path, pendingCoverFile, { upsert: true });
-            if (!upErr && upData?.path) {
+            if (upErr) {
+              showToast("Cover banner upload failed: " + upErr.message, "error");
+              submitBtn.disabled = false;
+              return;
+            }
+            if (upData?.path) {
               const { data: pubData } = client.storage.from("covers").getPublicUrl(upData.path);
               if (pubData?.publicUrl) updates.cover = pubData.publicUrl;
             }
           } catch (stErr) {
-            console.warn("Cover upload storage error:", stErr);
+            console.error("Cover upload storage exception:", stErr);
+            showToast("Cover banner upload failed. Changes were not saved.", "error");
+            submitBtn.disabled = false;
+            return;
           }
         }
-
 
         if (uName && uName !== activeProfile.username) {
           // Check 14-day restriction

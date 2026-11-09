@@ -110,11 +110,12 @@ function resizeCanvas() {
 
 
   // Erase tool overlay deletion handler
-  overlayLayer.addEventListener("click", event => {
+  const textLayerEl = $("#textLayer");
+  textLayerEl?.addEventListener("click", event => {
     if (drawMode !== "erase") return;
     const target = event.target.closest(".overlay-text");
     if (!target) return;
-    const idx = parseInt(target.dataset.index, 10);
+    const idx = parseInt(target.dataset.overlay, 10);
     if (!isNaN(idx) && idx >= 0 && idx < overlays.length) {
       overlays.splice(idx, 1);
       renderText();

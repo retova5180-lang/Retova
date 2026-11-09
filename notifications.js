@@ -108,17 +108,12 @@
     }
 
     try {
-      const { data: { session } } = await client.auth.getSession();
-      if (!session || !session.user) {
-        const local = localStorage.getItem("ars_user");
-        if (!local) {
-          window.location.href = "index.html";
-          return;
-        }
-        currentUser = JSON.parse(local);
-      } else {
-        currentUser = session.user;
+      const { data: authData, error: authErr } = await client.auth.getUser();
+      if (authErr || !authData?.user) {
+        window.location.href = "index.html";
+        return;
       }
+      currentUser = authData.user;
 
       await loadNotifications();
       setupTabs();
@@ -244,13 +239,22 @@
         const id = card.dataset.id;
         const href = card.dataset.href;
 
-        card.classList.remove("unread");
-
         if (client && id) {
           try {
-            await client.from("notifications").update({ is_read: true }).eq("id", id);
+            const { error: updErr } = await client
+              .from("notifications")
+              .update({ is_read: true })
+              .eq("id", id);
+
+            if (!updErr) {
+              card.classList.remove("unread");
+              const notif = allNotifications.find(n => n.id === id);
+              if (notif) notif.is_read = true;
+            } else {
+              console.warn("Could not mark notification as read in database:", updErr);
+            }
           } catch (e) {
-            console.warn("Mark read error:", e);
+            console.warn("Mark read exception:", e);
           }
         }
 

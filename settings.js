@@ -98,7 +98,7 @@
       activePreferences = prefData || {};
 
       // Render UI
-      renderProfileCard();
+      await renderProfileCard();
       populateFormFields();
       checkScheduledDeletionStatus();
 
@@ -108,7 +108,7 @@
     }
   }
 
-  function renderProfileCard() {
+  async function renderProfileCard() {
     const p = activeProfile;
     if (!p) return;
 
@@ -125,8 +125,32 @@
     // Username
     $("#settingsUsername").textContent = "@" + (p.username || "user");
 
-    // Premium status in card
-    const isPremium = p.plan === "premium" || p.plan === "pro";
+    // Secure fail-closed subscription check from server
+    let isPremium = false;
+    let activeSub = null;
+    if (client && currentAuthUser?.id) {
+      try {
+        const { data: sub } = await client
+          .from("subscriptions")
+          .select("id, status, plan, expires_at, current_period_end")
+          .eq("user_id", currentAuthUser.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (sub && (sub.status === "active" || sub.status === "trialing" || sub.status === "paid")) {
+          const expiry = sub.current_period_end || sub.expires_at;
+          const isNotExpired = !expiry || (new Date(expiry).getTime() > Date.now());
+          if (isNotExpired) {
+            isPremium = true;
+            activeSub = sub;
+          }
+        }
+      } catch (subErr) {
+        console.warn("Fail-closed subscription check:", subErr);
+      }
+    }
+
     const statusEl = $("#settingsPremiumStatus");
     const badgeEl = $("#premiumStatusBadge");
 
@@ -153,7 +177,7 @@
     $("#accEmail").value = currentAuthUser?.email || p.email || "";
     $("#accName").value = p.display_name || "";
     $("#accUsername").value = p.username || "";
-    $("#accTypeSelect").value = p.account_type || "Personal";
+    const accTypeEl = $("#accType") || $("#accTypeSelect"); if (accTypeEl) accTypeEl.value = p.account_type || "Personal";
     $("#accStatusBadge").textContent = p.account_status || "Active";
 
     // Privacy Form
@@ -272,7 +296,7 @@
 
     const dName = $("#accName").value.trim();
     const uName = $("#accUsername").value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
-    const accType = $("#accTypeSelect").value;
+    const accTypeEl = $("#accType") || $("#accTypeSelect"); const accType = accTypeEl ? accTypeEl.value : (activeProfile?.account_type || "Personal");
 
     const saveBtn = $("#saveAccountBtn");
     saveBtn.disabled = true;
@@ -303,7 +327,7 @@
       if (error) throw error;
 
       activeProfile = { ...activeProfile, ...updates };
-      renderProfileCard();
+      await renderProfileCard();
       $("#accountDialog")?.close();
       showToast("Account details updated successfully!");
     } catch (err) {
@@ -601,28 +625,35 @@
   }
 
 
-    // Premium activation / management
+    // Secure subscription modal handler (client cannot self-grant plan)
     $("#togglePremiumBtn")?.addEventListener("click", async () => {
       if (!client || !currentAuthUser) return;
-      const isPrem = activeProfile.plan === "premium" || activeProfile.plan === "pro";
-      const newPlan = isPrem ? "free" : "premium";
       const btn = $("#togglePremiumBtn");
       btn.disabled = true;
 
       try {
-        const { error } = await client.from("users").update({
-          plan: newPlan,
-          updated_at: new Date().toISOString()
-        }).eq("id", currentAuthUser.id);
-        if (error) throw error;
+        const { data: sub } = await client
+          .from("subscriptions")
+          .select("id, status, plan, expires_at, current_period_end")
+          .eq("user_id", currentAuthUser.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-        activeProfile.plan = newPlan;
-        renderProfileCard();
-        showToast(newPlan === "premium" ? "ARS Premium activated!" : "Subscription updated to Free plan.");
+        const isActive = sub && (sub.status === "active" || sub.status === "trialing" || sub.status === "paid");
+        const expiry = sub ? (sub.current_period_end || sub.expires_at) : null;
+        const isNotExpired = !expiry || (new Date(expiry).getTime() > Date.now());
+
+        if (isActive && isNotExpired) {
+          const expStr = expiry ? new Date(expiry).toLocaleDateString() : "Continuous";
+          showToast(`Your ARS Premium is active (Renews: ${expStr}). Contact billing support to manage recurring options.`, "success");
+        } else {
+          showToast("ARS Premium requires verified activation through authorized payment checkout. Self-activation is disabled for security.", "info");
+        }
         $("#premiumDialog")?.close();
       } catch (err) {
-        console.error("Premium toggle error:", err);
-        showToast("Could not update subscription.", "error");
+        console.error("Subscription status error:", err);
+        showToast("Could not verify subscription status.", "error");
       } finally {
         btn.disabled = false;
       }
