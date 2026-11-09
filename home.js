@@ -1157,9 +1157,11 @@ function avatarMarkup(user, extra = "") {
         throw new Error(reward.message || reward.error || "Daily spin could not be completed.");
       }
 
-      const rewardCode = (reward.reward_code || reward.title || reward.type || reward.perk || "").toLowerCase();
-      if (!rewardCode && !reward.message) {
-        throw new Error("Invalid reward format returned by server.");
+      // Strict validation of reward code: reward.message alone is NOT accepted as proof of a valid reward.
+      // A known reward_code matching an actual sector is strictly required.
+      const rawCode = (reward.reward_code || reward.perk || reward.type || "").toString().trim().toLowerCase();
+      if (!rawCode) {
+        throw new Error("Reward code is missing from server response. Daily spin cannot be verified.");
       }
 
       // Sector midpoints in wheelDisk:
@@ -1169,14 +1171,27 @@ function avatarMarkup(user, extra = "") {
       // Avatar: 210° (180-240°) -> rotation = 360 - 210 = 150°
       // Premium: 270° (240-300°) -> rotation = 360 - 270 = 90°
       // Rare: 330° (300-360°) -> rotation = 360 - 330 = 30°
-      let targetOffset = 330; // VIP
-      if (rewardCode.includes("badge")) targetOffset = 270;
-      else if (rewardCode.includes("streak")) targetOffset = 210;
-      else if (rewardCode.includes("avatar")) targetOffset = 150;
-      else if (rewardCode.includes("prem")) targetOffset = 90;
-      else if (rewardCode.includes("rare")) targetOffset = 30;
-      else if (rewardCode.includes("vip")) targetOffset = 330;
-      else targetOffset = 330;
+      const SECTOR_OFFSETS = {
+        "rare": 30,
+        "premium": 90,
+        "prem": 90,
+        "avatar": 150,
+        "streak": 210,
+        "badge": 270,
+        "vip": 330
+      };
+
+      let targetOffset = null;
+      for (const [key, offset] of Object.entries(SECTOR_OFFSETS)) {
+        if (rawCode === key || rawCode.includes(key)) {
+          targetOffset = offset;
+          break;
+        }
+      }
+
+      if (targetOffset === null) {
+        throw new Error(`Unrecognized reward code "${rawCode}". Daily spin cannot be mapped to a valid sector.`);
+      }
 
       const fullRotations = 6 * 360;
       const currentMod = totalWheelRotation % 360;
@@ -1190,7 +1205,7 @@ function avatarMarkup(user, extra = "") {
       }
 
       setTimeout(() => {
-        const rewardText = reward.title || reward.message || reward.reward_code || "Perk claimed!";
+        const rewardText = reward.title || reward.reward_code || "Perk claimed!";
         if (result) result.textContent = rewardText;
         if (status) status.textContent = "Your reward has been safely recorded by ARS.";
         const hint = $("#wheelHint");
@@ -1214,12 +1229,11 @@ function avatarMarkup(user, extra = "") {
   $("#refreshFeed").addEventListener("click", () => loadFeed());
   $("#profileShortcut")?.addEventListener("click", (e) => { e.preventDefault(); location.href = "profile.html"; });
   $("#menuOpenStreaks")?.addEventListener("click", () => openStreakCenter("list"));
-  $("#openStreaksFromActivity").addEventListener("click", () => openStreakCenter("list"));
-  $("#menuOpenNotifications")?.addEventListener("click", () => { closeDialog("profileMenuDialog"); openActivity(); });
+  $("#openStreaksFromActivity")?.addEventListener("click", () => openStreakCenter("list"));
   $("#menuSignOut")?.addEventListener("click", async () => { try { await client.auth.signOut(); } finally { localStorage.setItem(STORAGE.loggedIn,"false"); localStorage.removeItem(STORAGE.user); location.replace("index.html"); } });
   const openSearchUnavailable = () => { location.href = "search.html"; };
-  $("#openSearch").addEventListener("click", openSearchUnavailable);
-  $("#navSearch").addEventListener("click", openSearchUnavailable);
+  $("#openSearch")?.addEventListener("click", openSearchUnavailable);
+  $("#navSearch")?.addEventListener("click", openSearchUnavailable);
   $("#menuOpenNotifications")?.addEventListener("click", () => {
     window.location.href = "notifications.html";
   });
@@ -1227,10 +1241,7 @@ function avatarMarkup(user, extra = "") {
     event.preventDefault();
     window.location.href = "notifications.html";
   });
-  $("#navNotifications")?.addEventListener("click", event => {
-    // Navigates directly to notifications.html without blocking navigation
-  });
-  $("#navStreak").addEventListener("click", () => openStreakCenter("list"));
+  $("#navStreak")?.addEventListener("click", () => openStreakCenter("list"));
 
   $("#streakInviteForm").addEventListener("submit", async event => {
     event.preventDefault();
