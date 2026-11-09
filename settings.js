@@ -119,11 +119,14 @@
     }
 
     // Name & verified
-    $("#settingsDisplayName").textContent = p.display_name || p.username || "User";
-    $("#settingsVerifiedBadge").classList.toggle("hidden", !p.verified);
+    const nameEl = $("#settingsDisplayName");
+    if (nameEl) nameEl.textContent = p.display_name || p.username || "User";
+    const verifiedBadge = $("#settingsVerifiedBadge");
+    if (verifiedBadge) verifiedBadge.classList.toggle("hidden", !p.verified);
 
     // Username
-    $("#settingsUsername").textContent = "@" + (p.username || "user");
+    const usernameEl = $("#settingsUsername");
+    if (usernameEl) usernameEl.textContent = "@" + (p.username || "user");
 
     // Secure fail-closed subscription check from server
     let isPremium = false;
@@ -155,10 +158,10 @@
     const badgeEl = $("#premiumStatusBadge");
 
     if (isPremium) {
-      statusEl.textContent = "Premium Member";
+      if (statusEl) statusEl.textContent = "Premium Member";
       badgeEl?.classList.remove("hidden");
     } else {
-      statusEl.textContent = "Free Member";
+      if (statusEl) statusEl.textContent = "Free Member";
       badgeEl?.classList.add("hidden");
     }
 
@@ -170,22 +173,32 @@
   }
 
   function populateFormFields() {
-    const p = activeProfile;
-    const pref = activePreferences;
+    const p = activeProfile || {};
+    const pref = activePreferences || {};
 
     // Account Form
-    $("#accEmail").value = currentAuthUser?.email || p.email || "";
-    $("#accName").value = p.display_name || "";
-    $("#accUsername").value = p.username || "";
-    const accTypeEl = $("#accType") || $("#accTypeSelect"); if (accTypeEl) accTypeEl.value = p.account_type || "Personal";
-    $("#accStatusBadge").textContent = p.account_status || "Active";
+    const accEmail = $("#accEmail");
+    if (accEmail) accEmail.value = currentAuthUser?.email || p.email || "";
+    const accName = $("#accName");
+    if (accName) accName.value = p.display_name || "";
+    const accUsername = $("#accUsername");
+    if (accUsername) accUsername.value = p.username || "";
+    const accTypeEl = $("#accType") || $("#accTypeSelect");
+    if (accTypeEl) accTypeEl.value = p.account_type || "Personal";
+    const accStatusBadge = $("#accStatusBadge");
+    if (accStatusBadge) accStatusBadge.textContent = p.account_status || "Active";
 
     // Privacy Form
-    $("#togglePrivateAccount").checked = Boolean(p.is_private);
-    $("#toggleOnlineVisibility").checked = p.online_status_visible !== false;
-    $("#toggleShowLikes").checked = pref.show_likes !== false;
-    $("#toggleShowFollowers").checked = pref.show_followers !== false;
-    $("#toggleShowFollowing").checked = pref.show_following !== false;
+    const togglePriv = $("#togglePrivateAccount");
+    if (togglePriv) togglePriv.checked = Boolean(p.is_private);
+    const toggleOnline = $("#toggleOnlineVisibility");
+    if (toggleOnline) toggleOnline.checked = p.online_status_visible !== false;
+    const toggleLikes = $("#toggleShowLikes");
+    if (toggleLikes) toggleLikes.checked = pref.show_likes !== false;
+    const toggleFollowers = $("#toggleShowFollowers");
+    if (toggleFollowers) toggleFollowers.checked = pref.show_followers !== false;
+    const toggleFollowing = $("#toggleShowFollowing");
+    if (toggleFollowing) toggleFollowing.checked = pref.show_following !== false;
   }
 
   function checkScheduledDeletionStatus() {

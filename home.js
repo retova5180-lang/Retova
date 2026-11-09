@@ -1123,35 +1123,59 @@ function avatarMarkup(user, extra = "") {
     stopStoryProgress();
   });
 
-  $("#spinWheel").addEventListener("click", () => {
-    $("#wheelResult").textContent = "";
-    $("#spinStatus").textContent = "Spin the wheel for verified daily rewards.";
+  $("#spinWheel")?.addEventListener("click", () => {
+    const resEl = $("#wheelResult");
+    if (resEl) resEl.textContent = "";
+    const statusEl = $("#spinStatus");
+    if (statusEl) statusEl.textContent = "Spin the wheel for verified daily rewards.";
     openDialog("wheelDialog");
   });
 
   let totalWheelRotation = 0;
-  $("#confirmSpin").addEventListener("click", async event => {
+  $("#confirmSpin")?.addEventListener("click", async event => {
     const button = event.currentTarget;
     const status = $("#spinStatus");
     const result = $("#wheelResult");
     const disk = $("#wheelDisk");
 
     button.disabled = true;
-    result.textContent = "";
-    status.textContent = "Verifying reward with ARS server…";
+    if (result) result.textContent = "";
+    if (status) status.textContent = "Verifying reward with ARS server…";
 
     try {
       const { data, error } = await client.rpc("spin_rewards_wheel");
       if (error) throw error;
+
+      // Unpack reward from result
       const reward = Array.isArray(data) ? data[0] : data;
 
-      const rewardCode = (reward?.reward_code || reward?.title || reward?.type || "").toLowerCase();
+      // Strict validation: Reject null, undefined, empty object or failed payload
+      if (!reward || typeof reward !== "object" || Object.keys(reward).length === 0) {
+        throw new Error("No reward data returned from the ARS server. Please try again later.");
+      }
+      if (reward.success === false || reward.status === "failed" || reward.error) {
+        throw new Error(reward.message || reward.error || "Daily spin could not be completed.");
+      }
+
+      const rewardCode = (reward.reward_code || reward.title || reward.type || reward.perk || "").toLowerCase();
+      if (!rewardCode && !reward.message) {
+        throw new Error("Invalid reward format returned by server.");
+      }
+
+      // Sector midpoints in wheelDisk:
+      // VIP: 30° (0-60°) -> rotation = 360 - 30 = 330°
+      // Badge: 90° (60-120°) -> rotation = 360 - 90 = 270°
+      // Streak: 150° (120-180°) -> rotation = 360 - 150 = 210°
+      // Avatar: 210° (180-240°) -> rotation = 360 - 210 = 150°
+      // Premium: 270° (240-300°) -> rotation = 360 - 270 = 90°
+      // Rare: 330° (300-360°) -> rotation = 360 - 330 = 30°
       let targetOffset = 330; // VIP
       if (rewardCode.includes("badge")) targetOffset = 270;
       else if (rewardCode.includes("streak")) targetOffset = 210;
       else if (rewardCode.includes("avatar")) targetOffset = 150;
-      else if (rewardCode.includes("premium")) targetOffset = 90;
+      else if (rewardCode.includes("prem")) targetOffset = 90;
       else if (rewardCode.includes("rare")) targetOffset = 30;
+      else if (rewardCode.includes("vip")) targetOffset = 330;
       else targetOffset = 330;
 
       const fullRotations = 6 * 360;
@@ -1159,22 +1183,25 @@ function avatarMarkup(user, extra = "") {
       const delta = (targetOffset - currentMod + 360) % 360;
       totalWheelRotation += fullRotations + delta;
 
-      status.textContent = "Spinning wheel…";
+      if (status) status.textContent = "Spinning wheel…";
       if (disk) {
         disk.style.transition = "transform 3.8s cubic-bezier(0.15, 0.9, 0.25, 1)";
         disk.style.transform = `rotate(${totalWheelRotation}deg)`;
       }
 
       setTimeout(() => {
-        result.textContent = reward?.title || reward?.message || reward?.reward_code || "Spin complete! Perk claimed.";
-        status.textContent = "Your reward has been safely recorded by ARS.";
+        const rewardText = reward.title || reward.message || reward.reward_code || "Perk claimed!";
+        if (result) result.textContent = rewardText;
+        if (status) status.textContent = "Your reward has been safely recorded by ARS.";
         const hint = $("#wheelHint");
         if (hint) hint.textContent = "Spun today";
+        button.disabled = true;
+        button.textContent = "Spun today";
       }, 3800);
     } catch (error) {
       console.warn("Rewards wheel failure:", error);
-      status.textContent = error.message || "Wheel spin failed. You may have already spun today.";
-      result.textContent = "Unable to process spin.";
+      if (status) status.textContent = error.message || "Wheel spin failed. You may have already spun today.";
+      if (result) result.textContent = "Unable to process spin.";
       button.disabled = false;
     }
   });
@@ -1193,8 +1220,16 @@ function avatarMarkup(user, extra = "") {
   const openSearchUnavailable = () => { location.href = "search.html"; };
   $("#openSearch").addEventListener("click", openSearchUnavailable);
   $("#navSearch").addEventListener("click", openSearchUnavailable);
-  $("#openNotifications").addEventListener("click", event => { event.preventDefault(); openActivity(); });
-  $("#navNotifications").addEventListener("click", event => { event.preventDefault(); openActivity(); });
+  $("#menuOpenNotifications")?.addEventListener("click", () => {
+    window.location.href = "notifications.html";
+  });
+  $("#openNotifications")?.addEventListener("click", event => {
+    event.preventDefault();
+    window.location.href = "notifications.html";
+  });
+  $("#navNotifications")?.addEventListener("click", event => {
+    // Navigates directly to notifications.html without blocking navigation
+  });
   $("#navStreak").addEventListener("click", () => openStreakCenter("list"));
 
   $("#streakInviteForm").addEventListener("submit", async event => {
