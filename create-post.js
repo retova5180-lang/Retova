@@ -33,13 +33,15 @@
     }
     user = data.session.user;
 
-    const { data: profile } = await client
+    const { data: profile, error: profileError } = await client
       .from("user_profiles")
       .select("username,display_name,avatar,is_private")
       .eq("id", user.id)
       .maybeSingle();
+    if (profileError) throw new Error("Could not load account privacy settings: " + profileError.message);
+    if (!profile) throw new Error("Your ARS profile is not ready yet. Please try again.");
 
-    accountIsPrivate = Boolean(profile?.is_private);
+    accountIsPrivate = Boolean(profile.is_private);
     const dName = profile?.display_name || profile?.username || "Your ARS account";
     const uName = profile?.username || "you";
     const initial = (dName || "A")[0].toUpperCase();
