@@ -34,7 +34,7 @@
     user = data.session.user;
 
     const { data: profile, error: profileError } = await client
-      .from("user_profiles")
+      .from("public_profiles")
       .select("username,display_name,avatar,is_private")
       .eq("id", user.id)
       .maybeSingle();
