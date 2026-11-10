@@ -537,19 +537,19 @@
           posts = (data || []).filter(p => Boolean(p.image) || (Array.isArray(p.media_urls) && p.media_urls.length > 0));
         } else if (tab === "bookmarks" && isOwnProfile) {
           const { data } = await client.from("bookmarks")
-            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
+            .select("post_id, posts(id, user_id, content, image, media_type, media_urls, privacy, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(b => b.posts).filter(Boolean);
         } else if (tab === "reposts") {
           const { data } = await client.from("reposts")
-            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
+            .select("post_id, posts(id, user_id, content, image, media_type, media_urls, privacy, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(r => r.posts).filter(Boolean);
         } else if (tab === "likes") {
           const { data } = await client.from("likes")
-            .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
+            .select("post_id, posts(id, user_id, content, image, media_type, media_urls, privacy, likes_count, comments_count, created_at)")
             .eq("user_id", activeProfile.id)
             .order("created_at", { ascending: false });
           posts = (data || []).map(l => l.posts).filter(Boolean);
@@ -803,16 +803,18 @@
 
         try {
           if (action === "accept") {
-            await client.from("followers").update({
+            const { error } = await client.from("followers").update({
               status: "accepted",
               responded_at: new Date().toISOString()
             }).eq("id", id);
+            if (error) throw error;
             showToast("Follow request accepted.");
           } else {
-            await client.from("followers").update({
+            const { error } = await client.from("followers").update({
               status: "declined",
               responded_at: new Date().toISOString()
             }).eq("id", id);
+            if (error) throw error;
             showToast("Follow request declined.");
           }
 
