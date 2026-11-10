@@ -229,9 +229,12 @@
 
       // Story mode publish
       if (storyMode) {
+        uploadedStoragePaths.push({ bucket: "story-media", path: storyDraft.path });
+        if (storyDraft.audioPath) uploadedStoragePaths.push({ bucket: "story-media", path: storyDraft.audioPath });
         const { error } = await client.from("stories").insert({
           user_id: user.id,
           image: storyDraft.path,
+          audio_path: storyDraft.audioPath || null,
           media_type: storyDraft.mediaType || "image",
           story_text: content,
           privacy: $("#privacy")?.value || "public",
@@ -243,11 +246,14 @@
           edit_metadata: {
             filter: storyDraft.filter,
             zoom: storyDraft.zoom,
-            rotation: storyDraft.rotation
+            rotation: storyDraft.rotation,
+            hasSoundtrack: Boolean(storyDraft.audioPath),
+            soundName: storyDraft.soundName || null
           },
           expires_at: new Date(Date.now() + 86400000).toISOString()
         });
         if (error) throw error;
+        uploadedStoragePaths.length = 0;
         sessionStorage.removeItem("ars_story_composer");
         location.href = "home.html";
         return;
