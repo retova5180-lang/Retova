@@ -407,7 +407,7 @@ function avatarMarkup(user, extra = "") {
   async function loadStreaks() {
     const list = $("#streaksListContainer");
     list.innerHTML = '<p class="muted">Loading Streaks…</p>';
-    const { data, error } = await client.from("streaks").select("id,user_a_id,user_b_id,streak_count,status,last_activity_user_a_at,last_activity_user_b_at,broken_at,created_at,updated_at").or("user_a_id.eq."+currentUser.id+",user_b_id.eq."+currentUser.id).order("updated_at", { ascending:false }).limit(100);
+    const { data, error } = await client.from("streaks").select("id,user_a_id,user_b_id,streak_count,status,last_activity_at,last_activity_user_a_at,last_activity_user_b_at,broken_at,created_at,updated_at").or("user_a_id.eq."+currentUser.id+",user_b_id.eq."+currentUser.id).order("updated_at", { ascending:false }).limit(100);
     if (error) { list.textContent = "Could not load Streaks: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">No Streaks yet. Invite someone to start one together.</p>'; return; }
     const peerIds = [...new Set(data.map(row => row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id).filter(Boolean))];
@@ -1087,7 +1087,15 @@ function avatarMarkup(user, extra = "") {
     openDialog("storyViewerDialog");
 
     if (currentUser?.id && story.id) {
-      client.from("story_views").insert({ story_id: story.id, viewer_id: currentUser.id }).catch(() => {});
+      try {
+        const { error: viewError } = await client.from("story_views").insert({
+          story_id: story.id,
+          viewer_id: currentUser.id
+        });
+        if (viewError) console.warn("Could not record story view:", viewError.message);
+      } catch (viewError) {
+        console.warn("Could not record story view:", viewError);
+      }
     }
 
     setTimeout(() => {
@@ -1116,11 +1124,31 @@ function avatarMarkup(user, extra = "") {
 
   $("#storyPauseBtn").addEventListener("click", () => toggleStoryPause());
 
-  $("#storyHeartBtn").addEventListener("click", () => {
-    const btn = $("#storyHeartBtn");
-    btn.style.transform = "scale(1.4)";
-    setTimeout(() => { btn.style.transform = ""; }, 250);
-    showMessage("Reaction sent", "Your reaction was sent to this story.");
+  $("#storyHeartBtn").addEventListener("click", async () => {
+    const story = stories[currentStoryIndex];
+    if (!story?.id || !currentUser?.id) {
+      showMessage("Reaction unavailable", "Open an active story while signed in to react.");
+      return;
+    }
+
+    const button = $("#storyHeartBtn");
+    button.disabled = true;
+    try {
+      const { error } = await client.from("story_reactions").insert({
+        story_id: story.id,
+        user_id: currentUser.id,
+        emoji: "💜"
+      });
+      if (error) throw error;
+      button.style.transform = "scale(1.4)";
+      setTimeout(() => { button.style.transform = ""; }, 250);
+      showMessage("Reaction sent", "Your reaction was saved to this story.");
+    } catch (error) {
+      console.error("Story reaction failed:", error);
+      showMessage("Could not send reaction", error.message || "Please try again.");
+    } finally {
+      button.disabled = false;
+    }
   });
 
   $("#storyQuickReply").addEventListener("keydown", event => {
@@ -1130,7 +1158,7 @@ function avatarMarkup(user, extra = "") {
       const val = input.value.trim();
       if (!val) return;
       input.value = "";
-      showMessage("Reply sent", "Your reply was sent to this story.");
+      showMessage("Story replies unavailable", "Your reply was not sent because story replies are not connected to the database yet.");
     }
   });
 
@@ -1165,12 +1193,13 @@ function avatarMarkup(user, extra = "") {
       targetRotation: 270,
       verify: async (userId) => {
         const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-        const { count, error } = await client.from("story_views")
-          .select("id", { count: "exact", head: true })
+        const { data, error } = await client.from("story_views")
+          .select("story_id")
           .eq("viewer_id", userId)
           .gte("created_at", since);
         if (error) throw error;
-        return { completed: (count || 0) >= 5, progress: `${count || 0}/5 stories viewed in 24h` };
+        const uniqueStories = new Set((data || []).map(row => row.story_id).filter(Boolean)).size;
+        return { completed: uniqueStories >= 5, progress: `${uniqueStories}/5 different stories viewed in 24h` };
       }
     },
     {
@@ -1228,12 +1257,20 @@ function avatarMarkup(user, extra = "") {
       spokeAngle: 330, // 330° spoke -> wheel rotation: 360 - 330 = 30°
       targetRotation: 30,
       verify: async (userId) => {
+        const since = Date.now() - 24 * 60 * 60 * 1000;
         const { data, error } = await client.from("streaks")
-          .select("id, user_a_id, user_b_id, streak_count, updated_at, last_activity_user_a_at, last_activity_user_b_at")
+          .select("id,status,broken_at,last_activity_user_a_at,last_activity_user_b_at")
           .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
-          .limit(1);
+          .eq("status", "active")
+          .is("broken_at", null)
+          .limit(100);
         if (error) throw error;
-        return { completed: Boolean(data?.length), progress: data?.length ? "Streak active" : "No streak yet" };
+        const active = (data || []).some(row => {
+          const lastA = row.last_activity_user_a_at ? new Date(row.last_activity_user_a_at).getTime() : 0;
+          const lastB = row.last_activity_user_b_at ? new Date(row.last_activity_user_b_at).getTime() : 0;
+          return lastA >= since && lastB >= since;
+        });
+        return { completed: active, progress: active ? "Both people interacted in the last 24h" : "Both people must interact within the last 24h" };
       }
     }
   ];
@@ -1314,7 +1351,10 @@ function avatarMarkup(user, extra = "") {
 
     try {
       const match = ARS_CHALLENGES.find(c => c.id === activeChallenge.id);
-      if (match && match.verify) {
+      if (!match || typeof match.verify !== "function") {
+        throw new Error("This saved challenge is no longer supported. Dismiss it and spin again.");
+      }
+      {
         const result = await match.verify(currentUser.id);
         if (result.completed) {
           btn.textContent = "Completed!";
@@ -1366,11 +1406,6 @@ function avatarMarkup(user, extra = "") {
     if (disk) {
       disk.style.transition = "transform 3.8s cubic-bezier(0.15, 0.9, 0.25, 1)";
       disk.style.transform = `rotate(${totalWheelRotation}deg)`;
-    }
-
-    // Optional background log to wheel_spins if accessible
-    if (currentUser?.id && client) {
-      client.from("wheel_spins").insert({ user_id: currentUser.id, reward_code: chosen.id }).then(() => {}).catch(() => {});
     }
 
     setTimeout(() => {
