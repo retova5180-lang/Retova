@@ -46,17 +46,20 @@
     }
     if (!item.url) return null;
     let url = item.url;
-    if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
-      if (post.privacy === "public" && !isPrivateAccount) {
-        url = client?.storage.from("post-media").getPublicUrl(url).data?.publicUrl || "";
-      } else {
-        const { data, error } = await client.storage.from("private-post-media").createSignedUrl(url, 1800);
-        if (error) {
-          console.warn("Could not resolve private search media:", error.message);
-          return null;
-        }
-        url = data?.signedUrl || "";
+    if (!url.startsWith("data:")) {
+      let bucket = post.privacy === "public" && !isPrivateAccount ? "post-media" : "private-post-media";
+      if (/^https?:\/\//i.test(url)) {
+        const match = url.match(/\/storage\/v1\/object\/(?:public|sign)\/(post-media|private-post-media)\/(.+?)(?:\?|$)/i);
+        if (!match) return { url, type: item.type === "video" ? "video" : "image" };
+        bucket = match[1];
+        try { url = decodeURIComponent(match[2]); } catch { url = match[2]; }
       }
+      const { data, error } = await client.storage.from(bucket).createSignedUrl(url, 1800);
+      if (error) {
+        console.warn("Could not resolve post search media:", error.message);
+        return null;
+      }
+      url = data?.signedUrl || "";
     }
     return url ? { url, type: item.type === "video" ? "video" : "image" } : null;
   }
