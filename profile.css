@@ -1306,3 +1306,6 @@
 .bottom-nav {
   max-width: min(100%, 820px) !important;
 }
+
+#editFormError { display:block; position:sticky; bottom:8px; z-index:30; margin:12px 0; padding:14px 16px; border:1px solid #ef4444; border-radius:12px; background:#351014; color:#fff; font-size:14px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+#editFormError.hidden { display:none !important; }
