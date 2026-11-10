@@ -11,6 +11,9 @@
     root.style.setProperty("--purple", accent);
     root.style.setProperty("--purple-light", accent);
     root.style.setProperty("--purple-dark", accent);
+    root.style.setProperty("--purple-primary", accent);
+    root.style.setProperty("--purple-bright", accent);
+    root.style.setProperty("--border-focus", accent);
     root.style.setProperty("--purple-glow", "rgba(" + rgb + ", 0.45)");
     root.style.setProperty("--purple-border", "rgba(" + rgb + ", 0.16)");
     root.style.setProperty("--purple-border-subtle", "rgba(" + rgb + ", 0.1)");
