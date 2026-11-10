@@ -150,19 +150,22 @@ function avatarMarkup(user, extra = "") {
     if (!url) return "";
     let path = String(url);
     let bucket = privacy === "public" && !isPrivateAccount ? "post-media" : "private-post-media";
+    let exactBucket = false;
     if (path.startsWith("data:")) return path;
     if (/^https?:\/\//i.test(path)) {
       const stored = parsePostStorageUrl(path);
       if (!stored) return path;
       bucket = stored.bucket;
+      exactBucket = true;
       path = stored.path;
     }
-    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 1800);
-    if (error) {
-      console.warn("Post media unavailable:", error.message);
-      return "";
+    const buckets = exactBucket ? [bucket] : [bucket, bucket === "post-media" ? "private-post-media" : "post-media"];
+    for (const candidate of buckets) {
+      const { data, error } = await client.storage.from(candidate).createSignedUrl(path, 1800);
+      if (!error && data?.signedUrl) return data.signedUrl;
+      if (error) console.warn("Post media lookup failed in " + candidate + ":", error.message);
     }
-    return data?.signedUrl || "";
+    return "";
   }
 
   async function resolvePostMediaItems(post, isPrivateAccount = false) {
