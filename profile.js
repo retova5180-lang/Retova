@@ -608,7 +608,7 @@
         /\.(mp4|webm|mov)(?:$|[?#])/i.test(media);
       if (media && !/^https?:\/\//i.test(media) && !media.startsWith("data:")) {
         try {
-          if (post.privacy === "public") {
+          if (post.privacy === "public" && !activeProfile.is_private) {
             media = client.storage.from("post-media").getPublicUrl(media).data?.publicUrl || "";
           } else {
             const { data: signed, error: signedError } = await client.storage
