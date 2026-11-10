@@ -126,6 +126,7 @@ function avatarMarkup(user, extra = "") {
 
     currentUser = {
       ...local, ...(profile || {}), id: authUser.id,
+      is_private: profile?.is_private ?? true,
       email: accountEmail,
       username: profile?.username || local.username || authUser.user_metadata?.username || "",
       displayName: profile?.display_name || local.displayName || authUser.user_metadata?.display_name || "",
