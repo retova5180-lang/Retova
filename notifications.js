@@ -62,6 +62,7 @@
         return '<svg viewBox="0 0 24 24" width="12" height="12" fill="#ec4899"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
       case "comment":
       case "reply":
+      case "story_reply":
         return '<svg viewBox="0 0 24 24" width="12" height="12" fill="#a855f7"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>';
       case "repost":
         return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
@@ -83,6 +84,7 @@
       case "like": return "liked your post.";
       case "comment": return "commented on your post.";
       case "reply": return "replied to your comment.";
+      case "story_reply": return "replied to your story.";
       case "repost": return "reposted your post to their feed.";
       case "follow": return "started following you.";
       case "follow_request": return "requested to follow your account.";
@@ -179,7 +181,7 @@
 
     let filtered = allNotifications;
     if (currentFilter === "interactions") {
-      filtered = allNotifications.filter(n => ["like", "comment", "reply", "repost"].includes(n.type));
+      filtered = allNotifications.filter(n => ["like", "comment", "reply", "story_reply", "repost"].includes(n.type));
     } else if (currentFilter === "follows") {
       filtered = allNotifications.filter(n => ["follow", "follow_request"].includes(n.type));
     } else if (currentFilter === "system") {
