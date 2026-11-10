@@ -7,7 +7,7 @@
   <meta name="description" content="ARS — Next-generation social platform.">
   <title>ARS — Home</title>
   <meta name="color-scheme" content="dark">
-  <link rel="stylesheet" href="home.css?v=20261110-xthread4">
+  <link rel="stylesheet" href="home.css?v=20261110-threadpage5">
 </head>
 <body>
   <div class="app-shell">
@@ -227,24 +227,33 @@
       </div>
     </dialog>
 
-    <dialog id="commentsDialog" class="modal">
-      <section class="modal-card comments-card">
-        <div class="modal-heading">
-          <h2>Replies</h2>
-          <button type="button" class="close-btn" data-close="commentsDialog" aria-label="Close">×</button>
+    <dialog id="commentsDialog" class="modal thread-page-modal" aria-label="Post conversation">
+      <section class="thread-page">
+        <header class="thread-topbar">
+          <button type="button" class="thread-back-btn" data-close="commentsDialog" aria-label="Back to feed">←</button>
+          <h2>Post</h2>
+          <span class="thread-topbar-spacer"></span>
+        </header>
+        <div class="thread-scroll-area" id="threadScrollArea">
+          <article id="threadOriginalPost" class="thread-original-post">
+            <p class="muted">Loading post…</p>
+          </article>
+          <div class="thread-replies-heading"><span>Replies</span></div>
+          <div id="commentsList" class="comments-list">
+            <p class="muted">Loading replies…</p>
+          </div>
         </div>
-        <div id="commentsList" class="comments-list">
-          <p class="muted">Loading replies…</p>
+        <div class="thread-composer-dock">
+          <div id="commentReplyContext" class="comment-reply-context" hidden>
+            <span></span>
+            <button type="button" id="cancelCommentReply" aria-label="Cancel reply">Cancel</button>
+          </div>
+          <form id="commentForm" class="comment-form">
+            <input id="commentInput" type="text" maxlength="2000" placeholder="Post your reply" required autocomplete="off" aria-label="Write a reply">
+            <button id="commentSubmitBtn" class="primary-btn" type="submit">Reply</button>
+          </form>
+          <p id="commentMessage" class="form-message" aria-live="polite"></p>
         </div>
-        <div id="commentReplyContext" class="comment-reply-context" hidden>
-          <span></span>
-          <button type="button" id="cancelCommentReply" aria-label="Cancel reply">Cancel</button>
-        </div>
-        <form id="commentForm" class="comment-form">
-          <input id="commentInput" type="text" maxlength="2000" placeholder="Write a reply…" required autocomplete="off">
-          <button id="commentSubmitBtn" class="primary-btn" type="submit">Reply</button>
-        </form>
-        <p id="commentMessage" class="form-message" aria-live="polite"></p>
       </section>
     </dialog>
 
@@ -397,6 +406,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="theme.js?v=20261110-replies3"></script>
-  <script src="home.js?v=20261110-replies3"></script>
+  <script src="home.js?v=20261110-threadpage5"></script>
 </body>
 </html>
