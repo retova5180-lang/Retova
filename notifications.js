@@ -159,7 +159,7 @@
       let userMap = new Map();
       if (senderIds.length) {
         const { data: senders } = await client
-          .from("user_profiles")
+          .from("public_profiles")
           .select("id, username, display_name, avatar, plan")
           .in("id", senderIds);
         if (senders) {
@@ -218,6 +218,9 @@
       var targetHref = "#";
       if (item.post_id) {
         targetHref = "home.html?post=" + encodeURIComponent(item.post_id);
+        if ((item.type === "comment" || item.type === "reply") && item.metadata?.comment_id) {
+          targetHref += "&openReplies=1&comment=" + encodeURIComponent(item.metadata.comment_id);
+        }
       } else if (actor.username) {
         targetHref = "profile.html?user=" + encodeURIComponent(actor.username);
       }
