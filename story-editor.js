@@ -474,6 +474,7 @@ $("#soundPicker").addEventListener("change", event => {
     event.target.value = "";
     return;
   }
+  if (soundPreview) soundPreview.pause();
   if (soundObjectUrl) URL.revokeObjectURL(soundObjectUrl);
   soundFile = selected;
   soundObjectUrl = soundFile ? URL.createObjectURL(soundFile) : "";
@@ -584,6 +585,11 @@ $("#closeEditor").addEventListener("click", () => {
   if (confirm("Discard this story edit?")) location.href = "home.html";
 });
 window.addEventListener("resize", resizeCanvas);
+window.addEventListener("pagehide", () => {
+  if (soundPreview) soundPreview.pause();
+  if (soundObjectUrl) URL.revokeObjectURL(soundObjectUrl);
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+});
 
 const stage = $("#previewWrap");
 stage.addEventListener("dragover", event => { event.preventDefault(); stage.classList.add("dragging"); });
