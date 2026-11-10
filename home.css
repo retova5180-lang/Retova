@@ -807,6 +807,12 @@ a {
   cursor: pointer;
 }
 
+.comment-notification-focus > .comment-body {
+  border-color: var(--purple-light);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.18), 0 0 20px rgba(168, 85, 247, 0.16);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
 .comment-children {
   display: flex;
   flex-direction: column;
