@@ -799,13 +799,18 @@ function avatarMarkup(user, extra = "") {
         showMessage("Post deleted", "Your post has been removed from ARS.");
         await loadFeed();
       } else if (action === "save") {
-        const { data: existing } = await client.from("bookmarks")
+        const { data: existing, error: lookupError } = await client.from("bookmarks")
           .select("id").eq("user_id", currentUser.id).eq("post_id", post.id).maybeSingle();
+        if (lookupError) throw lookupError;
         if (existing) {
-          await client.from("bookmarks").delete().eq("user_id", currentUser.id).eq("post_id", post.id);
+          const { error: deleteError } = await client.from("bookmarks")
+            .delete().eq("user_id", currentUser.id).eq("post_id", post.id);
+          if (deleteError) throw deleteError;
           showMessage("Bookmark removed", "Post removed from your saved list.");
         } else {
-          await client.from("bookmarks").insert({ user_id: currentUser.id, post_id: post.id });
+          const { error: insertError } = await client.from("bookmarks")
+            .insert({ user_id: currentUser.id, post_id: post.id });
+          if (insertError) throw insertError;
           showMessage("Post saved", "Post saved to your bookmarks.");
         }
         closeDialog("postOptionsDialog");
