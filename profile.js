@@ -72,6 +72,7 @@
   let selectedLetter = "R";
   let selectedLetterColor = "#ffffff";
   let selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+  let avatarCustomizerTouched = false;
 
   function initAvatarCustomizer(p) {
     const preview = $("#largeAvatarPreview");
@@ -82,6 +83,7 @@
     selectedLetter = (p?.display_name?.[0] || p?.username?.[0] || "R").toUpperCase();
     selectedLetterColor = "#ffffff";
     selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+    avatarCustomizerTouched = false;
 
     if (preview) {
       preview.textContent = selectedLetter;
@@ -98,6 +100,7 @@
           letterGrid.querySelectorAll(".letter-option").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
           selectedLetter = btn.dataset.letter;
+          avatarCustomizerTouched = true;
           if (preview) preview.textContent = selectedLetter;
         });
       });
@@ -112,6 +115,7 @@
           colorGrid.querySelectorAll(".color-option").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
           selectedLetterColor = btn.dataset.color;
+          avatarCustomizerTouched = true;
           if (preview) preview.style.color = selectedLetterColor;
         });
       });
@@ -133,6 +137,7 @@
           gradGrid.querySelectorAll(".gradient-option").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
           selectedBgGradient = btn.dataset.gradient;
+          avatarCustomizerTouched = true;
           if (preview) preview.style.background = selectedBgGradient;
         });
       });
@@ -298,15 +303,19 @@
       $("#accountTypeTag").classList.add("hidden");
     }
 
-    // Avatar
+    // Avatar: SVG avatars are visible for all users; photo avatars require verified Premium
     const avatarEl = $("#profileAvatarImg");
-    if (p.avatar && isPremium) {
-      avatarEl.src = p.avatar;
-    } else {
-      const l = localStorage.getItem("ars_letter") || p.letter || (p.display_name || p.username || "R")[0];
-      const c = localStorage.getItem("ars_letter_color") || p.letterColor || p.profile_accent_color || "#ffffff";
-      const bg = localStorage.getItem("ars_background") || p.background || "linear-gradient(135deg, #8b3dff, #c54dff)";
-      avatarEl.src = getSvgAvatar(l, c, bg);
+    if (avatarEl) {
+      if (p.avatar && (p.avatar.startsWith("data:image/") || p.avatar.startsWith("<svg"))) {
+        avatarEl.src = p.avatar;
+      } else if (p.avatar && isPremium && /^https?:\/\//i.test(p.avatar)) {
+        avatarEl.src = p.avatar;
+      } else {
+        const l = (p.display_name || p.username || "R")[0];
+        const c = p.profile_accent_color || "#ffffff";
+        const bg = "linear-gradient(135deg, #8b3dff, #c54dff)";
+        avatarEl.src = getSvgAvatar(l, c, bg);
+      }
     }
 
     // Cover: blank black space if none
@@ -888,7 +897,7 @@
               return;
             }
           }
-        } else if (!userHasPremium) {
+        } else if (avatarCustomizerTouched || !activeProfile.avatar) {
           updates.avatar = getSvgAvatar(selectedLetter, selectedLetterColor, selectedBgGradient);
         }
 

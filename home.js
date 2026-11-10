@@ -94,8 +94,10 @@ function avatarMarkup(user, extra = "") {
         menuAvatar.style.backgroundPosition = "center";
       }
     }
-    $("#menuName").textContent = name;
-    $("#menuHandle").textContent = currentUser.username ? "@"+currentUser.username : "";
+    const menuName = $("#menuName");
+    if (menuName) menuName.textContent = name;
+    const menuHandle = $("#menuHandle");
+    if (menuHandle) menuHandle.textContent = currentUser.username ? "@"+currentUser.username : "";
   }
 
   async function requireSession() {
@@ -1123,102 +1125,254 @@ function avatarMarkup(user, extra = "") {
     stopStoryProgress();
   });
 
-  $("#spinWheel")?.addEventListener("click", () => {
-    const resEl = $("#wheelResult");
-    if (resEl) resEl.textContent = "";
-    const statusEl = $("#spinStatus");
-    if (statusEl) statusEl.textContent = "Spin the wheel for verified daily rewards.";
-    openDialog("wheelDialog");
-  });
+  // ARS Optional Challenge Wheel Controller
+  // 6 Approved Challenge Types corresponding to wheelDisk spokes (30deg, 90deg, 150deg, 210deg, 270deg, 330deg)
+  const ARS_CHALLENGES = [
+    {
+      id: "like_posts",
+      title: "Like 3 Posts",
+      desc: "Like 3 posts from creators in your ARS feed.",
+      spokeAngle: 30, // 30° spoke -> wheel rotation: 360 - 30 = 330°
+      targetRotation: 330,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("likes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 3, progress: `${count || 0}/3 likes in 24h` };
+      }
+    },
+    {
+      id: "watch_stories",
+      title: "Watch 5 Stories",
+      desc: "Watch 5 stories from ARS members.",
+      spokeAngle: 90, // 90° spoke -> wheel rotation: 360 - 90 = 270°
+      targetRotation: 270,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("story_views")
+          .select("id", { count: "exact", head: true })
+          .eq("viewer_id", userId)
+          .gte("viewed_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 5, progress: `${count || 0}/5 stories viewed in 24h` };
+      }
+    },
+    {
+      id: "write_comment",
+      title: "Write a Comment",
+      desc: "Leave a meaningful comment on any post.",
+      spokeAngle: 150, // 150° spoke -> wheel rotation: 360 - 150 = 210°
+      targetRotation: 210,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 comment posted in 24h` };
+      }
+    },
+    {
+      id: "post_story",
+      title: "Share a Story",
+      desc: "Post a new story with photos or drawings.",
+      spokeAngle: 210, // 210° spoke -> wheel rotation: 360 - 210 = 150°
+      targetRotation: 150,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("stories")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 story shared in 24h` };
+      }
+    },
+    {
+      id: "save_post",
+      title: "Save a Post",
+      desc: "Bookmark an interesting post to your saved collection.",
+      spokeAngle: 270, // 270° spoke -> wheel rotation: 360 - 270 = 90°
+      targetRotation: 90,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("bookmarks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 post saved in 24h` };
+      }
+    },
+    {
+      id: "streak_interact",
+      title: "Maintain Streak",
+      desc: "Interact with a friend to maintain your ARS streak.",
+      spokeAngle: 330, // 330° spoke -> wheel rotation: 360 - 330 = 30°
+      targetRotation: 30,
+      verify: async (userId) => {
+        const { data, error } = await client.from("streaks")
+          .select("id, current_streak, updated_at")
+          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+          .limit(1);
+        if (error) throw error;
+        return { completed: Boolean(data?.length), progress: data?.length ? "Streak active" : "No streak yet" };
+      }
+    }
+  ];
 
   let totalWheelRotation = 0;
+  let activeChallenge = null;
+
+  function restoreActiveChallenge() {
+    try {
+      const stored = localStorage.getItem("ars_active_challenge");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.id) {
+          activeChallenge = parsed;
+          showChallengeBanner(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Challenge restore error:", e);
+    }
+  }
+
+  function showChallengeBanner(challenge) {
+    const banner = $("#activeChallengeBanner");
+    const titleEl = $("#bannerChallengeTitle");
+    const descEl = $("#bannerChallengeDesc");
+    if (!banner || !challenge) return;
+
+    if (titleEl) titleEl.textContent = challenge.title;
+    if (descEl) descEl.textContent = challenge.desc;
+    banner.classList.remove("hidden");
+  }
+
+  function dismissChallenge() {
+    activeChallenge = null;
+    localStorage.removeItem("ars_active_challenge");
+    const banner = $("#activeChallengeBanner");
+    if (banner) banner.classList.add("hidden");
+    const dismissBtn = $("#dismissChallengeBtn");
+    if (dismissBtn) dismissBtn.classList.add("hidden");
+  }
+
+  function openWheelModal() {
+    const resEl = $("#wheelResult");
+    const titleEl = $("#challengeTitle");
+    const statusEl = $("#spinStatus");
+    const dismissBtn = $("#dismissChallengeBtn");
+
+    if (activeChallenge) {
+      if (titleEl) titleEl.textContent = activeChallenge.title;
+      if (resEl) resEl.textContent = activeChallenge.desc + " (Optional — can be ignored anytime)";
+      if (dismissBtn) dismissBtn.classList.remove("hidden");
+    } else {
+      if (titleEl) titleEl.textContent = "Optional Social Challenge";
+      if (resEl) resEl.textContent = "Spin the wheel to get an optional social challenge. Challenges are 100% voluntary and can be ignored anytime.";
+      if (dismissBtn) dismissBtn.classList.add("hidden");
+    }
+    if (statusEl) statusEl.textContent = "";
+    openDialog("wheelDialog");
+  }
+
+  $("#spinWheel")?.addEventListener("click", openWheelModal);
+  $("#storyWheelBtn")?.addEventListener("click", openWheelModal);
+
+  $("#dismissChallengeBtn")?.addEventListener("click", () => {
+    dismissChallenge();
+    closeDialog("wheelDialog");
+    showMessage("Challenge Dismissed", "The optional challenge was dismissed. No penalties or lost points.");
+  });
+
+  $("#dismissBannerChallengeBtn")?.addEventListener("click", dismissChallenge);
+
+  $("#checkChallengeCompletionBtn")?.addEventListener("click", async () => {
+    if (!activeChallenge || !currentUser?.id) return;
+    const btn = $("#checkChallengeCompletionBtn");
+    btn.disabled = true;
+    btn.textContent = "Checking…";
+
+    try {
+      const match = ARS_CHALLENGES.find(c => c.id === activeChallenge.id);
+      if (match && match.verify) {
+        const result = await match.verify(currentUser.id);
+        if (result.completed) {
+          btn.textContent = "Completed!";
+          btn.style.background = "#22c55e";
+          showMessage("Challenge Completed!", `Great job! You completed "${activeChallenge.title}". Thank you for engaging with the ARS community.`);
+          setTimeout(() => {
+            dismissChallenge();
+            btn.disabled = false;
+            btn.textContent = "Check";
+            btn.style.background = "";
+          }, 2000);
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Check";
+          showMessage("In Progress", `Status: ${result.progress}. Continue interacting on ARS when you wish!`);
+        }
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = "Check";
+      console.warn("Challenge check error:", e);
+      showMessage("Notice", "Unable to verify activity right now. Please try again later.");
+    }
+  });
+
   $("#confirmSpin")?.addEventListener("click", async event => {
     const button = event.currentTarget;
     const status = $("#spinStatus");
     const result = $("#wheelResult");
+    const titleEl = $("#challengeTitle");
     const disk = $("#wheelDisk");
+    const dismissBtn = $("#dismissChallengeBtn");
 
     button.disabled = true;
-    if (result) result.textContent = "";
-    if (status) status.textContent = "Verifying reward with ARS server…";
+    if (status) status.textContent = "Selecting challenge…";
 
-    try {
-      const { data, error } = await client.rpc("spin_rewards_wheel");
-      if (error) throw error;
+    // Select challenge, avoiding immediate repetition
+    const lastId = localStorage.getItem("ars_last_challenge");
+    const candidates = ARS_CHALLENGES.filter(c => c.id !== lastId);
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)] || ARS_CHALLENGES[0];
+    localStorage.setItem("ars_last_challenge", chosen.id);
 
-      // Unpack reward from result
-      const reward = Array.isArray(data) ? data[0] : data;
+    // Calculate rotation to land chosen spoke exactly under top pointer (0°)
+    const fullRotations = 6 * 360;
+    const currentMod = totalWheelRotation % 360;
+    const delta = (chosen.targetRotation - currentMod + 360) % 360;
+    totalWheelRotation += fullRotations + delta;
 
-      // Strict validation: Reject null, undefined, empty object or failed payload
-      if (!reward || typeof reward !== "object" || Object.keys(reward).length === 0) {
-        throw new Error("No reward data returned from the ARS server. Please try again later.");
-      }
-      if (reward.success === false || reward.status === "failed" || reward.error) {
-        throw new Error(reward.message || reward.error || "Daily spin could not be completed.");
-      }
-
-      // Strict validation of reward code: reward.message alone is NOT accepted as proof of a valid reward.
-      // A known reward_code matching an actual sector is strictly required.
-      const rawCode = (reward.reward_code || reward.perk || reward.type || "").toString().trim().toLowerCase();
-      if (!rawCode) {
-        throw new Error("Reward code is missing from server response. Daily spin cannot be verified.");
-      }
-
-      // Sector midpoints in wheelDisk:
-      // VIP: 30° (0-60°) -> rotation = 360 - 30 = 330°
-      // Badge: 90° (60-120°) -> rotation = 360 - 90 = 270°
-      // Streak: 150° (120-180°) -> rotation = 360 - 150 = 210°
-      // Avatar: 210° (180-240°) -> rotation = 360 - 210 = 150°
-      // Premium: 270° (240-300°) -> rotation = 360 - 270 = 90°
-      // Rare: 330° (300-360°) -> rotation = 360 - 330 = 30°
-      const SECTOR_OFFSETS = {
-        "rare": 30,
-        "premium": 90,
-        "prem": 90,
-        "avatar": 150,
-        "streak": 210,
-        "badge": 270,
-        "vip": 330
-      };
-
-      let targetOffset = null;
-      for (const [key, offset] of Object.entries(SECTOR_OFFSETS)) {
-        if (rawCode === key || rawCode.includes(key)) {
-          targetOffset = offset;
-          break;
-        }
-      }
-
-      if (targetOffset === null) {
-        throw new Error(`Unrecognized reward code "${rawCode}". Daily spin cannot be mapped to a valid sector.`);
-      }
-
-      const fullRotations = 6 * 360;
-      const currentMod = totalWheelRotation % 360;
-      const delta = (targetOffset - currentMod + 360) % 360;
-      totalWheelRotation += fullRotations + delta;
-
-      if (status) status.textContent = "Spinning wheel…";
-      if (disk) {
-        disk.style.transition = "transform 3.8s cubic-bezier(0.15, 0.9, 0.25, 1)";
-        disk.style.transform = `rotate(${totalWheelRotation}deg)`;
-      }
-
-      setTimeout(() => {
-        const rewardText = reward.title || reward.reward_code || "Perk claimed!";
-        if (result) result.textContent = rewardText;
-        if (status) status.textContent = "Your reward has been safely recorded by ARS.";
-        const hint = $("#wheelHint");
-        if (hint) hint.textContent = "Spun today";
-        button.disabled = true;
-        button.textContent = "Spun today";
-      }, 3800);
-    } catch (error) {
-      console.warn("Rewards wheel failure:", error);
-      if (status) status.textContent = error.message || "Wheel spin failed. You may have already spun today.";
-      if (result) result.textContent = "Unable to process spin.";
-      button.disabled = false;
+    if (disk) {
+      disk.style.transition = "transform 3.8s cubic-bezier(0.15, 0.9, 0.25, 1)";
+      disk.style.transform = `rotate(${totalWheelRotation}deg)`;
     }
+
+    // Optional background log to wheel_spins if accessible
+    if (currentUser?.id && client) {
+      client.from("wheel_spins").insert({ user_id: currentUser.id, reward_code: chosen.id }).then(() => {}).catch(() => {});
+    }
+
+    setTimeout(() => {
+      activeChallenge = chosen;
+      localStorage.setItem("ars_active_challenge", JSON.stringify(chosen));
+      showChallengeBanner(chosen);
+
+      if (titleEl) titleEl.textContent = chosen.title;
+      if (result) result.textContent = chosen.desc + " (100% voluntary social challenge. You can complete it or ignore it.)";
+      if (status) status.textContent = "Challenge active! You can check completion from your feed.";
+      if (dismissBtn) dismissBtn.classList.remove("hidden");
+
+      button.disabled = false;
+      button.textContent = "Spin again";
+    }, 3800);
   });
 
   document.addEventListener("click", event => {
@@ -1313,6 +1467,7 @@ function avatarMarkup(user, extra = "") {
       const user = await requireSession();
       if (!user) return;
       setProfileHeader();
+      restoreActiveChallenge();
       const results = await Promise.allSettled([loadFeed(), loadStories(), loadNotifications()]);
       client.channel("ars-notifications-"+currentUser.id).on("postgres_changes", { event:"*", schema:"public", table:"notifications", filter:"user_id=eq."+currentUser.id }, () => { loadNotifications(); if ($("#activityDialog")?.open) openActivity(); }).subscribe();
       results.forEach((result, index) => {

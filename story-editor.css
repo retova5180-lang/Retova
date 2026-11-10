@@ -24,10 +24,22 @@ body { background: radial-gradient(ellipse at 50% 8%, #160a24 0, transparent 42%
 .story-image { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: contain; transition: filter .2s, transform .2s; transform-origin: center; }
 .hidden { display: none !important; }
 /* Canvas is transparent and click-through except while a drawing tool is active. */
-#drawCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; pointer-events: none; }
+#drawCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; pointer-events: none; z-index: 3; }
 #drawCanvas.drawing { pointer-events: auto; cursor: crosshair; }
-#textLayer { position: absolute; inset: 0; pointer-events: none; }
-.overlay-text { position: absolute; transform: translate(-50%,-50%); font-size: 28px; font-weight: 750; color: white; text-shadow: 0 2px 9px #000; max-width: 90%; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: auto; cursor: pointer; user-select: none; }
+#textLayer, .overlay-layer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.overlay-text { position: absolute; transform: translate(-50%,-50%); font-size: 28px; font-weight: 750; color: white; text-shadow: 0 2px 9px #000; max-width: 90%; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: auto; cursor: grab; user-select: none; }
+.overlay-text:active { cursor: grabbing; }
+
+#drawCanvas.drawing.draw-active ~ #textLayer .overlay-text,
+#drawCanvas.drawing.draw-active ~ .overlay-layer .overlay-text {
+  pointer-events: none;
+}
+
+body.mode-erase .overlay-text {
+  cursor: pointer;
+  outline: 1.5px dashed rgba(239, 68, 68, 0.75);
+  outline-offset: 4px;
+}
 .zoom-label { position: absolute; left: 14px; bottom: 15px; z-index: 2; border: 1px solid #8750ba; border-radius: 30px; padding: 7px 12px; background: #080611aa; backdrop-filter: blur(8px); font-size: 12px; pointer-events: none; }
 .close, .undo-btn, .change-btn { position: absolute; z-index: 10; top: 15px; border-radius: 24px; border: 1px solid #ffffff2a; background: #080611c9; color: #fff; cursor: pointer; backdrop-filter: blur(8px); }
 .close { left: 15px; width: 43px; height: 43px; font-size: 28px; line-height: 1; }

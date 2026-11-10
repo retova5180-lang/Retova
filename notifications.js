@@ -202,7 +202,9 @@
       const isUnread = !item.is_read;
 
       var avatarSrc = "";
-      if (actor.avatar && /^https?:\/\//i.test(actor.avatar) && (actor.plan === "premium" || actor.plan === "pro")) {
+      if (actor.avatar && (actor.avatar.startsWith("data:image/") || actor.avatar.startsWith("<svg"))) {
+        avatarSrc = actor.avatar;
+      } else if (actor.avatar && /^https?:\/\//i.test(actor.avatar) && (actor.plan === "premium" || actor.plan === "pro")) {
         avatarSrc = actor.avatar;
       } else {
         var letter = (name[0] || "A").toUpperCase();
@@ -244,7 +246,8 @@
             const { error: updErr } = await client
               .from("notifications")
               .update({ is_read: true })
-              .eq("id", id);
+              .eq("id", id)
+              .eq("user_id", currentUser.id);
 
             if (!updErr) {
               card.classList.remove("unread");

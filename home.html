@@ -43,12 +43,42 @@
             </div>
             <span class="story-name">You</span>
           </button>
+          <button class="story-item wheel-story-item" id="storyWheelBtn" aria-label="ARS Challenges Wheel">
+            <div class="story-ring wheel-ring">
+              <span class="story-wheel-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#c084fc">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </span>
+            </div>
+            <span class="story-name">Wheel</span>
+          </button>
           <div class="loading-inline">Loading stories…</div>
         </div>
       </section>
 
       <!-- Feed Section directly below stories -->
       <section class="feed-section" aria-label="Feed">
+        <!-- Optional Challenge Banner (Dismissible) -->
+        <div class="active-challenge-banner hidden" id="activeChallengeBanner">
+          <div class="challenge-banner-content">
+            <div class="challenge-banner-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="#c084fc">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div class="challenge-banner-info">
+              <span class="challenge-banner-tag">OPTIONAL CHALLENGE</span>
+              <strong id="bannerChallengeTitle" class="challenge-banner-title">Like 3 Posts</strong>
+              <p id="bannerChallengeDesc" class="challenge-banner-desc">Like 3 posts from creators in your ARS feed.</p>
+            </div>
+          </div>
+          <div class="challenge-banner-actions">
+            <button type="button" class="challenge-check-btn" id="checkChallengeCompletionBtn" title="Check completion">Check</button>
+            <button type="button" class="challenge-dismiss-btn" id="dismissBannerChallengeBtn" aria-label="Dismiss challenge">×</button>
+          </div>
+        </div>
+
         <div class="feed-list" id="feed">
           <div class="empty-state">Loading your feed…</div>
         </div>
@@ -167,7 +197,7 @@
       <div class="modal-card wheel-modal">
         <div class="modal-heading">
           <div>
-            <span class="eyebrow">ARS PERKS</span>
+            <span class="eyebrow">ARS CHALLENGES</span>
             <h2>Challenge Wheel</h2>
           </div>
           <button type="button" class="close-btn" data-close="wheelDialog" aria-label="Close">×</button>
@@ -179,12 +209,12 @@
             </svg>
           </div>
           <div class="wheel-disk" id="wheelDisk">
-            <div class="wheel-spoke" style="--rot:30deg;"><span>VIP</span></div>
-            <div class="wheel-spoke" style="--rot:90deg;"><span>Badge</span></div>
-            <div class="wheel-spoke" style="--rot:150deg;"><span>Streak</span></div>
-            <div class="wheel-spoke" style="--rot:210deg;"><span>Avatar</span></div>
-            <div class="wheel-spoke" style="--rot:270deg;"><span>Premium</span></div>
-            <div class="wheel-spoke" style="--rot:330deg;"><span>Rare</span></div>
+            <div class="wheel-spoke" style="--rot:30deg;"><span>Like Posts</span></div>
+            <div class="wheel-spoke" style="--rot:90deg;"><span>Stories</span></div>
+            <div class="wheel-spoke" style="--rot:150deg;"><span>Comment</span></div>
+            <div class="wheel-spoke" style="--rot:210deg;"><span>Share</span></div>
+            <div class="wheel-spoke" style="--rot:270deg;"><span>Save Post</span></div>
+            <div class="wheel-spoke" style="--rot:330deg;"><span>Streak</span></div>
             <div class="wheel-center-pin">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -192,10 +222,14 @@
             </div>
           </div>
         </div>
-        <div class="wheel-result-box">
-          <p id="wheelResult" class="wheel-result-text">Spin the daily wheel to unlock exclusive ARS platform perks.</p>
+        <div class="wheel-result-box" id="wheelResultBox">
+          <h3 id="challengeTitle" class="challenge-title">Optional Social Challenge</h3>
+          <p id="wheelResult" class="wheel-result-text">Spin the wheel to get an optional social challenge. Challenges are 100% voluntary and can be ignored anytime.</p>
         </div>
-        <button id="confirmSpin" class="primary-btn spin-btn" type="button">Spin the wheel</button>
+        <div class="wheel-modal-actions">
+          <button id="confirmSpin" class="primary-btn spin-btn" type="button">Spin the wheel</button>
+          <button id="dismissChallengeBtn" class="outline-btn hidden" type="button">Ignore Challenge</button>
+        </div>
         <small id="spinStatus" class="spin-status-note"></small>
       </div>
     </dialog>

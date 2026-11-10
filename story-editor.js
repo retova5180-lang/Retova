@@ -109,19 +109,68 @@ function resizeCanvas() {
 }
 
 
-  // Erase tool overlay deletion handler
-  const textLayerEl = $("#textLayer");
-  textLayerEl?.addEventListener("click", event => {
-    if (drawMode !== "erase") return;
-    const target = event.target.closest(".overlay-text");
-    if (!target) return;
-    const idx = parseInt(target.dataset.overlay, 10);
-    if (!isNaN(idx) && idx >= 0 && idx < overlays.length) {
-      overlays.splice(idx, 1);
-      renderText();
-      msg("Item deleted by eraser.");
-    }
-  });
+  // Interactive overlay handler: supports pointer dragging and eraser deletion
+  let draggingOverlay = null;
+
+  function initOverlayInteraction() {
+    const layer = $("#textLayer") || $(".overlay-layer");
+    if (!layer) return;
+
+    layer.addEventListener("pointerdown", event => {
+      if (drawMode === "draw") return;
+      const target = event.target.closest(".overlay-text");
+      if (!target) return;
+
+      if (drawMode === "erase") {
+        event.stopPropagation();
+        const idx = parseInt(target.dataset.overlay || target.dataset.index, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < overlays.length) {
+          overlays.splice(idx, 1);
+          renderText();
+          msg("Item deleted by eraser.");
+        }
+        return;
+      }
+
+      const idx = parseInt(target.dataset.overlay || target.dataset.index, 10);
+      if (isNaN(idx) || !overlays[idx]) return;
+
+      draggingOverlay = {
+        el: target,
+        idx,
+        startX: event.clientX,
+        startY: event.clientY,
+        initX: overlays[idx].x,
+        initY: overlays[idx].y
+      };
+      try { target.setPointerCapture(event.pointerId); } catch (e) {}
+    });
+
+    layer.addEventListener("pointermove", event => {
+      if (!draggingOverlay) return;
+      const wrap = $("#previewWrap");
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const deltaX = ((event.clientX - draggingOverlay.startX) / rect.width) * 100;
+      const deltaY = ((event.clientY - draggingOverlay.startY) / rect.height) * 100;
+
+      const newX = Math.max(5, Math.min(95, Math.round((draggingOverlay.initX + deltaX) * 10) / 10));
+      const newY = Math.max(5, Math.min(95, Math.round((draggingOverlay.initY + deltaY) * 10) / 10));
+
+      overlays[draggingOverlay.idx].x = newX;
+      overlays[draggingOverlay.idx].y = newY;
+      draggingOverlay.el.style.left = `${newX}%`;
+      draggingOverlay.el.style.top = `${newY}%`;
+    });
+
+    const stopDrag = () => { draggingOverlay = null; };
+    layer.addEventListener("pointerup", stopDrag);
+    layer.addEventListener("pointercancel", stopDrag);
+  }
+
+  initOverlayInteraction();
 
   $("#clearDrawingsBtn")?.addEventListener("click", () => {
     paths = [];
@@ -158,12 +207,14 @@ function canvasPoint(event) {
 }
 
 function renderText() {
-  const layer = $("#textLayer");
+  const layer = $("#textLayer") || $(".overlay-layer");
+  if (!layer) return;
   layer.replaceChildren();
   overlays.forEach((overlay, index) => {
     const node = document.createElement("div");
     node.className = "overlay-text";
     node.dataset.overlay = String(index);
+    node.dataset.index = String(index);
     node.textContent = overlay.text;
     node.style.left = `${overlay.x}%`;
     node.style.top = `${overlay.y}%`;
@@ -191,7 +242,10 @@ function updateTools() {
 
 function activateTool(tool) {
   drawMode = tool;
-  $("#drawCanvas").classList.toggle("drawing", tool === "draw" || tool === "erase");
+  const canvas = $("#drawCanvas");
+  canvas.classList.toggle("drawing", tool === "draw" || tool === "erase");
+  canvas.classList.toggle("draw-active", tool === "draw");
+  document.body.classList.toggle("mode-erase", tool === "erase");
 
   const panels = [
     ["filters", "#filterList"],

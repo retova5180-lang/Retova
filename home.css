@@ -1501,3 +1501,153 @@ a {
   letter-spacing: 0.5px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
+
+/* ARS Challenge Wheel & Story Item */
+.wheel-story-item .wheel-ring {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  padding: 2.5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.45);
+}
+.wheel-story-item .story-wheel-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #110e20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active Challenge Banner */
+.active-challenge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.15);
+  backdrop-filter: blur(10px);
+  animation: fadeInChallenge 0.3s ease-out;
+}
+@keyframes fadeInChallenge {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.challenge-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.challenge-banner-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.challenge-banner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.challenge-banner-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--purple-light, #c084fc);
+  text-transform: uppercase;
+}
+.challenge-banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.challenge-banner-desc {
+  font-size: 11px;
+  color: var(--text-sub, #a1a1aa);
+  margin: 0;
+  line-height: 1.3;
+}
+.challenge-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.challenge-check-btn {
+  background: var(--purple-main, #a855f7);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.challenge-check-btn:hover {
+  background: #9333ea;
+}
+.challenge-dismiss-btn {
+  background: transparent;
+  color: var(--text-sub, #a1a1aa);
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.challenge-dismiss-btn:hover {
+  color: #fff;
+}
+
+/* Challenge Modal Details */
+.challenge-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 4px;
+  text-align: center;
+}
+.wheel-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+.wheel-modal-actions .outline-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ccc;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.wheel-modal-actions .outline-btn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}

@@ -210,7 +210,8 @@
       const dateText = activeProfile.deletion_requested_at 
         ? new Date(activeProfile.deletion_requested_at).toLocaleDateString()
         : "recently";
-      $("#deletionBannerDate").textContent = `Deletion requested on ${dateText}. Account is in a 30-day grace period.`;
+      const delDateEl = $("#deletionBannerDate");
+      if (delDateEl) delDateEl.textContent = `Deletion requested on ${dateText}. Account is in a 30-day grace period.`;
     } else {
       banner.classList.add("hidden");
     }
@@ -483,8 +484,11 @@
       msg.className = "modal-status-msg success";
       msg.textContent = `A verification link has been sent to ${newEmail}. Please click the link in your inbox to complete the change.`;
       
-      $("#accEmailHint").textContent = `Verification pending for: ${newEmail}`;
-      $("#accEmailHint").style.color = "#c084fc";
+      const emailHint = $("#accEmailHint");
+      if (emailHint) {
+        emailHint.textContent = `Verification pending for: ${newEmail}`;
+        emailHint.style.color = "#c084fc";
+      }
       
       showToast("Verification link sent! Check your email.");
       setTimeout(() => $("#changeEmailDialog")?.close(), 3000);
@@ -620,7 +624,8 @@
       activeProfile.account_status = "active";
       activeProfile.deletion_requested_at = null;
       $("#scheduledDeletionBanner")?.classList.add("hidden");
-      $("#accStatusBadge").textContent = "Active";
+      const statusBadge = $("#accStatusBadge");
+      if (statusBadge) statusBadge.textContent = "Active";
       showToast("Deletion request cancelled. Account is now active!");
     } catch (err) {
       showToast("Failed to cancel deletion request.", "error");
