@@ -112,7 +112,7 @@ function avatarMarkup(user, extra = "") {
     }
     const authUser = session.user;
     const local = readLocalUser();
-    const { data: profile, error: profileError } = await client.from("user_profiles")
+    const { data: profile, error: profileError } = await client.from("public_profiles")
       .select("id,username,display_name,bio,avatar,cover,verified,plan,streak,vip_badge_enabled,is_private,account_type,profile_accent_color,cover_type")
       .eq("id", authUser.id).maybeSingle();
     if (profileError) throw new Error("Could not load your ARS profile: "+profileError.message);
@@ -242,7 +242,7 @@ function avatarMarkup(user, extra = "") {
     const postIds = visible.map(post => post.id);
     const userIds = [...new Set(visible.map(post => post.user_id).filter(Boolean))];
     const [userResult, likeResult, bookmarkResult, repostResult] = await Promise.all([
-      client.from("user_profiles").select("id,username,display_name,avatar,verified,is_private").in("id", userIds),
+      client.from("public_profiles").select("id,username,display_name,avatar,verified,is_private").in("id", userIds),
       client.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("bookmarks").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("reposts").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds)
@@ -282,6 +282,7 @@ function avatarMarkup(user, extra = "") {
   function renderPost(post, user, isLiked, isSaved, isReposted) {
     const name = user.display_name || user.username || "ARS member";
     const handle = user.username ? "@"+user.username : "member";
+    const profileHref = user.id ? "profile.html?id=" + encodeURIComponent(user.id) : "profile.html";
     const date = post.created_at ? new Date(post.created_at).toLocaleString([], {
       month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
     }) : "";
@@ -308,11 +309,11 @@ function avatarMarkup(user, extra = "") {
     const editedNotice = post.edited_at ? ' <small style="color:#7c8292;">(edited)</small>' : '';
     return '<article class="post-card" data-post-id="'+escapeHTML(post.id)+'">'+
       '<div class="post-head">'+
-        avatarMarkup(user)+
-        '<div class="post-author">'+
+        '<a class="post-author-avatar-link" href="'+escapeHTML(profileHref)+'">'+avatarMarkup(user)+'</a>'+
+        '<a class="post-author-link" href="'+escapeHTML(profileHref)+'"><div class="post-author">'+
           '<div class="author-title"><strong>'+escapeHTML(name)+'</strong>'+verifiedBadge+pinnedBadge+'</div>'+
           '<small class="author-meta">'+escapeHTML(handle)+' · '+escapeHTML(date)+editedNotice+'</small>'+
-        '</div>'+
+        '</div></a>'+
         '<button class="post-menu" data-action="menu" aria-label="Post options"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg></button>'+
       '</div>'+
       (post.content ? '<p class="post-content">'+escapeHTML(post.content)+'</p>' : '')+media+
@@ -350,7 +351,7 @@ function avatarMarkup(user, extra = "") {
     stories = data || [];
     const ids = [...new Set(stories.map(story => story.user_id).filter(Boolean))];
     const { data: users, error: usersError } = ids.length
-      ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", ids)
+      ? await client.from("public_profiles").select("id,username,display_name,avatar").in("id", ids)
       : { data: [], error: null };
     if (usersError) console.warn("Story profiles:", usersError.message);
     const userMap = new Map((users || []).map(user => [user.id, user]));
@@ -395,7 +396,7 @@ function avatarMarkup(user, extra = "") {
     if (error) { list.textContent = "Could not load activity: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">You’re all caught up.</p>'; return; }
     const ids = [...new Set(data.map(item => item.sender_id).filter(Boolean))];
-    const { data: senders } = ids.length ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", ids) : { data:[] };
+    const { data: senders } = ids.length ? await client.from("public_profiles").select("id,username,display_name,avatar").in("id", ids) : { data:[] };
     const userMap = new Map((senders || []).map(user => [user.id, user]));
     list.innerHTML = data.map(item => {
       const user = userMap.get(item.sender_id) || {};
@@ -427,7 +428,7 @@ function avatarMarkup(user, extra = "") {
     if (error) { list.textContent = "Could not load Streaks: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">No Streaks yet. Invite someone to start one together.</p>'; return; }
     const peerIds = [...new Set(data.map(row => row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id).filter(Boolean))];
-    const { data: peers } = peerIds.length ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", peerIds) : { data:[] };
+    const { data: peers } = peerIds.length ? await client.from("public_profiles").select("id,username,display_name,avatar").in("id", peerIds) : { data:[] };
     const users = new Map((peers || []).map(user => [user.id, user]));
     list.innerHTML = data.map(row => {
       const peerId = row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id;
@@ -463,7 +464,7 @@ function avatarMarkup(user, extra = "") {
     const ids=[...new Set(data.map(row=>row.streak_id).filter(Boolean))];
     const { data: streaks }=ids.length?await client.from("streaks").select("id,user_a_id,user_b_id").in("id",ids):{data:[]};
     const partners=[...new Set((streaks||[]).flatMap(row=>[row.user_a_id,row.user_b_id]).filter(Boolean))];
-    const { data: people }=partners.length?await client.from("user_profiles").select("id,username,display_name").in("id",partners):{data:[]};
+    const { data: people }=partners.length?await client.from("public_profiles").select("id,username,display_name").in("id",partners):{data:[]};
     const userMap=new Map((people||[]).map(user=>[user.id,user]));
     const streakMap=new Map((streaks||[]).map(row=>[row.id,row]));
     list.innerHTML=data.map(row=>{
@@ -961,7 +962,7 @@ function avatarMarkup(user, extra = "") {
     if (!data?.length) { list.innerHTML = '<p class="muted">No comments yet. Start the conversation.</p>'; return; }
     const ids = [...new Set(data.map(comment => comment.user_id).filter(Boolean))];
     const { data: users } = ids.length
-      ? await client.from("user_profiles").select("id,username,display_name").in("id", ids)
+      ? await client.from("public_profiles").select("id,username,display_name").in("id", ids)
       : { data:[] };
     const userMap = new Map((users || []).map(user => [user.id,user]));
     list.innerHTML = data.map(comment => {
@@ -1420,6 +1421,111 @@ function avatarMarkup(user, extra = "") {
           return lastA >= since && lastB >= since;
         });
         return { completed: active, progress: active ? "Both people interacted in the last 24h" : "Both people must interact within the last 24h" };
+      }
+    },
+    {
+      id: "react_to_story",
+      title: "Like a Story",
+      desc: "Send a like to a story from someone you follow.",
+      spokeAngle: 90,
+      targetRotation: 270,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("story_reactions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 story like in 24h` };
+      }
+    },
+    {
+      id: "repost_content",
+      title: "Repost a Post",
+      desc: "Repost a post you want your followers to see.",
+      spokeAngle: 210,
+      targetRotation: 150,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("reposts")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 repost in 24h` };
+      }
+    },
+    {
+      id: "follow_creator",
+      title: "Follow a Creator",
+      desc: "Follow an ARS creator whose posts you enjoy.",
+      spokeAngle: 330,
+      targetRotation: 30,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("followers")
+          .select("id", { count: "exact", head: true })
+          .eq("follower_id", userId).eq("status", "accepted").gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 1, progress: `${count || 0}/1 new follow in 24h` };
+      }
+    },
+    {
+      id: "watch_three_stories",
+      title: "Watch 3 Stories",
+      desc: "Watch three different stories from ARS members.",
+      spokeAngle: 90,
+      targetRotation: 270,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { data, error } = await client.from("story_views")
+          .select("story_id").eq("viewer_id", userId).gte("created_at", since);
+        if (error) throw error;
+        const total = new Set((data || []).map(row => row.story_id).filter(Boolean)).size;
+        return { completed: total >= 3, progress: `${total}/3 different stories viewed in 24h` };
+      }
+    },
+    {
+      id: "save_two_posts",
+      title: "Save 2 Posts",
+      desc: "Bookmark two posts to revisit later.",
+      spokeAngle: 270,
+      targetRotation: 90,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("bookmarks")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 2, progress: `${count || 0}/2 posts saved in 24h` };
+      }
+    },
+    {
+      id: "comment_twice",
+      title: "Join the Conversation",
+      desc: "Leave comments on two posts you find interesting.",
+      spokeAngle: 150,
+      targetRotation: 210,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 2, progress: `${count || 0}/2 comments in 24h` };
+      }
+    },
+    {
+      id: "share_two_stories",
+      title: "Share 2 Stories",
+      desc: "Share two moments with your ARS community.",
+      spokeAngle: 210,
+      targetRotation: 150,
+      verify: async (userId) => {
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        const { count, error } = await client.from("stories")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId).gte("created_at", since);
+        if (error) throw error;
+        return { completed: (count || 0) >= 2, progress: `${count || 0}/2 stories shared in 24h` };
       }
     }
   ];
