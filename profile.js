@@ -1005,13 +1005,13 @@
       if (!client) {
         const message = "ARS connection is unavailable. Refresh the page and sign in again.";
         if (errorBox) { errorBox.textContent = message; errorBox.classList.remove("hidden"); }
-        showToast(message, "error");
+        if (errorBox) errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!isOwnProfile || !activeProfile) {
         const message = "This profile is not recognized as your account. Open your own profile while signed in.";
         if (errorBox) { errorBox.textContent = message; errorBox.classList.remove("hidden"); }
-        showToast(message, "error");
+        if (errorBox) errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
 
@@ -1133,7 +1133,7 @@
           errorBox.textContent = message;
           errorBox.classList.remove("hidden");
         }
-        showToast(message, "error");
+        if (errorBox) errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
       } finally {
         submitBtn.disabled = false;
       }
