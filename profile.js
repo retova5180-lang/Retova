@@ -1095,8 +1095,13 @@
           updates.username = uName;
         }
 
-        const { error } = await client.from("users").update(updates).eq("id", currentAuthUser.id);
+        const { data: savedProfile, error } = await client.from("users")
+          .update(updates)
+          .eq("id", currentAuthUser.id)
+          .select("id")
+          .maybeSingle();
         if (error) throw error;
+        if (!savedProfile?.id) throw new Error("Profile changes were not saved. Please sign in again and retry.");
 
         activeProfile = { ...activeProfile, ...updates };
         if (updates.username) activeProfile.username_changed_at = new Date().toISOString();
