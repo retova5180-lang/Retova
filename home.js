@@ -139,10 +139,10 @@ function avatarMarkup(user, extra = "") {
     return currentUser;
   }
 
-  async function resolveSingleMediaUrl(url, privacy) {
+  async function resolveSingleMediaUrl(url, privacy, isPrivateAccount = false) {
     if (!url) return "";
     if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
-    if (privacy === "public") {
+    if (privacy === "public" && !isPrivateAccount) {
       const { data } = client.storage.from("post-media").getPublicUrl(url);
       return data?.publicUrl || "";
     }
@@ -154,7 +154,7 @@ function avatarMarkup(user, extra = "") {
     return data?.signedUrl || "";
   }
 
-  async function resolvePostMediaItems(post) {
+  async function resolvePostMediaItems(post, isPrivateAccount = false) {
     if (!post.image) return [];
     const raw = String(post.image).trim();
     let items = [];
@@ -173,7 +173,7 @@ function avatarMarkup(user, extra = "") {
     }
     if (!items.length) items = [{ url: raw, type: post.media_type || "image" }];
     return Promise.all(items.map(async item => ({
-      url: await resolveSingleMediaUrl(item.url, post.privacy),
+      url: await resolveSingleMediaUrl(item.url, post.privacy, isPrivateAccount),
       type: item.type
     })));
   }
@@ -226,7 +226,7 @@ function avatarMarkup(user, extra = "") {
     const postIds = visible.map(post => post.id);
     const userIds = [...new Set(visible.map(post => post.user_id).filter(Boolean))];
     const [userResult, likeResult, bookmarkResult, repostResult] = await Promise.all([
-      client.from("user_profiles").select("id,username,display_name,avatar,verified").in("id", userIds),
+      client.from("user_profiles").select("id,username,display_name,avatar,verified,is_private").in("id", userIds),
       client.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("bookmarks").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("reposts").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds)
@@ -239,7 +239,7 @@ function avatarMarkup(user, extra = "") {
     const saved = new Set((bookmarkResult.data || []).map(row => row.post_id));
     const reposted = new Set((repostResult.data || []).map(row => row.post_id));
     const displayPosts = await Promise.all(visible.map(async post => ({
-      ...post, displayMedia: await resolvePostMediaItems(post)
+      ...post, displayMedia: await resolvePostMediaItems(post, userMap.get(post.user_id)?.is_private)
     })));
     const rendered = [];
     displayPosts.forEach((post, idx) => {
@@ -537,7 +537,7 @@ function avatarMarkup(user, extra = "") {
       let mediaType = "text";
       if (selectedPostFile) {
         mediaType = selectedPostFile.type.startsWith("video/") ? "video" : "image";
-        const bucket = $("#postPrivacy").value === "public" ? "post-media" : "private-post-media";
+        const bucket = $("#postPrivacy").value === "public" && !currentUser.is_private ? "post-media" : "private-post-media";
         image = await uploadMedia(selectedPostFile, bucket, "posts");
       }
       const hashtags = [...content.matchAll(/#([\p{L}\p{N}_]+)/gu)].map(match => match[1]);
