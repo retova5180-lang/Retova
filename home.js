@@ -1120,7 +1120,7 @@ function avatarMarkup(user, extra = "") {
       media.autoplay = true;
       media.playsInline = true;
       media.controls = false;
-      media.muted = false;
+      media.muted = Boolean(story.audio_path);
       media.addEventListener("loadedmetadata", () => {
         const duration = Math.min(30000, Math.max(4000, (media.duration || 5) * 1000));
         startStoryProgress(duration);
@@ -1152,7 +1152,9 @@ function avatarMarkup(user, extra = "") {
       }, { once: true });
       content.appendChild(soundtrack);
       if (audioButton) audioButton.classList.remove("hidden");
-      soundtrack.play().catch(() => {
+      soundtrack.play().then(() => {
+        if (audioButton) audioButton.textContent = "♪";
+      }).catch(() => {
         if (audioButton) audioButton.textContent = "♫";
       });
     } else if (audioButton) {
