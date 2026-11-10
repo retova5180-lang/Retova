@@ -997,7 +997,23 @@
     // Edit Profile form submission
     $("#editProfileForm")?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!client || !isOwnProfile) return;
+      const errorBox = $("#editFormError");
+      if (errorBox) {
+        errorBox.textContent = "";
+        errorBox.classList.add("hidden");
+      }
+      if (!client) {
+        const message = "ARS connection is unavailable. Refresh the page and sign in again.";
+        if (errorBox) { errorBox.textContent = message; errorBox.classList.remove("hidden"); }
+        showToast(message, "error");
+        return;
+      }
+      if (!isOwnProfile || !activeProfile) {
+        const message = "This profile is not recognized as your account. Open your own profile while signed in.";
+        if (errorBox) { errorBox.textContent = message; errorBox.classList.remove("hidden"); }
+        showToast(message, "error");
+        return;
+      }
 
       const dName = $("#editDisplayName").value.trim();
       const uName = $("#editUsername").value.trim().toLowerCase().replace(/[^a-z0-9_.]/g, "");
@@ -1007,6 +1023,12 @@
       submitBtn.disabled = true;
 
       try {
+        const { data: authResult, error: authError } = await client.auth.getUser();
+        if (authError) throw authError;
+        const authenticatedUser = authResult?.user;
+        if (!authenticatedUser?.id) throw new Error("Your login session has expired. Sign in again, then retry.");
+        if (authenticatedUser.id !== activeProfile.id) throw new Error("The signed-in account does not match this profile. Open your own profile and retry.");
+
         const updates = {
           display_name: dName,
           bio: bio,
@@ -1028,9 +1050,7 @@
               const path = `${currentAuthUser.id}/avatar-${Date.now()}.${ext}`;
               const { data: upData, error: upErr } = await client.storage.from("avatars").upload(path, pendingAvatarFile, { upsert: true });
               if (upErr) {
-                showToast("Avatar photo upload failed: " + upErr.message, "error");
-                submitBtn.disabled = false;
-                return;
+                throw new Error("Avatar photo upload failed: " + upErr.message);
               }
               if (upData?.path) {
                 const { data: pubData } = client.storage.from("avatars").getPublicUrl(upData.path);
@@ -1038,9 +1058,7 @@
               }
             } catch (stErr) {
               console.error("Avatar upload storage exception:", stErr);
-              showToast("Avatar photo upload failed. Changes were not saved.", "error");
-              submitBtn.disabled = false;
-              return;
+              throw new Error("Avatar photo upload failed. Changes were not saved.");
             }
           }
         } else if (avatarCustomizerTouched || !activeProfile.avatar) {
@@ -1060,9 +1078,7 @@
               upsert: false
             });
             if (upErr) {
-              showToast("Cover banner upload failed: " + upErr.message, "error");
-              submitBtn.disabled = false;
-              return;
+              throw new Error("Cover banner upload failed: " + upErr.message);
             }
             if (!upData?.path) {
               throw new Error("Cover banner upload returned no file path.");
@@ -1074,9 +1090,7 @@
             updates.cover = pubData.publicUrl;
           } catch (stErr) {
             console.error("Cover upload storage exception:", stErr);
-            showToast("Cover banner upload failed. Changes were not saved.", "error");
-            submitBtn.disabled = false;
-            return;
+            throw new Error("Cover banner upload failed. Changes were not saved.");
           }
         }
 
@@ -1114,7 +1128,12 @@
         showToast("Profile updated successfully!");
       } catch (err) {
         console.error("Save error:", err);
-        showToast(err.message || "Failed to update profile.", "error");
+        const message = err?.message || "Failed to update profile.";
+        if (errorBox) {
+          errorBox.textContent = message;
+          errorBox.classList.remove("hidden");
+        }
+        showToast(message, "error");
       } finally {
         submitBtn.disabled = false;
       }
