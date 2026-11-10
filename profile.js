@@ -91,13 +91,13 @@
 
     const accentInput = $("#editAccentColor");
     if (accentInput) accentInput.value = selectedProfileAccent;
-    $(".color-picker-row .color-swatch").forEach(swatch => {
+    $$(".color-picker-row .color-swatch").forEach(swatch => {
       const selected = swatch.dataset.color?.toLowerCase() === selectedProfileAccent.toLowerCase();
       swatch.classList.toggle("active", selected);
       swatch.onclick = () => {
         selectedProfileAccent = swatch.dataset.color || "#a855f7";
         if (accentInput) accentInput.value = selectedProfileAccent;
-        $(".color-picker-row .color-swatch").forEach(item => item.classList.toggle("active", item === swatch));
+        $$(".color-picker-row .color-swatch").forEach(item => item.classList.toggle("active", item === swatch));
       };
     });
 
