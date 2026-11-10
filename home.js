@@ -420,10 +420,17 @@ function avatarMarkup(user, extra = "") {
       const count = Number(row.streak_count || 0);
       const lastA = row.last_activity_user_a_at ? new Date(row.last_activity_user_a_at).getTime() : 0;
       const lastB = row.last_activity_user_b_at ? new Date(row.last_activity_user_b_at).getTime() : 0;
-      const last = Math.max(lastA, lastB);
-      // Strict 24h expiration: no premium exemption from 24h rule
-      const expired = !!row.broken_at || /broken|expired|inactive|ended/i.test(row.status || "") || (last > 0 && (Date.now() - last) >= 86400000);
-      const action = expired ? '<div class="streak-status-bar"><span class="streak-status broken">Recovery may be available</span><button class="streak-recover-btn" type="button" data-request-recovery="'+escapeHTML(row.id)+'">Request recovery</button></div>' : '<div class="streak-status-bar"><span class="streak-status active">● Active</span><span class="muted">Last activity '+escapeHTML(row.last_activity_at ? new Date(row.last_activity_at).toLocaleString() : "not recorded")+'</span></div>';
+      const now = Date.now();
+      const status = String(row.status || "").toLowerCase();
+      const bothRecent = lastA > 0 && lastB > 0 &&
+        (now - lastA) < 86400000 && (now - lastB) < 86400000;
+      // A Streak is active only while both participants have interacted within 24 hours.
+      const expired = Boolean(row.broken_at) || status === "broken" || (status === "active" && !bothRecent);
+      const action = status === "setup"
+        ? '<div class="streak-status-bar"><span class="streak-status active">● Setup in progress</span><span class="muted">Both people need to interact to keep the Streak active.</span></div>'
+        : expired
+          ? '<div class="streak-status-bar"><span class="streak-status broken">Recovery may be available</span><button class="streak-recover-btn" type="button" data-request-recovery="'+escapeHTML(row.id)+'">Request recovery</button></div>'
+          : '<div class="streak-status-bar"><span class="streak-status active">● Active</span><span class="muted">Last activity '+escapeHTML(row.last_activity_at ? new Date(row.last_activity_at).toLocaleString() : "not recorded")+'</span></div>';
       const avatar = peer.avatar && /^https?:\/\//i.test(peer.avatar) ? '<span class="activity-avatar"><img src="'+escapeHTML(peer.avatar)+'" alt=""></span>' : '<span class="activity-avatar">'+escapeHTML(name[0] || "A")+'</span>';
       return '<article class="streak-card"><div class="streak-card-main">'+avatar+'<div class="streak-user-info"><strong>'+escapeHTML(name)+'</strong><small>@'+escapeHTML(peer.username || "member")+'</small></div><span class="streak-count-badge"> '+count+' days</span></div>'+action+'</article>';
     }).join("");
