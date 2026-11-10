@@ -504,10 +504,6 @@ function avatarMarkup(user, extra = "") {
       cacheControl:"3600", upsert:false, contentType:file.type
     });
     if (error) throw error;
-    if (bucket === "post-media") {
-      const { data: publicData } = client.storage.from(bucket).getPublicUrl(data.path);
-      return publicData.publicUrl;
-    }
     return data.path;
   }
 
