@@ -13,3 +13,8 @@
   left: 50% !important;
   transform: translateX(-50%) !important;
 }
+
+/* Focused search mode: keep the search field and show only matching results. */
+body.searching main > section:not(#resultsSection){display:none!important}
+body.searching .results{display:block!important;margin-top:18px}
+.back{background:none;border:0;padding:0;cursor:pointer;font:inherit}
