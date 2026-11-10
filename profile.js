@@ -92,7 +92,7 @@
     }
 
     if (letterGrid) {
-      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
+      const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", ..."0123456789", "★", "✦", "♥", "◆", "●", "Λ"];
       letterGrid.innerHTML = letters.map(l => '<button type="button" class="letter-option ' + (l === selectedLetter ? 'selected' : '') + '" data-letter="' + l + '">' + l + '</button>').join("");
 
       letterGrid.querySelectorAll(".letter-option").forEach(btn => {
@@ -107,7 +107,7 @@
     }
 
     if (colorGrid) {
-      const colors = ["#ffffff", "#c084fc", "#a855f7", "#ec4899", "#38bdf8", "#4ade80", "#facc15", "#f97316"];
+      const colors = ["#ffffff","#f4c2ff","#d8a6ff","#bd75ff","#9f55ff","#8b3dff","#ff7ac8","#ff5f86","#7de2ff","#53d79a","#ffd166","#f5f5f5","#d9d9df","#9ca3af","#111111","#000000","#ff3b30","#ff5f75","#ff7a59","#ff9f0a","#ffe66d","#22c55e","#00c896","#38bdf8","#3b82f6","#6366f1","#8b5cf6","#a855f7","#c54dff","#d946ef","#ec4899","#f43f5e"];
       colorGrid.innerHTML = colors.map(c => '<button type="button" class="color-option ' + (c === selectedLetterColor ? 'selected' : '') + '" data-color="' + c + '" style="background:' + c + ';" aria-label="Color ' + c + '"></button>').join("");
 
       colorGrid.querySelectorAll(".color-option").forEach(btn => {
@@ -124,10 +124,26 @@
     if (gradGrid) {
       const gradients = [
         "linear-gradient(135deg, #8b3dff, #c54dff)",
-        "linear-gradient(135deg, #4c1d95, #7c3aed)",
-        "linear-gradient(135deg, #581c87, #c026d3)",
-        "linear-gradient(135deg, #1e1b4b, #4338ca)",
-        "linear-gradient(135deg, #831843, #db2777)",
+        "linear-gradient(135deg, #6d28d9, #a855f7)",
+        "linear-gradient(135deg, #4c1d95, #8b5cf6)",
+        "linear-gradient(135deg, #7c3aed, #ec4899)",
+        "linear-gradient(135deg, #9333ea, #f43f5e)",
+        "linear-gradient(135deg, #c026d3, #7c3aed)",
+        "linear-gradient(135deg, #581c87, #be185d)",
+        "linear-gradient(135deg, #111111, #44444c)",
+        "linear-gradient(135deg, #18181d, #5d5d68)",
+        "linear-gradient(135deg, #312e81, #7c3aed)",
+        "linear-gradient(135deg, #000000, #222222)",
+        "linear-gradient(135deg, #1d4ed8, #38bdf8)",
+        "linear-gradient(135deg, #0f766e, #22c55e)",
+        "linear-gradient(135deg, #15803d, #84cc16)",
+        "linear-gradient(135deg, #ca8a04, #f59e0b)",
+        "linear-gradient(135deg, #ea580c, #f43f5e)",
+        "linear-gradient(135deg, #be123c, #fb7185)",
+        "linear-gradient(135deg, #9d174d, #f472b6)",
+        "linear-gradient(135deg, #7e22ce, #e879f9)",
+        "linear-gradient(135deg, #4338ca, #818cf8)",
+        "linear-gradient(135deg, #0369a1, #67e8f9)",
         "linear-gradient(135deg, #0f172a, #334155)"
       ];
       gradGrid.innerHTML = gradients.map((g, idx) => '<button type="button" class="gradient-option ' + (idx === 0 ? 'selected' : '') + '" data-gradient="' + g + '" style="background:' + g + ';" aria-label="Gradient ' + (idx+1) + '"></button>').join("");
@@ -203,7 +219,7 @@
     }
 
     try {
-      let query = client.from("user_profiles");
+      let query = client.from("public_profiles");
 
       if (targetUserId) {
         // Viewing specific user by ID
