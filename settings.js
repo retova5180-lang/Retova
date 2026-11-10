@@ -287,6 +287,27 @@
       });
     });
 
+    // Appearance accent selection is saved locally and applied across ARS pages.
+    const appearancePicker = $("#settingsColorPicker");
+    const savedAccent = window.ARSTheme?.get?.() || "#a855f7";
+    appearancePicker?.querySelectorAll(".color-swatch").forEach(swatch => {
+      swatch.classList.toggle("active", swatch.dataset.color?.toLowerCase() === savedAccent.toLowerCase());
+      swatch.addEventListener("click", () => {
+        appearancePicker.querySelectorAll(".color-swatch").forEach(item => item.classList.remove("active"));
+        swatch.classList.add("active");
+      });
+    });
+    $("#saveAppearanceBtn")?.addEventListener("click", () => {
+      const selected = appearancePicker?.querySelector(".color-swatch.active")?.dataset.color || "#a855f7";
+      try { localStorage.setItem(window.ARSTheme?.key || "ars_theme_accent", selected); } catch (error) {
+        showToast("Could not save appearance on this device.", "error");
+        return;
+      }
+      window.ARSTheme?.apply?.(selected);
+      $("#appearanceDialog")?.close();
+      showToast("Appearance updated across ARS.");
+    });
+
     // Save Account Form
     $("#accountForm")?.addEventListener("submit", handleAccountUpdate);
 
