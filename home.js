@@ -1157,11 +1157,11 @@ function avatarMarkup(user, extra = "") {
     const button = $("#storyHeartBtn");
     button.disabled = true;
     try {
-      const { error } = await client.from("story_reactions").insert({
+      const { error } = await client.from("story_reactions").upsert({
         story_id: story.id,
         user_id: currentUser.id,
         emoji: "💜"
-      });
+      }, { onConflict: "story_id,user_id" });
       if (error) throw error;
       button.style.transform = "scale(1.4)";
       setTimeout(() => { button.style.transform = ""; }, 250);
