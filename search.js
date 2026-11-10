@@ -79,7 +79,9 @@
       : `<span class="avatar" aria-hidden="true">${escapeHTML(name[0]?.toUpperCase() || "A")}</span>`;
   }
   async function peopleResults(query) {
-    const pattern = `%${query}%`;
+    const normalized = String(query || "").trim().replace(/^@+/, "").trim();
+    if (!normalized) return [];
+    const pattern = `%${normalized}%`;
     const columns = ["username", "display_name", "bio"];
     const answers = await Promise.all(columns.map(column => client.from("user_profiles").select("id,username,display_name,bio,avatar,verified").ilike(column, pattern).limit(20)));
     const seen = new Set(), people = [];
