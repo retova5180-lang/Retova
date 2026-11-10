@@ -106,7 +106,7 @@
     $("#query").value = discoverQueryValue;
     lastQuery = "";
     currentTab = "all";
-    requestAnimationFrame(() => window.scrollTo({ top: discoverScrollY, behavior: "instant" }));
+    requestAnimationFrame(() => window.scrollTo(0, discoverScrollY));
   }
   async function search(query, tab = "all") {
     const q = query.trim();
