@@ -632,7 +632,8 @@ function avatarMarkup(user, extra = "") {
     const input = $("#commentInput");
     if (context) {
       context.hidden = true;
-      context.textContent = "";
+      const label = context.querySelector("span");
+      if (label) label.textContent = "";
     }
     if (input) input.placeholder = "Write a reply…";
   }
@@ -1126,7 +1127,8 @@ function avatarMarkup(user, extra = "") {
     const context = $("#commentReplyContext");
     const input = $("#commentInput");
     if (context) {
-      context.textContent = "Replying to " + (replyButton.dataset.replyName || "comment");
+      const label = context.querySelector("span");
+      if (label) label.textContent = "Replying to " + (replyButton.dataset.replyName || "comment");
       context.hidden = false;
     }
     if (input) {
