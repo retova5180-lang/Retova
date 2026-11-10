@@ -1060,7 +1060,11 @@
 
         activeProfile = { ...activeProfile, ...updates };
         if (updates.username) activeProfile.username_changed_at = new Date().toISOString();
-        renderProfileHeader();
+        await renderProfileHeader();
+        pendingAvatarFile = null;
+        pendingCoverFile = null;
+        $("#avatarFileInput").value = "";
+        $("#coverFileInput").value = "";
         $("#editProfileDialog")?.close();
         showToast("Profile updated successfully!");
       } catch (err) {
