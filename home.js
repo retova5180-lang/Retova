@@ -275,6 +275,9 @@ function avatarMarkup(user, extra = "") {
           postCard.style.borderRadius = "16px";
           postCard.style.boxShadow = "0 0 24px rgba(168, 85, 247, 0.4)";
         }
+        if (urlParams.get("openReplies") === "1") {
+          openCommentsForPost(targetPostId, urlParams.get("comment"));
+        }
       }, 350);
     }
   }
@@ -634,7 +637,7 @@ function avatarMarkup(user, extra = "") {
     if (input) input.placeholder = "Write a reply…";
   }
 
-  async function openCommentsForPost(postId) {
+  async function openCommentsForPost(postId, focusCommentId = null) {
     if (!postId) return;
     activeCommentPostId = postId;
     const input = $("#commentInput");
@@ -647,6 +650,15 @@ function avatarMarkup(user, extra = "") {
     clearCommentReplyTarget();
     openDialog("commentsDialog");
     await loadComments(postId);
+    if (focusCommentId) {
+      requestAnimationFrame(() => {
+        const target = document.querySelector('[data-comment-id="' + CSS.escape(focusCommentId) + '"]');
+        if (target) {
+          target.scrollIntoView({ behavior:"smooth", block:"center" });
+          target.classList.add("comment-notification-focus");
+        }
+      });
+    }
   }
 
   $("#feed").addEventListener("click", async event => {
