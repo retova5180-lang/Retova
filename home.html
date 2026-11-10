@@ -230,15 +230,19 @@
     <dialog id="commentsDialog" class="modal">
       <section class="modal-card comments-card">
         <div class="modal-heading">
-          <h2>Comments</h2>
+          <h2>Replies</h2>
           <button type="button" class="close-btn" data-close="commentsDialog" aria-label="Close">×</button>
         </div>
         <div id="commentsList" class="comments-list">
-          <p class="muted">Loading comments…</p>
+          <p class="muted">Loading replies…</p>
+        </div>
+        <div id="commentReplyContext" class="comment-reply-context" hidden>
+          <span></span>
+          <button type="button" id="cancelCommentReply" aria-label="Cancel reply">Cancel</button>
         </div>
         <form id="commentForm" class="comment-form">
-          <input id="commentInput" type="text" maxlength="2000" placeholder="Add a comment…" required autocomplete="off">
-          <button class="primary-btn" type="submit">Post</button>
+          <input id="commentInput" type="text" maxlength="2000" placeholder="Write a reply…" required autocomplete="off">
+          <button id="commentSubmitBtn" class="primary-btn" type="submit">Reply</button>
         </form>
         <p id="commentMessage" class="form-message" aria-live="polite"></p>
       </section>
