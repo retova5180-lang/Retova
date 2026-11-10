@@ -218,7 +218,10 @@
     const accUsername = $("#accUsername");
     if (accUsername) accUsername.value = p.username || "";
     const accTypeEl = $("#accType") || $("#accTypeSelect");
-    if (accTypeEl) accTypeEl.value = p.account_type || "Personal";
+    if (accTypeEl) {
+      const type = String(p.account_type || "personal").toLowerCase();
+      accTypeEl.value = type.charAt(0).toUpperCase() + type.slice(1);
+    }
     const accStatusBadge = $("#accStatusBadge");
     if (accStatusBadge) accStatusBadge.textContent = p.account_status || "Active";
 
@@ -352,7 +355,7 @@
     try {
       const updates = {
         display_name: dName,
-        account_type: accType
+        account_type: String(accType || "personal").toLowerCase()
       };
 
       if (uName && uName !== activeProfile.username) {
