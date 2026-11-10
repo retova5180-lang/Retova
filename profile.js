@@ -270,13 +270,18 @@
         isPendingFollower = false;
       }
 
-      // Check privacy preferences of target user
+      // Read only the public visibility flags from the safe public profile mirror.
       if (!isOwnProfile) {
-        const { data: pref } = await client.from("user_preferences")
+        const { data: pref, error: prefError } = await client.from("public_profiles")
           .select("show_likes, show_followers, show_following")
-          .eq("user_id", activeProfile.id)
+          .eq("id", activeProfile.id)
           .maybeSingle();
-        targetPreferences = pref;
+        if (prefError) {
+          console.warn("Could not load public profile visibility settings:", prefError);
+          targetPreferences = { show_likes: false, show_followers: false, show_following: false };
+        } else {
+          targetPreferences = pref || { show_likes: true, show_followers: true, show_following: true };
+        }
       }
 
       renderProfileHeader();
