@@ -606,16 +606,19 @@
       let media = mediaItem?.url || mediaItem?.image || "";
       const isVideo = mediaItem?.type === "video" || post.media_type === "video" ||
         /\.(mp4|webm|mov)(?:$|[?#])/i.test(media);
-      if (media && !/^https?:\/\//i.test(media) && !media.startsWith("data:")) {
+      if (media && !media.startsWith("data:")) {
         try {
-          if (post.privacy === "public" && !activeProfile.is_private) {
-            media = client.storage.from("post-media").getPublicUrl(media).data?.publicUrl || "";
-          } else {
-            const { data: signed, error: signedError } = await client.storage
-              .from("private-post-media").createSignedUrl(media, 1800);
-            if (signedError) throw signedError;
-            media = signed?.signedUrl || "";
+          let bucket = post.privacy === "public" && !activeProfile.is_private ? "post-media" : "private-post-media";
+          if (/^https?:\/\//i.test(media)) {
+            const match = media.match(/\/storage\/v1\/object\/(?:public|sign)\/(post-media|private-post-media)\/(.+?)(?:\?|$)/i);
+            if (!match) return { post, media, isVideo };
+            bucket = match[1];
+            try { media = decodeURIComponent(match[2]); } catch { media = match[2]; }
           }
+          const { data: signed, error: signedError } = await client.storage
+            .from(bucket).createSignedUrl(media, 1800);
+          if (signedError) throw signedError;
+          media = signed?.signedUrl || "";
         } catch (mediaError) {
           console.warn("Could not resolve profile post media:", mediaError);
           media = "";
