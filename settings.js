@@ -73,7 +73,7 @@
     try {
       // 1. Load public profile data via user_profiles view
       const { data: userProfile, error: uErr } = await client
-        .from("user_profiles")
+        .from("public_profiles")
         .select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color")
         .eq("id", currentAuthUser.id)
         .maybeSingle();
