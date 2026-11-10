@@ -20,6 +20,8 @@ let paths = [];
 let activePath = null;
 let overlays = [];
 let soundFile = null;
+let soundObjectUrl = "";
+let soundPreview = null;
 
 const filters = {
   none: "none",
@@ -336,7 +338,7 @@ async function bakeMediaBlob() {
       }
     };
     img.onerror = () => resolve(file);
-    img.src = preview.src;
+    img.src = objectUrl;
   });
 }
 
@@ -367,7 +369,7 @@ async function upload() {
   return data.path;
 }
 
-function draftData(path) {
+function draftData(path, audioPath = null) {
   return {
     filter,
     zoom,
@@ -375,9 +377,25 @@ function draftData(path) {
     paths,
     overlays,
     mediaPath: path || null,
+    audioPath: audioPath || null,
     mediaType: file?.type.startsWith("video/") ? "video" : "image",
     soundName: soundFile?.name || null
   };
+}
+
+async function uploadSound() {
+  if (!soundFile) return null;
+  if (!user) throw new Error("Sign in to upload story audio.");
+  const safeName = (soundFile.name || "story-audio").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+  const path = `${user.id}/stories/audio/${crypto.randomUUID()}-${safeName}`;
+  const { data, error } = await client.storage.from("story-media").upload(path, soundFile, {
+    upsert: false,
+    contentType: soundFile.type || "audio/mpeg",
+    cacheControl: "3600"
+  });
+  if (error) throw new Error("Story audio upload failed: " + error.message);
+  if (!data?.path) throw new Error("Audio upload finished without a storage path.");
+  return data.path;
 }
 
 async function cleanupUpload(path) {
@@ -445,20 +463,55 @@ canvas.addEventListener("pointermove", event => {
 ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => canvas.addEventListener(type, () => { drawing = false; activePath = null; }));
 
 $("#soundPicker").addEventListener("change", event => {
-  soundFile = event.target.files?.[0] || null;
-  msg(soundFile ? `Selected audio: ${soundFile.name}. Separate story audio is not included in the final story.` : "No audio selected.");
+  const selected = event.target.files?.[0] || null;
+  if (selected && !selected.type.startsWith("audio/")) {
+    msg("Choose a valid audio file.", true);
+    event.target.value = "";
+    return;
+  }
+  if (selected && selected.size > 25 * 1024 * 1024) {
+    msg("Audio files must be 25 MB or smaller.", true);
+    event.target.value = "";
+    return;
+  }
+  if (soundObjectUrl) URL.revokeObjectURL(soundObjectUrl);
+  soundFile = selected;
+  soundObjectUrl = soundFile ? URL.createObjectURL(soundFile) : "";
+  soundPreview = soundObjectUrl ? new Audio(soundObjectUrl) : null;
+  if (soundPreview) soundPreview.preload = "metadata";
+  msg(soundFile ? `Selected soundtrack: ${soundFile.name}. It will be uploaded and attached to your published story.` : "Soundtrack removed.");
   event.target.value = "";
 });
 
 $("#playPreview").addEventListener("click", async () => {
   const video = $("#storyVideo");
-  if (!file || !file.type.startsWith("video/")) { msg(file ? "Photo preview is ready." : "Choose a photo or video first."); return; }
-  try { if (video.paused) await video.play(); else video.pause(); }
-  catch (error) { msg(error.message || "Video playback could not start.", true); }
+  if (!file) { msg("Choose a photo or video first."); return; }
+  try {
+    if (file.type.startsWith("video/")) {
+      if (video.paused) await video.play();
+      else video.pause();
+    }
+    if (soundPreview) {
+      if (soundPreview.paused) await soundPreview.play();
+      else soundPreview.pause();
+    } else if (!file.type.startsWith("video/")) {
+      msg("Photo preview is ready. Select Sound to add a soundtrack.");
+    }
+  } catch (error) {
+    msg(error.message || "Preview playback could not start.", true);
+  }
 });
 $("#soundToggle").addEventListener("click", () => {
   const video = $("#storyVideo");
-  if (!file || !file.type.startsWith("video/")) { msg("Video sound is available after selecting a video."); return; }
+  if (soundPreview) {
+    soundPreview.muted = !soundPreview.muted;
+    $("#soundToggle").textContent = soundPreview.muted ? "◖×" : "◖))";
+    return;
+  }
+  if (!file || !file.type.startsWith("video/")) {
+    msg("Choose a video or add a soundtrack first.");
+    return;
+  }
   video.muted = !video.muted;
   $("#soundToggle").textContent = video.muted ? "◖×" : "◖))";
 });
@@ -467,12 +520,14 @@ $("#saveDraft").addEventListener("click", async () => {
   const button = $("#saveDraft");
   button.disabled = true;
   let uploadedPath = null;
+  let uploadedAudioPath = null;
   try {
     if (!user) throw new Error("Sign in to save a story draft.");
     if (!file) throw new Error("Choose a photo or video first.");
     button.textContent = "Uploading…";
     uploadedPath = await upload();
-    const draft = draftData(uploadedPath);
+    uploadedAudioPath = await uploadSound();
+    const draft = draftData(uploadedPath, uploadedAudioPath);
     const { error } = await client.from("story_drafts").insert({
       user_id: user.id,
       media_url: uploadedPath,
@@ -483,6 +538,7 @@ $("#saveDraft").addEventListener("click", async () => {
     msg("Draft saved to your ARS account.");
   } catch (error) {
     await cleanupUpload(uploadedPath);
+    await cleanupUpload(uploadedAudioPath);
     msg(error.message || "Could not save this draft.", true);
   } finally {
     button.textContent = "⇩ Save Draft";
@@ -494,14 +550,17 @@ $("#nextStory").addEventListener("click", async () => {
   const button = $("#nextStory");
   button.disabled = true;
   let uploadedPath = null;
+  let uploadedAudioPath = null;
   try {
     if (!user) throw new Error("Sign in to continue.");
     if (!file) throw new Error("Choose a photo or video first.");
     button.textContent = "Uploading…";
     uploadedPath = await upload();
-    const draft = draftData(uploadedPath);
+    uploadedAudioPath = await uploadSound();
+    const draft = draftData(uploadedPath, uploadedAudioPath);
     sessionStorage.setItem("ars_story_composer", JSON.stringify({
       path: uploadedPath,
+      audioPath: uploadedAudioPath,
       mediaType: draft.mediaType,
       filter,
       zoom,
@@ -513,6 +572,7 @@ $("#nextStory").addEventListener("click", async () => {
     location.href = "create-post.html?mode=story";
   } catch (error) {
     await cleanupUpload(uploadedPath);
+    await cleanupUpload(uploadedAudioPath);
     msg(error.message || "Could not continue to story publishing.", true);
   } finally {
     button.textContent = "Next ›";
