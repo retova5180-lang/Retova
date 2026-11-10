@@ -48,18 +48,27 @@
     let url = item.url;
     if (!url.startsWith("data:")) {
       let bucket = post.privacy === "public" && !isPrivateAccount ? "post-media" : "private-post-media";
+      let exactBucket = false;
       if (/^https?:\/\//i.test(url)) {
         const match = url.match(/\/storage\/v1\/object\/(?:public|sign)\/(post-media|private-post-media)\/(.+?)(?:\?|$)/i);
         if (!match) return { url, type: item.type === "video" ? "video" : "image" };
         bucket = match[1];
+        exactBucket = true;
         try { url = decodeURIComponent(match[2]); } catch { url = match[2]; }
       }
-      const { data, error } = await client.storage.from(bucket).createSignedUrl(url, 1800);
-      if (error) {
-        console.warn("Could not resolve post search media:", error.message);
+      const buckets = exactBucket ? [bucket] : [bucket, bucket === "post-media" ? "private-post-media" : "post-media"];
+      let signedUrl = "";
+      let lastError = null;
+      for (const candidate of buckets) {
+        const { data, error } = await client.storage.from(candidate).createSignedUrl(url, 1800);
+        if (!error && data?.signedUrl) { signedUrl = data.signedUrl; break; }
+        lastError = error;
+      }
+      if (!signedUrl) {
+        if (lastError) console.warn("Could not resolve post search media:", lastError.message);
         return null;
       }
-      url = data?.signedUrl || "";
+      url = signedUrl;
     }
     return url ? { url, type: item.type === "video" ? "video" : "image" } : null;
   }
