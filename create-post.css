@@ -105,7 +105,7 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  background: linear-gradient(135deg, #8b3dff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #8b3dff 0%, var(--purple, #a855f7) 100%);
   color: #fff;
   border: none;
   border-radius: 20px;
@@ -155,7 +155,7 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b3dff, #c084fc);
+  background: linear-gradient(135deg, #8b3dff, var(--purple-light, #c084fc));
   color: #fff;
   font-weight: 800;
   font-size: 19px;
@@ -186,9 +186,9 @@ body {
 }
 
 .ars-badge {
-  color: #c084fc;
+  color: var(--purple-light, #c084fc);
   font-size: 11px;
-  text-shadow: 0 0 8px #a855f7;
+  text-shadow: 0 0 8px var(--purple, #a855f7);
 }
 
 .user-meta small {
@@ -324,7 +324,7 @@ textarea#content::placeholder {
 }
 
 .add-media-card:hover {
-  border-color: #a855f7;
+  border-color: var(--purple, #a855f7);
   background: rgba(139, 61, 255, 0.1);
   transform: translateY(-2px);
 }
@@ -334,7 +334,7 @@ textarea#content::placeholder {
   height: 44px;
   border-radius: 50%;
   background: rgba(139, 61, 255, 0.2);
-  color: #c084fc;
+  color: var(--purple-light, #c084fc);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -505,7 +505,7 @@ textarea#content::placeholder {
 
 .audience-icon {
   background: rgba(139, 61, 255, 0.15);
-  color: #c084fc;
+  color: var(--purple-light, #c084fc);
 }
 
 .comments-icon {
@@ -562,7 +562,7 @@ textarea#content::placeholder {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #c084fc;
+  color: var(--purple-light, #c084fc);
   pointer-events: none;
   font-size: 12px;
 }
@@ -614,8 +614,8 @@ textarea#content::placeholder {
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #8b3dff, #a855f7);
-  border-color: #a855f7;
+  background: linear-gradient(135deg, #8b3dff, var(--purple, #a855f7));
+  border-color: var(--purple, #a855f7);
 }
 
 input:checked + .slider:before {
@@ -629,7 +629,7 @@ input:checked + .slider:before {
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #c084fc;
+  color: var(--purple-light, #c084fc);
   padding: 4px 0;
 }
 
@@ -643,7 +643,7 @@ input:checked + .slider:before {
   padding: 14px;
   border-radius: 18px;
   border: none;
-  background: linear-gradient(135deg, #8b3dff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #8b3dff 0%, var(--purple, #a855f7) 100%);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
