@@ -639,7 +639,7 @@ function avatarMarkup(user, extra = "") {
     const button = event.target.closest("[data-action]");
     if (!button) {
       // Tapping the post body opens its replies; media and author areas keep their own behavior.
-      if (event.target.closest("button, a, input, textarea, video, .post-media-grid, .post-head, .post-actions")) return;
+      if (event.target.closest("button, a, input, textarea, video, img.post-media, .post-media-grid, .post-actions")) return;
       if (card.querySelector('.comment-btn[disabled]')) {
         showMessage("Comments turned off", "The owner has disabled comments on this post.");
         return;
