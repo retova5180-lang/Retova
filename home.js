@@ -1465,7 +1465,7 @@ function avatarMarkup(user, extra = "") {
   $("#dismissChallengeBtn")?.addEventListener("click", () => {
     dismissChallenge();
     closeDialog("wheelDialog");
-    showMessage("Challenge Dismissed", "The optional challenge was dismissed. No penalties or lost points.");
+    showMessage("Challenge Dismissed", "The optional challenge was dismissed. You can choose another challenge anytime.");
   });
 
   $("#dismissBannerChallengeBtn")?.addEventListener("click", dismissChallenge);
