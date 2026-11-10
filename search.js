@@ -86,7 +86,7 @@
     document.querySelectorAll(".result-tabs [data-tab]").forEach(button => { const active = button.dataset.tab === tab; button.classList.toggle("selected", active); button.setAttribute("aria-pressed", String(active)); });
     const jobs = [];
     if (tab === "all" || tab === "people") jobs.push(peopleResults(q).then(data => ({ kind:"people", data })).catch(error => ({ kind:"people", error })));
-    if (tab === "all" || tab === "posts") jobs.push(client.from("posts").select("id,user_id,content,image,media_type,created_at,likes_count").eq("privacy", "public").ilike("content", `%${q}%`).order("created_at", { ascending:false }).limit(20).then(result => ({ kind:"posts", ...result })));
+    if (tab === "all" || tab === "posts") jobs.push(client.from("posts").select("id,user_id,content,image,media_type,privacy,created_at,likes_count").eq("privacy", "public").ilike("content", `%${q}%`).order("created_at", { ascending:false }).limit(20).then(result => ({ kind:"posts", ...result })));
     const results = await Promise.all(jobs);
     let html = "";
     for (const result of results) {
