@@ -23,6 +23,7 @@
   let storyElapsed = 0;
   let storyReplySending = false;
   let activeCommentPostId = null;
+  let activeReplyToCommentId = null;
   let activePost = null;
   let previewUrls = [];
   let hiddenPostIds = new Set();
@@ -622,13 +623,28 @@ function avatarMarkup(user, extra = "") {
     }
   }
 
+  function clearCommentReplyTarget() {
+    activeReplyToCommentId = null;
+    const context = $("#commentReplyContext");
+    const input = $("#commentInput");
+    if (context) {
+      context.hidden = true;
+      context.textContent = "";
+    }
+    if (input) input.placeholder = "Write a reply…";
+  }
+
   async function openCommentsForPost(postId) {
     if (!postId) return;
     activeCommentPostId = postId;
     const input = $("#commentInput");
     const message = $("#commentMessage");
-    if (input) input.value = "";
+    if (input) {
+      input.value = "";
+      input.placeholder = "Write a reply…";
+    }
     if (message) message.textContent = "";
+    clearCommentReplyTarget();
     openDialog("commentsDialog");
     await loadComments(postId);
   }
@@ -954,28 +970,90 @@ function avatarMarkup(user, extra = "") {
 
   async function loadComments(postId) {
     const list = $("#commentsList");
-    list.innerHTML = '<p class="muted">Loading comments…</p>';
+    list.innerHTML = '<p class="muted">Loading replies…</p>';
     const { data, error } = await client.from("comments")
-      .select("id,user_id,content,created_at").eq("post_id", postId)
-      .order("created_at", { ascending:true }).limit(100);
-    if (error) { list.textContent = "Could not load comments: "+error.message; return; }
-    if (!data?.length) { list.innerHTML = '<p class="muted">No comments yet. Start the conversation.</p>'; return; }
+      .select("id,post_id,parent_comment_id,user_id,content,created_at")
+      .eq("post_id", postId)
+      .order("created_at", { ascending:true }).limit(200);
+    if (error) {
+      list.textContent = "Could not load replies: " + error.message;
+      return;
+    }
+    if (!data?.length) {
+      list.innerHTML = '<p class="muted">No replies yet. Start the conversation.</p>';
+      return;
+    }
+
     const ids = [...new Set(data.map(comment => comment.user_id).filter(Boolean))];
-    const { data: users } = ids.length
-      ? await client.from("public_profiles").select("id,username,display_name").in("id", ids)
-      : { data:[] };
+    const { data: users, error: usersError } = ids.length
+      ? await client.from("public_profiles")
+          .select("id,username,display_name,avatar,verified").in("id", ids)
+      : { data:[], error:null };
+    if (usersError) console.warn("Comment profiles:", usersError.message);
     const userMap = new Map((users || []).map(user => [user.id,user]));
-    list.innerHTML = data.map(comment => {
+    const commentMap = new Map(data.map(comment => [comment.id, { ...comment, children:[] }]));
+    const roots = [];
+
+    for (const comment of commentMap.values()) {
+      const parent = comment.parent_comment_id ? commentMap.get(comment.parent_comment_id) : null;
+      if (parent && parent.id !== comment.id) parent.children.push(comment);
+      else roots.push(comment);
+    }
+
+    function renderComment(comment, depth = 0) {
       const user = userMap.get(comment.user_id) || {};
-      return '<article class="comment-item"><strong>'+escapeHTML(user.display_name || user.username || "ARS member")+'</strong><small>'+escapeHTML(new Date(comment.created_at).toLocaleString())+'</small><p>'+escapeHTML(comment.content)+'</p></article>';
-    }).join("");
+      const displayName = user.display_name || user.username || "ARS member";
+      const handle = user.username ? "@" + user.username : "member";
+      const profileHref = user.id ? "profile.html?id=" + encodeURIComponent(user.id) : "profile.html";
+      const date = new Date(comment.created_at).toLocaleString([], {
+        month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
+      });
+      const verified = user.verified
+        ? '<span class="verified-badge" aria-label="Verified">✓</span>' : "";
+      const children = comment.children.length
+        ? '<div class="comment-children">' + comment.children.map(child => renderComment(child, depth + 1)).join("") + '</div>'
+        : "";
+      return '<article class="comment-item" data-comment-id="' + escapeHTML(comment.id) + '">' +
+        '<div class="comment-body">' +
+          '<div class="comment-meta">' +
+            '<a class="comment-author-link" href="' + escapeHTML(profileHref) + '">' +
+              '<strong>' + escapeHTML(displayName) + '</strong>' + verified +
+            '</a>' +
+            '<small>' + escapeHTML(handle + " · " + date) + '</small>' +
+          '</div>' +
+          '<p>' + escapeHTML(comment.content) + '</p>' +
+          '<button type="button" class="comment-reply-btn" data-reply-to="' + escapeHTML(comment.id) +
+            '" data-reply-name="' + escapeHTML(handle) + '">Reply</button>' +
+        '</div>' + children +
+      '</article>';
+    }
+
+    list.innerHTML = roots.map(comment => renderComment(comment)).join("");
   }
+
+  $("#commentsList").addEventListener("click", event => {
+    const replyButton = event.target.closest("[data-reply-to]");
+    if (!replyButton) return;
+    activeReplyToCommentId = replyButton.dataset.replyTo;
+    const context = $("#commentReplyContext");
+    const input = $("#commentInput");
+    if (context) {
+      context.textContent = "Replying to " + (replyButton.dataset.replyName || "comment");
+      context.hidden = false;
+    }
+    if (input) {
+      input.placeholder = "Write your reply…";
+      input.focus();
+    }
+  });
+
+  $("#cancelCommentReply").addEventListener("click", clearCommentReplyTarget);
 
   $("#commentForm").addEventListener("submit", async event => {
     event.preventDefault();
     const input = $("#commentInput");
     const message = $("#commentMessage");
-    const button = event.submitter;
+    const button = event.submitter || $("#commentSubmitBtn");
     const content = input.value.trim();
     if (!activeCommentPostId || !content) return;
     button.disabled = true;
@@ -985,17 +1063,24 @@ function avatarMarkup(user, extra = "") {
         .select("allow_comments").eq("id", activeCommentPostId).maybeSingle();
       if (postError) throw postError;
       if (!post || post.allow_comments === false) throw new Error("Comments are turned off for this post.");
-      const { error } = await client.from("comments").insert({
-        post_id:activeCommentPostId, user_id:currentUser.id, content
-      });
+      const payload = {
+        post_id:activeCommentPostId,
+        user_id:currentUser.id,
+        content,
+        parent_comment_id:activeReplyToCommentId || null
+      };
+      const { error } = await client.from("comments").insert(payload);
       if (error) throw error;
       input.value = "";
       message.textContent = "";
+      clearCommentReplyTarget();
       await loadComments(activeCommentPostId);
       await loadFeed();
     } catch (error) {
-      message.textContent = error.message || "Could not send comment.";
-    } finally { button.disabled = false; }
+      message.textContent = error.message || "Could not send reply.";
+    } finally {
+      button.disabled = false;
+    }
   });
 
   function stopStoryProgress() {
