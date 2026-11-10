@@ -5,6 +5,7 @@
   const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = selector => document.querySelector(selector);
   let currentTab = "all", lastQuery = "", showAllAccounts = false;
+  let discoverScrollY = 0, discoverQueryValue = "";
   const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   })[char]);
@@ -91,9 +92,26 @@
     }
     return people.slice(0, 20);
   }
+  function enterSearchMode() {
+    if (document.body.classList.contains("searching")) return;
+    discoverScrollY = window.scrollY;
+    discoverQueryValue = $("#query").value;
+    document.body.classList.add("searching");
+  }
+  function exitSearchMode() {
+    if (!document.body.classList.contains("searching")) return;
+    document.body.classList.remove("searching");
+    $("#resultsSection").classList.add("hidden");
+    $("#resultsList").replaceChildren();
+    $("#query").value = discoverQueryValue;
+    lastQuery = "";
+    currentTab = "all";
+    requestAnimationFrame(() => window.scrollTo({ top: discoverScrollY, behavior: "instant" }));
+  }
   async function search(query, tab = "all") {
     const q = query.trim();
     if (!q) return;
+    enterSearchMode();
     if (!client) { $("#resultsSection").classList.remove("hidden"); $("#resultsList").innerHTML = '<p class="muted">Search is unavailable right now. Please reload and try again.</p>'; return; }
     lastQuery = q; currentTab = tab; setRecent(q); $("#query").value = q;
     $("#resultsSection").classList.remove("hidden"); $("#resultsList").innerHTML = '<p class="muted" role="status">Searching ARS…</p>';
@@ -167,6 +185,8 @@
     if (button) { button.classList.toggle("hidden", accounts.length <= 3); button.textContent = showAllAccounts ? "Show Less ‹" : "See More ›"; }
   }
   $("#searchForm").addEventListener("submit", event => { event.preventDefault(); search($("#query").value); });
+  $("#exitSearch")?.addEventListener("click", exitSearchMode);
+  document.addEventListener("keydown", event => { if (event.key === "Escape") exitSearchMode(); });
   $("#clearQuery").addEventListener("click", () => { $("#query").value = ""; $("#query").focus(); });
   $("#clearRecent").addEventListener("click", () => { localStorage.removeItem("ars_search_history"); renderRecent(); });
   $("#recentList").addEventListener("click", event => {
