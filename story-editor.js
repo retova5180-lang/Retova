@@ -74,6 +74,7 @@ function showFile(nextFile) {
   video.classList.toggle("hidden", !isVideo);
 
   if (isVideo) {
+    video.muted = Boolean(soundFile);
     video.src = objectUrl;
     video.load();
   } else {
@@ -477,6 +478,7 @@ $("#soundPicker").addEventListener("change", event => {
   if (soundPreview) soundPreview.pause();
   if (soundObjectUrl) URL.revokeObjectURL(soundObjectUrl);
   soundFile = selected;
+  if (file?.type.startsWith("video/")) $("#storyVideo").muted = Boolean(soundFile);
   soundObjectUrl = soundFile ? URL.createObjectURL(soundFile) : "";
   soundPreview = soundObjectUrl ? new Audio(soundObjectUrl) : null;
   if (soundPreview) soundPreview.preload = "metadata";
