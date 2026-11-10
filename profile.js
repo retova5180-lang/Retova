@@ -931,6 +931,21 @@
       $("#editUsername").value = activeProfile.username || "";
       $("#editBio").value = activeProfile.bio || "";
       initAvatarCustomizer(activeProfile);
+      const previewImg = $("#editAvatarPreview");
+      const currentAvatar = $("#profileAvatarImg");
+      if (previewImg) {
+        previewImg.onerror = () => {
+          previewImg.removeAttribute("src");
+          previewImg.style.display = "none";
+        };
+        previewImg.style.display = "block";
+        const avatarSrc = currentAvatar?.getAttribute("src");
+        if (avatarSrc) previewImg.src = avatarSrc;
+        else {
+          previewImg.removeAttribute("src");
+          previewImg.style.display = "none";
+        }
+      }
       $("#editProfileDialog")?.showModal();
     });
 
