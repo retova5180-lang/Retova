@@ -11,6 +11,7 @@
   let urls = [];
   const storyMode = new URLSearchParams(location.search).get("mode") === "story";
   let storyDraft = null;
+  let accountIsPrivate = false;
 
   function say(v, isError = false) {
     const el = $("#message");
@@ -34,10 +35,11 @@
 
     const { data: profile } = await client
       .from("user_profiles")
-      .select("username,display_name,avatar")
+      .select("username,display_name,avatar,is_private")
       .eq("id", user.id)
       .maybeSingle();
 
+    accountIsPrivate = Boolean(profile?.is_private);
     const dName = profile?.display_name || profile?.username || "Your ARS account";
     const uName = profile?.username || "you";
     const initial = (dName || "A")[0].toUpperCase();
@@ -256,7 +258,7 @@
 
       const mediaItems = [];
       const privacy = $("#privacy")?.value || "public";
-      const bucket = privacy === "public" ? "post-media" : "private-post-media";
+      const bucket = privacy === "public" && !accountIsPrivate ? "post-media" : "private-post-media";
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
