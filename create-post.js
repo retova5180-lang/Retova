@@ -281,13 +281,7 @@
 
         const storedPath = uploadResult.data.path;
         uploadedStoragePaths.push({ bucket, path: storedPath });
-        let url = storedPath;
-        if (bucket === "post-media") {
-          const { data: publicData } = client.storage.from(bucket).getPublicUrl(storedPath);
-          url = publicData?.publicUrl || "";
-          if (!url) throw new Error(`Upload finished for "${file.name}", but its public URL could not be created.`);
-        }
-        mediaItems.push({ url, type: file.type.startsWith("video/") ? "video" : "image" });
+        mediaItems.push({ url: storedPath, type: file.type.startsWith("video/") ? "video" : "image" });
       }
 
       const hashtags = [...content.matchAll(/#([\p{L}\p{N}_]+)/gu)].map(x => x[1]);
