@@ -26,14 +26,30 @@
     try { localStorage.setItem("ars_search_history", JSON.stringify(list)); } catch { /* History is optional if storage is unavailable. */ }
     renderRecent();
   }
-  function mediaURL(image) {
-    if (!image || typeof image !== "string") return "";
-    let value = image.trim();
-    if (value.startsWith("[")) {
-      try { const entries = JSON.parse(value); value = typeof entries?.[0] === "string" ? entries[0] : (entries?.[0]?.url || ""); } catch { return ""; }
+  function mediaInfo(post) {
+    if (!post?.image || typeof post.image !== "string") return null;
+    let item = { url: post.image.trim(), type: post.media_type || "image" };
+    if (item.url.startsWith("[")) {
+      try {
+        const entries = JSON.parse(item.url);
+        const first = Array.isArray(entries) ? entries[0] : null;
+        if (typeof first === "string") {
+          item = { url: first, type: post.media_type === "video" ? "video" : "image" };
+        } else if (first && typeof first === "object") {
+          item = { url: first.url || first.image || "", type: first.type || first.media_type || post.media_type || "image" };
+        } else {
+          return null;
+        }
+      } catch {
+        return null;
+      }
     }
-    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
-    return client?.storage.from("post-media").getPublicUrl(value).data?.publicUrl || "";
+    if (!item.url) return null;
+    let url = item.url;
+    if (!/^https?:\/\//i.test(url) && !url.startsWith("data:")) {
+      url = client?.storage.from("post-media").getPublicUrl(url).data?.publicUrl || "";
+    }
+    return url ? { url, type: item.type === "video" ? "video" : "image" } : null;
   }
   function avatar(user) {
     const name = user.display_name || user.username || "ARS member";
@@ -75,8 +91,12 @@
         const profiles = new Map((profileResult.data || []).map(user => [user.id, user]));
         html += '<h3>Posts</h3>';
         html += result.data?.length ? result.data.map(post => {
-          const user = profiles.get(post.user_id) || {}, media = mediaURL(post.image);
-          const mediaMarkup = media && !((post.media_type || "").toLowerCase().includes("video")) ? `<img class="search-post-media" src="${escapeHTML(media)}" alt="Post media" loading="lazy">` : "";
+          const user = profiles.get(post.user_id) || {}, media = mediaInfo(post);
+          const mediaMarkup = media?.url
+            ? (media.type === "video"
+              ? `<video class="search-post-media" src="${escapeHTML(media.url)}" controls playsinline preload="metadata"></video>`
+              : `<img class="search-post-media" src="${escapeHTML(media.url)}" alt="Post media" loading="lazy">`)
+            : "";
           return `<article class="result-card post-result">${mediaMarkup}<div><b>@${escapeHTML(user.username || "ARS member")}</b><p>${escapeHTML(post.content || "")}</p><small>${formatCount(post.likes_count)} likes</small></div></article>`;
         }).join("") : '<p class="muted">No matching public posts.</p>';
       }
@@ -96,13 +116,18 @@
     const users = ids.length ? await client.from("user_profiles").select("id,username").in("id", ids) : { data:[] };
     const names = new Map((users.data || []).map(user => [user.id, user.username]));
     $("#popularList").innerHTML = posts.length ? posts.map(post => {
-      const media = mediaURL(post.image), visual = media && !String(post.media_type || "").includes("video") ? `<img src="${escapeHTML(media)}" alt="" loading="lazy">` : "";
+      const media = mediaInfo(post);
+      const visual = media?.url
+        ? (media.type === "video"
+          ? `<video src="${escapeHTML(media.url)}" controls playsinline preload="metadata"></video>`
+          : `<img src="${escapeHTML(media.url)}" alt="" loading="lazy">`)
+        : "";
       return `<article class="popular-card">${visual}<div class="popular-copy"><b>@${escapeHTML(names.get(post.user_id) || "ARS member")}</b><span>${escapeHTML((post.content || "A moment on ARS").slice(0, 72))}</span><small>${formatCount(post.likes_count)} likes</small></div></article>`;
     }).join("") : '<p class="muted">No public posts yet.</p>';
   }
   function renderAccounts(accounts) {
     const visible = showAllAccounts ? accounts : accounts.slice(0, 3);
-    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<a href="profile.html?user=${encodeURIComponent(user.username || "")}" class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="#a855f7" style="vertical-align:middle;margin-left:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></div>`).join("") : '<p class="muted">New creators will appear here.</p>';
+    $("#suggestedList").innerHTML = visible.length ? visible.map(user => `<a href="profile.html?user=${encodeURIComponent(user.username || "")}" class="suggested">${avatar(user)}<span><b>${escapeHTML(user.display_name || user.username || "ARS member")} ${user.verified ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="#a855f7" style="vertical-align:middle;margin-left:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : ""}</b><small>@${escapeHTML(user.username || "member")}</small></span></a>`).join("") : '<p class="muted">New creators will appear here.</p>';
     const button = $("#seeAccounts");
     if (button) { button.classList.toggle("hidden", accounts.length <= 3); button.textContent = showAllAccounts ? "Show Less ‹" : "See More ›"; }
   }
