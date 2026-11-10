@@ -318,26 +318,48 @@
       if (postError) throw postError;
       uploadedStoragePaths.length = 0;
 
-      // Optional: share also to story
-      if ($("#toStory")?.checked && mediaItems[0]) {
+      // Optional: share a separate copy to the story-media bucket.
+      // Post media may live in private-post-media and must never be referenced from story-media.
+      let storyShareError = null;
+      if ($("#toStory")?.checked && mediaItems[0] && files[0]) {
+        let storyPath = null;
         try {
-          await client.from("stories").insert({
+          const storyFile = files[0];
+          const safeName = storyFile.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "story-upload";
+          const destination = user.id + "/stories/" + crypto.randomUUID() + "-" + safeName;
+          const { data: storyUpload, error: storyUploadError } = await client.storage
+            .from("story-media")
+            .upload(destination, storyFile, { upsert: false, contentType: storyFile.type, cacheControl: "3600" });
+          if (storyUploadError) throw storyUploadError;
+          if (!storyUpload?.path) throw new Error("Story storage did not return a file path.");
+          storyPath = storyUpload.path;
+
+          const { error: storyInsertError } = await client.from("stories").insert({
             user_id: user.id,
-            image: mediaItems[0].url,
+            image: storyPath,
             media_type: mediaItems[0].type,
             story_text: content.slice(0, 180),
             privacy: privacy,
             expires_at: new Date(Date.now() + 86400000).toISOString()
           });
+          if (storyInsertError) throw storyInsertError;
         } catch (storyErr) {
+          storyShareError = storyErr.message || "Story sharing failed.";
           console.warn("Story share error:", storyErr);
+          if (storyPath) {
+            const { error: cleanupError } = await client.storage.from("story-media").remove([storyPath]);
+            if (cleanupError) console.warn("Could not clean up failed story upload:", cleanupError.message);
+          }
         }
       }
 
-      say("Published successfully! Redirecting…");
+      say(
+        storyShareError ? "Post published, but story sharing failed: " + storyShareError : "Published successfully! Redirecting…",
+        Boolean(storyShareError)
+      );
       setTimeout(() => {
         location.href = "home.html";
-      }, 500);
+      }, storyShareError ? 1800 : 500);
 
     } catch (e) {
       console.error(e);
