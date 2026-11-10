@@ -84,7 +84,7 @@
     if (!normalized) return [];
     const pattern = `%${normalized}%`;
     const columns = ["username", "display_name", "bio"];
-    const answers = await Promise.all(columns.map(column => client.from("user_profiles").select("id,username,display_name,bio,avatar,verified").ilike(column, pattern).limit(20)));
+    const answers = await Promise.all(columns.map(column => client.from("public_profiles").select("id,username,display_name,bio,avatar,verified").ilike(column, pattern).limit(20)));
     const seen = new Set(), people = [];
     for (const answer of answers) {
       if (answer.error) throw answer.error;
@@ -128,7 +128,7 @@
         html += result.data.length ? result.data.map(user => `<article class="result-card person-result">${avatar(user)}<div><b>${escapeHTML(user.display_name || user.username || "ARS member")}</b> ${user.verified ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="#a855f7" style="vertical-align:middle;margin-left:3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : ""}<br><small>@${escapeHTML(user.username || "member")}</small>${user.bio ? `<p>${escapeHTML(user.bio)}</p>` : ""}</div></article>`).join("") : '<p class="muted">No matching accounts.</p>';
       } else {
         const ids = [...new Set((result.data || []).map(post => post.user_id).filter(Boolean))];
-        const profileResult = ids.length ? await client.from("user_profiles").select("id,username,display_name,avatar,verified,is_private").in("id", ids) : { data:[] };
+        const profileResult = ids.length ? await client.from("public_profiles").select("id,username,display_name,avatar,verified,is_private").in("id", ids) : { data:[] };
         const profiles = new Map((profileResult.data || []).map(user => [user.id, user]));
         html += '<h3>Posts</h3>';
         if (result.data?.length) {
@@ -153,14 +153,14 @@
   async function loadDiscover() {
     if (!client) { $("#suggestedList").innerHTML = '<p class="muted">Accounts are unavailable right now.</p>'; $("#popularList").innerHTML = '<p class="muted">Posts are unavailable right now.</p>'; return; }
     const [usersResult, postsResult] = await Promise.all([
-      client.from("user_profiles").select("id,username,display_name,avatar,verified").order("username", { ascending:true }).limit(8),
+      client.from("public_profiles").select("id,username,display_name,avatar,verified").order("username", { ascending:true }).limit(8),
       client.from("posts").select("id,user_id,content,image,media_type,privacy,likes_count").eq("privacy", "public").order("likes_count", { ascending:false }).limit(6)
     ]);
     if (usersResult.error) $("#suggestedList").innerHTML = '<p class="muted">Suggested accounts are unavailable.</p>';
     else renderAccounts(usersResult.data || []);
     if (postsResult.error) { $("#popularList").innerHTML = '<p class="muted">Popular posts are unavailable.</p>'; return; }
     const posts = postsResult.data || [], ids = [...new Set(posts.map(post => post.user_id).filter(Boolean))];
-    const users = ids.length ? await client.from("user_profiles").select("id,username,is_private").in("id", ids) : { data:[] };
+    const users = ids.length ? await client.from("public_profiles").select("id,username,is_private").in("id", ids) : { data:[] };
     const names = new Map((users.data || []).map(user => [user.id, user.username]));
     const privateProfiles = new Map((users.data || []).map(user => [user.id, user.is_private]));
     if (posts.length) {
