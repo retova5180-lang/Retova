@@ -621,11 +621,34 @@ function avatarMarkup(user, extra = "") {
     }
   }
 
+  async function openCommentsForPost(postId) {
+    if (!postId) return;
+    activeCommentPostId = postId;
+    const input = $("#commentInput");
+    const message = $("#commentMessage");
+    if (input) input.value = "";
+    if (message) message.textContent = "";
+    openDialog("commentsDialog");
+    await loadComments(postId);
+  }
+
   $("#feed").addEventListener("click", async event => {
+    const card = event.target.closest("[data-post-id]");
+    if (!card) return;
+
     const button = event.target.closest("[data-action]");
-    if (!button || button.disabled) return;
-    const card = button.closest("[data-post-id]");
-    const postId = card?.dataset.postId;
+    if (!button) {
+      // Tapping the post body opens its replies; media and author areas keep their own behavior.
+      if (event.target.closest("button, a, input, textarea, video, .post-media-grid, .post-head, .post-actions")) return;
+      if (card.querySelector('.comment-btn[disabled]')) {
+        showMessage("Comments turned off", "The owner has disabled comments on this post.");
+        return;
+      }
+      await openCommentsForPost(card.dataset.postId);
+      return;
+    }
+    if (button.disabled) return;
+    const postId = card.dataset.postId;
     if (!postId) return;
     const action = button.dataset.action;
 
@@ -686,9 +709,8 @@ function avatarMarkup(user, extra = "") {
           console.warn("Repost sync failed:", err.message);
         }
       } else if (action === "comment") {
-        activeCommentPostId = postId;
-        await loadComments(postId);
-        openDialog("commentsDialog");
+        if (button.disabled) return;
+        await openCommentsForPost(postId);
       } else if (action === "menu") {
         await openPostOptions(postId);
       }
