@@ -239,11 +239,17 @@
       if (isOwnProfile && currentAuthUser) {
         try {
           const { data: emailData, error: emailErr } = await client.rpc("get_my_account_email");
-          if (!emailErr && emailData) {
-            activeProfile.email = emailData;
-          }
+          if (!emailErr && emailData) activeProfile.email = emailData;
         } catch (e) {
           console.warn("Could not retrieve account email via RPC:", e);
+        }
+
+        try {
+          const { data: settingsData, error: settingsErr } = await client.rpc("get_my_account_settings");
+          if (settingsErr) throw settingsErr;
+          if (settingsData) activeProfile = { ...activeProfile, ...settingsData };
+        } catch (e) {
+          console.warn("Could not retrieve private account settings:", e);
         }
       }
 
@@ -256,7 +262,7 @@
           .maybeSingle();
 
         followRecord = rec;
-        isAcceptedFollower = rec?.status === "Accepted";
+        isAcceptedFollower = rec?.status === "accepted";
         isPendingFollower = rec?.status === "Pending";
       } else {
         followRecord = null;
@@ -415,17 +421,28 @@
     let likesCount = 0;
 
     try {
-      const [postsRes, followersRes, followingRes, likesRes] = await Promise.all([
+      const [postsRes, followersRes, followingRes, profilePostsRes] = await Promise.all([
         client.from("posts").select("id", { count: "exact", head: true }).eq("user_id", activeProfile.id),
-        client.from("followers").select("id", { count: "exact", head: true }).eq("following_id", activeProfile.id).eq("status", "Accepted"),
-        client.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", activeProfile.id).eq("status", "Accepted"),
-        client.from("likes").select("id", { count: "exact", head: true }).eq("post_user_id", activeProfile.id)
+        client.from("followers").select("id", { count: "exact", head: true }).eq("following_id", activeProfile.id).eq("status", "accepted"),
+        client.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", activeProfile.id).eq("status", "accepted"),
+        client.from("posts").select("id").eq("user_id", activeProfile.id)
       ]);
 
+      for (const result of [postsRes, followersRes, followingRes, profilePostsRes]) {
+        if (result.error) throw result.error;
+      }
       postsCount = postsRes.count || 0;
       followersCount = followersRes.count || 0;
       followingCount = followingRes.count || 0;
-      likesCount = likesRes.count || 0;
+
+      const postIds = (profilePostsRes.data || []).map(post => post.id).filter(Boolean);
+      if (postIds.length) {
+        const { count, error: likesError } = await client.from("likes")
+          .select("id", { count: "exact", head: true })
+          .in("post_id", postIds);
+        if (likesError) throw likesError;
+        likesCount = count || 0;
+      }
     } catch (e) {
       console.warn("Error counting stats:", e);
     }
@@ -654,7 +671,7 @@
 
       } else {
         // Create new follow request
-        const status = activeProfile.is_private ? "Pending" : "Accepted";
+        const status = activeProfile.is_private ? "Pending" : "accepted";
 
         const { data, error } = await client.from("followers").insert({
           follower_id: currentAuthUser.id,
@@ -747,7 +764,7 @@
         try {
           if (action === "accept") {
             await client.from("followers").update({
-              status: "Accepted",
+              status: "accepted",
               responded_at: new Date().toISOString()
             }).eq("id", id);
             showToast("Follow request accepted.");
@@ -874,8 +891,7 @@
       try {
         const updates = {
           display_name: dName,
-          bio: bio,
-          updated_at: new Date().toISOString()
+          bio: bio
         };
 
         // Handle avatar: enforce Premium verification and strict error handling
@@ -948,13 +964,13 @@
             }
           }
           updates.username = uName;
-          updates.username_changed_at = new Date().toISOString();
         }
 
         const { error } = await client.from("users").update(updates).eq("id", currentAuthUser.id);
         if (error) throw error;
 
         activeProfile = { ...activeProfile, ...updates };
+        if (updates.username) activeProfile.username_changed_at = new Date().toISOString();
         renderProfileHeader();
         $("#editProfileDialog")?.close();
         showToast("Profile updated successfully!");
