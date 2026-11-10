@@ -263,7 +263,7 @@
 
         followRecord = rec;
         isAcceptedFollower = rec?.status === "accepted";
-        isPendingFollower = rec?.status === "Pending";
+        isPendingFollower = rec?.status === "pending";
       } else {
         followRecord = null;
         isAcceptedFollower = false;
@@ -313,8 +313,8 @@
     $("#usernameHandle").textContent = "@" + (p.username || "user");
 
     // Account type tag
-    if (p.account_type && p.account_type !== "Personal") {
-      $("#accountTypeTag").textContent = p.account_type;
+    if (p.account_type && String(p.account_type).toLowerCase() !== "personal") {
+      $("#accountTypeTag").textContent = String(p.account_type).charAt(0).toUpperCase() + String(p.account_type).slice(1);
       $("#accountTypeTag").classList.remove("hidden");
     } else {
       $("#accountTypeTag").classList.add("hidden");
@@ -524,18 +524,17 @@
       try {
         if (tab === "posts") {
           const { data } = await client.from("posts")
-            .select("id, user_id, content, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
+            .select("id, user_id, content, image, media_type, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
             .eq("user_id", activeProfile.id)
             .order("is_pinned", { ascending: false })
             .order("created_at", { ascending: false });
           posts = data || [];
         } else if (tab === "media") {
           const { data } = await client.from("posts")
-            .select("id, user_id, content, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
+            .select("id, user_id, content, image, media_type, media_urls, is_pinned, likes_count, comments_count, created_at, privacy")
             .eq("user_id", activeProfile.id)
-            .not("media_urls", "is", null)
             .order("created_at", { ascending: false });
-          posts = (data || []).filter(p => Array.isArray(p.media_urls) && p.media_urls.length > 0);
+          posts = (data || []).filter(p => Boolean(p.image) || (Array.isArray(p.media_urls) && p.media_urls.length > 0));
         } else if (tab === "bookmarks" && isOwnProfile) {
           const { data } = await client.from("bookmarks")
             .select("post_id, posts(id, user_id, content, media_urls, likes_count, comments_count, created_at)")
@@ -581,30 +580,64 @@
       return;
     }
 
-    // Render Posts Grid matching reference image
-    grid.innerHTML = posts.map(post => {
-      const media = (post.media_urls && post.media_urls.length > 0) ? post.media_urls[0] : null;
-      const isVideo = media && (media.includes(".mp4") || media.includes(".webm") || media.includes("video"));
+    // Resolve both legacy image values and media_urls before rendering profile tiles.
+    const renderedPosts = await Promise.all(posts.map(async post => {
+      let mediaItem = null;
+      if (Array.isArray(post.media_urls) && post.media_urls.length) {
+        const first = post.media_urls[0];
+        mediaItem = typeof first === "string" ? { url: first, type: post.media_type } : first;
+      } else if (post.image) {
+        try {
+          const parsed = JSON.parse(post.image);
+          if (Array.isArray(parsed) && parsed.length) {
+            const first = parsed[0];
+            mediaItem = typeof first === "string" ? { url: first, type: post.media_type } : first;
+          }
+        } catch (_) {
+          mediaItem = { url: post.image, type: post.media_type };
+        }
+      }
 
-      return `
-        <article class="post-grid-tile" data-post-id="${post.id}">
-          ${post.is_pinned ? `<span class="pinned-badge" title="Pinned post"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="6"/></svg> Pinned</span>` : ""}
-          ${media ? (
-            isVideo
-              ? `<video src="${escapeHTML(media)}" class="tile-media" preload="metadata"></video><span class="video-indicator">▶</span>`
-              : `<img src="${escapeHTML(media)}" alt="Post image" class="tile-media" loading="lazy">`
-          ) : `
-            <div class="tile-text-fallback">
-              <p>${escapeHTML(post.content || "")}</p>
-            </div>
-          `}
-          <div class="tile-overlay">
-            <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${formatCount(post.likes_count || 0)}</span>
-            <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${formatCount(post.comments_count || 0)}</span>
+      let media = mediaItem?.url || mediaItem?.image || "";
+      const isVideo = mediaItem?.type === "video" || post.media_type === "video" ||
+        /\.(mp4|webm|mov)(?:$|[?#])/i.test(media);
+      if (media && !/^https?:\/\//i.test(media) && !media.startsWith("data:")) {
+        try {
+          if (post.privacy === "public") {
+            media = client.storage.from("post-media").getPublicUrl(media).data?.publicUrl || "";
+          } else {
+            const { data: signed, error: signedError } = await client.storage
+              .from("private-post-media").createSignedUrl(media, 1800);
+            if (signedError) throw signedError;
+            media = signed?.signedUrl || "";
+          }
+        } catch (mediaError) {
+          console.warn("Could not resolve profile post media:", mediaError);
+          media = "";
+        }
+      }
+      return { post, media, isVideo };
+    }));
+
+    // Render Posts Grid matching reference image
+    grid.innerHTML = renderedPosts.map(({ post, media, isVideo }) => `
+      <article class="post-grid-tile" data-post-id="${post.id}">
+        ${post.is_pinned ? `<span class="pinned-badge" title="Pinned post"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="6"/></svg> Pinned</span>` : ""}
+        ${media ? (
+          isVideo
+            ? `<video src="${escapeHTML(media)}" class="tile-media" preload="metadata"></video><span class="video-indicator">▶</span>`
+            : `<img src="${escapeHTML(media)}" alt="Post image" class="tile-media" loading="lazy">`
+        ) : `
+          <div class="tile-text-fallback">
+            <p>${escapeHTML(post.content || "")}</p>
           </div>
-        </article>
-      `;
-    }).join("");
+        `}
+        <div class="tile-overlay">
+          <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${formatCount(post.likes_count || 0)}</span>
+          <span class="tile-stat"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${formatCount(post.comments_count || 0)}</span>
+        </div>
+      </article>
+    `).join("");
 
     // Click to view post
     $$(".post-grid-tile").forEach(tile => {
@@ -671,7 +704,7 @@
 
       } else {
         // Create new follow request
-        const status = activeProfile.is_private ? "Pending" : "accepted";
+        const status = activeProfile.is_private ? "pending" : "accepted";
 
         const { data, error } = await client.from("followers").insert({
           follower_id: currentAuthUser.id,
@@ -683,7 +716,7 @@
 
         followRecord = data;
 
-        if (status === "Pending") {
+        if (status === "pending") {
           isPendingFollower = true;
           showToast("Follow request sent.");
         } else {
@@ -708,17 +741,24 @@
 
     try {
       const { data, error } = await client.from("followers")
-        .select("id, follower_id, created_at, users!follower_id(id, username, display_name, avatar)")
+        .select("id, follower_id, created_at")
         .eq("following_id", activeProfile.id)
-        .eq("status", "Pending");
+        .eq("status", "pending");
 
+      if (error) throw error;
       const banner = $("#pendingRequestsBanner");
       if (!banner) return;
 
       if (data && data.length > 0) {
+        const followerIds = [...new Set(data.map(row => row.follower_id).filter(Boolean))];
+        const { data: profiles, error: profilesError } = followerIds.length
+          ? await client.from("public_profiles").select("id, username, display_name, avatar").in("id", followerIds)
+          : { data: [], error: null };
+        if (profilesError) throw profilesError;
+        const people = new Map((profiles || []).map(person => [person.id, person]));
         banner.classList.remove("hidden");
         $("#pendingRequestsCount").textContent = String(data.length);
-        renderPendingRequestsList(data);
+        renderPendingRequestsList(data.map(row => ({ ...row, users: people.get(row.follower_id) || {} })));
       } else {
         banner.classList.add("hidden");
       }
@@ -738,7 +778,7 @@
 
     list.innerHTML = requests.map(req => {
       const u = req.users || {};
-      const av = u.avatar || `"User")}&background=790ce2&color=fff`;
+      const av = u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.display_name || u.username || "User")}&background=790ce2&color=fff`;
 
       return `
         <div class="request-item-card" data-req-id="${req.id}">
@@ -770,7 +810,7 @@
             showToast("Follow request accepted.");
           } else {
             await client.from("followers").update({
-              status: "Declined",
+              status: "declined",
               responded_at: new Date().toISOString()
             }).eq("id", id);
             showToast("Follow request declined.");
