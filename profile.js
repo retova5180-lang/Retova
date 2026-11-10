@@ -203,17 +203,17 @@
     }
 
     try {
-      let query = client.from("users");
+      let query = client.from("user_profiles");
 
       if (targetUserId) {
         // Viewing specific user by ID
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, account_status, online_status_visible").eq("id", targetUserId);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("id", targetUserId);
       } else if (targetUsername) {
         // Viewing specific user by username
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, account_status, online_status_visible").eq("username", targetUsername);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("username", targetUsername);
       } else if (currentAuthUser) {
-        // Viewing own profile
-        query = query.select("*").eq("id", currentAuthUser.id);
+        // Viewing own profile via user_profiles
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("id", currentAuthUser.id);
       } else {
         // Visitor with no target specified -> redirect to login
         window.location.href = "index.html";
@@ -235,6 +235,17 @@
 
       activeProfile = data;
       isOwnProfile = currentAuthUser && currentAuthUser.id === activeProfile.id;
+
+      if (isOwnProfile && currentAuthUser) {
+        try {
+          const { data: emailData, error: emailErr } = await client.rpc("get_my_account_email");
+          if (!emailErr && emailData) {
+            activeProfile.email = emailData;
+          }
+        } catch (e) {
+          console.warn("Could not retrieve account email via RPC:", e);
+        }
+      }
 
       // Check follow relationship if viewing someone else
       if (!isOwnProfile && currentAuthUser) {

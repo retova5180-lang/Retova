@@ -33,7 +33,7 @@
     user = data.session.user;
 
     const { data: profile } = await client
-      .from("users")
+      .from("user_profiles")
       .select("username,display_name,avatar")
       .eq("id", user.id)
       .maybeSingle();

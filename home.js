@@ -111,12 +111,22 @@ function avatarMarkup(user, extra = "") {
     }
     const authUser = session.user;
     const local = readLocalUser();
-    const { data: profile, error: profileError } = await client.from("users")
-      .select("id,username,display_name,email,bio,avatar,cover,verified,plan,streak,xp,vip_badge_enabled")
+    const { data: profile, error: profileError } = await client.from("user_profiles")
+      .select("id,username,display_name,bio,avatar,cover,verified,plan,streak,vip_badge_enabled,is_private,account_type,profile_accent_color,cover_type")
       .eq("id", authUser.id).maybeSingle();
     if (profileError) throw new Error("Could not load your ARS profile: "+profileError.message);
+
+    let accountEmail = authUser.email || "";
+    try {
+      const { data: emailData, error: emailError } = await client.rpc("get_my_account_email");
+      if (!emailError && emailData) accountEmail = emailData;
+    } catch (e) {
+      console.warn("Could not fetch account email via RPC:", e);
+    }
+
     currentUser = {
       ...local, ...(profile || {}), id: authUser.id,
+      email: accountEmail,
       username: profile?.username || local.username || authUser.user_metadata?.username || "",
       displayName: profile?.display_name || local.displayName || authUser.user_metadata?.display_name || "",
       avatar: profile?.avatar || local.avatar || "",
@@ -216,7 +226,7 @@ function avatarMarkup(user, extra = "") {
     const postIds = visible.map(post => post.id);
     const userIds = [...new Set(visible.map(post => post.user_id).filter(Boolean))];
     const [userResult, likeResult, bookmarkResult, repostResult] = await Promise.all([
-      client.from("users").select("id,username,display_name,avatar,verified").in("id", userIds),
+      client.from("user_profiles").select("id,username,display_name,avatar,verified").in("id", userIds),
       client.from("likes").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("bookmarks").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds),
       client.from("reposts").select("post_id").eq("user_id", currentUser.id).in("post_id", postIds)
@@ -324,7 +334,7 @@ function avatarMarkup(user, extra = "") {
     stories = data || [];
     const ids = [...new Set(stories.map(story => story.user_id).filter(Boolean))];
     const { data: users, error: usersError } = ids.length
-      ? await client.from("users").select("id,username,display_name,avatar").in("id", ids)
+      ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", ids)
       : { data: [], error: null };
     if (usersError) console.warn("Story profiles:", usersError.message);
     const userMap = new Map((users || []).map(user => [user.id, user]));
@@ -369,7 +379,7 @@ function avatarMarkup(user, extra = "") {
     if (error) { list.textContent = "Could not load activity: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">You’re all caught up.</p>'; return; }
     const ids = [...new Set(data.map(item => item.sender_id).filter(Boolean))];
-    const { data: senders } = ids.length ? await client.from("users").select("id,username,display_name,avatar").in("id", ids) : { data:[] };
+    const { data: senders } = ids.length ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", ids) : { data:[] };
     const userMap = new Map((senders || []).map(user => [user.id, user]));
     list.innerHTML = data.map(item => {
       const user = userMap.get(item.sender_id) || {};
@@ -397,19 +407,22 @@ function avatarMarkup(user, extra = "") {
   async function loadStreaks() {
     const list = $("#streaksListContainer");
     list.innerHTML = '<p class="muted">Loading Streaks…</p>';
-    const { data, error } = await client.from("streaks").select("id,user_a_id,user_b_id,count,streak_count,status,last_activity_at,last_activity_user_a,last_activity_user_b,broken_at,created_at,updated_at").or("user_a_id.eq."+currentUser.id+",user_b_id.eq."+currentUser.id).order("updated_at", { ascending:false }).limit(100);
+    const { data, error } = await client.from("streaks").select("id,user_a_id,user_b_id,streak_count,status,last_activity_user_a_at,last_activity_user_b_at,broken_at,created_at,updated_at").or("user_a_id.eq."+currentUser.id+",user_b_id.eq."+currentUser.id).order("updated_at", { ascending:false }).limit(100);
     if (error) { list.textContent = "Could not load Streaks: "+error.message; return; }
     if (!data?.length) { list.innerHTML = '<p class="muted">No Streaks yet. Invite someone to start one together.</p>'; return; }
     const peerIds = [...new Set(data.map(row => row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id).filter(Boolean))];
-    const { data: peers } = peerIds.length ? await client.from("users").select("id,username,display_name,avatar").in("id", peerIds) : { data:[] };
+    const { data: peers } = peerIds.length ? await client.from("user_profiles").select("id,username,display_name,avatar").in("id", peerIds) : { data:[] };
     const users = new Map((peers || []).map(user => [user.id, user]));
     list.innerHTML = data.map(row => {
       const peerId = row.user_a_id === currentUser.id ? row.user_b_id : row.user_a_id;
       const peer = users.get(peerId) || {};
       const name = peer.display_name || peer.username || "ARS member";
-      const count = Number(row.streak_count ?? row.count ?? 0);
-      const last = row.last_activity_at ? new Date(row.last_activity_at).getTime() : 0;
-      const expired = !!row.broken_at || /broken|expired|inactive|ended/i.test(row.status || "") || (last && Date.now()-last >= 86400000);
+      const count = Number(row.streak_count || 0);
+      const lastA = row.last_activity_user_a_at ? new Date(row.last_activity_user_a_at).getTime() : 0;
+      const lastB = row.last_activity_user_b_at ? new Date(row.last_activity_user_b_at).getTime() : 0;
+      const last = Math.max(lastA, lastB);
+      // Strict 24h expiration: no premium exemption from 24h rule
+      const expired = !!row.broken_at || /broken|expired|inactive|ended/i.test(row.status || "") || (last > 0 && (Date.now() - last) >= 86400000);
       const action = expired ? '<div class="streak-status-bar"><span class="streak-status broken">Recovery may be available</span><button class="streak-recover-btn" type="button" data-request-recovery="'+escapeHTML(row.id)+'">Request recovery</button></div>' : '<div class="streak-status-bar"><span class="streak-status active">● Active</span><span class="muted">Last activity '+escapeHTML(row.last_activity_at ? new Date(row.last_activity_at).toLocaleString() : "not recorded")+'</span></div>';
       const avatar = peer.avatar && /^https?:\/\//i.test(peer.avatar) ? '<span class="activity-avatar"><img src="'+escapeHTML(peer.avatar)+'" alt=""></span>' : '<span class="activity-avatar">'+escapeHTML(name[0] || "A")+'</span>';
       return '<article class="streak-card"><div class="streak-card-main">'+avatar+'<div class="streak-user-info"><strong>'+escapeHTML(name)+'</strong><small>@'+escapeHTML(peer.username || "member")+'</small></div><span class="streak-count-badge"> '+count+' days</span></div>'+action+'</article>';
@@ -427,7 +440,7 @@ function avatarMarkup(user, extra = "") {
     const ids=[...new Set(data.map(row=>row.streak_id).filter(Boolean))];
     const { data: streaks }=ids.length?await client.from("streaks").select("id,user_a_id,user_b_id").in("id",ids):{data:[]};
     const partners=[...new Set((streaks||[]).flatMap(row=>[row.user_a_id,row.user_b_id]).filter(Boolean))];
-    const { data: people }=partners.length?await client.from("users").select("id,username,display_name").in("id",partners):{data:[]};
+    const { data: people }=partners.length?await client.from("user_profiles").select("id,username,display_name").in("id",partners):{data:[]};
     const userMap=new Map((people||[]).map(user=>[user.id,user]));
     const streakMap=new Map((streaks||[]).map(row=>[row.id,row]));
     list.innerHTML=data.map(row=>{
@@ -902,7 +915,7 @@ function avatarMarkup(user, extra = "") {
     if (!data?.length) { list.innerHTML = '<p class="muted">No comments yet. Start the conversation.</p>'; return; }
     const ids = [...new Set(data.map(comment => comment.user_id).filter(Boolean))];
     const { data: users } = ids.length
-      ? await client.from("users").select("id,username,display_name").in("id", ids)
+      ? await client.from("user_profiles").select("id,username,display_name").in("id", ids)
       : { data:[] };
     const userMap = new Map((users || []).map(user => [user.id,user]));
     list.innerHTML = data.map(comment => {
@@ -1155,7 +1168,7 @@ function avatarMarkup(user, extra = "") {
         const { count, error } = await client.from("story_views")
           .select("id", { count: "exact", head: true })
           .eq("viewer_id", userId)
-          .gte("viewed_at", since);
+          .gte("created_at", since);
         if (error) throw error;
         return { completed: (count || 0) >= 5, progress: `${count || 0}/5 stories viewed in 24h` };
       }
@@ -1216,8 +1229,8 @@ function avatarMarkup(user, extra = "") {
       targetRotation: 30,
       verify: async (userId) => {
         const { data, error } = await client.from("streaks")
-          .select("id, current_streak, updated_at")
-          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+          .select("id, user_a_id, user_b_id, streak_count, updated_at, last_activity_user_a_at, last_activity_user_b_at")
+          .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
           .limit(1);
         if (error) throw error;
         return { completed: Boolean(data?.length), progress: data?.length ? "Streak active" : "No streak yet" };

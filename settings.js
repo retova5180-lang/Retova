@@ -71,20 +71,40 @@
 
   async function loadUserData() {
     try {
-      // 1. Load users table data
+      // 1. Load public profile data via user_profiles view
       const { data: userProfile, error: uErr } = await client
-        .from("users")
-        .select("*")
+        .from("user_profiles")
+        .select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color")
         .eq("id", currentAuthUser.id)
         .maybeSingle();
 
       if (uErr) throw uErr;
 
-      activeProfile = userProfile || {
+      // 2. Safely retrieve the current account email via get_my_account_email RPC
+      let accountEmail = currentAuthUser.email || "";
+      try {
+        const { data: emailData, error: emailErr } = await client.rpc("get_my_account_email");
+        if (!emailErr && emailData) {
+          accountEmail = emailData;
+        }
+      } catch (e) {
+        console.warn("Could not retrieve account email via RPC:", e);
+      }
+
+      activeProfile = {
+        ...(userProfile || {}),
         id: currentAuthUser.id,
-        email: currentAuthUser.email,
-        display_name: currentAuthUser.user_metadata?.display_name || "User",
-        username: currentAuthUser.user_metadata?.username || "user",
+        email: accountEmail,
+        display_name: userProfile?.display_name || currentAuthUser.user_metadata?.display_name || "User",
+        username: userProfile?.username || currentAuthUser.user_metadata?.username || "user",
+        plan: userProfile?.plan || "free",
+        verified: userProfile?.verified || false,
+        account_type: userProfile?.account_type || "personal",
+        is_private: userProfile?.is_private || false,
+        avatar: userProfile?.avatar || null,
+        cover: userProfile?.cover || null,
+        bio: userProfile?.bio || "",
+        profile_accent_color: userProfile?.profile_accent_color || "#8b3dff",
         account_status: "active"
       };
 

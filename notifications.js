@@ -157,7 +157,7 @@
       let userMap = new Map();
       if (senderIds.length) {
         const { data: senders } = await client
-          .from("users")
+          .from("user_profiles")
           .select("id, username, display_name, avatar, plan")
           .in("id", senderIds);
         if (senders) {
