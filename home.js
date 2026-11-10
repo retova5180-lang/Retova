@@ -1105,6 +1105,11 @@ function avatarMarkup(user, extra = "") {
     }
 
     const content = $("#storyViewerContent");
+    content.querySelectorAll("video,audio").forEach(element => {
+      element.pause();
+      element.removeAttribute("src");
+      element.load?.();
+    });
     content.replaceChildren();
 
     const isVideo = story.media_type === "video" || /\.(mp4|webm|mov)$/i.test(mediaUrl || "");
@@ -1276,6 +1281,14 @@ function avatarMarkup(user, extra = "") {
 
   $("#storyViewerDialog").addEventListener("close", () => {
     stopStoryProgress();
+    const content = $("#storyViewerContent");
+    content?.querySelectorAll("video,audio").forEach(element => {
+      element.pause();
+      element.removeAttribute("src");
+      element.load?.();
+    });
+    const audioButton = $("#storyAudioToggle");
+    if (audioButton) audioButton.classList.add("hidden");
   });
 
   // ARS Optional Challenge Wheel Controller
