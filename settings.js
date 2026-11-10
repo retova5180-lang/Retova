@@ -91,8 +91,18 @@
         console.warn("Could not retrieve account email via RPC:", e);
       }
 
+      let accountSettings = {};
+      try {
+        const { data: settingsData, error: settingsError } = await client.rpc("get_my_account_settings");
+        if (settingsError) throw settingsError;
+        accountSettings = settingsData || {};
+      } catch (settingsError) {
+        console.warn("Could not load private account settings:", settingsError);
+      }
+
       activeProfile = {
         ...(userProfile || {}),
+        ...accountSettings,
         id: currentAuthUser.id,
         email: accountEmail,
         display_name: userProfile?.display_name || currentAuthUser.user_metadata?.display_name || "User",
@@ -105,7 +115,11 @@
         cover: userProfile?.cover || null,
         bio: userProfile?.bio || "",
         profile_accent_color: userProfile?.profile_accent_color || "#8b3dff",
-        account_status: "active"
+        account_status: accountSettings.account_status || "active",
+        username_changed_at: accountSettings.username_changed_at || null,
+        online_status_visible: accountSettings.online_status_visible !== false,
+        deletion_requested_at: accountSettings.deletion_requested_at || null,
+        deactivated_at: accountSettings.deactivated_at || null
       };
 
       // 2. Load preferences
@@ -225,7 +239,7 @@
     const banner = $("#scheduledDeletionBanner");
     if (!banner || !activeProfile) return;
 
-    if (activeProfile.account_status === "Deletion Pending") {
+    if (String(activeProfile.account_status || "").toLowerCase() === "deletion_pending") {
       banner.classList.remove("hidden");
       const dateText = activeProfile.deletion_requested_at 
         ? new Date(activeProfile.deletion_requested_at).toLocaleDateString()
@@ -338,8 +352,7 @@
     try {
       const updates = {
         display_name: dName,
-        account_type: accType,
-        updated_at: new Date().toISOString()
+        account_type: accType
       };
 
       if (uName && uName !== activeProfile.username) {
@@ -354,13 +367,13 @@
           }
         }
         updates.username = uName;
-        updates.username_changed_at = new Date().toISOString();
       }
 
       const { error } = await client.from("users").update(updates).eq("id", currentAuthUser.id);
       if (error) throw error;
 
       activeProfile = { ...activeProfile, ...updates };
+      if (updates.username) activeProfile.username_changed_at = new Date().toISOString();
       await renderProfileCard();
       $("#accountDialog")?.close();
       showToast("Account details updated successfully!");
@@ -388,8 +401,7 @@
       // 1. Update users table
       const { error: userErr } = await client.from("users").update({
         is_private: isPrivate,
-        online_status_visible: onlineVisible,
-        updated_at: new Date().toISOString()
+        online_status_visible: onlineVisible
       }).eq("id", currentAuthUser.id);
 
       if (userErr) throw userErr;
