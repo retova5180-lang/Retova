@@ -1002,7 +1002,18 @@ function avatarMarkup(user, extra = "") {
           .select("id,username,display_name,avatar,verified").in("id", ids)
       : { data:[], error:null };
     if (usersError) console.warn("Comment profiles:", usersError.message);
-    const userMap = new Map((users || []).map(user => [user.id,user]));
+    const userMap = new Map((users || []).map(user => [user.id,{ ...user, avatarUrl:"" }]));
+    await Promise.all([...userMap.values()].map(async user => {
+      if (!user.avatar) return;
+      if (/^https?:\/\//i.test(user.avatar) || user.avatar.startsWith("data:")) {
+        user.avatarUrl = user.avatar;
+        return;
+      }
+      const { data: signed, error: avatarError } = await client.storage
+        .from("avatars").createSignedUrl(user.avatar, 1800);
+      if (!avatarError && signed?.signedUrl) user.avatarUrl = signed.signedUrl;
+      else console.warn("Reply avatar unavailable:", avatarError?.message || "No signed URL");
+    }));
     const commentMap = new Map(data.map(comment => [comment.id, { ...comment, children:[] }]));
     const roots = [];
 
@@ -1022,21 +1033,29 @@ function avatarMarkup(user, extra = "") {
       });
       const verified = user.verified
         ? '<span class="verified-badge" aria-label="Verified">✓</span>' : "";
+      const avatarContent = user.avatarUrl
+        ? '<img src="' + escapeHTML(user.avatarUrl) + '" alt="" loading="lazy">'
+        : '<span>' + escapeHTML((displayName.trim()[0] || "A").toUpperCase()) + '</span>';
       const children = comment.children.length
         ? '<div class="comment-children">' + comment.children.map(child => renderComment(child, depth + 1)).join("") + '</div>'
         : "";
-      return '<article class="comment-item" data-comment-id="' + escapeHTML(comment.id) + '">' +
-        '<div class="comment-body">' +
-          '<div class="comment-meta">' +
-            '<a class="comment-author-link" href="' + escapeHTML(profileHref) + '">' +
-              '<strong>' + escapeHTML(displayName) + '</strong>' + verified +
-            '</a>' +
-            '<small>' + escapeHTML(handle + " · " + date) + '</small>' +
-          '</div>' +
-          '<p>' + escapeHTML(comment.content) + '</p>' +
-          '<button type="button" class="comment-reply-btn" data-reply-to="' + escapeHTML(comment.id) +
-            '" data-reply-name="' + escapeHTML(handle) + '">Reply</button>' +
-        '</div>' + children +
+      return '<article class="comment-item' + (depth ? ' comment-item-nested' : '') + '" data-comment-id="' + escapeHTML(comment.id) + '">' +
+        '<a class="comment-avatar-link" href="' + escapeHTML(profileHref) + '" aria-label="Open ' + escapeHTML(displayName) + ' profile">' +
+          '<span class="comment-avatar">' + avatarContent + '</span>' +
+        '</a>' +
+        '<div class="comment-content-column">' +
+          '<div class="comment-body">' +
+            '<div class="comment-meta">' +
+              '<a class="comment-author-link" href="' + escapeHTML(profileHref) + '">' +
+                '<strong>' + escapeHTML(displayName) + '</strong>' + verified +
+              '</a>' +
+              '<small>' + escapeHTML(handle + " · " + date) + '</small>' +
+            '</div>' +
+            '<p>' + escapeHTML(comment.content) + '</p>' +
+            '<button type="button" class="comment-reply-btn" data-reply-to="' + escapeHTML(comment.id) +
+              '" data-reply-name="' + escapeHTML(handle) + '">Reply</button>' +
+          '</div>' + children +
+        '</div>' +
       '</article>';
     }
 
