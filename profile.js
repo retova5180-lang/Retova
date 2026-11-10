@@ -72,6 +72,7 @@
   let selectedLetter = "R";
   let selectedLetterColor = "#ffffff";
   let selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+  let selectedProfileAccent = "#a855f7";
   let avatarCustomizerTouched = false;
 
   function initAvatarCustomizer(p) {
@@ -83,7 +84,22 @@
     selectedLetter = (p?.display_name?.[0] || p?.username?.[0] || "R").toUpperCase();
     selectedLetterColor = "#ffffff";
     selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
+    selectedProfileAccent = /^#[0-9a-f]{6}$/i.test(p?.profile_accent_color || "")
+      ? p.profile_accent_color
+      : "#a855f7";
     avatarCustomizerTouched = false;
+
+    const accentInput = $("#editAccentColor");
+    if (accentInput) accentInput.value = selectedProfileAccent;
+    $(".color-picker-row .color-swatch").forEach(swatch => {
+      const selected = swatch.dataset.color?.toLowerCase() === selectedProfileAccent.toLowerCase();
+      swatch.classList.toggle("active", selected);
+      swatch.onclick = () => {
+        selectedProfileAccent = swatch.dataset.color || "#a855f7";
+        if (accentInput) accentInput.value = selectedProfileAccent;
+        $(".color-picker-row .color-swatch").forEach(item => item.classList.toggle("active", item === swatch));
+      };
+    });
 
     if (preview) {
       preview.textContent = selectedLetter;
@@ -318,6 +334,19 @@
   async function renderProfileHeader() {
     const p = activeProfile;
     if (!p) return;
+
+    // Apply this account's profile accent to profile-page UI only.
+    const profileAccent = /^#[0-9a-f]{6}$/i.test(p.profile_accent_color || "")
+      ? p.profile_accent_color
+      : "#a855f7";
+    const accentRoot = document.documentElement;
+    accentRoot.style.setProperty("--purple", profileAccent);
+    accentRoot.style.setProperty("--purple-light", profileAccent);
+    accentRoot.style.setProperty("--purple-dark", profileAccent);
+    accentRoot.style.setProperty("--purple-primary", profileAccent);
+    accentRoot.style.setProperty("--purple-bright", profileAccent);
+    accentRoot.style.setProperty("--border-focus", profileAccent);
+    accentRoot.style.setProperty("--ars-accent", profileAccent);
 
     // Display Name
     $("#displayName").textContent = p.display_name || p.username || "User";
@@ -980,7 +1009,8 @@
       try {
         const updates = {
           display_name: dName,
-          bio: bio
+          bio: bio,
+          profile_accent_color: selectedProfileAccent
         };
 
         // Handle avatar: enforce Premium verification and strict error handling
@@ -1022,16 +1052,26 @@
           try {
             const ext = pendingCoverFile.name.split(".").pop() || "jpg";
             const path = `${currentAuthUser.id}/cover-${Date.now()}.${ext}`;
-            const { data: upData, error: upErr } = await client.storage.from("covers").upload(path, pendingCoverFile, { upsert: true });
+            // Each cover uses a unique timestamped path, so upsert is unnecessary.
+            // Avoiding upsert also avoids requiring a Storage SELECT policy for this bucket.
+            const { data: upData, error: upErr } = await client.storage.from("covers").upload(path, pendingCoverFile, {
+              cacheControl: "3600",
+              contentType: pendingCoverFile.type || "image/jpeg",
+              upsert: false
+            });
             if (upErr) {
               showToast("Cover banner upload failed: " + upErr.message, "error");
               submitBtn.disabled = false;
               return;
             }
-            if (upData?.path) {
-              const { data: pubData } = client.storage.from("covers").getPublicUrl(upData.path);
-              if (pubData?.publicUrl) updates.cover = pubData.publicUrl;
+            if (!upData?.path) {
+              throw new Error("Cover banner upload returned no file path.");
             }
+            const { data: pubData } = client.storage.from("covers").getPublicUrl(upData.path);
+            if (!pubData?.publicUrl) {
+              throw new Error("Could not create a public URL for the uploaded cover banner.");
+            }
+            updates.cover = pubData.publicUrl;
           } catch (stErr) {
             console.error("Cover upload storage exception:", stErr);
             showToast("Cover banner upload failed. Changes were not saved.", "error");
