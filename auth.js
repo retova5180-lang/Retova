@@ -793,9 +793,9 @@
           error: profileError
         } =
           await supabaseClient
-            .from("users")
+            .from("public_profiles")
             .select(
-              "id, username, display_name, email, bio, avatar, cover, verified, plan, streak, xp"
+              "id, username, display_name, bio, avatar, cover, verified, plan, streak"
             )
             .eq(
               "id",
@@ -827,7 +827,6 @@
               "",
 
             email:
-              profile.email ||
               data.user.email ||
               email,
 
@@ -862,7 +861,6 @@
               0,
 
             xp:
-              profile.xp ??
               localUser.xp ??
               0
 
