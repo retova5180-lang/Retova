@@ -139,16 +139,27 @@ function avatarMarkup(user, extra = "") {
     return currentUser;
   }
 
+  function parsePostStorageUrl(value) {
+    const match = String(value || "").match(/\/storage\/v1\/object\/(?:public|sign)\/(post-media|private-post-media)\/(.+?)(?:\?|$)/i);
+    if (!match) return null;
+    try { return { bucket: match[1], path: decodeURIComponent(match[2]) }; }
+    catch { return { bucket: match[1], path: match[2] }; }
+  }
+
   async function resolveSingleMediaUrl(url, privacy, isPrivateAccount = false) {
     if (!url) return "";
-    if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
-    if (privacy === "public" && !isPrivateAccount) {
-      const { data } = client.storage.from("post-media").getPublicUrl(url);
-      return data?.publicUrl || "";
+    let path = String(url);
+    let bucket = privacy === "public" && !isPrivateAccount ? "post-media" : "private-post-media";
+    if (path.startsWith("data:")) return path;
+    if (/^https?:\/\//i.test(path)) {
+      const stored = parsePostStorageUrl(path);
+      if (!stored) return path;
+      bucket = stored.bucket;
+      path = stored.path;
     }
-    const { data, error } = await client.storage.from("private-post-media").createSignedUrl(url, 1800);
+    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, 1800);
     if (error) {
-      console.warn("Private post media unavailable:", error.message);
+      console.warn("Post media unavailable:", error.message);
       return "";
     }
     return data?.signedUrl || "";
