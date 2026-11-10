@@ -21,6 +21,7 @@
   let storyDuration = 5000;
   let storyPaused = false;
   let storyElapsed = 0;
+  let storyReplySending = false;
   let activeCommentPostId = null;
   let activePost = null;
   let previewUrls = [];
@@ -338,7 +339,7 @@ function avatarMarkup(user, extra = "") {
   async function loadStories() {
     const row = $("#storiesRow");
     const { data, error } = await client.from("stories")
-      .select("id,user_id,image,media_type,story_text,created_at,expires_at,privacy")
+      .select("id,user_id,image,audio_path,media_type,story_text,created_at,expires_at,privacy")
       .gt("expires_at", new Date().toISOString()).order("created_at", { ascending: true }).limit(50);
     if (error) {
       console.warn("Stories load failed:", error.message);
@@ -987,7 +988,11 @@ function avatarMarkup(user, extra = "") {
     if (content) {
       const vid = content.querySelector("video");
       if (vid) { vid.pause(); vid.src = ""; }
+      const soundtrack = content.querySelector("audio");
+      if (soundtrack) { soundtrack.pause(); soundtrack.src = ""; }
       content.replaceChildren();
+      const audioButton = $("#storyAudioToggle");
+      if (audioButton) audioButton.classList.add("hidden");
     }
     closeDialog("storyViewerDialog");
   }
@@ -1029,10 +1034,16 @@ function avatarMarkup(user, extra = "") {
     storyPaused = !storyPaused;
     const pauseBtn = $("#storyPauseBtn");
     if (pauseBtn) pauseBtn.textContent = storyPaused ? "▶" : "⏸";
-    const vid = $("#storyViewerContent")?.querySelector("video");
+    const mediaContent = $("#storyViewerContent");
+    const vid = mediaContent?.querySelector("video");
+    const soundtrack = mediaContent?.querySelector("audio");
     if (vid) {
       if (storyPaused) vid.pause();
       else vid.play().catch(() => {});
+    }
+    if (soundtrack) {
+      if (storyPaused) soundtrack.pause();
+      else soundtrack.play().catch(() => {});
     }
     if (storyPaused) {
       storyElapsed += (performance.now() - storyStartTime);
@@ -1081,6 +1092,18 @@ function avatarMarkup(user, extra = "") {
       }
     }
 
+    let audioUrl = story.audio_path || "";
+    if (audioUrl && !/^https?:\/\//i.test(audioUrl)) {
+      try {
+        const { data, error } = await client.storage.from("story-media").createSignedUrl(audioUrl, 1800);
+        if (error) throw error;
+        audioUrl = data?.signedUrl || "";
+      } catch (audioError) {
+        console.warn("Story soundtrack unavailable:", audioError);
+        audioUrl = "";
+      }
+    }
+
     const content = $("#storyViewerContent");
     content.replaceChildren();
 
@@ -1099,10 +1122,37 @@ function avatarMarkup(user, extra = "") {
       });
       media.addEventListener("error", () => startStoryProgress(4000));
     } else {
-      media.addEventListener("load", () => startStoryProgress(5000));
+      media.addEventListener("load", () => {
+        if (!audioUrl) startStoryProgress(5000);
+      });
       media.addEventListener("error", () => startStoryProgress(4000));
     }
     content.appendChild(media);
+
+    const audioButton = $("#storyAudioToggle");
+    if (audioUrl) {
+      const soundtrack = document.createElement("audio");
+      soundtrack.src = audioUrl;
+      soundtrack.preload = "auto";
+      soundtrack.loop = true;
+      soundtrack.autoplay = true;
+      soundtrack.addEventListener("loadedmetadata", () => {
+        if (!isVideo && currentStoryIndex === index) {
+          const duration = Number.isFinite(soundtrack.duration) ? soundtrack.duration * 1000 : 5000;
+          startStoryProgress(Math.min(30000, Math.max(5000, duration)));
+        }
+      }, { once: true });
+      soundtrack.addEventListener("error", () => {
+        if (!isVideo && currentStoryIndex === index) startStoryProgress(5000);
+      }, { once: true });
+      content.appendChild(soundtrack);
+      if (audioButton) audioButton.classList.remove("hidden");
+      soundtrack.play().catch(() => {
+        if (audioButton) audioButton.textContent = "♫";
+      });
+    } else if (audioButton) {
+      audioButton.classList.add("hidden");
+    }
 
     const captionBar = $("#storyCaptionBar");
     if (captionBar) captionBar.textContent = story.story_text || "";
@@ -1147,6 +1197,18 @@ function avatarMarkup(user, extra = "") {
 
   $("#storyPauseBtn").addEventListener("click", () => toggleStoryPause());
 
+  $("#storyAudioToggle")?.addEventListener("click", async () => {
+    const soundtrack = $("#storyViewerContent")?.querySelector("audio");
+    if (!soundtrack) return;
+    try {
+      if (soundtrack.paused) await soundtrack.play();
+      else soundtrack.pause();
+      $("#storyAudioToggle").textContent = soundtrack.paused ? "♫" : "♪";
+    } catch (error) {
+      showMessage("Soundtrack unavailable", error.message || "Tap again to play the story soundtrack.");
+    }
+  });
+
   $("#storyHeartBtn").addEventListener("click", async () => {
     const story = stories[currentStoryIndex];
     if (!story?.id || !currentUser?.id) {
@@ -1174,14 +1236,41 @@ function avatarMarkup(user, extra = "") {
     }
   });
 
-  $("#storyQuickReply").addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const input = $("#storyQuickReply");
-      const val = input.value.trim();
-      if (!val) return;
+  $("#storyQuickReply").addEventListener("keydown", async event => {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    const input = $("#storyQuickReply");
+    const content = input.value.trim();
+    const story = stories[currentStoryIndex];
+    if (!content || storyReplySending) return;
+    if (!currentUser?.id || !story?.id) {
+      showMessage("Reply unavailable", "Sign in and open an active story before replying.");
+      return;
+    }
+    if (story.user_id === currentUser.id) {
+      showMessage("Your story", "You cannot send a reply to your own story.");
+      return;
+    }
+
+    storyReplySending = true;
+    input.disabled = true;
+    try {
+      const { error } = await client.from("story_replies").insert({
+        story_id: story.id,
+        sender_id: currentUser.id,
+        recipient_id: story.user_id,
+        content
+      });
+      if (error) throw error;
       input.value = "";
-      showMessage("Story replies unavailable", "Your reply was not sent because story replies are not connected to the database yet.");
+      showMessage("Reply sent", "Your reply was delivered and the story owner was notified.");
+    } catch (error) {
+      console.error("Story reply failed:", error);
+      showMessage("Could not send reply", error.message || "Please try again.");
+    } finally {
+      storyReplySending = false;
+      input.disabled = false;
+      input.focus();
     }
   });
 
