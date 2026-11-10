@@ -649,7 +649,9 @@ function avatarMarkup(user, extra = "") {
     if (message) message.textContent = "";
     clearCommentReplyTarget();
     openDialog("commentsDialog");
-    await loadComments(postId);
+    const threadScroll = $("#threadScrollArea");
+    if (threadScroll) threadScroll.scrollTop = 0;
+    await Promise.all([loadThreadOriginalPost(postId), loadComments(postId)]);
     if (focusCommentId) {
       requestAnimationFrame(() => {
         const target = document.querySelector('[data-comment-id="' + CSS.escape(focusCommentId) + '"]');
@@ -980,6 +982,61 @@ function avatarMarkup(user, extra = "") {
     }
   });
 
+  async function loadThreadOriginalPost(postId) {
+    const target = $("#threadOriginalPost");
+    if (!target) return;
+    target.innerHTML = '<p class="muted">Loading post…</p>';
+    const { data: post, error } = await client.from("posts")
+      .select("id,user_id,content,created_at,likes_count,comments_count,reposts_count,views_count,allow_comments")
+      .eq("id", postId).maybeSingle();
+    if (error) {
+      target.textContent = "Could not load this post: " + error.message;
+      return;
+    }
+    if (!post) {
+      target.textContent = "This post is unavailable.";
+      return;
+    }
+    const { data: author } = await client.from("public_profiles")
+      .select("id,username,display_name,avatar,verified")
+      .eq("id", post.user_id).maybeSingle();
+    const name = author?.display_name || author?.username || "ARS member";
+    const handle = author?.username ? "@" + author.username : "@member";
+    const profileHref = author?.id ? "profile.html?id=" + encodeURIComponent(author.id) : "profile.html";
+    let avatarUrl = "";
+    if (author?.avatar) {
+      if (/^https?:\/\//i.test(author.avatar) || author.avatar.startsWith("data:")) avatarUrl = author.avatar;
+      else {
+        const { data: signed } = await client.storage.from("avatars").createSignedUrl(author.avatar, 1800);
+        avatarUrl = signed?.signedUrl || "";
+      }
+    }
+    const avatar = avatarUrl
+      ? '<img src="' + escapeHTML(avatarUrl) + '" alt="" class="thread-author-avatar">'
+      : '<span class="thread-author-avatar thread-avatar-fallback">' + escapeHTML((name.trim()[0] || "A").toUpperCase()) + '</span>';
+    const date = post.created_at ? new Date(post.created_at).toLocaleString([], {
+      month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit"
+    }) : "";
+    target.innerHTML =
+      '<div class="thread-post-author">' +
+        '<a href="' + escapeHTML(profileHref) + '" class="thread-avatar-link">' + avatar + '</a>' +
+        '<div class="thread-author-details">' +
+          '<a href="' + escapeHTML(profileHref) + '" class="thread-author-name">' + escapeHTML(name) +
+            (author?.verified ? ' <span class="verified-badge" aria-label="Verified">✓</span>' : '') +
+          '</a>' +
+          '<span>' + escapeHTML(handle) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="thread-post-text">' + escapeHTML(post.content || "") + '</div>' +
+      '<div class="thread-post-date">' + escapeHTML(date) + '</div>' +
+      '<div class="thread-post-stats">' +
+        '<span><strong>' + formatCount(post.reposts_count || 0) + '</strong> Reposts</span>' +
+        '<span><strong>' + formatCount(post.comments_count || 0) + '</strong> Replies</span>' +
+        '<span><strong>' + formatCount(post.likes_count || 0) + '</strong> Likes</span>' +
+        '<span><strong>' + formatCount(post.views_count || 0) + '</strong> Views</span>' +
+      '</div>';
+  }
+
   async function loadComments(postId) {
     const list = $("#commentsList");
     list.innerHTML = '<p class="muted">Loading replies…</p>';
@@ -992,7 +1049,7 @@ function avatarMarkup(user, extra = "") {
       return;
     }
     if (!data?.length) {
-      list.innerHTML = '<p class="muted">No replies yet. Start the conversation.</p>';
+      list.innerHTML = '<p class="thread-empty-state">No replies yet. Be the first to reply.</p>';
       return;
     }
 
