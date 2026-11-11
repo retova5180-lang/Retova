@@ -1139,14 +1139,56 @@
       }
     });
 
-    // Lightbox Cover Image view
+    // Safe cover lightbox: never leave a blank black screen when the banner URL fails.
+    const coverDialog = $("#coverLightboxDialog");
+    const lightboxCover = $("#lightboxCoverImg");
+    const coverStatus = $("#lightboxCoverStatus");
+
+    if (lightboxCover) {
+      lightboxCover.addEventListener("load", () => {
+        lightboxCover.style.display = "block";
+        if (coverStatus) coverStatus.classList.add("hidden");
+      });
+      lightboxCover.addEventListener("error", () => {
+        lightboxCover.style.display = "none";
+        if (coverStatus) {
+          coverStatus.textContent = "This cover image could not be loaded. Close this window and try uploading it again.";
+          coverStatus.classList.remove("hidden");
+        }
+      });
+    }
+
     $("#coverContainer")?.addEventListener("click", (e) => {
       if (e.target.closest("#changeCoverBtn")) return;
-      const src = $("#profileCoverImg").src;
-      if (src) {
-        $("#lightboxCoverImg").src = src;
-        $("#coverLightboxDialog")?.showModal();
+      const coverEl = $("#profileCoverImg");
+      const src = coverEl?.currentSrc || coverEl?.src;
+      if (!src || !coverEl?.getAttribute("src")) return;
+      if (coverStatus) {
+        coverStatus.textContent = "Loading cover…";
+        coverStatus.classList.remove("hidden");
       }
+      if (lightboxCover) {
+        lightboxCover.style.display = "none";
+        lightboxCover.src = src;
+      }
+      if (coverDialog && !coverDialog.open) coverDialog.showModal();
+      if (lightboxCover?.complete) {
+        if (lightboxCover.naturalWidth > 0) {
+          lightboxCover.style.display = "block";
+          coverStatus?.classList.add("hidden");
+        } else {
+          lightboxCover.style.display = "none";
+          if (coverStatus) {
+            coverStatus.textContent = "This cover image could not be loaded. Close this window and try uploading it again.";
+            coverStatus.classList.remove("hidden");
+          }
+        }
+      }
+    });
+
+    // Tapping the dark area closes the viewer predictably on mobile.
+    coverDialog?.addEventListener("click", (e) => {
+      if (e.target === coverDialog) coverDialog.close();
     });
   }
 
