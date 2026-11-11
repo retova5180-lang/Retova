@@ -8,7 +8,7 @@
   <title>ARS — Profile</title>
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="home.css">
-  <link rel="stylesheet" href="profile.css?v=20261111-dialogcache1">
+  <link rel="stylesheet" href="profile.css?v=20261111-coverfix1">
 </head>
 <body class="profile-page">
   <div class="app-shell">
@@ -295,7 +295,8 @@
     <dialog id="coverLightboxDialog" class="modal lightbox-modal">
       <div class="lightbox-card">
         <button type="button" class="close-lightbox-btn" data-close="coverLightboxDialog" aria-label="Close">×</button>
-        <img id="lightboxCoverImg" src="" alt="Enlarged Cover">
+        <p id="lightboxCoverStatus" class="lightbox-cover-status hidden" role="status">Loading cover…</p>
+        <img id="lightboxCoverImg" src="" alt="Enlarged Cover" style="display:none;">
       </div>
     </dialog>
 
@@ -404,7 +405,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="theme.js"></script>
-  <script src="profile.js?v=20261111-dialogcache1"></script>
+  <script src="profile.js?v=20261111-coverfix1"></script>
     <!-- Follow Requests Modal -->
     <dialog id="followRequestsModal" class="profile-modal" aria-labelledby="followRequestsModalTitle">
       <div class="modal-card">
