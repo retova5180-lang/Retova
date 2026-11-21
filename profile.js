@@ -465,7 +465,7 @@
         premiumLabel.textContent = isPremium ? "Manage Subscription" : "Upgrade to Premium";
       const premBadge = $("#premiumCrownBadge");
       if (premBadge) {
-        premBadge.classList.toggle("hidden", !isPremium);
+        premBadge.classList.toggle("hidden", !isPremium || isAmbassador);
       }
       }
     } else {
@@ -533,6 +533,10 @@
     }
 
     $("#statPostsCount").textContent = formatCount(postsCount);
+
+    // The blue verification check is also earned at one million accepted followers.
+    const blueVerified = Boolean(activeProfile?.verified) || followersCount >= 1000000;
+    $("#verifiedBadge")?.classList.toggle("hidden", !blueVerified);
 
     // Apply privacy visibility settings
     if (!isOwnProfile && targetPreferences?.show_followers === false) {
