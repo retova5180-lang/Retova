@@ -69,6 +69,14 @@
   }
 
   
+  function isPublicPremiumActive(profile) {
+    const expiry = profile?.premium_badge_expires_at;
+    return Boolean(
+      profile?.premium_badge_enabled &&
+      (!expiry || (Number.isFinite(Date.parse(expiry)) && Date.parse(expiry) > Date.now()))
+    );
+  }
+
   function isAmbassadorPremiumActive(profile) {
     const expiry = profile?.founding_ambassador_premium_expires_at;
     return Boolean(expiry && Number.isFinite(Date.parse(expiry)) && Date.parse(expiry) > Date.now());
@@ -90,7 +98,7 @@
     const premiumPicker = $("#premiumAccentPicker");
     const premiumColorInput = $("#editAccentColorPicker");
     const freeAccentColors = ["#a855f7", "#ec4899", "#3b82f6"];
-    const canUsePremiumAccent = (await checkActivePremium(p?.id, p?.plan)) || isAmbassadorPremiumActive(p);
+    const canUsePremiumAccent = (await checkActivePremium(p?.id, p?.plan)) || isPublicPremiumActive(p) || isAmbassadorPremiumActive(p);
 
     selectedLetter = (p?.display_name?.[0] || p?.username?.[0] || "R").toUpperCase();
     selectedLetterColor = "#ffffff";
@@ -270,13 +278,13 @@
 
       if (targetUserId) {
         // Viewing specific user by ID
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at").eq("id", targetUserId);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at, premium_badge_enabled, premium_badge_expires_at").eq("id", targetUserId);
       } else if (targetUsername) {
         // Viewing specific user by username
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at").eq("username", targetUsername);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at, premium_badge_enabled, premium_badge_expires_at").eq("username", targetUsername);
       } else if (currentAuthUser) {
         // Viewing own profile via user_profiles
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at").eq("id", currentAuthUser.id);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge, founding_ambassador_premium_expires_at, premium_badge_enabled, premium_badge_expires_at").eq("id", currentAuthUser.id);
       } else {
         // Visitor with no target specified -> redirect to login
         window.location.href = "index.html";
@@ -367,7 +375,7 @@
     if (!p) return;
 
     // Resolve entitlements before applying the account's accent and badges.
-    const isPremium = (await checkActivePremium(p.id, p.plan)) || isAmbassadorPremiumActive(p);
+    const isPremium = (await checkActivePremium(p.id, p.plan)) || isPublicPremiumActive(p) || isAmbassadorPremiumActive(p);
     const isAmbassador = Boolean(p.founding_ambassador_badge);
     const freeAccentColors = ["#a855f7", "#ec4899", "#3b82f6"];
     let profileAccent = /^#[0-9a-f]{6}$/i.test(p.profile_accent_color || "")
