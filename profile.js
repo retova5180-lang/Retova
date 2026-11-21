@@ -75,31 +75,57 @@
   let selectedProfileAccent = "#a855f7";
   let avatarCustomizerTouched = false;
 
-  function initAvatarCustomizer(p) {
+  async function initAvatarCustomizer(p) {
     const preview = $("#largeAvatarPreview");
     const letterGrid = $("#letterGrid");
     const colorGrid = $("#letterColors");
     const gradGrid = $("#backgroundColors");
+    const accentInput = $("#editAccentColor");
+    const accentSwatches = $("#profileAccentSwatches");
+    const premiumPicker = $("#premiumAccentPicker");
+    const premiumColorInput = $("#editAccentColorPicker");
+    const freeAccentColors = ["#a855f7", "#ec4899", "#3b82f6"];
+    const canUsePremiumAccent = await checkActivePremium(p?.id, p?.plan);
 
     selectedLetter = (p?.display_name?.[0] || p?.username?.[0] || "R").toUpperCase();
     selectedLetterColor = "#ffffff";
     selectedBgGradient = "linear-gradient(135deg, #8b3dff, #c54dff)";
     selectedProfileAccent = /^#[0-9a-f]{6}$/i.test(p?.profile_accent_color || "")
-      ? p.profile_accent_color
+      ? p.profile_accent_color.toLowerCase()
       : "#a855f7";
+    if (!canUsePremiumAccent && !freeAccentColors.includes(selectedProfileAccent)) {
+      selectedProfileAccent = "#a855f7";
+    }
     avatarCustomizerTouched = false;
 
-    const accentInput = $("#editAccentColor");
     if (accentInput) accentInput.value = selectedProfileAccent;
-    $$(".color-picker-row .color-swatch").forEach(swatch => {
-      const selected = swatch.dataset.color?.toLowerCase() === selectedProfileAccent.toLowerCase();
-      swatch.classList.toggle("active", selected);
-      swatch.onclick = () => {
-        selectedProfileAccent = swatch.dataset.color || "#a855f7";
-        if (accentInput) accentInput.value = selectedProfileAccent;
-        $$(".color-picker-row .color-swatch").forEach(item => item.classList.toggle("active", item === swatch));
-      };
+    if (premiumPicker) premiumPicker.classList.toggle("hidden", !canUsePremiumAccent);
+    if (premiumColorInput) premiumColorInput.value = selectedProfileAccent;
+
+    const applyAccentChoice = (color) => {
+      selectedProfileAccent = color.toLowerCase();
+      if (accentInput) accentInput.value = selectedProfileAccent;
+      if (premiumColorInput) premiumColorInput.value = selectedProfileAccent;
+      accentSwatches?.querySelectorAll(".color-swatch").forEach(item => {
+        item.classList.toggle("active", item.dataset.color?.toLowerCase() === selectedProfileAccent);
+      });
+      const root = document.documentElement;
+      ["--purple", "--purple-light", "--purple-dark", "--purple-primary", "--purple-bright", "--border-focus", "--ars-accent"]
+        .forEach(variable => root.style.setProperty(variable, selectedProfileAccent));
+    };
+
+    accentSwatches?.querySelectorAll(".color-swatch").forEach(swatch => {
+      swatch.classList.toggle("active", swatch.dataset.color?.toLowerCase() === selectedProfileAccent);
+      swatch.onclick = () => applyAccentChoice(swatch.dataset.color || "#a855f7");
     });
+
+    if (premiumColorInput) {
+      premiumColorInput.oninput = () => {
+        if (canUsePremiumAccent && /^#[0-9a-f]{6}$/i.test(premiumColorInput.value)) {
+          applyAccentChoice(premiumColorInput.value);
+        }
+      };
+    }
 
     if (preview) {
       preview.textContent = selectedLetter;
@@ -239,13 +265,13 @@
 
       if (targetUserId) {
         // Viewing specific user by ID
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("id", targetUserId);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge").eq("id", targetUserId);
       } else if (targetUsername) {
         // Viewing specific user by username
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("username", targetUsername);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge").eq("username", targetUsername);
       } else if (currentAuthUser) {
         // Viewing own profile via user_profiles
-        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color").eq("id", currentAuthUser.id);
+        query = query.select("id, username, display_name, bio, avatar, cover, verified, plan, is_private, account_type, profile_accent_color, founding_ambassador_badge").eq("id", currentAuthUser.id);
       } else {
         // Visitor with no target specified -> redirect to login
         window.location.href = "index.html";
@@ -335,10 +361,14 @@
     const p = activeProfile;
     if (!p) return;
 
-    // Apply this account's profile accent to profile-page UI only.
-    const profileAccent = /^#[0-9a-f]{6}$/i.test(p.profile_accent_color || "")
-      ? p.profile_accent_color
+    // Resolve entitlements before applying the account's accent and badges.
+    const isPremium = await checkActivePremium(p.id, p.plan);
+    const isAmbassador = Boolean(p.founding_ambassador_badge);
+    const freeAccentColors = ["#a855f7", "#ec4899", "#3b82f6"];
+    let profileAccent = /^#[0-9a-f]{6}$/i.test(p.profile_accent_color || "")
+      ? p.profile_accent_color.toLowerCase()
       : "#a855f7";
+    if (!isPremium && !freeAccentColors.includes(profileAccent)) profileAccent = "#a855f7";
     const accentRoot = document.documentElement;
     accentRoot.style.setProperty("--purple", profileAccent);
     accentRoot.style.setProperty("--purple-light", profileAccent);
@@ -355,9 +385,9 @@
     const isVerified = Boolean(p.verified);
     $("#verifiedBadge").classList.toggle("hidden", !isVerified);
 
-    // Premium status verification from subscriptions / plan
-    const isPremium = await checkActivePremium(p.id, p.plan);
-    $("#premiumCrownBadge").classList.toggle("hidden", !isPremium);
+    // One consistent check icon; the ambassador badge takes priority over Premium.
+    $("#premiumCrownBadge").classList.toggle("hidden", !isPremium || isAmbassador);
+    $("#ambassadorBadge").classList.toggle("hidden", !isAmbassador);
 
     // Username Handle
     $("#usernameHandle").textContent = "@" + (p.username || "user");
@@ -970,12 +1000,12 @@
     });
 
     // Edit Profile Modal
-    $("#editProfileBtn")?.addEventListener("click", () => {
+    $("#editProfileBtn")?.addEventListener("click", async () => {
       if (!activeProfile) return;
       $("#editDisplayName").value = activeProfile.display_name || "";
       $("#editUsername").value = activeProfile.username || "";
       $("#editBio").value = activeProfile.bio || "";
-      initAvatarCustomizer(activeProfile);
+      await initAvatarCustomizer(activeProfile);
       const previewImg = $("#editAvatarPreview");
       const currentAvatar = $("#profileAvatarImg");
       if (previewImg) {
