@@ -6,9 +6,9 @@
   --border: #231636;
   --border-focus: var(--purple-primary, #8b3dff);
   --purple-glow: rgba(139, 61, 255, 0.35);
-  --purple-primary: var(--purple-primary, #8b3dff);
-  --purple-bright: var(--purple, #a855f7);
-  --purple-light: var(--purple-light, #c084fc);
+  --purple-primary: #8b3dff;
+  --purple-bright: #a855f7;
+  --purple-light: #c084fc;
   --text-main: #f8f6fc;
   --text-dim: #9d8db2;
   --danger: #ef4444;
