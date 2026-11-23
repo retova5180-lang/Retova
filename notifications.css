@@ -4,8 +4,8 @@
   --bg: #05040a;
   --card-bg: rgba(18, 14, 30, 0.85);
   --card-border: rgba(var(--ars-accent-rgb, 168, 85, 247), 0.16);
-  --purple: var(--purple-primary, #8b3dff);
-  --purple-light: var(--purple-light, #c084fc);
+  --purple: #8b3dff;
+  --purple-light: #c084fc;
   --purple-glow: rgba(var(--ars-accent-rgb, 168, 85, 247), 0.35);
   --text: #f8f3ff;
   --text-sub: #a198b5;
