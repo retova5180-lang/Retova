@@ -5,9 +5,9 @@
   --panel: #0d0b17;
   --panel-card: #0f0d1b;
   --panel-hover: #161224;
-  --purple: var(--purple, #a855f7);
+  --purple: #a855f7;
   --purple-glow: rgba(var(--ars-accent-rgb, 168, 85, 247), 0.45);
-  --purple-light: var(--purple-light, #c084fc);
+  --purple-light: #c084fc;
   --purple-border: rgba(var(--ars-accent-rgb, 168, 85, 247), 0.16);
   --purple-border-subtle: rgba(var(--ars-accent-rgb, 168, 85, 247), 0.1);
   --pink: #ec4899;
